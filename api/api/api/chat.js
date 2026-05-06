@@ -1,23 +1,21 @@
-export const config = { runtime: 'edge' };
-
-export default async function handler(req) {
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Content-Type': 'application/json'
-  };
+export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
 
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers });
+    res.status(200).end();
+    return;
   }
 
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers });
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const { messages } = await req.json();
+    const body = req.body;
+    const messages = body.messages || [];
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -29,15 +27,14 @@ export default async function handler(req) {
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 1024,
-        system: 'Du bist ARIA - eine leistungsstarke KI Super-App. Du kannst Chat, Bilder, Videos, Webseiten und Code erstellen. Antworte IMMER in der Sprache des Nutzers. Benutze maximal 1-2 Emojis pro Antwort. Sei direkt und präzise. Du bist ARIA - nenne dich niemals Claude oder erwähne Anthropic.',
-        messages
+        system: 'Du bist ARIA - eine KI Super-App. Antworte kurz, direkt und in der Sprache des Nutzers. Keine übermäßigen Emojis. Du bist nicht Claude - du bist ARIA.',
+        messages: messages
       })
     });
 
     const data = await response.json();
-    return new Response(JSON.stringify(data), { headers });
-
+    res.status(200).json(data);
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500, headers });
+    res.status(500).json({ error: error.message, stack: error.stack });
   }
 }
