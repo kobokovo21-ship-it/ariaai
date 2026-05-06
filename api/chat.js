@@ -14,7 +14,7 @@ export default async function handler(req, res) {
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'Claude-sonnet-4-6',
+        model: 'claude-sonnet-4-6',
         max_tokens: 1024,
         system: 'Du bist ARIA - eine KI Super-App. Antworte kurz und direkt in der Sprache des Nutzers. Du heißt ARIA. Keine langen Listen oder Tabellen. Maximal 1-2 Emojis.',
         messages
