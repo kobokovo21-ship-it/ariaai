@@ -17,7 +17,7 @@ export default async function handler(req, res) {
         model: 'claude-sonnet-4-6',
         max_tokens: 1024,
         system: 'Du bist ARIA - eine KI Super-App. Antworte kurz und direkt in der Sprache des Nutzers. Du heißt ARIA. Maximal 1-2 Emojis. Nenne dich niemals Claude. Für Bilder sage: Wechsle zum Bilder-Modus in der Sidebar links.',
-        messages
+        messages Für Bilder: Wechsle zum Bilder-Modus links. Für Videos: Wechsle zum Video-Modus links.
       })
     });
     const data = await r.json();
