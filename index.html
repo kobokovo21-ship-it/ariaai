@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1055,19 +1056,19 @@ function send(){
     headers: {'Content-Type':'application/json'},
     body: JSON.stringify({messages: chatHistory, model: curChatModel})
   })
-  .then(r => r.json())
+  .then(r => {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  })
   .then(data => {
     msgs.removeChild(tw);
-    // Handle different response formats
-    let reply = 'ARIA denkt nach...';
+    let reply;
     if (data.content && data.content[0] && data.content[0].text) {
       reply = data.content[0].text;
-    } else if (data.text) {
-      reply = data.text;
-    } else if (data.completion) {
-      reply = data.completion;
     } else if (data.error) {
-      reply = 'Fehler: ' + data.error;
+      reply = 'API Fehler: ' + JSON.stringify(data.error);
+    } else {
+      reply = 'Unbekannte Antwort: ' + JSON.stringify(data).substring(0, 100);
     }
     const am=document.createElement('div');
     am.className='msg aria';
