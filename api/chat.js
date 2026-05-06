@@ -1,12 +1,11 @@
-export const config = { runtime: 'edge' };
-
-export default async function handler(req) {
+}
+  
   if (req.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 });
+    return res.status(405).json({ error: 'Method not allowed' });
   }
-
+ 
   try {
-    const { messages } = await req.json();
+    const { messages } = req.body;
     
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -16,18 +15,17 @@ export default async function handler(req) {
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         max_tokens: 1024,
-        system: 'Du bist ARIA, eine intelligente KI Super-App. Antworte hilfreich, präzise und freundlich. Du kannst auf Deutsch, Albanisch, Englisch und vielen anderen Sprachen antworten.',
+        system: 'Du bist ARIA, eine intelligente KI Super-App. Antworte hilfreich, präzise und freundlich. Antworte immer in der Sprache des Nutzers.',
         messages
       })
     });
-
+ 
     const data = await response.json();
-    return new Response(JSON.stringify(data), {
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-    });
+    return res.status(200).json(data);
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    return res.status(500).json({ error: error.message });
   }
 }
+ 
