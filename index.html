@@ -1,0 +1,1404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARIA — Your AI Super App</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@200;300;400;500&family=Playfair+Display:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--w:#FFF;--bg:#FAFAFA;--b:#EBEBEB;--bs:#F4F4F4;--t:#0D0D0D;--ts:#888;--tm:#C0C0C0;--bl:#0D0D0D;--blue:#2563EB;--green:#10B981;--red:#EF4444;--purple:#7C3AED;--accent:#0D0D0D}
+body.dark{--w:#111;--bg:#0A0A0A;--b:#222;--bs:#1A1A1A;--t:#F0F0F0;--ts:#777;--tm:#444;--bl:#F0F0F0}
+body.mode-img{--accent:#2563EB}
+body.mode-vid{--accent:#7C3AED}
+body.mode-web{--accent:#10B981}
+body.mode-code{--accent:#F59E0B}
+body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--t);height:100vh;display:flex;overflow:hidden;transition:background .3s,color .3s}
+body.rtl{direction:rtl}
+body.sb-collapsed .sb{width:52px}
+body.sb-collapsed .sb-text{display:none}
+body.sb-collapsed .logo-a{padding:14px 11px}
+body.sb-collapsed .ln{display:none}
+body.sb-collapsed .nbtn{padding:9px;font-size:0}
+body.sb-collapsed .nbtn::before{content:'+';font-size:16px}
+body.sb-collapsed .modes{padding:8px 6px}
+body.sb-collapsed .mi{padding:8px;justify-content:center}
+body.sb-collapsed .mb{display:none}
+body.sb-collapsed .hist,.sb-collapsed .flags-wrap,.sb-collapsed .upg,.sb-collapsed .ubar .un,.sb-collapsed .ubar .up{display:none}
+
+/* SIDEBAR */
+.sb{width:248px;background:var(--w);border-right:1px solid var(--b);display:flex;flex-direction:column;flex-shrink:0;transition:width .3s,background .3s,border .3s;overflow:hidden}
+body.rtl .sb{border-right:none;border-left:1px solid var(--b)}
+.logo-a{padding:18px 16px 13px;border-bottom:1px solid var(--bs);display:flex;align-items:center;gap:8px}
+.logo{display:flex;align-items:center;gap:9px;flex:1}
+.lm{width:28px;height:28px;background:var(--bl);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .3s}
+.ln{font-size:14px;font-weight:500;letter-spacing:3px;color:var(--bl);transition:color .3s;white-space:nowrap}
+.collapse-btn{width:24px;height:24px;border:1px solid var(--b);background:transparent;border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--ts);flex-shrink:0;transition:all .15s}
+.collapse-btn:hover{background:var(--bg);color:var(--t)}
+.nbtn{width:100%;padding:8px;background:var(--bl);color:var(--w);border:none;border-radius:7px;font-family:'Sora',sans-serif;font-size:11.5px;cursor:pointer;letter-spacing:.5px;transition:opacity .2s,background .3s;white-space:nowrap;margin-top:11px}
+.nbtn:hover{opacity:.8}
+
+/* LANG */
+.flags-wrap{padding:7px 10px;border-bottom:1px solid var(--bs);position:relative}
+.lang-btn{display:flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--b);border-radius:6px;padding:5px 10px;cursor:pointer;font-family:'Sora',sans-serif;font-size:11px;color:var(--ts);width:100%;transition:all .15s}
+.lang-btn:hover{border-color:var(--tm);color:var(--t)}
+.lang-dropdown{position:absolute;top:100%;left:10px;right:10px;background:var(--w);border:1px solid var(--b);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.1);z-index:50;display:none;overflow:hidden}
+.lang-dropdown.vis{display:block}
+.lang-opt{padding:8px 12px;font-size:11.5px;cursor:pointer;transition:background .15s;display:flex;align-items:center;gap:8px;font-family:'Sora',sans-serif}
+.lang-opt:hover{background:var(--bg)}
+.lang-opt.on{font-weight:500;color:var(--t)}
+
+/* MODES */
+.modes{padding:10px 8px 6px;border-bottom:1px solid var(--bs)}
+.mode-group{margin-bottom:4px}
+.mode-group-label{font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--tm);padding:4px 9px 2px;display:block;white-space:nowrap}
+.mi{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:6px;cursor:pointer;font-size:11.5px;font-weight:300;color:var(--ts);transition:all .15s;margin-bottom:1px;position:relative}
+.mi:hover{background:var(--bg);color:var(--t)}
+.mi.on{background:var(--bg);color:var(--t);font-weight:400}
+.md{width:4px;height:4px;border-radius:50%;background:var(--b);flex-shrink:0;transition:all .15s}
+.mi.on .md{background:var(--accent)}
+.mb{font-size:8px;padding:1px 5px;border-radius:3px;background:var(--bl);color:var(--w);margin-left:auto;transition:background .3s;white-space:nowrap}
+.mb.pro{background:var(--accent)}
+.mi-notify{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:7px;height:7px;border-radius:50%;background:var(--accent);display:none}
+.mi-notify.vis{display:block}
+.mi-progress{position:absolute;bottom:0;left:9px;right:9px;height:2px;background:var(--b);border-radius:1px;display:none}
+.mi-progress.vis{display:block}
+.mi-progress-bar{height:100%;border-radius:1px;background:var(--accent);transition:width .5s}
+
+/* HISTORY */
+.hist{flex:1;overflow-y:auto;padding:8px}
+.hist::-webkit-scrollbar{width:3px}
+.hist::-webkit-scrollbar-thumb{background:var(--b);border-radius:3px}
+.hl{font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--tm);padding:0 8px;margin:10px 0 3px;white-space:nowrap}
+.hi{padding:6px 9px;border-radius:5px;font-size:11px;font-weight:300;color:var(--ts);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:all .15s;margin-bottom:1px;display:flex;align-items:center;gap:6px}
+.hi:hover{background:var(--bg);color:var(--t)}
+.hi.on{color:var(--t);font-weight:400}
+.hi-icon{font-size:10px;flex-shrink:0;opacity:.6}
+
+/* UPGRADE */
+.upg{margin:0 9px 9px;padding:11px;background:var(--bg);border:1px solid var(--b);border-radius:9px}
+.ut{font-size:11px;font-weight:500;margin-bottom:2px}
+.us{font-size:10px;color:var(--ts);margin-bottom:7px;line-height:1.5;font-weight:300}
+.ub{width:100%;padding:7px;background:var(--bl);color:var(--w);border:none;border-radius:6px;font-family:'Sora',sans-serif;font-size:10.5px;cursor:pointer;transition:opacity .2s,background .3s}
+.ub:hover{opacity:.85}
+.limit-bar{display:flex;flex-direction:column;gap:4px;margin-bottom:8px}
+.limit-item{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--ts);font-weight:300}
+.limit-track{flex:1;height:3px;background:var(--b);border-radius:2px}
+.limit-fill{height:100%;border-radius:2px;background:var(--accent);transition:width .3s}
+
+/* USER */
+.ubar{padding:9px 13px;border-top:1px solid var(--bs);display:flex;align-items:center;gap:9px;cursor:pointer;transition:background .15s}
+.ubar:hover{background:var(--bg)}
+.av{width:27px;height:27px;background:var(--bl);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--w);font-size:10px;font-weight:500;flex-shrink:0;transition:background .3s}
+.un{font-size:11.5px;font-weight:400;white-space:nowrap}
+.up{font-size:10px;color:var(--ts);font-weight:300;white-space:nowrap}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.topbar{height:50px;padding:0 22px;background:var(--w);border-bottom:1px solid var(--bs);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;transition:background .3s,border .3s}
+.tt{font-size:12.5px;font-weight:400;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:400px}
+.ta{display:flex;gap:5px;align-items:center}
+.ib{width:28px;height:28px;border:1px solid var(--b);background:var(--w);border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;color:var(--ts);transition:all .15s;flex-shrink:0}
+.ib:hover{background:var(--bg);color:var(--t)}
+.badge-live{font-size:8px;padding:2px 6px;background:var(--green);color:#fff;border-radius:3px;font-weight:500;letter-spacing:.5px}
+
+/* CONTENT */
+.content{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+.content::-webkit-scrollbar{width:4px}
+.content::-webkit-scrollbar-thumb{background:var(--b);border-radius:4px}
+
+/* LANDING */
+.landing{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;text-align:center}
+.lmark{width:48px;height:48px;background:var(--bl);border-radius:13px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 6px 18px rgba(0,0,0,.1);transition:background .3s}
+.landing h1{font-family:'Playfair Display',serif;font-size:24px;font-weight:400;margin-bottom:6px;line-height:1.3}
+.landing h1 em{font-style:italic}
+.landing p{font-size:12px;color:var(--ts);line-height:1.8;max-width:320px;margin:0 auto 10px;font-weight:300}
+.landing-sub{font-size:11px;color:var(--tm);margin-bottom:24px;font-weight:300}
+.caps{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;max-width:440px;margin:0 auto}
+.cap{padding:5px 10px;background:var(--w);border:1px solid var(--b);border-radius:20px;font-size:11px;color:var(--ts);font-weight:300;cursor:pointer;transition:all .2s;white-space:nowrap}
+.cap:hover{border-color:var(--accent);color:var(--t)}
+
+/* ENGINE INDICATOR */
+.engine{display:inline-flex;align-items:center;gap:4px;font-size:9px;color:var(--tm);padding:2px 7px;background:var(--bg);border:1px solid var(--b);border-radius:10px;margin-bottom:6px;font-weight:300}
+.engine-dot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:pulse2 1.5s infinite}
+@keyframes pulse2{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* MESSAGES */
+.msgs{padding:18px 22px;display:flex;flex-direction:column;gap:14px}
+.msg{display:flex;gap:9px;align-items:flex-start}
+.msg.user{flex-direction:row-reverse}
+body.rtl .msg.user{flex-direction:row}
+body.rtl .msg.aria{flex-direction:row-reverse}
+.mav{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:500;flex-shrink:0}
+.mav.aria{background:var(--bl);color:var(--w);transition:background .3s}
+.mav.user{background:var(--tm);color:var(--w)}
+.bbl{max-width:68%;padding:11px 14px;border-radius:13px;font-size:13px;line-height:1.8;font-weight:300}
+.msg.aria .bbl{background:var(--w);border:1px solid var(--b);border-top-left-radius:3px;transition:background .3s,border .3s}
+.msg.user .bbl{background:var(--bl);color:var(--w);border-top-right-radius:3px;transition:background .3s}
+.bbl strong{font-weight:500}
+.mt{font-size:9px;color:var(--tm);margin-top:3px;padding:0 2px;font-weight:300}
+.msg.user .mt{text-align:right}
+.magic-btn{margin-top:7px;padding:4px 9px;background:var(--bg);border:1px solid var(--b);border-radius:5px;font-size:10px;cursor:pointer;font-family:'Sora',sans-serif;color:var(--ts);transition:all .15s;display:inline-flex;align-items:center;gap:4px}
+.magic-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+.tw{display:flex;gap:9px;align-items:flex-start}
+.typing{display:flex;gap:4px;align-items:center;padding:11px 14px;background:var(--w);border:1px solid var(--b);border-radius:13px;border-top-left-radius:3px}
+.dot{width:4px;height:4px;background:var(--tm);border-radius:50%;animation:pulse 1.3s ease-in-out infinite}
+.dot:nth-child(2){animation-delay:.2s}
+.dot:nth-child(3){animation-delay:.4s}
+@keyframes pulse{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-4px);opacity:1}}
+
+/* GEN PANELS */
+.gp{flex:1;overflow-y:auto;display:none;flex-direction:column;padding:20px;gap:15px}
+.gp.vis{display:flex}
+.gh h2{font-size:15px;font-weight:400;margin-bottom:2px}
+.gh p{font-size:11px;color:var(--ts);font-weight:300}
+.gta{width:100%;background:var(--w);border:1px solid var(--b);border-radius:9px;padding:10px 13px;font-family:'Sora',sans-serif;font-size:12.5px;font-weight:300;color:var(--t);resize:none;outline:none;min-height:60px;transition:border-color .2s,background .3s}
+.gta:focus{border-color:var(--accent)}
+.gta::placeholder{color:var(--tm)}
+.grow{display:flex;gap:7px;align-items:flex-end}
+.gbtn{padding:9px 18px;background:var(--bl);color:var(--w);border:none;border-radius:7px;font-family:'Sora',sans-serif;font-size:11px;font-weight:400;cursor:pointer;white-space:nowrap;transition:opacity .2s,background .3s}
+.gbtn:hover{opacity:.85}
+.gbtn:disabled{opacity:.4;cursor:not-allowed}
+.gbtn-sec{padding:9px 14px;background:var(--bg);color:var(--t);border:1px solid var(--b);border-radius:7px;font-family:'Sora',sans-serif;font-size:11px;cursor:pointer;white-space:nowrap;transition:all .15s}
+.gbtn-sec:hover{border-color:var(--tm)}
+.chips{display:flex;gap:5px;flex-wrap:wrap}
+.chip{padding:4px 9px;background:var(--w);border:1px solid var(--b);border-radius:20px;font-family:'Sora',sans-serif;font-size:10.5px;cursor:pointer;transition:all .15s;color:var(--ts);font-weight:300}
+.chip:hover{border-color:var(--tm);color:var(--t)}
+.chip.on{border-color:var(--accent);color:var(--t);font-weight:400;background:var(--bg)}
+
+/* PROMPT OPT */
+.popt{background:var(--bg);border:1px solid var(--b);border-left:2px solid var(--accent);border-radius:0 8px 8px 0;padding:10px 12px;display:none}
+.popt.vis{display:block}
+.popt-label{font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);margin-bottom:5px;font-weight:500}
+.popt-text{font-size:11.5px;color:var(--t);line-height:1.6;font-style:italic;font-weight:300}
+
+/* IMG GRID */
+.ig{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:9px}
+.ic{background:var(--w);border:1px solid var(--b);border-radius:9px;overflow:hidden;transition:all .2s;cursor:pointer}
+.ic:hover{transform:translateY(-2px);box-shadow:0 5px 16px rgba(0,0,0,.07)}
+.iph{aspect-ratio:1;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--tm);position:relative}
+.ift{padding:8px 10px;border-top:1px solid var(--bs)}
+.ipt{font-size:10.5px;color:var(--ts);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:5px;font-weight:300}
+.ias{display:flex;gap:3px;flex-wrap:wrap}
+.ia{padding:3px 7px;background:var(--bg);border:1px solid var(--b);border-radius:4px;font-size:9.5px;cursor:pointer;transition:all .15s;font-family:'Sora',sans-serif;color:var(--ts);font-weight:300}
+.ia:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* SOCIAL EXPORT */
+.sex{display:flex;gap:5px;flex-wrap:wrap}
+.se{padding:5px 10px;border:1px solid var(--b);border-radius:6px;font-size:10.5px;cursor:pointer;font-family:'Sora',sans-serif;background:var(--w);color:var(--ts);transition:all .15s;display:flex;align-items:center;gap:4px}
+.se:hover{border-color:var(--accent);color:var(--t)}
+
+/* CAPTION */
+.capbox{background:var(--bg);border:1px solid var(--b);border-radius:8px;padding:11px;display:none}
+.capbox.vis{display:block}
+.cap-item{padding:7px 0;border-bottom:1px solid var(--bs);font-size:11.5px;font-weight:300;line-height:1.6;display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.cap-item:last-child{border-bottom:none}
+
+/* VIDEO */
+.vc{background:var(--w);border:1px solid var(--b);border-radius:9px;overflow:hidden;width:170px}
+.vph{aspect-ratio:9/16;background:var(--bl);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--w);transition:background .3s}
+.play{width:34px;height:34px;border:1.5px solid rgba(255,255,255,.25);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer}
+.vl{font-size:8px;opacity:.35;font-weight:300;letter-spacing:.5px}
+.vstat{display:none;align-items:center;gap:9px;padding:10px 13px;background:var(--bg);border:1px solid var(--b);border-radius:9px}
+.spin{width:14px;height:14px;border:2px solid var(--b);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.vst{font-size:11px;font-weight:500;margin-bottom:1px}
+.vss{font-size:10px;color:var(--ts);font-weight:300}
+
+/* TIKTOK PREVIEW */
+.tprev{background:#000;border-radius:10px;overflow:hidden;width:170px}
+.tscreen{aspect-ratio:9/16;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#111;color:#fff;position:relative}
+.tplay{width:38px;height:38px;border:1.5px solid rgba(255,255,255,.25);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;margin-bottom:8px}
+.tcap{font-size:9px;opacity:.6;text-align:center;padding:0 10px;line-height:1.4}
+.tui{position:absolute;right:6px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:12px}
+.tact{display:flex;flex-direction:column;align-items:center;gap:1px}
+.tact span{font-size:14px}
+.tact small{font-size:8px;opacity:.5}
+.tbot{position:absolute;bottom:0;left:0;right:0;padding:8px;background:linear-gradient(transparent,rgba(0,0,0,.6))}
+.tuser{font-size:9px;font-weight:500;margin-bottom:1px}
+.thash{font-size:8px;opacity:.6}
+.tbar{height:2px;background:rgba(255,255,255,.15);margin:0 8px 5px;position:relative;border-radius:1px}
+.tbar::after{content:'';position:absolute;left:0;top:0;height:100%;width:35%;background:#fff;border-radius:1px}
+
+/* PIP VIDEO */
+.pip{position:fixed;bottom:20px;right:20px;width:200px;background:var(--bl);border-radius:12px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.3);z-index:200;display:none;animation:slideUp .3s ease}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.pip.vis{display:block}
+.pip-header{padding:8px 12px;display:flex;justify-content:space-between;align-items:center}
+.pip-title{font-size:10px;color:rgba(255,255,255,.7);font-weight:300}
+.pip-close{background:transparent;border:none;color:rgba(255,255,255,.5);cursor:pointer;font-size:14px}
+.pip-content{aspect-ratio:16/9;background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center;font-size:24px}
+.pip-actions{padding:8px 12px;display:flex;gap:6px}
+.pip-btn{flex:1;padding:5px;background:rgba(255,255,255,.1);border:none;border-radius:5px;color:#fff;font-size:10px;cursor:pointer;font-family:'Sora',sans-serif}
+
+/* UPLOAD ZONE */
+.uz{background:var(--w);border:1.5px dashed var(--b);border-radius:9px;padding:22px;text-align:center;cursor:pointer;transition:all .2s}
+.uz:hover{border-color:var(--accent)}
+.ui{font-size:18px;margin-bottom:5px}
+.ut2{font-size:12px;font-weight:400;margin-bottom:2px}
+.us2{font-size:10px;color:var(--ts);font-weight:300}
+
+/* BRAND SPACE */
+.bgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.bcard{background:var(--w);border:1px solid var(--b);border-radius:9px;padding:13px;text-align:center;transition:all .2s}
+.bcard:hover{border-color:var(--tm)}
+.bcard-icon{font-size:20px;margin-bottom:7px}
+.bcard-title{font-size:11.5px;font-weight:400;margin-bottom:2px}
+.bcard-sub{font-size:10px;color:var(--ts);font-weight:300}
+.swatches{display:flex;gap:5px;margin-top:9px;flex-wrap:wrap}
+.sw{width:24px;height:24px;border-radius:4px;cursor:pointer;border:2px solid transparent;transition:all .2s}
+.sw.on{border-color:var(--accent);transform:scale(1.1)}
+.bupload{background:var(--bg);border:1.5px dashed var(--b);border-radius:8px;padding:16px;text-align:center;cursor:pointer;margin-top:8px}
+
+/* COMMUNITY */
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:7px}
+.ccard{background:var(--w);border:1px solid var(--b);border-radius:8px;overflow:hidden;cursor:pointer;transition:all .2s}
+.ccard:hover{transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,.07)}
+.cimg{aspect-ratio:1;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:20px}
+.cfoot{padding:7px 9px}
+.cuser{font-size:10px;color:var(--ts);font-weight:300}
+.clike{font-size:10px;color:var(--ts);float:right}
+.cpbtn{width:100%;margin-top:5px;padding:4px;background:var(--bg);border:1px solid var(--b);border-radius:4px;font-size:9.5px;cursor:pointer;font-family:'Sora',sans-serif;color:var(--ts);transition:all .15s}
+.cpbtn:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* WEB BUILDER */
+.web-toolbar{display:flex;align-items:center;gap:6px;padding:8px 12px;border-bottom:1px solid var(--bs);background:var(--w)}
+.device-btn{width:26px;height:26px;border:1px solid var(--b);background:transparent;border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .15s}
+.device-btn:hover,.device-btn.on{background:var(--bg);border-color:var(--tm)}
+.web-split{display:flex;height:320px}
+.web-code-panel{width:45%;border-right:1px solid var(--b);display:none;flex-direction:column}
+.web-code-panel.vis{display:flex}
+.web-code-header{padding:6px 10px;border-bottom:1px solid var(--b);display:flex;justify-content:space-between;align-items:center;background:#0D0D0D}
+.web-code-area{flex:1;background:#0D0D0D;padding:12px;font-family:monospace;font-size:11px;color:#A8B5C0;line-height:1.6;overflow-y:auto;outline:none}
+.web-preview{flex:1;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:7px;color:var(--tm)}
+.web-preview iframe{width:100%;height:100%;border:none}
+
+/* VOICE STUDIO */
+.tts-bar{display:flex;align-items:center;gap:7px;padding:9px 13px;background:var(--bg);border:1px solid var(--b);border-radius:7px;margin-top:5px}
+.tts-play{width:26px;height:26px;background:var(--bl);border:none;border-radius:50%;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
+.tts-wave{flex:1;height:20px;background:linear-gradient(90deg,var(--b) 0%,var(--tm) 50%,var(--b) 100%);border-radius:3px;opacity:.4}
+
+/* PRIVACY BADGES */
+.pbadges{display:flex;gap:7px;flex-wrap:wrap}
+.pbadge{display:flex;align-items:center;gap:6px;padding:7px 11px;background:var(--w);border:1px solid var(--b);border-radius:7px;font-size:10.5px;font-weight:300}
+
+/* INPUT BAR */
+.ibar{padding:9px 22px 13px;background:var(--w);border-top:1px solid var(--bs);flex-shrink:0;transition:background .3s,border .3s}
+.iwrap{display:flex;align-items:flex-end;gap:6px;background:var(--bg);border:1.5px solid var(--b);border-radius:11px;padding:8px 10px;transition:all .2s}
+.iwrap:focus-within{border-color:var(--accent);background:var(--w)}
+.ci{flex:1;border:none;background:transparent;font-family:'Sora',sans-serif;font-size:13px;font-weight:300;color:var(--t);resize:none;outline:none;max-height:90px;line-height:1.6}
+.ci::placeholder{color:var(--tm)}
+.atb{width:26px;height:26px;background:transparent;border:none;cursor:pointer;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--tm);transition:all .15s}
+.atb:hover{color:var(--t)}
+.sndb{width:28px;height:28px;background:var(--accent);border:none;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;transition:all .2s}
+.sndb:hover{opacity:.85}
+.hint{text-align:center;font-size:10px;color:var(--tm);margin-top:5px;font-weight:300}
+
+/* PANELS */
+.cp{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.cp.hid{display:none}
+
+/* MODAL */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal.vis{display:flex}
+.mbox{background:var(--w);border-radius:13px;padding:28px;width:340px;max-width:90vw;animation:fadeUp .3s ease;transition:background .3s;position:relative}
+.mbox.wide{width:460px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.mbox h2{font-family:'Playfair Display',serif;font-size:19px;font-weight:400;margin-bottom:4px}
+.mbox p{font-size:11px;color:var(--ts);margin-bottom:18px;font-weight:300}
+.minp{width:100%;padding:9px 12px;background:var(--bg);border:1px solid var(--b);border-radius:7px;font-family:'Sora',sans-serif;font-size:12px;color:var(--t);outline:none;margin-bottom:8px;transition:border-color .2s}
+.minp:focus{border-color:var(--accent)}
+.minp::placeholder{color:var(--tm)}
+.mbtn{width:100%;padding:10px;background:var(--bl);color:var(--w);border:none;border-radius:7px;font-family:'Sora',sans-serif;font-size:12px;font-weight:400;cursor:pointer;transition:opacity .2s;margin-top:3px}
+.mbtn:hover{opacity:.85}
+.mlink{text-align:center;margin-top:10px;font-size:11px;color:var(--ts)}
+.mlink a{color:var(--t);cursor:pointer;font-weight:400}
+.mclose{position:absolute;top:12px;right:12px;width:24px;height:24px;border:none;background:transparent;cursor:pointer;font-size:15px;color:var(--ts);display:flex;align-items:center;justify-content:center;border-radius:5px}
+.mclose:hover{background:var(--bg)}
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:5px}
+.pcard{background:var(--bg);border:1.5px solid var(--b);border-radius:10px;padding:16px;cursor:pointer;transition:all .2s}
+.pcard.feat{border-color:var(--bl);background:var(--bl);color:#fff}
+.pcard:hover{transform:translateY(-1px)}
+.ptier{font-size:8px;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;opacity:.6}
+.pprice{font-family:'Playfair Display',serif;font-size:24px;font-weight:400;margin-bottom:2px}
+.psub{font-size:10px;opacity:.5;margin-bottom:12px;font-weight:300}
+.pfeat{font-size:10px;line-height:1.8;opacity:.7;font-weight:300}
+
+/* SOFT REGISTER */
+.sreg{background:var(--bg);border:1px solid var(--b);border-radius:9px;padding:12px 14px;margin-top:8px;display:flex;align-items:center;gap:10px}
+.sreg-text{flex:1;font-size:11px;color:var(--ts);font-weight:300;line-height:1.4}
+.sreg-btn{padding:6px 12px;background:var(--bl);color:#fff;border:none;border-radius:6px;font-family:'Sora',sans-serif;font-size:10.5px;cursor:pointer;white-space:nowrap}
+</style>
+<script src="https://www.paypal.com/sdk/js?client-id=ARlfmzvjUFm15f47OBlcKSEVa5akHBWyBcguXFSwxLoTT7vs6drnDYIWxERGHYUjL4dk9kPzTeYVssyQ&vault=true&intent=subscription" data-sdk-integration-source="button-factory"></script>
+</head>
+<body>
+
+<!-- PIP VIDEO -->
+<div class="pip" id="pip">
+  <div class="pip-header">
+    <span class="pip-title">✅ Video bereit!</span>
+    <button class="pip-close" onclick="document.getElementById('pip').classList.remove('vis')">×</button>
+  </div>
+  <div class="pip-content">▶</div>
+  <div class="pip-actions">
+    <button class="pip-btn">↓ Speichern</button>
+    <button class="pip-btn" onclick="mode('vid',document.querySelectorAll('.mi')[2]);document.getElementById('pip').classList.remove('vis')">Öffnen</button>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<div class="sb" id="sb">
+  <div class="logo-a">
+    <div class="logo">
+      <div class="lm">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <circle cx="7" cy="7" r="5" stroke="white" stroke-width="1.3"/>
+          <circle cx="7" cy="7" r="2.8" fill="white"/>
+          <circle cx="7" cy="7" r="1" fill="#0D0D0D"/>
+        </svg>
+      </div>
+      <div class="ln sb-text">ARIA</div>
+    </div>
+    <button class="collapse-btn" onclick="toggleSb()" title="Collapse">◀</button>
+  </div>
+  <div class="sb-text" style="padding:0 12px">
+    <button class="nbtn" onclick="newChat()" id="nbtn">+ Neuer Chat</button>
+  </div>
+
+  <!-- LANG -->
+  <div class="flags-wrap sb-text">
+    <button class="lang-btn" onclick="toggleLang()" id="lang-btn">🌐 <span id="lang-label">Sprache</span> <span style="margin-left:auto;font-size:9px">▾</span></button>
+    <div class="lang-dropdown" id="lang-dd">
+      <div class="lang-opt on" onclick="setL('de')">🇩🇪 Deutsch</div>
+      <div class="lang-opt" onclick="setL('en')">🇬🇧 English</div>
+      <div class="lang-opt" onclick="setL('sq')">🇦🇱 Shqip</div>
+      <div class="lang-opt" onclick="setL('fr')">🇫🇷 Français</div>
+      <div class="lang-opt" onclick="setL('ar')">🇸🇦 العربية</div>
+      <div class="lang-opt" onclick="setL('zh')">🇨🇳 中文</div>
+      <div class="lang-opt" onclick="setL('ru')">🇷🇺 Русский</div>
+      <div class="lang-opt" onclick="setL('es')">🇪🇸 Español</div>
+      <div class="lang-opt" onclick="setL('it')">🇮🇹 Italiano</div>
+      <div class="lang-opt" onclick="setL('tr')">🇹🇷 Türkçe</div>
+    </div>
+  </div>
+
+  <!-- MODES -->
+  <div class="modes">
+    <div class="mode-group">
+      <span class="mode-group-label sb-text">Erstellung</span>
+      <div class="mi on" onclick="mode('chat',this)"><div class="md"></div><span class="sb-text" id="m0">Chat</span></div>
+      <div class="mi" onclick="mode('img',this)"><div class="md"></div><span class="sb-text" id="m1">Bilder</span><span class="mb sb-text">MJ V8</span><div class="mi-notify" id="img-notify"></div><div class="mi-progress" id="img-prog"><div class="mi-progress-bar" id="img-prog-bar" style="width:0%"></div></div></div>
+      <div class="mi" onclick="mode('vid',this)"><div class="md"></div><span class="sb-text" id="m2">Video</span><span class="mb pro sb-text">30s</span><div class="mi-notify" id="vid-notify"></div><div class="mi-progress" id="vid-prog"><div class="mi-progress-bar" id="vid-prog-bar" style="width:0%"></div></div></div>
+    </div>
+    <div class="mode-group">
+      <span class="mode-group-label sb-text">Business</span>
+      <div class="mi" onclick="mode('web',this)"><div class="md"></div><span class="sb-text" id="m3">Web Builder</span></div>
+      <div class="mi" onclick="mode('doc',this)"><div class="md"></div><span class="sb-text" id="m5">Dokumente</span></div>
+      <div class="mi" onclick="mode('brand',this)"><div class="md"></div><span class="sb-text" id="m6">Brand Space</span><span class="mb pro sb-text">PRO</span></div>
+    </div>
+    <div class="mode-group">
+      <span class="mode-group-label sb-text">Tools</span>
+      <div class="mi" onclick="mode('code',this)"><div class="md"></div><span class="sb-text" id="m4">Code</span></div>
+      <div class="mi" onclick="mode('comm',this)"><div class="md"></div><span class="sb-text" id="m7">Community</span></div>
+      <div class="mi" onclick="mode('tts',this)"><div class="md"></div><span class="sb-text" id="m8">Voice Studio</span><span class="mb pro sb-text">PRO</span></div>
+      <div class="mi" onclick="mode('priv',this)"><div class="md"></div><span class="sb-text" id="m9">Datenschutz</span></div>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="hist sb-text">
+    <div class="hl">Heute</div>
+    <div class="hi on"><span class="hi-icon">💬</span>Neues Gespräch gestartet</div>
+    <div class="hi"><span class="hi-icon">🎨</span>Fashion Bild generiert</div>
+    <div class="hi"><span class="hi-icon">🌐</span>Landingpage erstellt</div>
+    <div class="hl">Gestern</div>
+    <div class="hi"><span class="hi-icon">💬</span>Business Plan Kosovo</div>
+    <div class="hi"><span class="hi-icon">🎬</span>Video Kampagne Brand</div>
+    <div class="hi"><span class="hi-icon">📄</span>Vertrag übersetzt</div>
+  </div>
+
+  <!-- LIMITS -->
+  <div class="upg sb-text">
+    <div class="limit-bar">
+      <div class="limit-item">💬 <span style="flex:1">Chat</span> <span style="color:var(--green)">∞</span></div>
+      <div class="limit-item">🎨 <span style="flex:1">Bilder</span> <span>3/3</span><div class="limit-track"><div class="limit-fill" style="width:100%;background:var(--red)"></div></div></div>
+      <div class="limit-item">🎬 <span style="flex:1">Video</span> <span style="color:var(--tm)">— Pro</span></div>
+    </div>
+    <div class="ut">🚀 Launch Special</div>
+    <div class="us">Pro €19.99 · Business €49.99 · Upgrade für mehr Power!</div>
+    <button class="ub" onclick="showM('modal-price')" style="background:linear-gradient(135deg,#0D0D0D,#333)">Jetzt upgraden ↗</button>
+  </div>
+
+  <div class="ubar" onclick="showM('modal-login')">
+    <div class="av">K</div>
+    <div style="flex:1"><div class="un sb-text">Kovo</div><div class="up sb-text">Free · 3 Bilder übrig · <span style="color:#D4AF37;cursor:pointer" onclick="showM('modal-price')">Upgrade ↗</span></div></div>
+    <span style="color:var(--tm);font-size:11px">⚙</span>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="tt" id="topt">Neuer Chat</div>
+    <div class="ta">
+      <span class="badge-live">LIVE</span>
+      <div class="ib" onclick="toggleDark()" title="Dunkelmodus">🌙</div>
+      <div class="ib" onclick="showM('modal-price')" title="Upgrade">⭐</div>
+      <div class="ib" onclick="showM('modal-login')" title="Konto">👤</div>
+      <div class="ib" id="export-btn" title="Code exportieren" style="display:none">↗</div>
+      <div class="ib">⋯</div>
+    </div>
+  </div>
+
+  <!-- CHAT -->
+  <div class="cp" id="cp-chat">
+    <div class="content" id="chat-content">
+      <div class="landing" id="landing">
+        <div class="lmark">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <circle cx="10" cy="10" r="7" stroke="white" stroke-width="1.5"/>
+            <circle cx="10" cy="10" r="4" fill="white"/>
+            <circle cx="10" cy="10" r="1.5" fill="#0D0D0D"/>
+          </svg>
+        </div>
+        <h1 id="wh">Willkommen bei <em>ARIA</em></h1>
+        <p id="wp">Deine KI Super-App — Chat, Bilder, Videos, Webseiten und Code.</p>
+        <p class="landing-sub" id="wsub">Was möchtest du heute erschaffen?</p>
+        <div class="caps">
+          <div class="cap" onclick="qs('Schreib eine professionelle E-Mail')">✉️ E-Mail</div>
+          <div class="cap" onclick="qs('Übersetze diesen Text')">🌍 Übersetzen</div>
+          <div class="cap" onclick="qs('Erstelle einen Marketingplan')">📈 Marketing</div>
+          <div class="cap" onclick="qs('Schreib eine Rechnung für 500€')">🧾 Rechnung</div>
+          <div class="cap" onclick="mode('img',document.querySelectorAll('.mi')[1])">🎨 Bilder</div>
+          <div class="cap" onclick="mode('vid',document.querySelectorAll('.mi')[2])">🎬 Video</div>
+          <div class="cap" onclick="mode('web',document.querySelectorAll('.mi')[3])">🌐 Website</div>
+          <div class="cap" onclick="mode('brand',document.querySelectorAll('.mi')[6])">🏷️ Brand</div>
+        </div>
+      </div>
+      <div class="msgs" id="msgs" style="display:none"></div>
+    </div>
+    <div class="ibar">
+      <div class="iwrap">
+        <textarea class="ci" id="ci" rows="1" onkeydown="onKey(event)" placeholder="Frag ARIA alles..."></textarea>
+        <button class="atb" onclick="toggleVoice()" title="Spracheingabe">🎤</button>
+        <button class="atb" onclick="uploadImg()" title="Bild hochladen">📷</button>
+        <button class="atb" title="Datei anhängen">📎</button>
+        <button class="sndb" onclick="send()">↑</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;padding:0 2px 4px">
+        <div style="font-size:9px;color:var(--tm);font-weight:300">KI Motor:</div>
+        <div class="chip on" style="font-size:9px;padding:2px 7px" onclick="selChatModel(this,'claude')">ARIA Standard</div>
+        <div class="chip" style="font-size:9px;padding:2px 7px" onclick="selChatModel(this,'gemini')">ARIA Pro</div>
+      </div>
+      <div class="hint" id="hint">ARIA kann Fehler machen. Bitte wichtige Informationen überprüfen. · Datenschutz geschützt 🔒</div>
+    </div>
+  </div>
+
+  <!-- IMAGES -->
+  <div class="gp" id="cp-img">
+    <div class="gh"><h2>🎨 <span id="g0h">Bilder generieren</span></h2><p id="g0p">Höchste Bildqualität — beschreibe was du sehen möchtest</p></div>
+    <div>
+      <div class="grow">
+        <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+          <textarea class="gta" id="img-p" rows="2" placeholder="Beschreibe das Bild..."></textarea>
+          <div class="popt" id="img-opt">
+            <div class="popt-label">✨ ARIA Prompt Optimierung</div>
+            <div class="popt-text" id="img-opt-text"></div>
+            <div style="display:flex;gap:5px;margin-top:7px">
+              <button class="ia" onclick="useOpt('img')">Diesen Prompt verwenden</button>
+              <button class="ia" onclick="document.getElementById('img-opt').classList.remove('vis')">✕</button>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <button class="gbtn" onclick="genImg()" id="img-btn">Generieren</button>
+          <button class="gbtn-sec" onclick="optPrompt('img')">✨ Optimieren</button>
+        </div>
+      </div>
+      <div class="chips" style="margin-top:7px">
+        <div class="chip on" onclick="tc(this)">9:16</div>
+        <div class="chip" onclick="tc(this)">1:1</div>
+        <div class="chip" onclick="tc(this)">16:9</div>
+        <div class="chip on" onclick="tc(this)">Photorealistisch</div>
+        <div class="chip" onclick="tc(this)">Cineastisch</div>
+        <div class="chip" onclick="tc(this)">Editorial</div>
+        <div class="chip" onclick="tc(this)">Artistisch</div>
+      </div>
+      <div style="margin-top:8px">
+        <div style="font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--tm);margin-bottom:5px">KI Modell wählen</div>
+        <div class="chips">
+          <div class="chip on" onclick="selImgModel(this,'gpt-image-2')">ARIA Vision</div>
+          <div class="chip" onclick="selImgModel(this,'nano-banana-pro')">ARIA Pro Max</div>
+          <div class="chip" onclick="selImgModel(this,'seedream-5-lite')">ARIA Creative</div>
+          <div class="chip" onclick="selImgModel(this,'flux-dev')">ARIA Artistic</div>
+        </div>
+      </div>
+    </div>
+    <div class="sex">
+      <div class="se" onclick="exportFor('TikTok')">📱 TikTok</div>
+      <div class="se" onclick="exportFor('Instagram')">📷 Instagram</div>
+      <div class="se" onclick="exportFor('Story')">⭕ Story</div>
+      <div class="se" onclick="genCaps()">✍️ Captions</div>
+    </div>
+    <div class="capbox" id="capbox">
+      <div class="cap-item">🔥 <strong>Hook 1:</strong> "Das hat KI in 2026 möglich gemacht... 🤯" <button class="ia" onclick="copyT(this)">Kopieren</button></div>
+      <div class="cap-item">⚡ <strong>Hook 2:</strong> "POV: KI übernimmt deinen kreativen Workflow ✨" <button class="ia" onclick="copyT(this)">Kopieren</button></div>
+      <div class="cap-item">🎯 <strong>Hook 3:</strong> "Die KI Revolution beginnt hier 🚀" <button class="ia" onclick="copyT(this)">Kopieren</button></div>
+      <div class="cap-item" style="font-size:10px;color:var(--ts)">#ARIA #AIContent #KIRevolution #DigitalCreator #ContentCreator</div>
+    </div>
+    <div class="ig" id="ig">
+      <div class="ic"><div class="iph">🌅</div><div class="ift"><div class="ipt">Paris Fashion, goldenes Licht...</div><div class="ias"><button class="ia">↓</button><button class="ia">▶ Animieren</button><button class="ia">📱 TikTok</button></div></div></div>
+      <div class="ic"><div class="iph">👗</div><div class="ift"><div class="ipt">Editorial minimal, Studio...</div><div class="ias"><button class="ia">↓</button><button class="ia">▶ Animieren</button><button class="ia">📱 TikTok</button></div></div></div>
+      <div class="ic"><div class="iph">🏙️</div><div class="ift"><div class="ipt">Stadtbild, Nacht, cineastisch...</div><div class="ias"><button class="ia">↓</button><button class="ia">▶ Animieren</button><button class="ia">📱 TikTok</button></div></div></div>
+    </div>
+  </div>
+
+  <!-- VIDEO -->
+  <div class="gp" id="cp-vid">
+    <div class="gh"><h2>🎬 <span id="g1h">Video generieren</span></h2><p id="g1p">Bis zu 30 Sekunden · Auto-Chaining</p></div>
+    <div>
+      <div class="grow">
+        <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+          <textarea class="gta" id="vid-p" rows="2" placeholder="Beschreibe das Video..."></textarea>
+          <div class="popt" id="vid-opt">
+            <div class="popt-label">✨ ARIA Prompt Optimierung</div>
+            <div class="popt-text" id="vid-opt-text"></div>
+            <div style="display:flex;gap:5px;margin-top:7px">
+              <button class="ia" onclick="useOpt('vid')">Verwenden</button>
+              <button class="ia" onclick="document.getElementById('vid-opt').classList.remove('vis')">✕</button>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <button class="gbtn" onclick="genVid()" id="vid-btn">Generieren</button>
+          <button class="gbtn-sec" onclick="optPrompt('vid')">✨ Optimieren</button>
+        </div>
+      </div>
+      <div class="chips" style="margin-top:7px">
+        <div class="chip on" onclick="selDur(this,5)">5 Sek</div>
+        <div class="chip" onclick="selDur(this,10)">10 Sek</div>
+        <div class="chip" onclick="selDur(this,20)">20 Sek ✨</div>
+        <div class="chip" onclick="selDur(this,30)">30 Sek ✨</div>
+        <div class="chip on" onclick="tc(this)">9:16</div>
+        <div class="chip" onclick="tc(this)">16:9</div>
+      </div>
+      <div style="margin-top:8px">
+        <div style="font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--tm);margin-bottom:5px">Video Modell wählen</div>
+        <div class="chips">
+          <div class="chip on" onclick="selVidModel(this,'seedance-v1-pro')">ARIA Video</div>
+          <div class="chip" onclick="selVidModel(this,'hailuo-video')">ARIA Cinematic</div>
+          <div class="chip" onclick="selVidModel(this,'skyreels-v2-i2v')">ARIA Reels</div>
+          <div class="chip" onclick="selVidModel(this,'sora')">ARIA Ultra</div>
+        </div>
+      </div>
+      <div style="font-size:9px;color:var(--tm);margin-top:3px;font-weight:300">✨ = Auto-Chaining · Mehrere Clips werden automatisch verbunden</div>
+    </div>
+    <div class="uz"><div class="ui">🖼️</div><div class="ut2">Basisbild hochladen</div><div class="us2">Drag & Drop oder klicken · PNG, JPG, WEBP</div></div>
+    <div class="vstat" id="vstat"><div class="spin"></div><div><div class="vst" id="vst">ARIA generiert...</div><div class="vss" id="vss"></div></div></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-start">
+      <div>
+        <div style="font-size:10px;color:var(--ts);margin-bottom:5px;font-weight:300">TikTok Vorschau</div>
+        <div class="tprev">
+          <div class="tscreen">
+            <div class="tplay">▶</div>
+            <div class="tcap">Dein Video erscheint hier</div>
+            <div class="tui">
+              <div class="tact"><span>❤️</span><small>24.5K</small></div>
+              <div class="tact"><span>💬</span><small>892</small></div>
+              <div class="tact"><span>↗</span><small>Teilen</small></div>
+            </div>
+            <div class="tbot"><div class="tuser">@aria_official</div><div class="thash">#ARIA #KIContent #Digital</div></div>
+          </div>
+          <div class="tbar"></div>
+        </div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:7px">
+        <div style="font-size:10px;color:var(--ts);font-weight:300">Generierte Videos</div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap" id="vid-grid">
+          <div class="vc"><div class="vph"><div class="play">▶</div><div class="vl">5 SEK</div></div><div class="ift"><div class="ipt">Fashion Paris...</div><div class="ias"><button class="ia">↓</button><button class="ia">📱</button></div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WEB BUILDER -->
+  <div class="gp" id="cp-web">
+    <div class="gh"><h2>🌐 Web Builder</h2><p>Beschreibe deine Website — ARIA baut sie sofort</p></div>
+    <div class="grow">
+      <textarea class="gta" id="web-p" placeholder="z.B. 'Landingpage für meine Modemarke, minimal, schwarz-weiß, mit Hero-Bereich und Shop'" rows="3"></textarea>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <button class="gbtn" onclick="genWeb()">Bauen</button>
+        <button class="gbtn-sec" onclick="toggleCodePanel()">⌨️ Code</button>
+      </div>
+    </div>
+    <div class="chips">
+      <div class="chip on" onclick="tc(this)">Landingpage</div>
+      <div class="chip" onclick="tc(this)">E-Commerce</div>
+      <div class="chip" onclick="tc(this)">Portfolio</div>
+      <div class="chip on" onclick="tc(this)">Minimal</div>
+      <div class="chip" onclick="tc(this)">Bold</div>
+    </div>
+    <div style="background:var(--w);border:1px solid var(--b);border-radius:10px;overflow:hidden">
+      <div class="web-toolbar">
+        <div style="display:flex;gap:4px"><div style="width:8px;height:8px;border-radius:50%;background:#FF5F57"></div><div style="width:8px;height:8px;border-radius:50%;background:#FFBD2E"></div><div style="width:8px;height:8px;border-radius:50%;background:#28CA41"></div></div>
+        <div style="flex:1;background:var(--bg);border-radius:4px;padding:3px 9px;font-size:10px;color:var(--tm)">yourwebsite.com</div>
+        <button class="device-btn on" onclick="setDevice(this,'desktop')" title="Desktop">🖥</button>
+        <button class="device-btn" onclick="setDevice(this,'tablet')" title="Tablet">📱</button>
+        <button class="device-btn" onclick="setDevice(this,'mobile')" title="Mobil">📲</button>
+        <button class="ia" id="export-web-btn" style="display:none" onclick="alert('Code wird als ZIP exportiert...')">↓ Export</button>
+        <button class="ia" onclick="alert('In der Pro-Version: Direkt veröffentlichen auf aria-sites.app')">🚀 Publish</button>
+      </div>
+      <div class="web-split" id="web-split">
+        <div class="web-code-panel" id="web-code-panel">
+          <div class="web-code-header">
+            <span style="font-size:10px;color:#666">index.html</span>
+            <button class="ia" style="background:#1a1a1a;border-color:#333;color:#666" onclick="copyCode()">Kopieren</button>
+          </div>
+          <div class="web-code-area" id="web-code-area" contenteditable="true"><!-- Code erscheint hier nach Generierung --></div>
+        </div>
+        <div class="web-preview" id="web-preview">
+          <div style="font-size:24px">🌐</div>
+          <div style="font-size:11.5px;font-weight:300">Beschreibe deine Website oben und klicke "Bauen"</div>
+          <div style="font-size:10px;color:var(--tm);margin-top:4px">⚠️ Vorschau läuft in einer sicheren Sandbox-Umgebung</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CODE -->
+  <div class="gp" id="cp-code">
+    <div class="gh"><h2>💻 Code</h2><p>Schreibe, erkläre, debugge oder konvertiere Code in jeder Sprache</p></div>
+    <div class="grow">
+      <textarea class="gta" id="code-p" placeholder="z.B. 'Erstelle ein Python-Skript das eine CSV liest und ein Diagramm erstellt'" rows="3"></textarea>
+      <button class="gbtn" onclick="genCode()">Generieren</button>
+    </div>
+    <div class="chips">
+      <div class="chip on" onclick="tc(this)">Python</div>
+      <div class="chip" onclick="tc(this)">JavaScript</div>
+      <div class="chip" onclick="tc(this)">HTML/CSS</div>
+      <div class="chip" onclick="tc(this)">React</div>
+      <div class="chip" onclick="tc(this)">SQL</div>
+    </div>
+    <div style="background:#0D0D0D;border-radius:10px;overflow:hidden">
+      <div style="padding:8px 12px;border-bottom:1px solid #222;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:10px;color:#666">output.py</span>
+        <button class="ia" style="background:#1a1a1a;border-color:#333;color:#666">Kopieren</button>
+      </div>
+      <div style="padding:14px;font-family:monospace;font-size:11px;color:#A8B5C0;line-height:1.7;min-height:160px">
+        <span style="color:#666"># Code erscheint hier nach Generierung</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- DOCUMENTS -->
+  <div class="gp" id="cp-doc">
+    <div class="gh"><h2>📄 Dokumente</h2><p>Lade Dokumente hoch, analysiere, übersetze oder generiere sie</p></div>
+    <div class="uz" style="padding:28px">
+      <div class="ui">📄</div><div class="ut2">Dokument hochladen</div><div class="us2">PDF, Word, Excel, PowerPoint, TXT · Max 50MB</div>
+    </div>
+    <div style="display:flex;gap:5px;flex-wrap:wrap">
+      <button class="gbtn">📝 Zusammenfassen</button>
+      <button class="gbtn-sec">🌍 Übersetzen</button>
+      <button class="gbtn-sec">🧾 Rechnung PDF</button>
+      <button class="gbtn-sec">✏️ Bearbeiten</button>
+      <button class="gbtn-sec">📷 Scan & OCR</button>
+    </div>
+    <div style="background:var(--w);border:1px solid var(--b);border-radius:10px;padding:16px;min-height:120px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;color:var(--tm)">
+      <div style="font-size:24px">📋</div><div style="font-size:11px;font-weight:300">Lade ein Dokument hoch um es zu analysieren</div>
+    </div>
+  </div>
+
+  <!-- BRAND SPACE -->
+  <div class="gp" id="cp-brand">
+    <div class="gh"><h2>🏷️ Brand Space</h2><p>Lade deine Marken-Assets hoch — ARIA verwendet sie in jedem Bild und Video</p></div>
+    <div class="bgrid">
+      <div class="bcard">
+        <div class="bcard-icon">🖼️</div>
+        <div class="bcard-title">Logo</div>
+        <div class="bcard-sub">PNG mit Transparenz hochladen</div>
+        <div class="bupload"><div style="font-size:16px">+</div></div>
+      </div>
+      <div class="bcard">
+        <div class="bcard-icon">🎨</div>
+        <div class="bcard-title">Markenfarben</div>
+        <div class="bcard-sub">Wähle deine Palette</div>
+        <div class="swatches">
+          <div class="sw on" style="background:#000"></div>
+          <div class="sw" style="background:#fff;border:1px solid #ddd" onclick="this.classList.toggle('on')"></div>
+          <div class="sw" style="background:#8B0000" onclick="this.classList.toggle('on')"></div>
+          <div class="sw" style="background:#2563EB" onclick="this.classList.toggle('on')"></div>
+          <div class="sw" style="background:#D4AF37" onclick="this.classList.toggle('on')"></div>
+          <div class="sw" style="background:#808080" onclick="this.classList.toggle('on')"></div>
+        </div>
+      </div>
+      <div class="bcard">
+        <div class="bcard-icon">✍️</div>
+        <div class="bcard-title">Typografie</div>
+        <div class="bcard-sub">Schriftstil der Marke</div>
+        <div style="display:flex;flex-direction:column;gap:4px;margin-top:7px">
+          <div class="chip on" onclick="tc(this)" style="font-family:serif">Serif</div>
+          <div class="chip" onclick="tc(this)">Sans-serif</div>
+          <div class="chip" onclick="tc(this)">Minimal</div>
+        </div>
+      </div>
+      <div class="bcard">
+        <div class="bcard-icon">📸</div>
+        <div class="bcard-title">Stil-Referenz</div>
+        <div class="bcard-sub">Referenzbild hochladen</div>
+        <div class="bupload"><div style="font-size:16px">+</div></div>
+      </div>
+    </div>
+    <div style="background:var(--bg);border:1px solid var(--b);border-radius:9px;padding:13px">
+      <div style="font-size:11px;font-weight:500;margin-bottom:5px">✅ Brand Space aktiv</div>
+      <div style="font-size:10.5px;color:var(--ts);font-weight:300;line-height:1.6">ARIA fügt automatisch dein Logo und deinen Farbstil in jedes generierte Bild und Video ein.</div>
+    </div>
+    <button class="gbtn">Brand-Einstellungen speichern</button>
+  </div>
+
+  <!-- COMMUNITY -->
+  <div class="gp" id="cp-comm">
+    <div class="gh"><h2>🌟 Community Galerie</h2><p>Die besten Kreationen der ARIA Community — lass dich inspirieren</p></div>
+    <div class="chips">
+      <div class="chip on" onclick="tc(this)">Alle</div>
+      <div class="chip" onclick="tc(this)">Fashion</div>
+      <div class="chip" onclick="tc(this)">Business</div>
+      <div class="chip" onclick="tc(this)">Architektur</div>
+      <div class="chip" onclick="tc(this)">Natur</div>
+    </div>
+    <div class="cgrid">
+      <div class="ccard"><div class="cimg">🌅</div><div class="cfoot"><span class="cuser">@ardiani.k</span><span class="clike">❤️ 2.4K</span><button class="cpbtn" onclick="usePrompt('Woman in Paris, golden hour, cinematic 35mm, editorial fashion')">📋 Prompt verwenden</button></div></div>
+      <div class="ccard"><div class="cimg">🏔️</div><div class="cfoot"><span class="cuser">@blerim_x</span><span class="clike">❤️ 1.8K</span><button class="cpbtn" onclick="usePrompt('Albanian Alps, drone view, misty morning, hyperrealistic')">📋 Prompt verwenden</button></div></div>
+      <div class="ccard"><div class="cimg">👗</div><div class="cfoot"><span class="cuser">@vlora.m</span><span class="clike">❤️ 3.1K</span><button class="cpbtn" onclick="usePrompt('Fashion editorial, minimal white studio, 9:16')">📋 Prompt verwenden</button></div></div>
+      <div class="ccard"><div class="cimg">🏙️</div><div class="cfoot"><span class="cuser">@city.arc</span><span class="clike">❤️ 945</span><button class="cpbtn" onclick="usePrompt('Modern city architecture, golden sunset, wide angle')">📋 Prompt verwenden</button></div></div>
+      <div class="ccard"><div class="cimg">🍽️</div><div class="cfoot"><span class="cuser">@resto.k</span><span class="clike">❤️ 712</span><button class="cpbtn" onclick="usePrompt('Restaurant branding, warm tones, rustic modern')">📋 Prompt verwenden</button></div></div>
+      <div class="ccard"><div class="cimg">💼</div><div class="cfoot"><span class="cuser">@biz.sq</span><span class="clike">❤️ 1.2K</span><button class="cpbtn" onclick="usePrompt('Professional business portrait, clean background')">📋 Prompt verwenden</button></div></div>
+    </div>
+  </div>
+
+  <!-- VOICE STUDIO -->
+  <div class="gp" id="cp-tts">
+    <div class="gh"><h2>🎤 Voice Studio</h2><p>Text-zu-Sprache in 50+ Sprachen · Sprachaufnahme zu Text</p></div>
+    <div style="background:var(--w);border:1px solid var(--b);border-radius:10px;padding:14px">
+      <div style="font-size:11px;font-weight:500;margin-bottom:9px">Text zu Sprache</div>
+      <textarea class="gta" placeholder="Text eingeben oder einfügen..." rows="3"></textarea>
+      <div class="chips" style="margin-top:7px">
+        <div class="chip on" onclick="tc(this)">🇩🇪 Deutsch</div>
+        <div class="chip" onclick="tc(this)">🇦🇱 Albanisch</div>
+        <div class="chip" onclick="tc(this)">🇬🇧 Englisch</div>
+        <div class="chip" onclick="tc(this)">🇷🇺 Russisch</div>
+        <div class="chip" onclick="tc(this)">🇸🇦 Arabisch</div>
+      </div>
+      <div style="display:flex;gap:5px;margin-top:9px">
+        <button class="gbtn">▶ Stimme generieren</button>
+        <button class="gbtn-sec">Weiblich</button>
+        <button class="gbtn-sec">Männlich</button>
+      </div>
+      <div class="tts-bar">
+        <button class="tts-play">▶</button>
+        <div class="tts-wave"></div>
+        <button class="ia">↓ MP3</button>
+      </div>
+    </div>
+    <div style="background:var(--w);border:1px solid var(--b);border-radius:10px;padding:14px">
+      <div style="font-size:11px;font-weight:500;margin-bottom:9px">Sprache zu Text</div>
+      <div class="uz" style="padding:18px">
+        <div class="ui">🎙️</div>
+        <div class="ut2">Audio hochladen oder aufnehmen</div>
+        <div class="us2">MP3, WAV, M4A · Wird in deiner Sprache transkribiert</div>
+      </div>
+      <div style="margin-top:9px;display:flex;gap:5px">
+        <button class="gbtn">🎙️ Aufnehmen</button>
+        <button class="gbtn-sec">📄 Als E-Mail</button>
+        <button class="gbtn-sec">📋 Kopieren</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRIVACY -->
+  <div class="gp" id="cp-priv">
+    <div class="gh"><h2>🔒 Datenschutz & Sicherheit</h2><p>Deine Daten sind geschützt — so funktioniert es</p></div>
+    <div class="pbadges">
+      <div class="pbadge">🔒 <div><div style="font-size:11px;font-weight:500">Ende-zu-Ende verschlüsselt</div><div style="font-size:10px;color:var(--ts);font-weight:300">Alle Gespräche verschlüsselt</div></div></div>
+      <div class="pbadge">🚫 <div><div style="font-size:11px;font-weight:500">Kein KI-Training</div><div style="font-size:10px;color:var(--ts);font-weight:300">Deine Daten trainieren keine Modelle</div></div></div>
+      <div class="pbadge">🗑️ <div><div style="font-size:11px;font-weight:500">Auto-Löschen</div><div style="font-size:10px;color:var(--ts);font-weight:300">Chats nach 30 Tagen gelöscht</div></div></div>
+      <div class="pbadge">🇪🇺 <div><div style="font-size:11px;font-weight:500">DSGVO-konform</div><div style="font-size:10px;color:var(--ts);font-weight:300">Europäischer Datenschutz</div></div></div>
+    </div>
+    <div style="background:var(--w);border:1px solid var(--b);border-radius:10px;padding:14px">
+      <div style="font-size:11.5px;font-weight:500;margin-bottom:11px">Datenschutz-Einstellungen</div>
+      <div style="display:flex;flex-direction:column;gap:9px">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--bs)">
+          <div><div style="font-size:11.5px;font-weight:400">Chat-Verlauf speichern</div><div style="font-size:10px;color:var(--ts);font-weight:300">Gespräche für spätere Nutzung behalten</div></div>
+          <div style="width:34px;height:18px;background:var(--bl);border-radius:9px;cursor:pointer;position:relative"><div style="width:14px;height:14px;background:#fff;border-radius:50%;position:absolute;right:2px;top:2px"></div></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0">
+          <div><div style="font-size:11.5px;font-weight:400">Analytics</div><div style="font-size:10px;color:var(--ts);font-weight:300">ARIA anonym verbessern helfen</div></div>
+          <div style="width:34px;height:18px;background:var(--b);border-radius:9px;cursor:pointer;position:relative"><div style="width:14px;height:14px;background:#fff;border:1px solid var(--b);border-radius:50%;position:absolute;left:2px;top:2px"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal" id="modal-login">
+  <div class="mbox">
+    <button class="mclose" onclick="closeM('modal-login')">×</button>
+    <h2>Willkommen zurück</h2>
+    <p>Melde dich bei deinem ARIA Konto an</p>
+    <input class="minp" type="email" placeholder="E-Mail Adresse">
+    <input class="minp" type="password" placeholder="Passwort">
+    <button class="mbtn">Anmelden</button>
+    <div class="mlink">Noch kein Konto? <a onclick="closeM('modal-login')">Kostenlos registrieren</a></div>
+  </div>
+</div>
+
+<div class="modal" id="modal-price">
+  <div class="mbox wide">
+    <button class="mclose" onclick="closeM('modal-price')">×</button>
+    <h2>Wähle deinen Plan</h2>
+    <p>Starte kostenlos, upgrade wenn du bereit bist.</p>
+    <div class="pgrid">
+      <div class="pcard">
+        <div class="ptier">Free</div>
+        <div class="pprice">€0</div>
+        <div class="psub">für immer</div>
+        <div class="pfeat">✓ Chat unbegrenzt<br>✓ 3 Bilder / Tag<br>✓ 10 Sprachen<br>✓ Web Builder Basic<br>✗ Video<br>✗ Brand Space<br>✗ Voice Studio</div>
+      </div>
+      <div class="pcard" onclick="window.open('https://buy.stripe.com/test_4gMdRa3u60xJc0s6LvbII00','_blank')" style="cursor:pointer">
+        <div class="ptier">Basic</div>
+        <div class="pprice">€9.99</div>
+        <div class="psub">pro Monat</div>
+        <div class="pfeat">✓ Chat unbegrenzt<br>✓ Web Builder Pro<br>✓ Code Generator<br>✓ Dokumente & OCR<br>✓ Alle Sprachen<br>✗ Bilder & Video<br>✗ Brand Space</div>
+      </div>
+      <div class="pcard feat" onclick="window.open('https://buy.stripe.com/test_6oU7sMaWy6W76G84DnbII03','_blank')" style="cursor:pointer">
+        <div class="ptier">Pro ⭐</div>
+        <div class="pprice">€19.99</div>
+        <div class="psub">pro Monat</div>
+        <div class="pfeat">✓ Alles aus Basic<br>✓ 100 Bilder / Monat<br>✓ 5 Videos / Monat<br>✓ Brand Space<br>✓ Voice Studio<br>✓ Community Galerie<br>✓ Priorität Speed</div>
+      </div>
+      <div class="pcard" style="border-color:#D4AF37;position:relative;overflow:hidden;cursor:pointer" onclick="window.open('https://buy.stripe.com/test_7sYcN64ya4NZ6G88TDbII01','_blank')">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#D4AF37,#F5E070,#D4AF37)"></div>
+        <div class="ptier" style="color:#D4AF37">Business 👑</div>
+        <div class="pprice">€49.99</div>
+        <div class="psub">pro Monat</div>
+        <div class="pfeat">✓ Alles aus Pro<br>✓ 500 Bilder / Monat<br>✓ 50 Videos / Monat<br>✓ Team Workspaces<br>✓ Rechnungs-Generator<br>✓ Priority Support & SLA</div>
+      </div>
+    </div>
+
+    <div style="background:var(--bg);border:1px solid var(--b);border-radius:9px;padding:13px;margin-top:12px">
+      <div style="font-size:11px;font-weight:500;margin-bottom:8px">⚡ Extra Credits — jederzeit zukaufbar</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
+        <div style="padding:8px 10px;background:var(--w);border:1px solid var(--b);border-radius:7px;font-size:10.5px;font-weight:300">🎨 50 Bilder — <strong>€7.99</strong></div>
+        <div style="padding:8px 10px;background:var(--w);border:1px solid var(--b);border-radius:7px;font-size:10.5px;font-weight:300">🎨 100 Bilder — <strong>€14.99</strong></div>
+        <div style="padding:8px 10px;background:var(--w);border:1px solid var(--b);border-radius:7px;font-size:10.5px;font-weight:300">🎬 10 Videos — <strong>€9.99</strong></div>
+        <div style="padding:8px 10px;background:var(--w);border:1px solid var(--b);border-radius:7px;font-size:10.5px;font-weight:300">🎬 25 Videos — <strong>€24.99</strong></div>
+      </div>
+    </div>
+
+    <div style="margin-top:12px">
+      <div style="font-size:10px;color:var(--ts);margin-bottom:8px;text-align:center;font-weight:300">Wähle deine Zahlungsmethode</div>
+      
+      <!-- PRO -->
+      <div style="background:var(--bg);border:1px solid var(--b);border-radius:9px;padding:12px;margin-bottom:8px">
+        <div style="font-size:11px;font-weight:500;margin-bottom:8px">⭐ Pro — €19.99 / Monat</div>
+        <div style="display:flex;gap:6px">
+          <button onclick="window.open('https://buy.stripe.com/test_6oU7sMaWy6W76G84DnbII03','_blank')" style="flex:1;padding:8px;background:var(--bl);color:#fff;border:none;border-radius:6px;font-family:'Sora',sans-serif;font-size:11px;cursor:pointer">💳 Karte / Apple Pay</button>
+          <div id="paypal-btn-pro" style="flex:1"></div>
+        </div>
+      </div>
+      
+      <!-- BASIC -->
+      <div style="background:var(--bg);border:1px solid var(--b);border-radius:9px;padding:12px;margin-bottom:8px">
+        <div style="font-size:11px;font-weight:500;margin-bottom:8px">Basic — €9.99 / Monat</div>
+        <div style="display:flex;gap:6px">
+          <button onclick="window.open('https://buy.stripe.com/test_4gMdRa3u60xJc0s6LvbII00','_blank')" style="flex:1;padding:8px;background:var(--bl);color:#fff;border:none;border-radius:6px;font-family:'Sora',sans-serif;font-size:11px;cursor:pointer">💳 Karte / Apple Pay</button>
+          <div id="paypal-btn-basic" style="flex:1"></div>
+        </div>
+      </div>
+      
+      <!-- BUSINESS -->
+      <div style="background:var(--bg);border:1px solid #D4AF37;border-radius:9px;padding:12px">
+        <div style="font-size:11px;font-weight:500;margin-bottom:8px;color:#D4AF37">👑 Business — €49.99 / Monat</div>
+        <div style="display:flex;gap:6px">
+          <button onclick="window.open('https://buy.stripe.com/test_7sYcN64ya4NZ6G88TDbII01','_blank')" style="flex:1;padding:8px;background:#D4AF37;color:#000;border:none;border-radius:6px;font-family:'Sora',sans-serif;font-size:11px;cursor:pointer">💳 Karte / Apple Pay</button>
+          <div id="paypal-btn-business" style="flex:1"></div>
+        </div>
+      </div>
+    </div>
+    <div class="mlink" style="margin-top:8px">Kein Vertrag · Jederzeit kündbar · DSGVO-konform 🔒</div>
+  </div>
+</div>
+
+<script>
+let dark=false,chatStarted=false,selDuration=5,curLang='de',recOn=false,sbCollapsed=false,msgCount=0,curImgModel='gpt-image-2',curVidModel='seedance-v1-pro',curChatModel='claude';
+
+const LANGS={
+  de:{m:['Chat','Bilder','Video','Web Builder','Dokumente','Brand Space','Code','Community','Voice Studio','Datenschutz'],nb:'+ Neuer Chat',wh:'Willkommen bei',wp:'Deine KI Super-App — Chat, Bilder, Videos, Webseiten und Code.',wsub:'Was möchtest du heute erschaffen?',hint:'ARIA kann Fehler machen. Bitte wichtige Informationen überprüfen. · Datenschutz geschützt 🔒',top:'Neuer Chat',ll:'Sprache'},
+  en:{m:['Chat','Images','Video','Web Builder','Documents','Brand Space','Code','Community','Voice Studio','Privacy'],nb:'+ New Chat',wh:'Welcome to',wp:'Your AI Super App — chat, images, videos, websites and code.',wsub:'What would you like to create today?',hint:'ARIA can make mistakes. Verify important information. · Privacy protected 🔒',top:'New conversation',ll:'Language'},
+  sq:{m:['Chat','Imazhe','Video','Web Builder','Dokumente','Brand Space','Kod','Komunitet','Voice Studio','Privatësia'],nb:'+ Bisedë e re',wh:'Mirë se vjen në',wp:'Super-app juaj AI — bisedë, imazhe, video, faqe dhe kod.',wsub:'Çfarë dëshiron të krijosh sot?',hint:'ARIA mund të bëjë gabime. Kontrollo informacionin. · Privatësia e mbrojtur 🔒',top:'Bisedë e re',ll:'Gjuha'},
+  fr:{m:['Chat','Images','Vidéo','Web Builder','Documents','Brand Space','Code','Communauté','Voice Studio','Confidentialité'],nb:'+ Nouvelle conversation',wh:'Bienvenue sur',wp:"Votre super-app IA — chat, images, vidéos, sites web et code.",wsub:"Que souhaitez-vous créer aujourd'hui?",hint:'ARIA peut faire des erreurs. Vérifiez les informations. · Confidentialité protégée 🔒',top:'Nouvelle conversation',ll:'Langue'},
+  ar:{rtl:true,m:['دردشة','صور','فيديو','بناء مواقع','وثائق','Brand Space','كود','مجتمع','Voice Studio','الخصوصية'],nb:'+ محادثة جديدة',wh:'مرحباً بك في',wp:'تطبيقك الذكي الشامل.',wsub:'ماذا تريد أن تنشئ اليوم؟',hint:'قد يرتكب ARIA أخطاء. · الخصوصية محمية 🔒',top:'محادثة جديدة',ll:'اللغة'},
+  zh:{m:['对话','图片','视频','网站构建','文档','品牌空间','代码','社区','Voice Studio','隐私'],nb:'+ 新对话',wh:'欢迎使用',wp:'您的AI超级应用。',wsub:'今天想创建什么？',hint:'ARIA可能出错。· 隐私受保护 🔒',top:'新对话',ll:'语言'},
+  ru:{m:['Чат','Изображения','Видео','Web Builder','Документы','Brand Space','Код','Сообщество','Voice Studio','Конфиденциальность'],nb:'+ Новый чат',wh:'Добро пожаловать в',wp:'Ваш AI супер-приложение.',wsub:'Что вы хотите создать сегодня?',hint:'ARIA может ошибаться. · Конфиденциальность защищена 🔒',top:'Новый чат',ll:'Язык'},
+  es:{m:['Chat','Imágenes','Video','Web Builder','Documentos','Brand Space','Código','Comunidad','Voice Studio','Privacidad'],nb:'+ Nuevo chat',wh:'Bienvenido a',wp:'Tu super-app de IA.',wsub:'¿Qué quieres crear hoy?',hint:'ARIA puede cometer errores. · Privacidad protegida 🔒',top:'Nuevo chat',ll:'Idioma'},
+  it:{m:['Chat','Immagini','Video','Web Builder','Documenti','Brand Space','Codice','Community','Voice Studio','Privacy'],nb:'+ Nuova chat',wh:'Benvenuto in',wp:"Il tuo super-app AI.",wsub:'Cosa vuoi creare oggi?',hint:'ARIA può fare errori. · Privacy protetta 🔒',top:'Nuova chat',ll:'Lingua'},
+  tr:{m:['Sohbet','Görseller','Video','Web Builder','Belgeler','Brand Space','Kod','Topluluk','Voice Studio','Gizlilik'],nb:'+ Yeni Sohbet',wh:'Hoş geldiniz,',wp:'Her şey için AI süper uygulamanız.',wsub:'Bugün ne yaratmak istersiniz?',hint:'ARIA hata yapabilir. · Gizlilik korumalı 🔒',top:'Yeni Sohbet',ll:'Dil'}
+};
+
+const modeIds=['chat','img','vid','web','doc','brand','code','comm','tts','priv'];
+const modeColors={img:'mode-img',vid:'mode-vid',web:'mode-web',code:'mode-code'};
+
+function setL(l){
+  curLang=l;
+  const t=LANGS[l]||LANGS.de;
+  if(t.rtl)document.body.classList.add('rtl');
+  else document.body.classList.remove('rtl');
+  document.getElementById('nbtn').textContent=t.nb;
+  document.getElementById('lang-label').textContent=t.ll;
+  document.getElementById('wh').innerHTML=t.wh+' <em>ARIA</em>';
+  document.getElementById('wp').textContent=t.wp;
+  document.getElementById('wsub').textContent=t.wsub;
+  document.getElementById('hint').textContent=t.hint;
+  document.getElementById('ci').placeholder='...';
+  for(let i=0;i<10;i++){const e=document.getElementById('m'+i);if(e&&t.m[i])e.textContent=t.m[i];}
+  document.querySelectorAll('.lang-opt').forEach(o=>o.classList.remove('on'));
+  const langs=['de','en','sq','fr','ar','zh','ru','es','it','tr'];
+  const idx=langs.indexOf(l);
+  if(idx>=0)document.querySelectorAll('.lang-opt')[idx].classList.add('on');
+  document.getElementById('lang-dd').classList.remove('vis');
+}
+
+function toggleLang(){document.getElementById('lang-dd').classList.toggle('vis');}
+document.addEventListener('click',e=>{if(!e.target.closest('.flags-wrap'))document.getElementById('lang-dd').classList.remove('vis');});
+
+const bl=(navigator.language||'de').toLowerCase().split('-')[0];
+setL(LANGS[bl]?bl:'de');
+
+function toggleSb(){
+  sbCollapsed=!sbCollapsed;
+  document.body.classList.toggle('sb-collapsed',sbCollapsed);
+  document.querySelector('.collapse-btn').textContent=sbCollapsed?'▶':'◀';
+}
+
+function toggleDark(){dark=!dark;document.body.classList.toggle('dark',dark);}
+
+function mode(m,el){
+  document.querySelectorAll('.mi').forEach(x=>x.classList.remove('on'));
+  el.classList.add('on');
+  modeIds.forEach(p=>{const e=document.getElementById('cp-'+p);if(e){e.style.display='none';e.classList.remove('vis');}});
+  const panel=document.getElementById('cp-'+m);
+  if(panel){panel.style.display='flex';panel.classList.add('vis');}
+  Object.values(modeColors).forEach(c=>document.body.classList.remove(c));
+  if(modeColors[m])document.body.classList.add(modeColors[m]);
+  const t=LANGS[curLang]||LANGS.de;
+  const titles={chat:t.top,img:t.m[1],vid:t.m[2],web:t.m[3],doc:t.m[4],brand:t.m[5],code:t.m[6],comm:t.m[7],tts:t.m[8],priv:t.m[9]};
+  document.getElementById('topt').textContent=titles[m]||m;
+  document.getElementById('export-btn').style.display=m==='web'?'flex':'none';
+  document.getElementById('export-web-btn').style.display=m==='web'?'block':'none';
+  if(document.getElementById('img-notify'))document.getElementById('img-notify').classList.remove('vis');
+  if(document.getElementById('vid-notify'))document.getElementById('vid-notify').classList.remove('vis');
+}
+
+function newChat(){
+  mode('chat',document.querySelectorAll('.mi')[0]);
+  document.getElementById('landing').style.display='flex';
+  document.getElementById('msgs').style.display='none';
+  document.getElementById('ci').value='';
+  chatStarted=false;msgCount=0;
+  const t=LANGS[curLang]||LANGS.de;
+  document.getElementById('topt').textContent=t.top;
+}
+
+function qs(txt){document.getElementById('ci').value=txt;send();}
+function onKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}
+
+function send(){
+  const input=document.getElementById('ci');
+  const text=input.value.trim();
+  if(!text)return;
+  if(!chatStarted){
+    document.getElementById('landing').style.display='none';
+    document.getElementById('msgs').style.display='flex';
+    document.getElementById('topt').textContent=text.substring(0,36)+(text.length>36?'...':'');
+    chatStarted=true;
+  }
+  msgCount++;
+  const msgs=document.getElementById('msgs');
+  const cc=document.getElementById('chat-content');
+  
+  // Build history BEFORE adding new message
+  const chatHistory = [];
+  document.querySelectorAll('#msgs .msg').forEach(m => {
+    if(m.classList.contains('user')) {
+      const bbl = m.querySelector('.bbl');
+      if(bbl) chatHistory.push({role:'user', content: bbl.textContent.trim()});
+    } else if(m.classList.contains('aria')) {
+      const bbl = m.querySelector('.bbl');
+      if(bbl) chatHistory.push({role:'assistant', content: bbl.textContent.replace('✨ Als Bild generieren','').trim()});
+    }
+  });
+  chatHistory.push({role:'user', content: text});
+  
+  const um=document.createElement('div');
+  um.className='msg user';
+  um.innerHTML=`<div class="mav user">K</div><div><div class="bbl">${text}</div><div class="mt">${now()}</div></div>`;
+  msgs.appendChild(um);
+  input.value='';
+  const tw=document.createElement('div');
+  tw.className='tw';
+  tw.innerHTML=`<div class="mav aria">AI</div><div><div class="engine"><div class="engine-dot"></div>ARIA denkt nach...</div><div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>`;
+  msgs.appendChild(tw);
+  cc.scrollTop=cc.scrollHeight;
+
+  fetch('/api/chat', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({messages: chatHistory, model: curChatModel})
+  })
+  .then(r => r.text())
+  .then(text => {
+    msgs.removeChild(tw);
+    let reply;
+    try {
+      const data = JSON.parse(text);
+      if (data.content && data.content[0] && data.content[0].text) {
+        reply = data.content[0].text;
+      } else if (data.error) {
+        reply = 'Fehler: ' + JSON.stringify(data.error);
+      } else {
+        reply = 'Debug: ' + text.substring(0, 200);
+      }
+    } catch(e) {
+      reply = 'Parse Fehler: ' + text.substring(0, 200);
+    }
+    const am=document.createElement('div');
+    am.className='msg aria';
+    am.innerHTML=`<div class="mav aria">AI</div><div><div class="bbl">${reply}<br><button class="magic-btn" onclick="sendToImg(this)">✨ Als Bild generieren</button></div><div class="mt">${now()}</div></div>`;
+    msgs.appendChild(am);
+    cc.scrollTop=cc.scrollHeight;
+    if(msgCount===1){
+      setTimeout(()=>{
+        const sreg=document.createElement('div');
+        sreg.className='sreg';
+        sreg.innerHTML=`<div class="sreg-text">💾 Speichere dieses Ergebnis — melde dich kostenlos an.</div><button class="sreg-btn" onclick="showM('modal-login')">Anmelden</button>`;
+        msgs.appendChild(sreg);
+        cc.scrollTop=cc.scrollHeight;
+      },800);
+    }
+  })
+  .catch((err) => {
+    msgs.removeChild(tw);
+    const am=document.createElement('div');
+    am.className='msg aria';
+    am.innerHTML=`<div class="mav aria">AI</div><div><div class="bbl">Netzwerk Fehler: ${err.message}</div><div class="mt">${now()}</div></div>`;
+    msgs.appendChild(am);
+  });
+}
+
+function sendToImg(btn){
+  const text=btn.closest('.bbl').textContent.replace('Als Bild generieren','').trim();
+  document.getElementById('img-p').value=text.substring(0,200);
+  mode('img',document.querySelectorAll('.mi')[1]);
+}
+
+function now(){return new Date().toLocaleTimeString(curLang,{hour:'2-digit',minute:'2-digit'});}
+function toggleVoice(){
+  if(!('webkitSpeechRecognition' in window||'SpeechRecognition' in window)){
+    alert('Spracherkennung wird in diesem Browser nicht unterstützt. Bitte Chrome verwenden.');
+    return;
+  }
+  const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(recOn){
+    recOn=false;
+    document.querySelector('.atb[title="Spracheingabe"]').style.color='';
+    if(window._recognition)window._recognition.stop();
+    return;
+  }
+  recOn=true;
+  document.querySelector('.atb[title="Spracheingabe"]').style.color='red';
+  window._recognition=new SpeechRecognition();
+  window._recognition.lang=curLang==='de'?'de-DE':curLang==='sq'?'sq-AL':curLang==='fr'?'fr-FR':'en-US';
+  window._recognition.continuous=false;
+  window._recognition.interimResults=false;
+  window._recognition.onresult=function(e){
+    const text=e.results[0][0].transcript;
+    document.getElementById('ci').value=text;
+    recOn=false;
+    document.querySelector('.atb[title="Spracheingabe"]').style.color='';
+  };
+  window._recognition.onerror=function(){
+    recOn=false;
+    document.querySelector('.atb[title="Spracheingabe"]').style.color='';
+  };
+  window._recognition.start();
+}
+function uploadImg(){
+  const input=document.createElement('input');
+  input.type='file';
+  input.accept='image/*';
+  input.onchange=function(e){
+    const file=e.target.files[0];
+    if(!file)return;
+    const reader=new FileReader();
+    reader.onload=function(ev){
+      const base64=ev.target.result.split(',')[1];
+      const mime=file.type;
+      if(!chatStarted){
+        document.getElementById('landing').style.display='none';
+        document.getElementById('msgs').style.display='flex';
+        chatStarted=true;
+      }
+      const msgs=document.getElementById('msgs');
+      const um=document.createElement('div');
+      um.className='msg user';
+      um.innerHTML=`<div class="mav user">K</div><div><img src="${ev.target.result}" style="max-width:200px;border-radius:8px;margin-bottom:4px;display:block"><div class="mt">${now()}</div></div>`;
+      msgs.appendChild(um);
+      
+      const tw=document.createElement('div');
+      tw.className='tw';
+      tw.innerHTML=`<div class="mav aria">AI</div><div><div class="engine"><div class="engine-dot"></div>ARIA analysiert Bild...</div><div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>`;
+      msgs.appendChild(tw);
+      document.getElementById('chat-content').scrollTop=99999;
+      
+      fetch('/api/chat', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          messages:[{
+            role:'user',
+            content:[
+              {type:'image',source:{type:'base64',media_type:mime,data:base64}},
+              {type:'text',text:'Beschreibe und analysiere dieses Bild detailliert auf '+curLang}
+            ]
+          }]
+        })
+      })
+      .then(r=>r.json())
+      .then(data=>{
+        msgs.removeChild(tw);
+        const reply=data.content?.[0]?.text||'Ich habe das Bild analysiert. ✨';
+        const am=document.createElement('div');
+        am.className='msg aria';
+        am.innerHTML=`<div class="mav aria">AI</div><div><div class="bbl">${reply}</div><div class="mt">${now()}</div></div>`;
+        msgs.appendChild(am);
+        document.getElementById('chat-content').scrollTop=99999;
+      })
+      .catch(()=>{
+        msgs.removeChild(tw);
+        const am=document.createElement('div');
+        am.className='msg aria';
+        am.innerHTML=`<div class="mav aria">AI</div><div><div class="bbl">📷 Bild empfangen. ARIA Vision analysiert... ✨</div><div class="mt">${now()}</div></div>`;
+        msgs.appendChild(am);
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+}
+function tc(el){el.classList.toggle('on');}
+function selImgModel(el,model){
+  document.querySelectorAll('#cp-img .chip').forEach(c=>{if(['ARIA Vision','ARIA Pro Max','ARIA Creative','ARIA Artistic'].includes(c.textContent))c.classList.remove('on');});
+  el.classList.add('on');curImgModel=model;
+}
+function selVidModel(el,model){
+  document.querySelectorAll('#cp-vid .chip').forEach(c=>{if(['ARIA Video','ARIA Cinematic','ARIA Reels','ARIA Ultra'].includes(c.textContent))c.classList.remove('on');});
+  el.classList.add('on');curVidModel=model;
+}
+function selChatModel(el,model){
+  document.querySelectorAll('.ibar .chip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');curChatModel=model;
+}
+function optPrompt(t){
+  const orig=document.getElementById(t+'-p').value.trim();
+  if(!orig)return;
+  const opt=`${orig}, ultra-detailed, cinematic lighting, photorealistic, ${t==='img'?'9:16 vertical, editorial aesthetic, golden hour, 35mm film grain':'smooth motion, cinematic camera movement, professional color grade, Midjourney quality'}`;
+  document.getElementById(t+'-opt-text').textContent=opt;
+  document.getElementById(t+'-opt').classList.add('vis');
+}
+function useOpt(t){
+  const txt=document.getElementById(t+'-opt-text').textContent;
+  document.getElementById(t+'-p').value=txt;
+  document.getElementById(t+'-opt').classList.remove('vis');
+}
+function exportFor(p){alert(`✅ Wird für ${p} formatiert (automatisch zugeschnitten und optimiert).`);}
+function genCaps(){document.getElementById('capbox').classList.toggle('vis');}
+function copyT(btn){navigator.clipboard?.writeText(btn.parentElement.textContent.replace('Kopieren','').trim()).catch(()=>{});btn.textContent='✓';setTimeout(()=>btn.textContent='Kopieren',2000);}
+function usePrompt(p){document.getElementById('img-p').value=p;mode('img',document.querySelectorAll('.mi')[1]);}
+
+function genImg(){
+  const p=document.getElementById('img-p').value.trim();
+  if(!p)return;
+  const btn=document.getElementById('img-btn');
+  btn.disabled=true;btn.textContent='...';
+  const prog=document.getElementById('img-prog');
+  const bar=document.getElementById('img-prog-bar');
+  prog.classList.add('vis');
+  let pct=0;
+  const iv=setInterval(()=>{pct+=10;bar.style.width=pct+'%';if(pct>=90)clearInterval(iv);},250);
+  // Call real image API
+  fetch('/api/generate-image', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({prompt: p, model: curImgModel})
+  })
+  .then(r => r.json())
+  .then(data => {
+    const taskId = data.task_id;
+    if(!taskId) throw new Error('No task ID');
+    // Poll for result
+    const poll = setInterval(() => {
+      fetch(`/api/task-status?task_id=${taskId}`)
+        .then(r => r.json())
+        .then(result => {
+          if(result.status === 'completed') {
+            clearInterval(poll);
+            clearInterval(iv);
+            bar.style.width='100%';
+            btn.disabled=false;btn.textContent='Generieren';prog.classList.remove('vis');bar.style.width='0%';
+            const imgUrl = result.output?.image_url || result.output?.image_urls?.[0];
+            const g=document.getElementById('ig');
+            const c=document.createElement('div');
+            c.className='ic';
+            if(imgUrl) {
+              c.innerHTML=`<div class="iph" style="background-image:url(${imgUrl});background-size:cover;background-position:center"></div><div class="ift"><div class="ipt">${p.substring(0,38)}...</div><div class="ias"><a href="${imgUrl}" download class="ia">↓</a><button class="ia">▶ Animieren</button><button class="ia">📱 TikTok</button></div></div>`;
+            } else {
+              c.innerHTML=`<div class="iph">✨</div><div class="ift"><div class="ipt">${p.substring(0,38)}...</div><div class="ias"><button class="ia">↓</button><button class="ia">▶ Animieren</button><button class="ia">📱 TikTok</button></div></div>`;
+            }
+            g.prepend(c);
+            document.getElementById('img-notify').classList.add('vis');
+          } else if(result.status === 'failed') {
+            clearInterval(poll);
+            clearInterval(iv);
+            btn.disabled=false;btn.textContent='Generieren';prog.classList.remove('vis');
+            alert('Generierung fehlgeschlagen. Bitte versuche es nochmal.');
+          }
+        });
+    }, 3000);
+  })
+  .catch(() => {
+    clearInterval(iv);
+    btn.disabled=false;btn.textContent='Generieren';prog.classList.remove('vis');
+    alert('Fehler bei der Generierung. Bitte versuche es nochmal.');
+  });
+}
+
+function selDur(el,s){
+  document.querySelectorAll('#cp-vid .chip').forEach(c=>{if(['5 Sek','10 Sek','20 Sek ✨','30 Sek ✨'].includes(c.textContent))c.classList.remove('on');});
+  el.classList.add('on');selDuration=s;
+}
+
+function genVid(){
+  const btn=document.getElementById('vid-btn');
+  btn.disabled=true;
+  const clips=Math.ceil(selDuration/10);
+  const stat=document.getElementById('vstat');
+  stat.style.display='flex';
+  const prog=document.getElementById('vid-prog');
+  const bar=document.getElementById('vid-prog-bar');
+  prog.classList.add('vis');
+  let clip=1,pct=0;
+  const iv=setInterval(()=>{
+    document.getElementById('vst').textContent=`ARIA generiert Clip ${clip}/${clips}...`;
+    document.getElementById('vss').textContent=`${selDuration}s · Auto-Chaining · Verarbeitung...`;
+    btn.textContent=`Clip ${clip}/${clips}...`;
+    pct=Math.round((clip/clips)*100);
+    bar.style.width=pct+'%';
+    clip++;
+    if(clip>clips){
+      clearInterval(iv);
+      setTimeout(()=>{
+        btn.disabled=false;btn.textContent='Generieren';stat.style.display='none';
+        prog.classList.remove('vis');bar.style.width='0%';
+        const g=document.getElementById('vid-grid');
+        const p=document.getElementById('vid-p').value;
+        const c=document.createElement('div');
+        c.className='vc';
+        c.innerHTML=`<div class="vph"><div class="play">▶</div><div class="vl">${selDuration}S</div></div><div class="ift"><div class="ipt">${p.substring(0,28)}...</div><div class="ias"><button class="ia">↓</button><button class="ia">📱</button></div></div>`;
+        g.prepend(c);
+        document.getElementById('vid-notify').classList.add('vis');
+        document.getElementById('pip').classList.add('vis');
+      },400);
+    }
+  },2200);
+}
+
+function genWeb(){
+  const p=document.getElementById('web-p').value.trim();
+  if(!p)return;
+  const preview=document.getElementById('web-preview');
+  preview.innerHTML='<div style="font-size:18px">⏳</div><div style="font-size:11px;color:var(--tm)">ARIA baut deine Website...</div>';
+  const title=p.split(' ').slice(0,5).join(' ');
+  const code='<!DOCTYPE html><html><head><style>*{margin:0;padding:0;box-sizing:border-box;font-family:sans-serif}body{background:#fff;color:#111}.hero{height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px}.logo{font-size:10px;letter-spacing:5px;text-transform:uppercase;margin-bottom:20px;opacity:.4}h1{font-size:36px;font-weight:300;margin-bottom:12px}p{font-size:13px;opacity:.5;max-width:300px;line-height:1.6;margin-bottom:28px}.btn{padding:12px 28px;background:#111;color:#fff;border:none;border-radius:5px;font-size:11px;cursor:pointer;letter-spacing:1.5px}</style></head><body><div class="hero"><div class="logo">ARIA · Built for you</div><h1>'+title+'</h1><p>Deine Website ist bereit. Passe sie mit ARIA weiter an.</p><button class="btn">ENTDECKEN</button></div></body></html>';
+  document.getElementById('web-code-area').textContent=code;
+  setTimeout(()=>{
+    const iframe=document.createElement('iframe');
+    iframe.style.cssText='width:100%;height:320px;border:none';
+    preview.innerHTML='';
+    preview.appendChild(iframe);
+    iframe.contentDocument.open();
+    iframe.contentDocument.write(code);
+    iframe.contentDocument.close();
+    document.getElementById('export-web-btn').style.display='block';
+  },2000);
+}
+
+function toggleCodePanel(){
+  const panel=document.getElementById('web-code-panel');
+  panel.classList.toggle('vis');
+}
+function setDevice(el,d){document.querySelectorAll('.device-btn').forEach(b=>b.classList.remove('on'));el.classList.add('on');}
+function copyCode(){navigator.clipboard?.writeText(document.getElementById('web-code-area').textContent).catch(()=>{});alert('Code kopiert!');}
+function genCode(){}
+function showM(id){document.getElementById(id).classList.add('vis');}
+function closeM(id){document.getElementById(id).classList.remove('vis');}
+document.querySelectorAll('.modal').forEach(m=>{m.addEventListener('click',function(e){if(e.target===this)this.classList.remove('vis');});});
+document.getElementById('cp-chat').style.display='flex';
+
+// PayPal Buttons
+function initPayPal() {
+  if (typeof paypal === 'undefined') return;
+  
+  // Pro
+  if (document.getElementById('paypal-btn-pro')) {
+    paypal.Buttons({
+      style: { shape: 'rect', color: 'black', layout: 'vertical', label: 'subscribe', height: 35 },
+      createSubscription: function(data, actions) {
+        return actions.subscription.create({ plan_id: 'P-4CU038544G414752CNH5OOYQ' });
+      },
+      onApprove: function(data) { alert('Pro Abo aktiviert! ID: ' + data.subscriptionID); closeM('modal-price'); }
+    }).render('#paypal-btn-pro');
+  }
+  
+  // Basic
+  if (document.getElementById('paypal-btn-basic')) {
+    paypal.Buttons({
+      style: { shape: 'rect', color: 'black', layout: 'vertical', label: 'subscribe', height: 35 },
+      createSubscription: function(data, actions) {
+        return actions.subscription.create({ plan_id: 'P-7B168067YU8202537NH5OMEQ' });
+      },
+      onApprove: function(data) { alert('Basic Abo aktiviert! ID: ' + data.subscriptionID); closeM('modal-price'); }
+    }).render('#paypal-btn-basic');
+  }
+  
+  // Business
+  if (document.getElementById('paypal-btn-business')) {
+    paypal.Buttons({
+      style: { shape: 'rect', color: 'gold', layout: 'vertical', label: 'subscribe', height: 35 },
+      createSubscription: function(data, actions) {
+        return actions.subscription.create({ plan_id: 'P-14V33566MK786723WNH5OQAY' });
+      },
+      onApprove: function(data) { alert('Business Abo aktiviert! ID: ' + data.subscriptionID); closeM('modal-price'); }
+    }).render('#paypal-btn-business');
+  }
+}
+
+// Init PayPal when modal opens
+const origShowM = showM;
+window.showM = function(id) {
+  origShowM(id);
+  if (id === 'modal-price') setTimeout(initPayPal, 300);
+}
+
+</script>
+</body>
+</html>
