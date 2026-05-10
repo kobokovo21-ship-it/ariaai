@@ -6,23 +6,29 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
   try {
-    const { prompt, imageBase64, imageType } = req.body;
+    const { prompt, image_base64, image_mime, imageBase64, imageType } = req.body;
+    const imgB64 = image_base64 || imageBase64;
+    const imgMime = image_mime || imageType || 'image/jpeg';
 
     let body;
-    if (imageBase64) {
+    if (imgB64) {
+      // Image-to-Image mit GPT Image 2
       body = {
-        model: 'Qubico/flux1-dev',
-        task_type: 'img2img-kontext',
+        model: 'gpt-image-2',
+        task_type: 'edit-image',
         input: {
-          prompt: prompt + ', fashion model wearing the product, professional fashion photography, editorial style, clean background',
-          image: `data:${imageType || 'image/jpeg'};base64,${imageBase64}`
+          prompt: prompt || 'fashion model wearing this clothing, professional photography, clean background, high quality',
+          image: `data:${imgMime};base64,${imgB64}`
         }
       };
     } else {
+      // Text-to-Image mit GPT Image 2
       body = {
-        model: 'Qubico/flux1-dev',
-        task_type: 'txt2img',
-        input: { prompt }
+        model: 'gpt-image-2',
+        task_type: 'text-to-image',
+        input: {
+          prompt: prompt || 'beautiful image'
+        }
       };
     }
 
@@ -36,7 +42,6 @@ export default async function handler(req, res) {
     });
 
     const data = await response.json();
-    // Return task_id at top level so frontend can find it
     const taskId = data?.data?.task_id || data?.task_id;
     return res.status(200).json({ task_id: taskId, ...data });
 
