@@ -4,50 +4,26 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).end();
-
   try {
-    const { prompt, model = 'ARIA Vision', image_base64, image_mime } = req.body;
-
-    // Map ARIA model names to PiAPI model/task_type
-    let piModel = 'gemini';
-    let taskType = 'nano-banana-2';
-
-    if (model === 'ARIA Vision' || model === 'gpt-image-2') {
-      piModel = 'gpt-image-2';
-      taskType = 'text-to-image';
-    } else if (model === 'ARIA Pro Max' || model === 'nano-banana-pro') {
-      piModel = 'gemini';
-      taskType = 'nano-banana-pro';
-    } else if (model === 'ARIA Creative' || model === 'seedream-5-lite') {
-      piModel = 'seedream';
-      taskType = 'seedream-5-lite';
-    } else if (model === 'ARIA Artistic' || model === 'flux-dev') {
-      piModel = 'flux';
-      taskType = 'text-to-image';
-    }
-
-    if (image_base64) {
-      taskType = 'image-to-image';
-    }
-
-    const input = image_base64
-      ? { prompt, image_url: `data:${image_mime};base64,${image_base64}` }
-      : { prompt };
-
-    const response = await fetch('https://api.piapi.ai/api/v1/task', {
+    const messages = req.body?.messages || [];
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-API-KEY': process.env.PIAPI_KEY
+        'x-api-key': process.env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01'
       },
-      body: JSON.stringify({ model: piModel, task_type: taskType, input })
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1024,
+        system: 'Du bist ARIA - eine KI Super-App. Antworte kurz und direkt in der Sprache des Nutzers. Du heisst ARIA, nenne dich niemals Claude. Maximal 1-2 Emojis. Fuer Bilder sage: Wechsle zum Bilder-Modus in der Sidebar links. Fuer Videos sage: Wechsle zum Video-Modus in der Sidebar links.',
+        messages
+      })
     });
-
-    const data = await response.json();
+    const data = await r.json();
     return res.status(200).json(data);
-  } catch (error) {
-    return res.status(500).json({ error: error.message });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
   }
 }
-
    
