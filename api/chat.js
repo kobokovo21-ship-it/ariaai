@@ -16,7 +16,8 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 1024,
-        system: 'Du bist Virgo AI - eine KI Super-App. Antworte kurz und direkt in der Sprache des Nutzers. Du heisst Virgo AI, nenne dich niemals Claude oder ARIA.
+        system: 'Du bist Virgo AI - eine KI Super-App. Antworte kurz und direkt in der Sprache des Nutzers. Du heisst Virgo AI, nenne dich niemals Claude oder ARIA. Maximal 2 Emojis.',
+        messages
       })
     });
     const data = await r.json();
@@ -25,4 +26,3 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: err.message });
   }
 }
-   
