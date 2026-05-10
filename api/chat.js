@@ -6,19 +6,31 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
   try {
-    const { prompt, model = 'gpt-image-2', image_base64, image_mime } = req.body;
+    const { prompt, model = 'ARIA Vision', image_base64, image_mime } = req.body;
 
-    // Model to task_type mapping
-    const taskTypes = {
-      'gpt-image-2': 'text-to-image',
-      'nano-banana-pro': 'text-to-image', 
-      'seedream-5-lite': 'text-to-image',
-      'flux-dev': 'text-to-image'
-    };
+    // Map ARIA model names to PiAPI model/task_type
+    let piModel = 'gemini';
+    let taskType = 'nano-banana-2';
 
-    const task_type = image_base64 ? 'image-to-image' : (taskTypes[model] || 'text-to-image');
+    if (model === 'ARIA Vision' || model === 'gpt-image-2') {
+      piModel = 'gpt-image-2';
+      taskType = 'text-to-image';
+    } else if (model === 'ARIA Pro Max' || model === 'nano-banana-pro') {
+      piModel = 'gemini';
+      taskType = 'nano-banana-pro';
+    } else if (model === 'ARIA Creative' || model === 'seedream-5-lite') {
+      piModel = 'seedream';
+      taskType = 'seedream-5-lite';
+    } else if (model === 'ARIA Artistic' || model === 'flux-dev') {
+      piModel = 'flux';
+      taskType = 'text-to-image';
+    }
 
-    const input = image_base64 
+    if (image_base64) {
+      taskType = 'image-to-image';
+    }
+
+    const input = image_base64
       ? { prompt, image_url: `data:${image_mime};base64,${image_base64}` }
       : { prompt };
 
@@ -28,7 +40,7 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json',
         'X-API-KEY': process.env.PIAPI_KEY
       },
-      body: JSON.stringify({ model, task_type, input })
+      body: JSON.stringify({ model: piModel, task_type: taskType, input })
     });
 
     const data = await response.json();
@@ -37,3 +49,5 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: error.message });
   }
 }
+
+   
