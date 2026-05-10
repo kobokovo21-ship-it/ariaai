@@ -5,45 +5,62 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).end();
 
+  const KEY = process.env.PIAPI_KEY;
+
   try {
-    const { prompt, image_base64, image_mime, imageBase64, imageType } = req.body;
-    const imgB64 = image_base64 || imageBase64;
-    const imgMime = image_mime || imageType || 'image/jpeg';
+    const { prompt } = req.body;
 
-    let body;
-    if (imgB64) {
-      // Image-to-Image mit GPT Image 2
-      body = {
-        model: 'gpt-image-2',
-        task_type: 'edit-image',
-        input: {
-          prompt: prompt || 'fashion model wearing this clothing, professional photography, clean background, high quality',
-          image: `data:${imgMime};base64,${imgB64}`
-        }
-      };
-    } else {
-      // Text-to-Image mit GPT Image 2
-      body = {
-        model: 'gpt-image-2',
-        task_type: 'text-to-image',
-        input: {
-          prompt: prompt || 'beautiful image'
-        }
-      };
-    }
-
-    const response = await fetch('https://api.piapi.ai/api/v1/task', {
+    // Task erstellen mit Nano Banana Pro
+    const createRes = await fetch('https://api.piapi.ai/api/v1/task', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-API-KEY': process.env.PIAPI_KEY
+        'X-API-KEY': KEY
       },
-      body: JSON.stringify(body)
+      body: JSON.stringify({
+        model: 'gemini',
+        task_type: 'nano-banana-pro',
+        input: {
+          prompt: prompt || 'professional fashion editorial photo',
+          output_format: 'jpg',
+          aspect_ratio: '9:16',
+          resolution: '2K',
+          safety_level: 'high'
+        }
+      })
     });
 
-    const data = await response.json();
-    const taskId = data?.data?.task_id || data?.task_id;
-    return res.status(200).json({ task_id: taskId, ...data });
+    const createData = await createRes.json();
+    const taskId = createData?.data?.task_id;
+
+    if (!taskId) {
+      return res.status(500).json({ error: 'Generierung fehlgeschlagen', details: createData });
+    }
+
+    // Server-seitiges Polling — max 90 Sekunden
+    for (let i = 0; i < 30; i++) {
+      await new Promise(r => setTimeout(r, 3000));
+
+      const pollRes = await fetch(`https://api.piapi.ai/api/v1/task/${taskId}`, {
+        headers: { 'X-API-KEY': KEY }
+      });
+      const pollData = await pollRes.json();
+      const status = pollData?.data?.status;
+      const output = pollData?.data?.output;
+
+      if (status === 'completed') {
+        const imageUrl = output?.image_url
+          || (output?.image_urls && output.image_urls[0])
+          || output?.images?.[0];
+        return res.status(200).json({ success: true, imageUrl });
+      }
+
+      if (status === 'failed') {
+        return res.status(500).json({ error: 'Generierung fehlgeschlagen — bitte nochmal versuchen' });
+      }
+    }
+
+    return res.status(504).json({ error: 'Timeout — bitte nochmal versuchen' });
 
   } catch (error) {
     return res.status(500).json({ error: error.message });
