@@ -9,9 +9,7 @@ export default async function handler(req, res) {
     const { prompt, imageBase64, imageType } = req.body;
 
     let body;
-
     if (imageBase64) {
-      // Image-to-Image: Produkt auf Model
       body = {
         model: 'Qubico/flux1-dev',
         task_type: 'img2img-kontext',
@@ -21,7 +19,6 @@ export default async function handler(req, res) {
         }
       };
     } else {
-      // Text-to-Image
       body = {
         model: 'Qubico/flux1-dev',
         task_type: 'txt2img',
@@ -39,10 +36,11 @@ export default async function handler(req, res) {
     });
 
     const data = await response.json();
-    return res.status(200).json(data);
+    // Return task_id at top level so frontend can find it
+    const taskId = data?.data?.task_id || data?.task_id;
+    return res.status(200).json({ task_id: taskId, ...data });
 
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
 }
- 
