@@ -1,3 +1,5 @@
+import { createClient } from '@supabase/supabase-js';
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -5,9 +7,17 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).end();
 
-  const SUPABASE_URL = process.env.SUPABASE_URL;
-  const ANON_KEY = process.env.SUPABASE_ANON_KEY;
-  const SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
+  const supabaseAdmin = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_KEY,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
+
+  const supabaseAnon = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_ANON_KEY,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
 
   try {
     const { action, email, password } = req.body;
@@ -17,41 +27,19 @@ export default async function handler(req, res) {
     }
 
     if (action === 'register') {
-      const r = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': ANON_KEY,
-          'Authorization': `Bearer ${ANON_KEY}`
-        },
-        body: JSON.stringify({ email, password })
-      });
+      const { data, error } = await supabaseAnon.auth.signUp({ email, password });
+      if (error) return res.status(400).json({ error: error.message });
 
-      const data = await r.json();
-
-      if (!r.ok) {
-        return res.status(400).json({ error: data.error_description || data.msg || 'Registrierung fehlgeschlagen' });
-      }
-
-      const userId = data.user?.id || data.id;
-
-      // User in users Tabelle anlegen
+      const userId = data.user?.id;
       if (userId) {
-        await fetch(`${SUPABASE_URL}/rest/v1/users`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': SERVICE_KEY,
-            'Authorization': `Bearer ${SERVICE_KEY}`,
-            'Prefer': 'return=minimal'
-          },
-          body: JSON.stringify({ id: userId, email, credits: 10, plan: 'free' })
+        await supabaseAdmin.from('users').upsert({
+          id: userId, email, credits: 10, plan: 'free'
         });
       }
 
       return res.status(200).json({
         success: true,
-        user: data.user || { id: userId, email },
+        user: data.user,
         session: data.session,
         credits: 10,
         plan: 'free'
@@ -59,58 +47,28 @@ export default async function handler(req, res) {
     }
 
     if (action === 'login') {
-      const r = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': ANON_KEY,
-          'Authorization': `Bearer ${ANON_KEY}`
-        },
-        body: JSON.stringify({ email, password })
-      });
+      const { data, error } = await supabaseAnon.auth.signInWithPassword({ email, password });
+      if (error) return res.status(400).json({ error: error.message });
 
-      const data = await r.json();
-
-      if (!r.ok) {
-        return res.status(400).json({ error: data.error_description || data.error || 'Login fehlgeschlagen' });
-      }
-
-      // Credits laden
-      const userId = data.user?.id;
-      let credits = 10;
-      let plan = 'free';
-
-      if (userId) {
-        const userRes = await fetch(
-          `${SUPABASE_URL}/rest/v1/users?id=eq.${userId}&select=credits,plan`,
-          {
-            headers: {
-              'apikey': SERVICE_KEY,
-              'Authorization': `Bearer ${SERVICE_KEY}`
-            }
-          }
-        );
-        const users = await userRes.json();
-        if (users?.[0]) {
-          credits = users[0].credits ?? 10;
-          plan = users[0].plan ?? 'free';
-        }
-      }
+      const { data: userData } = await supabaseAdmin
+        .from('users')
+        .select('credits, plan')
+        .eq('id', data.user.id)
+        .single();
 
       return res.status(200).json({
         success: true,
         user: data.user,
-        session: { access_token: data.access_token },
-        credits,
-        plan
+        session: { access_token: data.session?.access_token },
+        credits: userData?.credits ?? 10,
+        plan: userData?.plan ?? 'free'
       });
     }
 
     return res.status(400).json({ error: 'Unbekannte Aktion' });
 
   } catch (error) {
-    return res.status(500).json({ error: 'Server Fehler: ' + error.message });
+    return res.status(500).json({ error: error.message });
   }
 }
-        
    
