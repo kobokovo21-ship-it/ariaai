@@ -668,14 +668,15 @@ async function send(){
   if(mode==='vid'&&!currentUser){const m=document.getElementById('up-msg');m.className='alert';m.textContent='Erstelle ein kostenloses Konto für Videos — 10 Gratis-Credits!';showM('modal-upgrade');return;}
   const ct=state.model==='img-modelia'?'modelia':mode;
   if(mode!=='chat'&&!(await useCredits(ct)))return;
+  let chatTitle=document.getElementById('chat-title').textContent;
   if(!state.chatStarted){
     state.chatStarted=true;
     document.getElementById('landing').style.display='none';
-    const title=txt.substring(0,40)+(txt.length>40?'...':'');
-    document.getElementById('chat-title').textContent=title;
+    chatTitle=txt.substring(0,40)+(txt.length>40?'...':'');
+    document.getElementById('chat-title').textContent=chatTitle;
   }
   conversationHistory.push({role:'user',content:txt});
-  if(authToken&&!state.activeChatId)await saveChat(title||document.getElementById('chat-title').textContent,conversationHistory);
+  if(authToken&&!state.activeChatId)await saveChat(chatTitle,conversationHistory);
   addUserMsg(txt);inp.value='';inp.style.height='24px';
   if(mode==='vid')genVideo(txt);
   else if(mode==='img')genImage(txt);
