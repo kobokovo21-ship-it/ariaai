@@ -1,0 +1,20 @@
+{
+  "name": "VIRGO — Create Your Future",
+  "short_name": "VIRGO",
+  "description": "Die KI Super-App für Creator. Videos, Bilder und Inhalte mit den besten KI-Modellen der Welt.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#111111",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='100' fill='%23111'/><text font-size='320' font-family='Inter,sans-serif' font-weight='200' fill='white' x='256' y='380' text-anchor='middle'>V</text></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "utilities"],
+  "lang": "de"
+}
