@@ -56,6 +56,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
 .av{width:28px;height:28px;border-radius:50%;background:var(--t);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0}
 .un{font-size:12px;font-weight:500}
 .up{font-size:10px;color:var(--tm)}
+.sb.collapsed{width:0;min-width:0;border-right:none;overflow:hidden}
 .sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:98}
 .sb-overlay.vis{display:block}
 .main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
@@ -672,9 +673,9 @@ async function send(){
     document.getElementById('landing').style.display='none';
     const title=txt.substring(0,40)+(txt.length>40?'...':'');
     document.getElementById('chat-title').textContent=title;
-    if(authToken)saveChat(title,conversationHistory);
   }
   conversationHistory.push({role:'user',content:txt});
+  if(authToken&&!state.activeChatId)await saveChat(title||document.getElementById('chat-title').textContent,conversationHistory);
   addUserMsg(txt);inp.value='';inp.style.height='24px';
   if(mode==='vid')genVideo(txt);
   else if(mode==='img')genImage(txt);
@@ -711,16 +712,16 @@ function endGen(){
 }
 function cancelGen(){clearInterval(genTimer);endGen();hideTyping();}
 
-function genChat(txt){
+async function genChat(txt){
   showTyping();
   fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:conversationHistory})})
-  .then(r=>r.json()).then(d=>{
+  .then(r=>r.json()).then(async d=>{
     hideTyping();
     const reply=d.content?.[0]?.text||'Fehler beim Laden.';
     conversationHistory.push({role:'assistant',content:reply});
     if(conversationHistory.length>30)conversationHistory=conversationHistory.slice(-30);
-    if(authToken&&state.activeChatId)saveChat(document.getElementById('chat-title').textContent,conversationHistory);
     addAIMsg(renderMD(reply));
+    if(authToken)await saveChat(document.getElementById('chat-title').textContent,conversationHistory);
   }).catch(()=>{hideTyping();addAIMsg('Verbindungsfehler. Bitte nochmal versuchen.');});
 }
 
@@ -732,7 +733,7 @@ function genImage(prompt){
   const body={prompt:fp,model:mm[state.model]||'nano',negative_prompt:'ai-look,plastic skin,cartoon,deformed'};
   if(refImages.length){body.image_base64=refImages[0].b64;body.image_mime=refImages[0].mime;}
   fetch('/api/generate-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
-  .then(r=>r.json()).then(d=>{
+  .then(r=>r.json()).then(async d=>{
     hideTyping();endGen();
     if(d.imageUrl)addImageCard(prompt,d.imageUrl);
     else addAIMsg('Bild konnte nicht generiert werden.');
@@ -748,7 +749,7 @@ function genVideo(prompt){
   const body={prompt,model:pm,duration:6,resolution:768};
   if(refImages.length&&pm!=='sora')body.imageUrl=refImages[0].url;
   fetch('/api/generate-video',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
-  .then(r=>r.json()).then(d=>{
+  .then(r=>r.json()).then(async d=>{
     hideTyping();endGen();
     if(d.videoUrl)addVideoCard(prompt,d.videoUrl,state.modelName);
     else addAIMsg('Video konnte nicht generiert werden.');
@@ -850,20 +851,71 @@ function newChat(){
 // ═══════════════════════════════
 // VOICE
 // ═══════════════════════════════
-let recOn=false;
+let recOn=false, mediaRecorder=null, audioChunks=[];
+
 function toggleVoice(){
-  const isSafariMobile=/^((?!chrome|android).)*safari/i.test(navigator.userAgent)&&/iPhone|iPad/i.test(navigator.userAgent);
-  if(isSafariMobile){document.getElementById('prompt').focus();return;}
-  if(!('webkitSpeechRecognition' in window||'SpeechRecognition' in window)){alert('Spracherkennung nur in Chrome.');return;}
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!location.protocol.startsWith('https')&&location.hostname!=='localhost'){
+    alert('Mikrofon nur über HTTPS verfügbar.');return;
+  }
   const btn=document.getElementById('mic-btn');
-  if(recOn){recOn=false;btn.textContent='🎤';btn.style.color='';if(window._rec)window._rec.stop();return;}
-  recOn=true;btn.textContent='🔴';btn.style.color='#ef4444';
-  window._rec=new SR();window._rec.lang='de-DE';window._rec.continuous=false;window._rec.interimResults=false;
-  window._rec.onresult=e=>{document.getElementById('prompt').value=e.results[0][0].transcript;recOn=false;btn.textContent='🎤';btn.style.color='';};
-  window._rec.onerror=()=>{recOn=false;btn.textContent='🎤';btn.style.color='';};
-  window._rec.start();
+  if(recOn){stopRecording();return;}
+
+  // Try Web Speech API first (Chrome Desktop)
+  if('webkitSpeechRecognition' in window||'SpeechRecognition' in window){
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    const rec=new SR();
+    rec.lang='de-DE';rec.continuous=false;rec.interimResults=false;
+    rec.onstart=()=>{recOn=true;btn.textContent='🔴';btn.style.color='#ef4444';};
+    rec.onresult=e=>{
+      document.getElementById('prompt').value=e.results[0][0].transcript;
+      recOn=false;btn.textContent='🎤';btn.style.color='';
+    };
+    rec.onerror=()=>{recOn=false;btn.textContent='🎤';btn.style.color='';};
+    rec.onend=()=>{recOn=false;btn.textContent='🎤';btn.style.color='';};
+    try{rec.start();window._rec=rec;return;}catch(e){}
+  }
+
+  // Fallback: MediaRecorder (iOS Safari)
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+    alert('Mikrofon wird auf diesem Gerät nicht unterstützt.');return;
+  }
+  navigator.mediaDevices.getUserMedia({audio:true})
+  .then(stream=>{
+    recOn=true;btn.textContent='🔴';btn.style.color='#ef4444';
+    audioChunks=[];
+    const mimeType=MediaRecorder.isTypeSupported('audio/webm')?'audio/webm':'audio/mp4';
+    mediaRecorder=new MediaRecorder(stream,{mimeType});
+    mediaRecorder.ondataavailable=e=>{if(e.data.size>0)audioChunks.push(e.data);};
+    mediaRecorder.onstop=async()=>{
+      stream.getTracks().forEach(t=>t.stop());
+      recOn=false;btn.textContent='🎤';btn.style.color='';
+      const blob=new Blob(audioChunks,{type:mimeType});
+      // Convert to text via FormData + Whisper if available, else show message
+      addAIMsg('🎤 Audio aufgenommen ('+Math.round(blob.size/1024)+'KB). Tippe deinen Text oder aktiviere Whisper für automatische Transkription.');
+    };
+    mediaRecorder.start();
+  })
+  .catch(err=>{
+    recOn=false;btn.textContent='🎤';btn.style.color='';
+    if(err.name==='NotAllowedError')alert('Bitte erlaube den Mikrofon-Zugriff in den Einstellungen.');
+    else alert('Mikrofon Fehler: '+err.message);
+  });
 }
+
+function stopRecording(){
+  if(window._rec)window._rec.stop();
+  if(mediaRecorder&&mediaRecorder.state!=='inactive')mediaRecorder.stop();
+  recOn=false;
+  document.getElementById('mic-btn').textContent='🎤';
+  document.getElementById('mic-btn').style.color='';
+}
+
+// iOS mic button - touchstart for immediate permission
+const micBtn = document.getElementById('mic-btn');
+micBtn.addEventListener('touchstart', function(e){
+  e.preventDefault();
+  toggleVoice();
+}, {passive: false});
 
 // ═══════════════════════════════
 // MODALS
