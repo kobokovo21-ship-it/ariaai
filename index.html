@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -229,6 +228,19 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
   .topbar-right .tb-btn:not(.primary){display:none}
   .footer-links{display:none}
 }
+
+/* iOS Keyboard Fix */
+@supports (-webkit-touch-callout: none) {
+  .main{height: -webkit-fill-available;}
+  .pw{padding-bottom: env(safe-area-inset-bottom, 12px);}
+  .feed{overflow-y: auto;-webkit-overflow-scrolling: touch;}
+}
+.cp2.img{aspect-ratio:unset!important;height:300px;}
+@media(max-width:768px){
+  .cp2.img{height:260px;}
+  .cp2.vid{height:200px;}
+  .cp2 img,.cp2 video{width:100%;height:100%;object-fit:cover;}
+}
 </style>
 </head>
 <body>
@@ -435,6 +447,7 @@ let curTab = 'login';
 let genTimer = null;
 let refImages = [];
 let chatHistory = JSON.parse(localStorage.getItem('virgo_chats') || '[]');
+let conversationHistory = [];
 
 // ══════════════════════════════════════════
 // MODE MANAGEMENT
@@ -796,7 +809,7 @@ async function send() {
     addToHistory(title);
   }
 
-  addUserMsg(txt); inp.value = ''; inp.style.height = '24px'; inp.blur(); setTimeout(()=>inp.focus(),100);
+  conversationHistory.push({role:'user', content:txt}); addUserMsg(txt); inp.value = ''; inp.style.height = '24px'; inp.blur(); setTimeout(()=>inp.focus(),100);
   if (mode === 'vid') genVideo(txt);
   else if (mode === 'img') genImage(txt);
   else genChat(txt);
@@ -856,8 +869,14 @@ function cancelGen() { clearInterval(genTimer); endGen(); hideTyping(); }
 
 function genChat(txt) {
   showTyping();
-  fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: [{ role: 'user', content: txt }] }) })
-    .then(r => r.json()).then(d => { hideTyping(); addAIMsg(renderMD(d.content?.[0]?.text || 'Fehler beim Laden.')); })
+  fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: conversationHistory }) })
+    .then(r => r.json()).then(d => { 
+    hideTyping(); 
+    const reply = d.content?.[0]?.text || 'Fehler beim Laden.';
+    conversationHistory.push({role:'assistant', content:reply});
+    if(conversationHistory.length > 20) conversationHistory = conversationHistory.slice(-20);
+    addAIMsg(renderMD(reply)); 
+  })
     .catch(() => { hideTyping(); addAIMsg('Verbindungsfehler. Bitte nochmal versuchen.'); });
 }
 
@@ -972,6 +991,7 @@ function doVariant(p) { document.getElementById('prompt').value = p + ' — Vari
 
 function newChat() {
   state.chatStarted = false;
+  conversationHistory = [];
   document.getElementById('chat-title').textContent = 'Neuer Chat';
   document.getElementById('prompt').value = '';
   clearRef(); resetToChatMode();
