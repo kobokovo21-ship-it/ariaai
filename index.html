@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -106,7 +107,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
 .mw.user{align-items:flex-end}
 .bb{max-width:85%;padding:12px 16px;border-radius:14px;font-size:13.5px;line-height:1.75;font-weight:300}
 .mw.user .bb{background:var(--t);color:#fff;border-bottom-right-radius:4px}
-.mw.ai .bb{background:var(--sf);border:1px solid var(--bd);border-bottom-left-radius:4px}
+.mw.ai .bb{background:var(--sf);border:1px solid var(--bd);border-bottom-left-radius:4px;line-height:1.7}
 .mt2{font-size:10px;color:var(--td);padding:0 4px}
 .aav{width:24px;height:24px;border-radius:50%;background:var(--t);color:#fff;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;flex-shrink:0;margin-top:2px}
 .tw{display:flex;align-items:flex-start;gap:10px}
@@ -766,7 +767,7 @@ function clearRef() { refImages = []; renderRefZone(); }
 // CHAT ENGINE
 // ══════════════════════════════════════════
 function onKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }
-function autoResize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 140) + 'px'; }
+function autoResize(el) { el.style.height = '24px'; el.style.height = Math.min(el.scrollHeight, 140) + 'px'; }
 function qs(txt) { document.getElementById('prompt').value = txt; send(); }
 function now() { return new Date().toLocaleTimeString('de', { hour: '2-digit', minute: '2-digit' }); }
 
@@ -795,7 +796,7 @@ async function send() {
     addToHistory(title);
   }
 
-  addUserMsg(txt); inp.value = ''; inp.style.height = 'auto';
+  addUserMsg(txt); inp.value = ''; inp.style.height = '24px'; inp.blur(); setTimeout(()=>inp.focus(),100);
   if (mode === 'vid') genVideo(txt);
   else if (mode === 'img') genImage(txt);
   else genChat(txt);
@@ -805,6 +806,21 @@ function addUserMsg(txt) {
   const d = document.createElement('div'); d.className = 'mw user';
   d.innerHTML = '<div><div class="bb">' + escHtml(txt) + '</div><div class="mt2">' + now() + '</div></div>';
   document.getElementById('fi').appendChild(d); scrollFeed();
+}
+
+function renderMD(t){
+  if(!t) return '';
+  t = t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  t = t.replace(/^### (.+)$/gm,'<b style="display:block;margin:8px 0 3px;font-size:13px">$1</b>');
+  t = t.replace(/^## (.+)$/gm,'<b style="display:block;margin:10px 0 4px;font-size:14px">$1</b>');
+  t = t.replace(/^# (.+)$/gm,'<b style="display:block;margin:10px 0 4px;font-size:15px">$1</b>');
+  t = t.replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>');
+  t = t.replace(/\*([^*]+)\*/g,'<i>$1</i>');
+  t = t.replace(/^---$/gm,'<hr style="border:none;border-top:1px solid #e8e8e8;margin:8px 0">');
+  t = t.replace(/^[-] (.+)$/gm,'<div style="margin:2px 0 2px 12px">&bull; $1</div>');
+  t = t.replace(/`([^`]+)`/g,'<code style="background:#f0f0f0;padding:1px 4px;border-radius:3px;font-size:12px">$1</code>');
+  t = t.replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
+  return t;
 }
 
 function addAIMsg(html) {
@@ -841,7 +857,7 @@ function cancelGen() { clearInterval(genTimer); endGen(); hideTyping(); }
 function genChat(txt) {
   showTyping();
   fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: [{ role: 'user', content: txt }] }) })
-    .then(r => r.json()).then(d => { hideTyping(); addAIMsg(d.content?.[0]?.text || 'Fehler beim Laden.'); })
+    .then(r => r.json()).then(d => { hideTyping(); addAIMsg(renderMD(d.content?.[0]?.text || 'Fehler beim Laden.')); })
     .catch(() => { hideTyping(); addAIMsg('Verbindungsfehler. Bitte nochmal versuchen.'); });
 }
 
@@ -978,6 +994,15 @@ function newChat() {
 // ══════════════════════════════════════════
 let recOn = false;
 function toggleVoice() {
+  // On iOS Safari use native input
+  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  if (isSafari && isMobile) {
+    const inp = document.getElementById('prompt');
+    inp.focus();
+    addAIMsg('🎤 Tippe auf das Mikrofon-Icon auf deiner Tastatur für Spracheingabe.');
+    return;
+  }
   if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) { alert('Spracherkennung nur in Chrome verfügbar.'); return; }
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   const btn = document.getElementById('mic-btn');
