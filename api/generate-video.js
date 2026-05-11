@@ -6,111 +6,87 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
   const PIAPI_KEY = process.env.PIAPI_KEY;
-  const HF_KEY_ID = process.env.HIGGSFIELD_KEY_ID;
-  const HF_KEY_SECRET = process.env.HIGGSFIELD_KEY_SECRET;
 
   try {
-    const { prompt, model = 'hailuo', duration = 6, resolution = 768, imageUrl = null } = req.body;
+    let { prompt, model = 'hailuo', duration = 6, resolution = 768, imageUrl = null, taskId = null } = req.body;
 
-    // ── HIGGSFIELD — Ultra/Max Premium ──
-    if (model === 'higgsfield') {
-      const credentials = `${HF_KEY_ID}:${HF_KEY_SECRET}`;
-      const body = {
-        prompt,
-        duration: 5,
-        resolution: '720p'
-      };
-      if (imageUrl) body.image_url = imageUrl;
+    if (!prompt && !taskId) return res.status(400).json({ error: 'Kein Prompt angegeben' });
+    if (prompt && prompt.length > 500) prompt = prompt.substring(0, 500);
 
-      const createRes = await fetch('https://cloud.higgsfield.ai/v1/generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Basic ${Buffer.from(credentials).toString('base64')}`
-        },
-        body: JSON.stringify(body)
+    // ── POLL existing task ──
+    if (taskId) {
+      const pollRes = await fetch(`https://api.piapi.ai/api/v1/task/${taskId}`, {
+        headers: { 'X-API-KEY': PIAPI_KEY }
       });
-      const createData = await createRes.json();
-      const jobId = createData?.id || createData?.job_id || createData?.request_id;
-
-      if (!jobId) return res.status(500).json({ error: 'Higgsfield Task fehlgeschlagen', details: createData });
-
-      // Poll for result
-      for (let i = 0; i < 60; i++) {
-        await new Promise(r => setTimeout(r, 3000));
-        const pollRes = await fetch(`https://cloud.higgsfield.ai/v1/generate/${jobId}`, {
-          headers: { 'Authorization': `Basic ${Buffer.from(credentials).toString('base64')}` }
-        });
-        const pollData = await pollRes.json();
-        const status = (pollData?.status || '').toUpperCase();
-        if (status === 'COMPLETED' || status === 'DONE') {
-          const videoUrl = pollData?.output?.url || pollData?.video_url || pollData?.url;
-          return res.status(200).json({ success: true, videoUrl, model: 'higgsfield' });
-        }
-        if (status === 'FAILED' || status === 'ERROR') {
-          return res.status(500).json({ error: 'Higgsfield Generierung fehlgeschlagen' });
-        }
+      const pd = await pollRes.json();
+      const status = pd?.data?.status;
+      const output = pd?.data?.output;
+      if (status === 'completed') {
+        const videoUrl = output?.video || output?.video_url || output?.url;
+        return res.status(200).json({ success: true, videoUrl, status: 'completed' });
       }
-      return res.status(504).json({ error: 'Timeout — bitte nochmal versuchen' });
+      if (status === 'failed') {
+        return res.status(500).json({ error: pd?.data?.error?.message || 'Fehlgeschlagen', status: 'failed' });
+      }
+      return res.status(200).json({ status: status || 'processing', taskId });
     }
 
-    // ── SORA 2 — Streaming ──
+    // ── SORA — not available ──
     if (model === 'sora') {
-      const soraRes = await fetch('https://api.piapi.ai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${PIAPI_KEY}`
-        },
-        body: JSON.stringify({
-          model: 'sora-2-preview',
-          messages: [{ role: 'user', content: prompt + ' without watermark' }],
-          stream: true
-        })
-      });
-      const text = await soraRes.text();
-      let fullContent = '';
-      for (const line of text.split('\n')) {
-        if (line.startsWith('data: ') && !line.includes('[DONE]')) {
-          try {
-            const data = JSON.parse(line.slice(6));
-            const content = data?.choices?.[0]?.delta?.content;
-            if (content) fullContent += content;
-          } catch {}
-        }
-      }
-      const mp4Match = fullContent.match(/https?:\/\/[^\s\)]+\.mp4/);
-      const videoUrl = mp4Match ? mp4Match[0] : null;
-      if (videoUrl) return res.status(200).json({ success: true, videoUrl, model: 'sora' });
-      return res.status(500).json({ error: 'Sora konnte kein Video generieren.' });
+      return res.status(503).json({ error: 'Sora 2.0 ist noch nicht öffentlich verfügbar. Nutze Hailuo 2.3 oder Veo 3.1.' });
     }
 
-    // ── VEO 3.1 ──
+    // ── VEO 3.1 — correct API format ──
     if (model === 'veo') {
       const taskBody = {
         model: 'veo3.1',
-        task_type: imageUrl ? 'img2video' : 'txt2video',
-        input: { prompt, ...(imageUrl && { image_url: imageUrl }) },
-        config: { service_mode: 'public' }
+        task_type: 'veo3.1-video-fast',
+        input: {
+          prompt,
+          negative_prompt: 'blurry, low quality, static',
+          aspect_ratio: '16:9',
+          duration: '8s',
+          resolution: '720p',
+          generate_audio: false
+        }
       };
+
       const createRes = await fetch('https://api.piapi.ai/api/v1/task', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-API-KEY': PIAPI_KEY },
         body: JSON.stringify(taskBody)
       });
-      const createData = await createRes.json();
-      const taskId = createData?.data?.task_id;
-      if (!taskId) return res.status(500).json({ error: 'Veo Task fehlgeschlagen', details: createData });
-      for (let i = 0; i < 60; i++) {
-        await new Promise(r => setTimeout(r, 3000));
-        const p = await (await fetch(`https://api.piapi.ai/api/v1/task/${taskId}`, { headers: { 'X-API-KEY': PIAPI_KEY } })).json();
-        if (p?.data?.status === 'completed') return res.status(200).json({ success: true, videoUrl: p?.data?.output?.video, model: 'veo' });
-        if (p?.data?.status === 'failed') return res.status(500).json({ error: 'Veo fehlgeschlagen' });
-      }
-      return res.status(504).json({ error: 'Timeout' });
+      const cd = await createRes.json();
+      const tid = cd?.data?.task_id;
+      if (!tid) return res.status(500).json({ error: cd?.data?.error?.message || 'Veo 3.1: Task fehlgeschlagen — ' + JSON.stringify(cd) });
+
+      // Return task_id for client-side polling (Veo takes 2-3 min)
+      return res.status(200).json({ status: 'processing', taskId: tid, model: 'veo' });
     }
 
-    // ── HAILUO 2.3 (default) — Text & Image-to-Video ──
+    // ── HIGGSFIELD ──
+    if (model === 'higgsfield') {
+      const HF_KEY_ID = process.env.HIGGSFIELD_KEY_ID;
+      const HF_KEY_SECRET = process.env.HIGGSFIELD_KEY_SECRET;
+      if (!HF_KEY_ID || !HF_KEY_SECRET) return res.status(500).json({ error: 'Higgsfield Key fehlt' });
+
+      const credentials = Buffer.from(`${HF_KEY_ID}:${HF_KEY_SECRET}`).toString('base64');
+      const body = { prompt, duration: 5, resolution: '720p' };
+      if (imageUrl) body.image_url = imageUrl;
+
+      const createRes = await fetch('https://cloud.higgsfield.ai/v1/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Basic ${credentials}` },
+        body: JSON.stringify(body)
+      });
+      const cd = await createRes.json();
+      if (!createRes.ok) return res.status(500).json({ error: cd?.message || 'Higgsfield fehlgeschlagen' });
+      const jobId = cd?.id || cd?.job_id;
+      if (!jobId) return res.status(500).json({ error: 'Higgsfield: Keine Job-ID' });
+      return res.status(200).json({ status: 'processing', taskId: jobId, model: 'higgsfield' });
+    }
+
+    // ── HAILUO 2.3 — server-side polling ──
     const hailuoInput = { prompt, model: 'v2.3', expand_prompt: true, duration, resolution };
     if (imageUrl) hailuoInput.image_url = imageUrl;
 
@@ -119,19 +95,25 @@ export default async function handler(req, res) {
       headers: { 'Content-Type': 'application/json', 'X-API-KEY': PIAPI_KEY },
       body: JSON.stringify({ model: 'hailuo', task_type: 'video_generation', input: hailuoInput, config: { service_mode: 'public' } })
     });
-    const createData = await createRes.json();
-    const taskId = createData?.data?.task_id;
-    if (!taskId) return res.status(500).json({ error: 'Hailuo Task fehlgeschlagen', details: createData });
+    const cd = await createRes.json();
+    const tid = cd?.data?.task_id;
+    if (!tid) return res.status(500).json({ error: cd?.data?.error?.message || 'Hailuo: Task fehlgeschlagen' });
 
-    for (let i = 0; i < 60; i++) {
-      await new Promise(r => setTimeout(r, 3000));
-      const p = await (await fetch(`https://api.piapi.ai/api/v1/task/${taskId}`, { headers: { 'X-API-KEY': PIAPI_KEY } })).json();
-      if (p?.data?.status === 'completed') return res.status(200).json({ success: true, videoUrl: p?.data?.output?.video, model: 'hailuo' });
-      if (p?.data?.status === 'failed') return res.status(500).json({ error: 'Hailuo fehlgeschlagen' });
+    // Poll server-side for Hailuo (usually fast enough)
+    for (let i = 0; i < 15; i++) {
+      await new Promise(r => setTimeout(r, 4000));
+      const pd = await (await fetch(`https://api.piapi.ai/api/v1/task/${tid}`, { headers: { 'X-API-KEY': PIAPI_KEY } })).json();
+      if (pd?.data?.status === 'completed') {
+        return res.status(200).json({ success: true, videoUrl: pd?.data?.output?.video, model: 'hailuo' });
+      }
+      if (pd?.data?.status === 'failed') {
+        return res.status(500).json({ error: pd?.data?.error?.message || 'Hailuo fehlgeschlagen' });
+      }
     }
-    return res.status(504).json({ error: 'Timeout' });
+    // If still processing after 60s, return taskId for client polling
+    return res.status(200).json({ status: 'processing', taskId: tid, model: 'hailuo' });
 
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: 'Server Fehler: ' + error.message });
   }
 }
