@@ -398,7 +398,7 @@ function resetToChatMode(){
   clearRef();
 }
 function setModel(el,model,name){
-  if(PREMIUM.includes(model)&&!isPro()){
+  if(PREMIUM.includes(model)&&!isPro()&&!isAdmin()){
     const m=document.getElementById('up-msg');m.className='alert';
     m.textContent='Veo 3.1, Sora und Higgsfield sind nur für Pro-Mitglieder.';
     showM('modal-upgrade');return;
@@ -481,6 +481,9 @@ function saveChat(title,messages){
 // ═══════════════════════════════
 // AUTH
 // ═══════════════════════════════
+const ADMIN_EMAIL = 'holyencore@gmail.com';
+function isAdmin(){return currentUser?.email === ADMIN_EMAIL;}
+
 function updateUI(){
   const li=!!currentUser;
   const plan=localStorage.getItem('virgo_plan')||'free';
@@ -489,8 +492,13 @@ function updateUI(){
   document.getElementById('uplan').textContent=li?(plan.charAt(0).toUpperCase()+plan.slice(1)+' · '+credits+' Credits'):'Kostenlos starten';
   document.getElementById('auth-btn').textContent=li?'Abmelden':'Anmelden';
   document.getElementById('auth-btn').onclick=li?logout:()=>showM('modal-login');
-  document.getElementById('cr-display').textContent=credits+' Credits';
-  document.getElementById('cdot').className='cdot'+(credits<10?' low':'');
+  if(isAdmin()){
+    document.getElementById('cr-display').textContent='∞ Credits';
+    document.getElementById('cdot').className='cdot';
+  } else {
+    document.getElementById('cr-display').textContent=credits+' Credits';
+    document.getElementById('cdot').className='cdot'+(credits<10?' low':'');
+  }
   document.querySelectorAll('.mc').forEach(btn=>{
     const m=btn.getAttribute('onclick')?.match(/'([^']+)'/)?.[1]||'';
     if(PREMIUM.includes(m))btn.style.opacity=isPro()?'1':'0.45';
@@ -553,6 +561,7 @@ function logout(){
 // CREDITS
 // ═══════════════════════════════
 async function useCredits(type){
+  if(isAdmin()) return true;
   const cost=COST[type]||1;
   if(credits<cost){
     const m=document.getElementById('up-msg');m.className='alert';
@@ -567,8 +576,13 @@ async function useCredits(type){
       credits=d.credits;localStorage.setItem('virgo_credits',credits);
     }catch(e){credits-=cost;localStorage.setItem('virgo_credits',credits);}
   }else{credits-=cost;localStorage.setItem('virgo_credits',credits);}
-  document.getElementById('cr-display').textContent=credits+' Credits';
-  document.getElementById('cdot').className='cdot'+(credits<10?' low':'');
+  if(isAdmin()){
+    document.getElementById('cr-display').textContent='∞ Credits';
+    document.getElementById('cdot').className='cdot';
+  } else {
+    document.getElementById('cr-display').textContent=credits+' Credits';
+    document.getElementById('cdot').className='cdot'+(credits<10?' low':'');
+  }
   return true;
 }
 
@@ -638,7 +652,7 @@ async function send(){
   const inp=document.getElementById('prompt');
   const txt=inp.value.trim();if(!txt||state.generating)return;
   const mode=state.model.startsWith('vid')?'vid':state.model.startsWith('img')?'img':'chat';
-  if(mode==='vid'&&!currentUser){const m=document.getElementById('up-msg');m.className='alert';m.textContent='Erstelle ein kostenloses Konto für Videos — 10 Gratis-Credits!';showM('modal-upgrade');return;}
+  if(mode==='vid'&&!currentUser&&!isAdmin()){const m=document.getElementById('up-msg');m.className='alert';m.textContent='Erstelle ein kostenloses Konto für Videos — 10 Gratis-Credits!';showM('modal-upgrade');return;}
   const ct=state.model==='img-modelia'?'modelia':mode;
   if(mode!=='chat'&&!(await useCredits(ct)))return;
   let chatTitle=document.getElementById('chat-title').textContent;
