@@ -420,34 +420,12 @@ function isPro(){return PRO_PLANS.includes(localStorage.getItem('virgo_plan')||'
 // ═══════════════════════════════
 // CHAT HISTORY (Supabase)
 // ═══════════════════════════════
-async function loadChats(){
-  if(!authToken){renderLocalChats();return;}
-  try{
-    const r=await fetch('/api/chats',{headers:{'Authorization':'Bearer '+authToken}});
-    const data=await r.json();
-    if(Array.isArray(data))renderChats(data);
-  }catch(e){renderLocalChats();}
-}
+// ── CHAT STORAGE (localStorage primary) ──
+function getLocalChats(){return JSON.parse(localStorage.getItem('virgo_chats_v2')||'[]');}
+function setLocalChats(chats){localStorage.setItem('virgo_chats_v2',JSON.stringify(chats));}
 
-function renderLocalChats(){
-  const local=JSON.parse(localStorage.getItem('virgo_chats')||'[]');
-  const hist=document.getElementById('hist');
-  const empty=document.getElementById('hist-empty');
-  hist.querySelectorAll('.hi,.hl,.clear-btn').forEach(el=>el.remove());
-  if(!local.length){if(empty)empty.style.display='block';return;}
-  if(empty)empty.style.display='none';
-  const lbl=document.createElement('span');lbl.className='hl';lbl.textContent='Zuletzt';hist.appendChild(lbl);
-  local.slice(0,15).forEach((chat,i)=>{
-    const d=document.createElement('div');d.className='hi'+(i===0?' on':'');
-    d.innerHTML='<span class="hi-title">'+escHtml(chat.title)+'</span><button class="hi-del" onclick="event.stopPropagation();">×</button>';
-    hist.appendChild(d);
-  });
-  const cb=document.createElement('button');cb.className='clear-btn';cb.textContent='Alle löschen';
-  cb.onclick=()=>{localStorage.removeItem('virgo_chats');renderLocalChats();};
-  hist.appendChild(cb);
-}
-
-function renderChats(chats){
+function loadChats(){
+  const chats=getLocalChats();
   const hist=document.getElementById('hist');
   const empty=document.getElementById('hist-empty');
   hist.querySelectorAll('.hi,.hl,.clear-btn').forEach(el=>el.remove());
@@ -455,54 +433,49 @@ function renderChats(chats){
   if(empty)empty.style.display='none';
   const lbl=document.createElement('span');lbl.className='hl';lbl.textContent='Chats';hist.appendChild(lbl);
   chats.forEach((chat,i)=>{
-    const d=document.createElement('div');d.className='hi'+(i===0&&state.activeChatId===chat.id?' on':'');
-    d.innerHTML='<span class="hi-title">'+escHtml(chat.title)+'</span><button class="hi-del" onclick="event.stopPropagation();deleteChat(\''+chat.id+'\')">×</button>';
-    d.querySelector('.hi-title').addEventListener('click',()=>openChat(chat));
+    const d=document.createElement('div');d.className='hi'+(chat.id===state.activeChatId?' on':'');
+    d.innerHTML='<span class="hi-title">'+escHtml(chat.title)+'</span><button class="hi-del" onclick="event.stopPropagation();deleteLocalChat(\''+chat.id+'\')">×</button>';
+    d.querySelector('.hi-title').addEventListener('click',()=>openLocalChat(chat));
     hist.appendChild(d);
   });
+  const cb=document.createElement('button');cb.className='clear-btn';cb.textContent='Alle löschen';
+  cb.onclick=()=>{setLocalChats([]);loadChats();};
+  hist.appendChild(cb);
 }
 
-async function deleteChat(id){
-  if(!authToken)return;
-  await fetch('/api/chats',{method:'DELETE',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({id})});
-  loadChats();
+function deleteLocalChat(id){
+  setLocalChats(getLocalChats().filter(c=>c.id!==id));
+  if(state.activeChatId===id)newChat();
+  else loadChats();
 }
 
-function openChat(chat){
+function openLocalChat(chat){
   state.chatStarted=true;state.activeChatId=chat.id;
   document.getElementById('landing').style.display='none';
   document.getElementById('chat-title').textContent=chat.title;
   document.getElementById('fi').innerHTML='';
   conversationHistory=[];
-  const messages=chat.messages||[];
-  messages.forEach(msg=>{
+  (chat.messages||[]).forEach(msg=>{
     if(msg.role==='user')addUserMsg(msg.content);
     else if(msg.role==='assistant')addAIMsg(renderMD(msg.content));
   });
-  conversationHistory=messages.slice();
+  conversationHistory=(chat.messages||[]).slice();
   closeSb();
 }
 
-async function saveChat(title,messages){
-  if(!authToken){
-    const local=JSON.parse(localStorage.getItem('virgo_chats')||'[]');
-    local.unshift({title,time:Date.now()});
-    if(local.length>20)local.pop();
-    localStorage.setItem('virgo_chats',JSON.stringify(local));
-    return null;
+function saveChat(title,messages){
+  const chats=getLocalChats();
+  if(state.activeChatId){
+    const idx=chats.findIndex(c=>c.id===state.activeChatId);
+    if(idx>=0){chats[idx].messages=messages;chats[idx].title=title;chats[idx].updated=Date.now();}
+    else{chats.unshift({id:state.activeChatId,title,messages,updated:Date.now()});}
+  }else{
+    state.activeChatId='chat_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+    chats.unshift({id:state.activeChatId,title,messages,updated:Date.now()});
   }
-  try{
-    if(state.activeChatId){
-      await fetch('/api/chats',{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({id:state.activeChatId,title,messages})});
-      return state.activeChatId;
-    }else{
-      const r=await fetch('/api/chats',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({title,messages})});
-      const data=await r.json();
-      state.activeChatId=data.id;
-      loadChats();
-      return data.id;
-    }
-  }catch(e){return null;}
+  if(chats.length>30)chats.splice(30);
+  setLocalChats(chats);
+  loadChats();
 }
 
 // ═══════════════════════════════
@@ -676,7 +649,7 @@ async function send(){
     document.getElementById('chat-title').textContent=chatTitle;
   }
   conversationHistory.push({role:'user',content:txt});
-  if(authToken&&!state.activeChatId)await saveChat(chatTitle,conversationHistory);
+  saveChat(chatTitle,conversationHistory);
   addUserMsg(txt);inp.value='';inp.style.height='24px';
   if(mode==='vid')genVideo(txt);
   else if(mode==='img')genImage(txt);
@@ -722,7 +695,7 @@ async function genChat(txt){
     conversationHistory.push({role:'assistant',content:reply});
     if(conversationHistory.length>30)conversationHistory=conversationHistory.slice(-30);
     addAIMsg(renderMD(reply));
-    if(authToken)await saveChat(document.getElementById('chat-title').textContent,conversationHistory);
+    saveChat(document.getElementById('chat-title').textContent,conversationHistory);
   }).catch(()=>{hideTyping();addAIMsg('Verbindungsfehler. Bitte nochmal versuchen.');});
 }
 
