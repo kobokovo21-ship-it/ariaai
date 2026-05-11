@@ -8,45 +8,43 @@ export default async function handler(req, res) {
   const KEY = process.env.PIAPI_KEY;
 
   try {
-    const { prompt, model = 'nano' } = req.body;
+    let { prompt, model = 'nano', negative_prompt = '', image_base64, image_mime } = req.body;
+
+    // Prompt max 800 chars
+    if (prompt && prompt.length > 800) prompt = prompt.substring(0, 800);
 
     let taskBody;
 
-    if (model === 'midjourney' || model === 'mj' || model === 'niji') {
-      // Midjourney V7 / Niji 7
-      taskBody = {
-        model: 'midjourney',
-        task_type: 'imagine',
-        input: {
-          prompt: prompt + (model === 'niji' ? ' --niji 7' : ' --v 7'),
-          aspect_ratio: '2:3',
-          process_mode: 'turbo',
-          skip_prompt_check: false
-        }
-      };
-    } else if (model === 'seedream') {
-      // Seedream 5 Lite
+    if (model === 'seedream') {
       taskBody = {
         model: 'Qubico/seedream-5-lite',
         task_type: 'txt2img',
         input: {
-          prompt: prompt,
+          prompt,
+          negative_prompt: negative_prompt || 'blurry, low quality, deformed',
           width: 832,
           height: 1216
         }
       };
     } else {
-      // Nano Banana Pro (default)
+      // Nano Banana Pro (default — also handles midjourney, modelia)
+      const input = {
+        prompt,
+        output_format: 'jpg',
+        aspect_ratio: '2:3',
+        resolution: '2K',
+        safety_level: 'high'
+      };
+      if (negative_prompt) input.negative_prompt = negative_prompt;
+      if (image_base64) {
+        input.image_base64 = image_base64;
+        input.image_mime = image_mime || 'image/jpeg';
+      }
       taskBody = {
         model: 'gemini',
         task_type: 'nano-banana-pro',
-        input: {
-          prompt: prompt,
-          output_format: 'jpg',
-          aspect_ratio: '9:16',
-          resolution: '2K',
-          safety_level: 'high'
-        }
+        input,
+        config: { service_mode: 'public' }
       };
     }
 
@@ -63,10 +61,11 @@ export default async function handler(req, res) {
     const taskId = createData?.data?.task_id;
 
     if (!taskId) {
-      return res.status(500).json({ error: 'Task konnte nicht erstellt werden', details: createData });
+      const errMsg = createData?.error?.message || createData?.message || 'Task konnte nicht erstellt werden';
+      return res.status(500).json({ error: errMsg });
     }
 
-    // Server-seitiges Polling — max 90 Sekunden
+    // Poll max 90 seconds
     for (let i = 0; i < 30; i++) {
       await new Promise(r => setTimeout(r, 3000));
 
@@ -78,22 +77,23 @@ export default async function handler(req, res) {
       const output = pollData?.data?.output;
 
       if (status === 'completed') {
-        // Midjourney gibt image_url (Grid) und image_urls (einzelne Bilder)
         const imageUrl = output?.image_url
           || (output?.image_urls && output.image_urls[0])
-          || output?.images?.[0];
-        const imageUrls = output?.image_urls || null;
-        return res.status(200).json({ success: true, imageUrl, imageUrls, taskId });
+          || output?.images?.[0]
+          || output?.url;
+        if (!imageUrl) return res.status(500).json({ error: 'Kein Bild in der Antwort' });
+        return res.status(200).json({ success: true, imageUrl, taskId });
       }
 
       if (status === 'failed') {
-        return res.status(500).json({ error: 'Generierung fehlgeschlagen' });
+        const reason = pollData?.data?.error?.message || 'Generierung fehlgeschlagen';
+        return res.status(500).json({ error: reason });
       }
     }
 
     return res.status(504).json({ error: 'Timeout — bitte nochmal versuchen' });
 
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: 'Server Fehler: ' + error.message });
   }
 }
