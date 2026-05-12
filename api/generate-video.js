@@ -19,18 +19,20 @@ export default async function handler(req, res) {
       if (model === 'higgsfield') {
         const HF_KEY_ID = process.env.HIGGSFIELD_KEY_ID;
         const HF_KEY_SECRET = process.env.HIGGSFIELD_KEY_SECRET;
-        const credentials = Buffer.from(`${HF_KEY_ID}:${HF_KEY_SECRET}`).toString('base64');
-        const pollRes = await fetch(`https://cloud.higgsfield.ai/v1/generate/${taskId}`, {
-          headers: { 'Authorization': `Basic ${credentials}` }
+        const authHeader = `Key ${HF_KEY_ID}:${HF_KEY_SECRET}`;
+        const pollRes = await fetch(`https://cloud.higgsfield.ai/requests/${taskId}/status`, {
+          headers: { 'Authorization': authHeader, 'User-Agent': 'higgsfield-server-js/2.0' }
         });
-        const pd = await pollRes.json();
+        const text = await pollRes.text();
+        let pd;
+        try { pd = JSON.parse(text); } catch(e) { return res.status(200).json({ status: 'processing', taskId, model: 'higgsfield' }); }
         const status = (pd?.status || '').toUpperCase();
-        if (status === 'COMPLETED' || status === 'DONE') {
-          const videoUrl = pd?.output?.url || pd?.video_url || pd?.url;
+        if (status === 'COMPLETED') {
+          const videoUrl = pd?.output?.media_url?.[0] || pd?.output?.url || pd?.video_url;
           return res.status(200).json({ success: true, videoUrl, status: 'completed' });
         }
         if (status === 'FAILED' || status === 'ERROR') {
-          return res.status(500).json({ error: pd?.message || 'Higgsfield fehlgeschlagen', status: 'failed' });
+          return res.status(500).json({ error: pd?.error || 'Higgsfield fehlgeschlagen', status: 'failed' });
         }
         return res.status(200).json({ status: 'processing', taskId, model: 'higgsfield' });
       }
@@ -91,19 +93,35 @@ export default async function handler(req, res) {
       const HF_KEY_SECRET = process.env.HIGGSFIELD_KEY_SECRET;
       if (!HF_KEY_ID || !HF_KEY_SECRET) return res.status(500).json({ error: 'Higgsfield Key fehlt' });
 
-      const credentials = Buffer.from(`${HF_KEY_ID}:${HF_KEY_SECRET}`).toString('base64');
-      const body = { prompt, duration: 5, resolution: '720p' };
-      if (imageUrl) body.image_url = imageUrl;
+      const authHeader = `Key ${HF_KEY_ID}:${HF_KEY_SECRET}`;
+      
+      const body = {
+        model: 'dop-turbo',
+        prompt: prompt,
+        input_images: imageUrl ? [{ type: 'image_url', image_url: imageUrl }] : undefined
+      };
 
-      const createRes = await fetch('https://cloud.higgsfield.ai/v1/generate', {
+      const endpoint = imageUrl 
+        ? 'https://cloud.higgsfield.ai/v1/image2video/dop'
+        : 'https://cloud.higgsfield.ai/v1/text2video/dop';
+
+      const createRes = await fetch(endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Basic ${credentials}` },
+        headers: { 
+          'Content-Type': 'application/json', 
+          'Authorization': authHeader,
+          'User-Agent': 'higgsfield-server-js/2.0'
+        },
         body: JSON.stringify(body)
       });
-      const cd = await createRes.json();
-      if (!createRes.ok) return res.status(500).json({ error: cd?.message || 'Higgsfield fehlgeschlagen' });
-      const jobId = cd?.id || cd?.job_id;
-      if (!jobId) return res.status(500).json({ error: 'Higgsfield: Keine Job-ID' });
+      
+      let cd;
+      const text = await createRes.text();
+      try { cd = JSON.parse(text); } catch(e) { return res.status(500).json({ error: 'Higgsfield: Ungültige Antwort — ' + text.substring(0,200) }); }
+      
+      if (!createRes.ok) return res.status(500).json({ error: cd?.message || cd?.error || 'Higgsfield fehlgeschlagen ('+createRes.status+')' });
+      const jobId = cd?.request_id || cd?.id || cd?.job_id;
+      if (!jobId) return res.status(500).json({ error: 'Higgsfield: Keine Job-ID — ' + JSON.stringify(cd).substring(0,200) });
       return res.status(200).json({ status: 'processing', taskId: jobId, model: 'higgsfield' });
     }
 
@@ -138,3 +156,4 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Server Fehler: ' + error.message });
   }
 }
+
