@@ -217,6 +217,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
     <span class="sl">Modell</span>
     <button class="mc on" onclick="setModel(this,'chat','Virgo Chat')"><div class="md"></div>Virgo Chat</button>
     <button class="mc" onclick="setModel(this,'code','Code AI')"><div class="md"></div>Code AI<span class="mt" style="background:#dbeafe;color:#1d4ed8">Dev</span></button>
+    <button class="mc" onclick="setModel(this,'agent','Virgo Agent')"><div class="md"></div>Virgo Agent ⚡<span class="mt" style="background:#fce7f3;color:#9d174d">AI Agent</span></button>
     <button class="mc modelia" onclick="setModel(this,'img-modelia','Modelia Fashion Pro')"><div class="md"></div>Modelia Fashion Pro<span class="mt gold">✨ 2cr</span></button>
     <button class="mc" onclick="setModel(this,'img-nano','Nano Banana Pro')"><div class="md"></div>Nano Banana Pro<span class="mt">Bild · 1cr</span></button>
     <button class="mc" onclick="setModel(this,'img-seed','Seedream 5.0')"><div class="md"></div>Seedream 5.0<span class="mt">Bild · 1cr</span></button>
@@ -348,7 +349,7 @@ const state={mode:'chat',model:'chat',modelName:'Virgo Chat',generating:false,ch
 const COST={img:1,vid:10,tool:5,modelia:2};
 const PREMIUM=['vid-veo','vid-sora','vid-higgsfield'];
 const PRO_PLANS=['pro','master','ultra','max'];
-const PH={chat:'Frag Virgo alles — Code, Business, Strategie...',img:'Beschreibe dein Bild...',vid:'Beschreibe dein Video...',code:'Beschreibe deinen Code — Sprache, Funktion, Problem...'};
+const PH={chat:'Frag Virgo alles — Code, Business, Strategie...',img:'Beschreibe dein Bild...',vid:'Beschreibe dein Video...',code:'Beschreibe deinen Code — Sprache, Funktion, Problem...',agent:'Gib dem Agent ein Ziel — er erledigt es automatisch...'};
 
 let authToken=localStorage.getItem('virgo_token')||null;
 let currentUser=JSON.parse(localStorage.getItem('virgo_user')||'null');
@@ -422,6 +423,7 @@ function setModel(el,model,name){
   if(model.startsWith('vid'))switchMode('vid',document.getElementById('mode-vid'));
   else if(model.startsWith('img'))switchMode('img',document.getElementById('mode-img'));
   else if(model==='code')switchMode('code',document.getElementById('mode-chat'));
+  else if(model==='agent')switchMode('agent',document.getElementById('mode-chat'));
   else switchMode('chat',document.getElementById('mode-chat'));
   closeSb();
 }
@@ -734,9 +736,12 @@ function endGen(){
 function cancelGen(){clearInterval(genTimer);endGen();hideTyping();}
 
 async function genChat(txt){
+  if(state.model==='agent')document.getElementById('gl').textContent='Agent arbeitet...';
   showTyping();
   const isCodeMode=state.model==='code';
-  fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:conversationHistory,codeMode:isCodeMode})})
+  const isAgentMode=state.model==='agent';
+  const endpoint=isAgentMode?'/api/agent':'/api/chat';
+  fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:conversationHistory,codeMode:isCodeMode})})
   .then(r=>r.json()).then(async d=>{
     hideTyping();
     const reply=d.content?.[0]?.text||'Fehler beim Laden.';
