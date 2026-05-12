@@ -20,7 +20,7 @@ export default async function handler(req, res) {
         const HF_KEY_ID = process.env.HIGGSFIELD_KEY_ID;
         const HF_KEY_SECRET = process.env.HIGGSFIELD_KEY_SECRET;
         const authHeader = `Key ${HF_KEY_ID}:${HF_KEY_SECRET}`;
-        const pollRes = await fetch(`https://cloud.higgsfield.ai/requests/${taskId}/status`, {
+        const pollRes = await fetch(`https://platform.higgsfield.ai/requests/${taskId}/status`, {
           headers: { 'Authorization': authHeader, 'User-Agent': 'higgsfield-server-js/2.0' }
         });
         const text = await pollRes.text();
@@ -102,8 +102,8 @@ export default async function handler(req, res) {
       };
 
       const endpoint = imageUrl 
-        ? 'https://cloud.higgsfield.ai/v1/image2video/dop'
-        : 'https://cloud.higgsfield.ai/v1/text2video/dop';
+        ? 'https://platform.higgsfield.ai/v1/image2video/dop'
+        : 'https://platform.higgsfield.ai/v1/text2video/dop';
 
       const createRes = await fetch(endpoint, {
         method: 'POST',
@@ -156,4 +156,3 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Server Fehler: ' + error.message });
   }
 }
-
