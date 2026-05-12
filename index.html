@@ -802,7 +802,7 @@ async function doUpscale(url,type){
     const r=await fetch('/api/upscale',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,type})});
     const d=await r.json();
     if(d.url)addAIMsg('✅ Fertig! <a href="'+d.url+'" download target="_blank" style="color:var(--blue);text-decoration:underline">4K Download</a>');
-    else addAIMsg('Upscale fehlgeschlagen.');
+    else addAIMsg('❌ Upscale: '+(d.error||'Fehlgeschlagen'));
   }catch(e){addAIMsg('Upscale Fehler.');}
 }
 async function doLipsync(videoUrl){
