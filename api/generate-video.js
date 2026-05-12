@@ -15,6 +15,27 @@ export default async function handler(req, res) {
 
     // ── POLL existing task ──
     if (taskId) {
+      // Higgsfield uses different endpoint
+      if (model === 'higgsfield') {
+        const HF_KEY_ID = process.env.HIGGSFIELD_KEY_ID;
+        const HF_KEY_SECRET = process.env.HIGGSFIELD_KEY_SECRET;
+        const credentials = Buffer.from(`${HF_KEY_ID}:${HF_KEY_SECRET}`).toString('base64');
+        const pollRes = await fetch(`https://cloud.higgsfield.ai/v1/generate/${taskId}`, {
+          headers: { 'Authorization': `Basic ${credentials}` }
+        });
+        const pd = await pollRes.json();
+        const status = (pd?.status || '').toUpperCase();
+        if (status === 'COMPLETED' || status === 'DONE') {
+          const videoUrl = pd?.output?.url || pd?.video_url || pd?.url;
+          return res.status(200).json({ success: true, videoUrl, status: 'completed' });
+        }
+        if (status === 'FAILED' || status === 'ERROR') {
+          return res.status(500).json({ error: pd?.message || 'Higgsfield fehlgeschlagen', status: 'failed' });
+        }
+        return res.status(200).json({ status: 'processing', taskId, model: 'higgsfield' });
+      }
+
+      // PiAPI polling (Veo, Hailuo)
       const pollRes = await fetch(`https://api.piapi.ai/api/v1/task/${taskId}`, {
         headers: { 'X-API-KEY': PIAPI_KEY }
       });
