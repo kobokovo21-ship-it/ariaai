@@ -8,34 +8,45 @@ export default async function handler(req, res) {
   const KEY = process.env.PIAPI_KEY;
 
   try {
-    const { url } = req.body;
+    const { url, type = 'image' } = req.body;
     if (!url) return res.status(400).json({ error: 'Keine URL angegeben' });
+
+    const taskBody = type === 'video' ? {
+      model: 'Qubico/video-toolkit',
+      task_type: 'upscale',
+      input: { video: url }
+    } : {
+      model: 'Qubico/image-toolkit',
+      task_type: 'upscale',
+      input: { image: url, scale: 2, face_enhance: true }
+    };
 
     const createRes = await fetch('https://api.piapi.ai/api/v1/task', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-API-KEY': KEY },
-      body: JSON.stringify({
-        model: 'Qubico/image-toolkit',
-        task_type: 'upscale',
-        input: {
-          image_url: url,
-          upscale_factor: 4
-        }
-      })
+      body: JSON.stringify(taskBody)
     });
 
-    const cd = await createRes.json();
+    const text = await createRes.text();
+    let cd;
+    try { cd = JSON.parse(text); } catch(e) { return res.status(500).json({ error: 'Ungültige API Antwort: ' + text.substring(0,200) }); }
+
     const taskId = cd?.data?.task_id;
-    if (!taskId) return res.status(500).json({ error: cd?.data?.error?.message || 'Upscale Task fehlgeschlagen' });
+    if (!taskId) return res.status(500).json({ error: cd?.data?.error?.message || 'Task fehlgeschlagen: ' + JSON.stringify(cd).substring(0,200) });
 
     for (let i = 0; i < 20; i++) {
       await new Promise(r => setTimeout(r, 3000));
-      const pd = await (await fetch(`https://api.piapi.ai/api/v1/task/${taskId}`, { headers: { 'X-API-KEY': KEY } })).json();
+      const pollRes = await fetch(`https://api.piapi.ai/api/v1/task/${taskId}`, {
+        headers: { 'X-API-KEY': KEY }
+      });
+      const pt = await pollRes.text();
+      let pd;
+      try { pd = JSON.parse(pt); } catch(e) { continue; }
       const status = pd?.data?.status;
       const output = pd?.data?.output;
       if (status === 'completed') {
-        const imageUrl = output?.image_url || output?.url || output?.image;
-        return res.status(200).json({ success: true, url: imageUrl });
+        const resultUrl = output?.image_url || output?.image || output?.video_url || output?.video || output?.url;
+        return res.status(200).json({ success: true, url: resultUrl });
       }
       if (status === 'failed') return res.status(500).json({ error: pd?.data?.error?.message || 'Upscale fehlgeschlagen' });
     }
@@ -45,3 +56,4 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Server Fehler: ' + error.message });
   }
 }
+
