@@ -8,45 +8,40 @@ export default async function handler(req, res) {
   const KEY = process.env.PIAPI_KEY;
 
   try {
-    const { url, type = 'image' } = req.body;
-
-    const taskBody = type === 'video' ? {
-      model: 'video-upscale',
-      task_type: 'video-upscale',
-      input: { video_url: url, scale: 2 }
-    } : {
-      model: 'image-upscale',
-      task_type: 'super-resolution',
-      input: { image_url: url, scale: 4 }
-    };
+    const { url } = req.body;
+    if (!url) return res.status(400).json({ error: 'Keine URL angegeben' });
 
     const createRes = await fetch('https://api.piapi.ai/api/v1/task', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-API-KEY': KEY },
-      body: JSON.stringify(taskBody)
+      body: JSON.stringify({
+        model: 'Qubico/image-toolkit',
+        task_type: 'upscale',
+        input: {
+          image_url: url,
+          upscale_factor: 4
+        }
+      })
     });
 
-    const createData = await createRes.json();
-    const taskId = createData?.data?.task_id;
-    if (!taskId) return res.status(500).json({ error: 'Upscale fehlgeschlagen', details: createData });
+    const cd = await createRes.json();
+    const taskId = cd?.data?.task_id;
+    if (!taskId) return res.status(500).json({ error: cd?.data?.error?.message || 'Upscale Task fehlgeschlagen' });
 
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 20; i++) {
       await new Promise(r => setTimeout(r, 3000));
-      const pollRes = await fetch(`https://api.piapi.ai/api/v1/task/${taskId}`, {
-        headers: { 'X-API-KEY': KEY }
-      });
-      const pollData = await pollRes.json();
-      const status = pollData?.data?.status;
-      const output = pollData?.data?.output;
+      const pd = await (await fetch(`https://api.piapi.ai/api/v1/task/${taskId}`, { headers: { 'X-API-KEY': KEY } })).json();
+      const status = pd?.data?.status;
+      const output = pd?.data?.output;
       if (status === 'completed') {
-        const resultUrl = output?.image_url || output?.video_url || output?.url;
-        return res.status(200).json({ success: true, url: resultUrl });
+        const imageUrl = output?.image_url || output?.url || output?.image;
+        return res.status(200).json({ success: true, url: imageUrl });
       }
-      if (status === 'failed') return res.status(500).json({ error: 'Upscale fehlgeschlagen' });
+      if (status === 'failed') return res.status(500).json({ error: pd?.data?.error?.message || 'Upscale fehlgeschlagen' });
     }
-    return res.status(504).json({ error: 'Timeout' });
+    return res.status(504).json({ error: 'Timeout — bitte nochmal versuchen' });
 
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: 'Server Fehler: ' + error.message });
   }
 }
