@@ -213,7 +213,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
     <button class="mc" onclick="setModel(this,'img-seed','Seedream 5.0')"><div class="md"></div>Seedream 5.0<span class="mt">Bild · 1cr</span></button>
     <button class="mc" onclick="setModel(this,'vid-hailuo','Hailuo 2.3')"><div class="md"></div>Hailuo 2.3<span class="mt">Video · 10cr</span></button>
     <button class="mc" onclick="setModel(this,'vid-veo','Veo 3.1')"><div class="md"></div>Veo 3.1<span class="mt">Video · 10cr</span></button>
-    <button class="mc" onclick="setModel(this,'vid-sora','Sora 2.0')"><div class="md"></div>Sora 2.0<span class="mt">Video · 10cr</span></button>
+    <button class="mc" onclick="alert('Sora 2.0 — Coming Soon! Aktuell noch nicht öffentlich verfügbar.')"><div class="md"></div>Sora 2.0<span class="mt soon" style="background:#FEF3C7;color:#92400E">Soon</span></button>
     <button class="mc" onclick="setModel(this,'vid-higgsfield','Higgsfield 1.1')"><div class="md"></div>Higgsfield 1.1<span class="mt premium">Ultra</span></button>
   </div>
   <div class="hist" id="hist">
@@ -714,7 +714,7 @@ async function genChat(txt){
 }
 
 function genImage(prompt){
-  const mm={'img-nano':'nano','img-mj':'midjourney','img-seed':'seedream','img-modelia':'nano'};
+  const mm={'img-nano':'nano','img-mj':'nano','img-seed':'seedream','img-modelia':'nano'};
   let fp=prompt;
   if(state.model==='img-modelia')fp=prompt+', shot on 35mm lens f/1.8, vogue editorial style, high-end fashion photography, hyper-realistic skin texture, professional studio lighting, 8k, cinematic color grading';
   startGen('Generiert Bild mit '+state.modelName+'...');showTyping();
@@ -724,7 +724,7 @@ function genImage(prompt){
   .then(r=>r.json()).then(async d=>{
     hideTyping();endGen();
     if(d.imageUrl)addImageCard(prompt,d.imageUrl);
-    else addAIMsg('Bild konnte nicht generiert werden.');
+    else addAIMsg('❌ ' + (d.error || 'Bild konnte nicht generiert werden.'));
     clearRef();
   }).catch(()=>{hideTyping();endGen();addAIMsg('Fehler bei der Bildgenerierung.');});
 }
@@ -740,7 +740,7 @@ function genVideo(prompt){
   .then(r=>r.json()).then(async d=>{
     hideTyping();endGen();
     if(d.videoUrl)addVideoCard(prompt,d.videoUrl,state.modelName);
-    else addAIMsg('Video konnte nicht generiert werden.');
+    else addAIMsg('❌ ' + (d.error || 'Video konnte nicht generiert werden.'));
     clearRef();
   }).catch(()=>{hideTyping();endGen();addAIMsg('Fehler bei der Video-Generierung.');});
 }
