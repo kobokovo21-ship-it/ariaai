@@ -218,6 +218,18 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
     <button class="mc on" onclick="setModel(this,'chat','Virgo Chat')"><div class="md"></div>Virgo Chat</button>
     <button class="mc" onclick="setModel(this,'code','Code AI')"><div class="md"></div>Code AI<span class="mt" style="background:#dbeafe;color:#1d4ed8">Dev</span></button>
     <button class="mc" onclick="setModel(this,'agent','Virgo Agent')"><div class="md"></div>Virgo Agent ⚡<span class="mt" style="background:#fce7f3;color:#9d174d">AI Agent</span></button>
+  </div>
+  <div class="ms" style="max-height:220px">
+    <span class="sl">Business Tools</span>
+    <button class="mc" onclick="setModel(this,'business-plan','Business Plan')"><div class="md"></div>Business Plan<span class="mt" style="background:#dcfce7;color:#166534">AI</span></button>
+    <button class="mc" onclick="setModel(this,'business-website','Website Text')"><div class="md"></div>Website Text<span class="mt" style="background:#dcfce7;color:#166534">AI</span></button>
+    <button class="mc" onclick="setModel(this,'business-ads','Ads Generator')"><div class="md"></div>Ads Generator<span class="mt" style="background:#dcfce7;color:#166534">AI</span></button>
+    <button class="mc" onclick="setModel(this,'business-social','Social Media')"><div class="md"></div>Social Media Posts<span class="mt" style="background:#dcfce7;color:#166534">AI</span></button>
+    <button class="mc" onclick="setModel(this,'business-email','Email Sequenz')"><div class="md"></div>Email Sequenz<span class="mt" style="background:#dcfce7;color:#166534">AI</span></button>
+    <button class="mc" onclick="setModel(this,'business-pitch','Pitch Deck')"><div class="md"></div>Pitch Deck<span class="mt" style="background:#dcfce7;color:#166534">AI</span></button>
+    <button class="mc" onclick="openInvoiceModal()"><div class="md"></div>🧾 Rechnung erstellen<span class="mt">PDF</span></button>
+    <button class="mc" onclick="openTTSModal()"><div class="md"></div>🔊 Text zu Sprache<span class="mt">ElevenLabs</span></button>
+    <button class="mc" onclick="window.open('/leads.html','_blank')"><div class="md"></div>📊 Leads Dashboard<span class="mt admin-only" id="leads-badge" style="display:none">Admin</span></button>
     <button class="mc modelia" onclick="setModel(this,'img-modelia','Modelia Fashion Pro')"><div class="md"></div>Modelia Fashion Pro<span class="mt gold">✨ 2cr</span></button>
     <button class="mc" onclick="setModel(this,'img-nano','Nano Banana Pro')"><div class="md"></div>Nano Banana Pro<span class="mt">Bild · 1cr</span></button>
     <button class="mc" onclick="setModel(this,'img-seed','Seedream 5.0')"><div class="md"></div>Seedream 5.0<span class="mt">Bild · 1cr</span></button>
@@ -324,6 +336,56 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
   </div>
 </div>
 
+<!-- INVOICE MODAL -->
+<div class="modal" id="modal-invoice">
+  <div class="mb2" style="width:500px">
+    <button class="mclose" onclick="closeM('modal-invoice')">×</button>
+    <h2>🧾 Rechnung erstellen</h2>
+    <p>Erstelle eine professionelle Rechnung als HTML.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Rechnungsnummer</label><input class="minp" id="inv-nr" placeholder="INV-001"></div>
+      <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Datum</label><input class="minp" id="inv-datum" type="date"></div>
+      <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Kundenname *</label><input class="minp" id="inv-kunde" placeholder="Max Mustermann"></div>
+      <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Betrag (netto) *</label><input class="minp" id="inv-betrag" type="number" placeholder="100"></div>
+    </div>
+    <label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Leistungsbeschreibung *</label>
+    <textarea class="minp" id="inv-leistung" placeholder="KI-Beratung, 1 Stunde..." style="margin-bottom:8px;min-height:60px;resize:vertical"></textarea>
+    <label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Ihre Adresse / Firma</label>
+    <input class="minp" id="inv-absender" placeholder="Virgo AI, virgoio.com">
+    <div id="inv-msg" style="font-size:12px;color:var(--red);margin:8px 0;display:none"></div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="mbtn sec" onclick="closeM('modal-invoice')">Abbrechen</button>
+      <button class="mbtn" onclick="createInvoice()">Rechnung erstellen</button>
+    </div>
+  </div>
+</div>
+
+<!-- TTS MODAL -->
+<div class="modal" id="modal-tts">
+  <div class="mb2" style="width:480px">
+    <button class="mclose" onclick="closeM('modal-tts')">×</button>
+    <h2>🔊 Text zu Sprache</h2>
+    <p>Powered by ElevenLabs — natürliche KI-Stimmen.</p>
+    <label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Text eingeben</label>
+    <textarea class="minp" id="tts-text" placeholder="Gib deinen Text ein..." style="min-height:100px;resize:vertical;margin-bottom:12px"></textarea>
+    <label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Stimme</label>
+    <select class="minp" id="tts-voice" style="margin-bottom:12px">
+      <option value="pNInz6obpgDQGcFmaJgB">Adam — männlich, amerikanisch</option>
+      <option value="EXAVITQu4vr4xnSDxMaL">Bella — weiblich, amerikanisch</option>
+      <option value="VR6AewLTigWG4xSOukaG">Arnold — männlich, amerikanisch</option>
+      <option value="MF3mGyEYCl7XYWbV9V6O">Elli — weiblich, deutsch</option>
+    </select>
+    <div id="tts-audio" style="display:none;margin-bottom:12px">
+      <audio id="tts-player" controls style="width:100%;border-radius:8px"></audio>
+    </div>
+    <div id="tts-msg" style="font-size:12px;color:var(--red);margin:8px 0;display:none"></div>
+    <div style="display:flex;gap:8px">
+      <button class="mbtn sec" onclick="closeM('modal-tts')">Schließen</button>
+      <button class="mbtn" id="tts-btn" onclick="generateTTS()">Generieren</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal" id="modal-upgrade">
   <div class="mb2 wide">
     <button class="mclose" onclick="closeM('modal-upgrade')">×</button>
@@ -349,7 +411,19 @@ const state={mode:'chat',model:'chat',modelName:'Virgo Chat',generating:false,ch
 const COST={img:1,vid:10,tool:5,modelia:2};
 const PREMIUM=['vid-veo','vid-sora','vid-higgsfield'];
 const PRO_PLANS=['pro','master','ultra','max'];
-const PH={chat:'Frag Virgo alles — Code, Business, Strategie...',img:'Beschreibe dein Bild...',vid:'Beschreibe dein Video...',code:'Beschreibe deinen Code — Sprache, Funktion, Problem...',agent:'Gib dem Agent ein Ziel — er erledigt es automatisch...'};
+const PH={
+  chat:'Frag Virgo alles — Code, Business, Strategie...',
+  img:'Beschreibe dein Bild...',
+  vid:'Beschreibe dein Video...',
+  code:'Beschreibe deinen Code — Sprache, Funktion, Problem...',
+  agent:'Gib dem Agent ein Ziel — er erledigt es automatisch...',
+  'business-plan':'Beschreibe dein Business — Name, Branche, Produkt, Zielgruppe...',
+  'business-website':'Beschreibe dein Business für den Website-Text...',
+  'business-ads':'Beschreibe dein Produkt für Meta/Google Ads...',
+  'business-social':'Beschreibe dein Business für Social Media Posts...',
+  'business-email':'Beschreibe dein Angebot für die Email-Sequenz...',
+  'business-pitch':'Beschreibe dein Startup für den Pitch...'
+};
 
 let authToken=localStorage.getItem('virgo_token')||null;
 let currentUser=JSON.parse(localStorage.getItem('virgo_user')||'null');
@@ -424,6 +498,7 @@ function setModel(el,model,name){
   else if(model.startsWith('img'))switchMode('img',document.getElementById('mode-img'));
   else if(model==='code')switchMode('code',document.getElementById('mode-chat'));
   else if(model==='agent')switchMode('agent',document.getElementById('mode-chat'));
+  else if(model.startsWith('business-'))switchMode(model,document.getElementById('mode-chat'));
   else switchMode('chat',document.getElementById('mode-chat'));
   closeSb();
 }
@@ -516,6 +591,8 @@ function updateUI(){
     if(PREMIUM.includes(m))btn.style.opacity=isPro()?'1':'0.45';
     if(m.startsWith('vid')&&!li)btn.style.opacity='0.45';
   });
+  const leadsB=document.getElementById('leads-badge');
+  if(leadsB)leadsB.style.display=isAdmin()?'inline-block':'none';
 }
 
 async function loadCredits(){
@@ -740,8 +817,14 @@ async function genChat(txt){
   showTyping();
   const isCodeMode=state.model==='code';
   const isAgentMode=state.model==='agent';
-  const endpoint=isAgentMode?'/api/agent':'/api/chat';
-  fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:conversationHistory,codeMode:isCodeMode})})
+  const isBusinessMode=state.model.startsWith('business-');
+  let endpoint='/api/chat';
+  if(isAgentMode)endpoint='/api/agent';
+  if(isBusinessMode)endpoint='/api/business';
+  const bodyData=isBusinessMode
+    ?{type:state.model.replace('business-',''),messages:conversationHistory,data:{prompt:txt}}
+    :{messages:conversationHistory,codeMode:isCodeMode};
+  fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(bodyData)})
   .then(r=>r.json()).then(async d=>{
     hideTyping();
     const reply=d.content?.[0]?.text||'Fehler beim Laden.';
@@ -955,6 +1038,65 @@ function closeM(id){
 }
 document.querySelectorAll('.modal').forEach(m=>{m.addEventListener('click',function(e){if(e.target===this)closeM(this.id);});});
 function scrollFeed(){document.getElementById('feed').scrollTop=99999;}
+
+// ═══════════════════════════════
+// INVOICE
+// ═══════════════════════════════
+function openInvoiceModal(){
+  document.getElementById('inv-datum').value=new Date().toISOString().split('T')[0];
+  showM('modal-invoice');
+  closeSb();
+}
+
+async function createInvoice(){
+  const kunde=document.getElementById('inv-kunde').value.trim();
+  const leistung=document.getElementById('inv-leistung').value.trim();
+  const betrag=document.getElementById('inv-betrag').value;
+  const msg=document.getElementById('inv-msg');
+  if(!kunde||!leistung||!betrag){msg.textContent='Bitte alle Pflichtfelder ausfüllen.';msg.style.display='block';return;}
+  msg.style.display='none';
+  try{
+    const r=await fetch('/api/invoice',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      invoice_nr:document.getElementById('inv-nr').value||'INV-'+Date.now(),
+      kunde,leistung,betrag,
+      datum:document.getElementById('inv-datum').value,
+      absender_name:document.getElementById('inv-absender').value||'Virgo AI'
+    })});
+    const d=await r.json();
+    if(d.error){msg.textContent=d.error;msg.style.display='block';return;}
+    const blob=new Blob([d.html],{type:'text/html'});
+    const url=URL.createObjectURL(blob);
+    window.open(url,'_blank');
+    closeM('modal-invoice');
+    addAIMsg('✅ Rechnung erstellt! Zum Drucken: Datei → Drucken → Als PDF speichern.');
+  }catch(e){msg.textContent='Fehler: '+e.message;msg.style.display='block';}
+}
+
+// ═══════════════════════════════
+// TEXT TO SPEECH
+// ═══════════════════════════════
+function openTTSModal(){showM('modal-tts');closeSb();}
+
+async function generateTTS(){
+  const text=document.getElementById('tts-text').value.trim();
+  const voice=document.getElementById('tts-voice').value;
+  const msg=document.getElementById('tts-msg');
+  const btn=document.getElementById('tts-btn');
+  if(!text){msg.textContent='Bitte Text eingeben.';msg.style.display='block';return;}
+  msg.style.display='none';
+  btn.disabled=true;btn.textContent='Generiert...';
+  try{
+    const r=await fetch('/api/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,voice_id:voice})});
+    const d=await r.json();
+    if(d.error){msg.textContent=d.error;msg.style.display='block';btn.disabled=false;btn.textContent='Generieren';return;}
+    const audioSrc='data:audio/mpeg;base64,'+d.audio;
+    const player=document.getElementById('tts-player');
+    player.src=audioSrc;
+    document.getElementById('tts-audio').style.display='block';
+    player.play();
+  }catch(e){msg.textContent='Fehler: '+e.message;msg.style.display='block';}
+  btn.disabled=false;btn.textContent='Generieren';
+}
 
 // ═══════════════════════════════
 // INIT
