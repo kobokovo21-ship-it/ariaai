@@ -138,8 +138,8 @@ export default async function handler(req, res) {
     const tid = cd?.data?.task_id;
     if (!tid) return res.status(500).json({ error: cd?.data?.error?.message || 'Hailuo: Task fehlgeschlagen' });
 
-    // Poll server-side for Hailuo (usually fast enough)
-    for (let i = 0; i < 15; i++) {
+    // Poll server-side briefly, then hand off to client
+    for (let i = 0; i < 5; i++) {
       await new Promise(r => setTimeout(r, 4000));
       const pd = await (await fetch(`https://api.piapi.ai/api/v1/task/${tid}`, { headers: { 'X-API-KEY': PIAPI_KEY } })).json();
       if (pd?.data?.status === 'completed') {
@@ -149,10 +149,11 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: pd?.data?.error?.message || 'Hailuo fehlgeschlagen' });
       }
     }
-    // If still processing after 60s, return taskId for client polling
+    // Return taskId for client-side polling
     return res.status(200).json({ status: 'processing', taskId: tid, model: 'hailuo' });
 
   } catch (error) {
     return res.status(500).json({ error: 'Server Fehler: ' + error.message });
   }
 }
+
