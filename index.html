@@ -174,6 +174,15 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
 .footer-links{padding:6px 16px;border-top:1px solid var(--bd);display:flex;gap:12px;flex-shrink:0}
 .footer-links a{font-size:10px;color:var(--td);text-decoration:none}
 
+/* Code Blocks */
+.code-block{background:#1e1e1e;border-radius:10px;overflow:hidden;margin:8px 0;max-width:100%}
+.code-header{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#2d2d2d;font-size:10px;color:#888}
+.code-lang{color:#569cd6;font-weight:600;text-transform:uppercase;letter-spacing:1px}
+.code-copy{background:transparent;border:1px solid #444;color:#888;font-size:10px;padding:3px 8px;border-radius:4px;cursor:pointer;font-family:Inter,sans-serif}
+.code-copy:hover{border-color:#888;color:#fff}
+.code-block pre{margin:0;padding:12px;overflow-x:auto;font-family:'Courier New',monospace;font-size:12px;line-height:1.6;color:#d4d4d4}
+.code-block code{color:#d4d4d4}
+
 @media(max-width:768px){
   .sb{position:fixed;top:0;left:0;bottom:0;width:280px;z-index:99;transform:translateX(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1)}
   .sb.open{transform:translateX(0)}
@@ -625,6 +634,14 @@ function clearRef(){refImages=[];renderRefZone();}
 // ═══════════════════════════════
 function renderMD(t){
   if(!t)return'';
+  // Handle code blocks first (before escaping)
+  const codeBlocks=[];
+  t=t.replace(/```([\w]*)?\n?([\s\S]*?)```/g,(match,lang,code)=>{
+    const id='cb'+codeBlocks.length;
+    const langLabel=lang||'code';
+    codeBlocks.push({id,lang:langLabel,code:code.trim()});
+    return '%%%CODEBLOCK_'+id+'%%%';
+  });
   t=t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   t=t.replace(/^### (.+)$/gm,'<b style="display:block;margin:8px 0 3px;font-size:13px">$1</b>');
   t=t.replace(/^## (.+)$/gm,'<b style="display:block;margin:10px 0 4px;font-size:14px">$1</b>');
@@ -633,11 +650,26 @@ function renderMD(t){
   t=t.replace(/\*([^*\n]+)\*/g,'<i>$1</i>');
   t=t.replace(/^---$/gm,'<hr style="border:none;border-top:1px solid var(--bd);margin:8px 0">');
   t=t.replace(/^[-•] (.+)$/gm,'<div style="margin:2px 0 2px 12px">• $1</div>');
-  t=t.replace(/`([^`]+)`/g,'<code style="background:var(--sf2);padding:1px 4px;border-radius:3px;font-size:11px">$1</code>');
+  t=t.replace(/`([^`]+)`/g,'<code style="background:var(--sf2);padding:1px 4px;border-radius:3px;font-size:11px;font-family:monospace">$1</code>');
   t=t.replace(/\|\s*[-:| ]+\s*\|[\s\S]*?(?=\n[^|]|\n$|$)/g,'');
   t=t.replace(/^\|(.+)\|$/gm,(_,c)=>'<div style="display:flex;border-bottom:1px solid var(--bd)">'+c.split('|').filter(x=>x.trim()).map(x=>'<div style="flex:1;padding:3px 6px;font-size:11px;border-right:1px solid var(--bd)">'+x.trim()+'</div>').join('')+'</div>');
   t=t.replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
+  // Restore code blocks with syntax highlighting
+  codeBlocks.forEach(({id,lang,code})=>{
+    const escaped=code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const html=`<div class="code-block"><div class="code-header"><span class="code-lang">${lang}</span><button class="code-copy" onclick="copyCode(this,'${id}')">Kopieren</button></div><pre id="${id}"><code>${escaped}</code></pre></div>`;
+    t=t.replace('%%%CODEBLOCK_'+id+'%%%',html);
+  });
   return t;
+}
+
+function copyCode(btn,id){
+  const el=document.getElementById(id);
+  if(!el)return;
+  navigator.clipboard.writeText(el.innerText).then(()=>{
+    btn.textContent='✓ Kopiert';
+    setTimeout(()=>btn.textContent='Kopieren',2000);
+  });
 }
 
 // ═══════════════════════════════
