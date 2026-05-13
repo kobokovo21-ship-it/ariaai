@@ -1086,7 +1086,7 @@ async function generateTTS(){
   msg.style.display='none';
   btn.disabled=true;btn.textContent='Generiert...';
   try{
-    const r=await fetch('/api/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,voice_id:voice})});
+    const r=await fetch('/api/tools',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tool:'tts',text,voice_id:voice})});
     const d=await r.json();
     if(d.error){msg.textContent=d.error;msg.style.display='block';btn.disabled=false;btn.textContent='Generieren';return;}
     const audioSrc='data:audio/mpeg;base64,'+d.audio;
