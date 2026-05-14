@@ -1,96 +1,196 @@
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).end();
 
-  const { tool } = req.body;
+  const BASE = process.env.SUPABASE_URL;
+  const SVC = process.env.SUPABASE_SERVICE_KEY;
+  const RESEND = process.env.RESEND_API_KEY;
+  const ELEVEN = process.env.ELEVENLABS_API_KEY;
+
+  const body = req.method !== 'GET' ? (req.body || {}) : {};
+  const tool = req.method === 'GET' ? req.query.tool : body.tool;
 
   // ── TEXT TO SPEECH ──
   if (tool === 'tts') {
-    const KEY = process.env.ELEVENLABS_API_KEY;
     try {
-      const { text, voice_id = 'pNInz6obpgDQGcFmaJgB', model_id = 'eleven_multilingual_v2' } = req.body;
+      const { text, voice_id = 'pNInz6obpgDQGcFmaJgB', model_id = 'eleven_multilingual_v2' } = body;
       if (!text) return res.status(400).json({ error: 'Kein Text angegeben' });
       if (text.length > 5000) return res.status(400).json({ error: 'Text zu lang (max. 5000 Zeichen)' });
-
       const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voice_id}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'xi-api-key': KEY },
+        headers: { 'Content-Type': 'application/json', 'xi-api-key': ELEVEN },
         body: JSON.stringify({ text, model_id, voice_settings: { stability: 0.5, similarity_boost: 0.75 } })
       });
-
       if (!r.ok) {
         const err = await r.json().catch(() => ({}));
         return res.status(500).json({ error: err.detail?.message || 'TTS fehlgeschlagen' });
       }
-
-      const audioBuffer = await r.arrayBuffer();
-      const base64 = Buffer.from(audioBuffer).toString('base64');
+      const buf = await r.arrayBuffer();
+      const base64 = Buffer.from(buf).toString('base64');
       return res.status(200).json({ success: true, audio: base64, mime: 'audio/mpeg' });
-    } catch (err) {
-      return res.status(500).json({ error: err.message });
-    }
+    } catch (e) { return res.status(500).json({ error: e.message }); }
   }
 
   // ── SEND EMAIL ──
   if (tool === 'email') {
-    const KEY = process.env.RESEND_API_KEY;
     try {
-      const { type, to, data = {} } = req.body;
+      const { type, to, data = {} } = body;
       if (!to) return res.status(400).json({ error: 'Kein Empfänger angegeben' });
-
       let subject, html;
-
       if (type === 'welcome') {
-        subject = '🎉 Willkommen bei Virgo AI!';
+        subject = 'Willkommen bei Virgo AI!';
         html = `<div style="font-family:Inter,sans-serif;max-width:600px;margin:0 auto;padding:40px 20px">
           <h1 style="font-size:13px;font-weight:200;letter-spacing:8px;color:#111;margin-bottom:24px">V I R G O</h1>
-          <h2 style="font-size:24px;font-weight:300;color:#111;margin-bottom:16px">Willkommen bei Virgo AI!</h2>
-          <p style="font-size:14px;color:#888;line-height:1.7;margin-bottom:24px">Du hast 10 Start-Credits erhalten. Generiere Videos, Bilder und nutze den KI-Chat für alles.</p>
-          <a href="https://virgoio.com" style="display:inline-block;padding:12px 24px;background:#111;color:#fff;text-decoration:none;border-radius:8px;font-size:13px">Jetzt starten →</a>
-          <p style="font-size:11px;color:#bbb;margin-top:32px">Virgo AI · virgoio.com</p>
-        </div>`;
+          <h2 style="font-size:24px;font-weight:300;margin-bottom:16px">Willkommen!</h2>
+          <p style="font-size:14px;color:#888;line-height:1.7;margin-bottom:24px">Du hast 10 Start-Credits. Generiere Videos, Bilder und nutze den KI-Chat.</p>
+          <a href="https://virgoio.com" style="padding:12px 24px;background:#111;color:#fff;text-decoration:none;border-radius:8px;font-size:13px">Jetzt starten</a>
+          <p style="font-size:11px;color:#bbb;margin-top:32px">Virgo AI · virgoio.com</p></div>`;
       } else if (type === 'lead') {
-        subject = '🔔 Neuer Lead: ' + (data.versicherung || 'Versicherung');
+        subject = 'Neuer Lead: ' + (data.versicherung || 'Versicherung');
         html = `<div style="font-family:Inter,sans-serif;max-width:600px;margin:0 auto;padding:40px 20px">
           <h1 style="font-size:13px;font-weight:200;letter-spacing:8px;color:#111;margin-bottom:24px">V I R G O</h1>
-          <h2 style="font-size:20px;font-weight:500;color:#111;margin-bottom:16px">Neuer Lead eingegangen!</h2>
+          <h2 style="font-size:20px;font-weight:500;margin-bottom:16px">Neuer Lead!</h2>
           <div style="background:#f7f7f7;border-radius:12px;padding:20px;margin-bottom:20px">
-            <p style="font-size:13px;margin-bottom:8px"><strong>Name:</strong> ${data.name || '—'}</p>
-            <p style="font-size:13px;margin-bottom:8px"><strong>Telefon:</strong> ${data.telefon || '—'}</p>
-            <p style="font-size:13px;margin-bottom:8px"><strong>Email:</strong> ${data.email || '—'}</p>
-            <p style="font-size:13px;margin-bottom:8px"><strong>Versicherung:</strong> ${data.versicherung || '—'}</p>
-            <p style="font-size:13px"><strong>Notiz:</strong> ${data.notiz || '—'}</p>
+            <p style="font-size:13px;margin-bottom:8px"><strong>Name:</strong> ${data.name||'—'}</p>
+            <p style="font-size:13px;margin-bottom:8px"><strong>Telefon:</strong> ${data.telefon||'—'}</p>
+            <p style="font-size:13px;margin-bottom:8px"><strong>Email:</strong> ${data.email||'—'}</p>
+            <p style="font-size:13px"><strong>Versicherung:</strong> ${data.versicherung||'—'}</p>
           </div>
-          <a href="https://virgoio.com/leads.html" style="display:inline-block;padding:12px 24px;background:#111;color:#fff;text-decoration:none;border-radius:8px;font-size:13px">Lead anzeigen →</a>
-          <p style="font-size:11px;color:#bbb;margin-top:32px">Virgo AI · virgoio.com</p>
-        </div>`;
+          <a href="https://virgoio.com/leads.html" style="padding:12px 24px;background:#111;color:#fff;text-decoration:none;border-radius:8px;font-size:13px">Dashboard öffnen</a>
+          <p style="font-size:11px;color:#bbb;margin-top:32px">Virgo AI · virgoio.com</p></div>`;
+      } else if (type === 'makler-lead') {
+        subject = 'Neuer Lead für ' + (data.makler_name || 'deine Landing Page');
+        html = `<div style="font-family:Inter,sans-serif;max-width:600px;margin:0 auto;padding:40px 20px">
+          <h1 style="font-size:13px;font-weight:200;letter-spacing:8px;color:#111;margin-bottom:24px">V I R G O</h1>
+          <h2 style="font-size:20px;font-weight:500;margin-bottom:16px">Neuer Lead!</h2>
+          <div style="background:#f7f7f7;border-radius:12px;padding:20px;margin-bottom:20px">
+            <p style="font-size:13px;margin-bottom:8px"><strong>Name:</strong> ${data.name||'—'}</p>
+            <p style="font-size:13px;margin-bottom:8px"><strong>Telefon:</strong> ${data.telefon||'—'}</p>
+            <p style="font-size:13px;margin-bottom:8px"><strong>Email:</strong> ${data.email||'—'}</p>
+            <p style="font-size:13px;margin-bottom:8px"><strong>Versicherung:</strong> ${data.versicherung||'—'}</p>
+            <p style="font-size:13px"><strong>Nachricht:</strong> ${data.nachricht||'—'}</p>
+          </div>
+          <p style="font-size:11px;color:#bbb;margin-top:32px">Virgo AI · virgoio.com</p></div>`;
       } else if (type === 'custom') {
         subject = data.subject || 'Nachricht von Virgo AI';
         html = `<div style="font-family:Inter,sans-serif;max-width:600px;margin:0 auto;padding:40px 20px">
           <h1 style="font-size:13px;font-weight:200;letter-spacing:8px;color:#111;margin-bottom:24px">V I R G O</h1>
-          <div style="font-size:14px;color:#111;line-height:1.7">${data.body || ''}</div>
-          <p style="font-size:11px;color:#bbb;margin-top:32px">Virgo AI · virgoio.com</p>
-        </div>`;
+          <div style="font-size:14px;color:#111;line-height:1.7">${data.body||''}</div>
+          <p style="font-size:11px;color:#bbb;margin-top:32px">Virgo AI · virgoio.com</p></div>`;
       } else {
         return res.status(400).json({ error: 'Unbekannter Email-Typ' });
       }
-
       const r = await fetch('https://api.resend.com/emails', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + KEY },
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + RESEND },
         body: JSON.stringify({ from: 'Virgo AI <onboarding@resend.dev>', to, subject, html })
       });
-
       const d = await r.json();
       if (!r.ok) return res.status(500).json({ error: d.message || 'Email fehlgeschlagen' });
       return res.status(200).json({ success: true, id: d.id });
-    } catch (err) {
-      return res.status(500).json({ error: err.message });
-    }
+    } catch (e) { return res.status(500).json({ error: e.message }); }
   }
 
-  return res.status(400).json({ error: 'Unbekanntes Tool. Nutze: tts, email' });
+  // ── MAKLER — GET PROFILE BY SLUG ──
+  if (tool === 'makler-get' || (req.method === 'GET' && req.query.slug)) {
+    try {
+      const slug = req.query.slug;
+      if (!slug) return res.status(400).json({ error: 'Slug fehlt' });
+      const r = await fetch(`${BASE}/rest/v1/makler?slug=eq.${slug}&select=*`, {
+        headers: { 'apikey': SVC, 'Authorization': `Bearer ${SVC}` }
+      });
+      const data = await r.json();
+      if (!data.length) return res.status(404).json({ error: 'Makler nicht gefunden' });
+      return res.status(200).json(data[0]);
+    } catch (e) { return res.status(500).json({ error: e.message }); }
+  }
+
+  // ── MAKLER — GET MY PROFILE ──
+  if (tool === 'makler-mine') {
+    try {
+      const token = req.headers.authorization?.replace('Bearer ', '');
+      if (!token) return res.status(401).json({ error: 'Nicht eingeloggt' });
+      const userRes = await fetch(`${BASE}/auth/v1/user`, {
+        headers: { 'apikey': SVC, 'Authorization': `Bearer ${token}` }
+      });
+      const user = await userRes.json();
+      if (!user?.id) return res.status(401).json({ error: 'Ungültiger Token' });
+      const r = await fetch(`${BASE}/rest/v1/makler?user_id=eq.${user.id}&select=*`, {
+        headers: { 'apikey': SVC, 'Authorization': `Bearer ${SVC}` }
+      });
+      const data = await r.json();
+      return res.status(200).json(data[0] || null);
+    } catch (e) { return res.status(500).json({ error: e.message }); }
+  }
+
+  // ── MAKLER — CREATE/UPDATE PROFILE ──
+  if (tool === 'makler-save') {
+    try {
+      const token = req.headers.authorization?.replace('Bearer ', '');
+      if (!token) return res.status(401).json({ error: 'Nicht eingeloggt' });
+      const userRes = await fetch(`${BASE}/auth/v1/user`, {
+        headers: { 'apikey': SVC, 'Authorization': `Bearer ${token}` }
+      });
+      const user = await userRes.json();
+      if (!user?.id) return res.status(401).json({ error: 'Ungültiger Token' });
+
+      const { name, firma, telefon, email, beschreibung, versicherungen, farbe, slug } = body;
+      if (!name || !slug) return res.status(400).json({ error: 'Name und Slug sind Pflichtfelder' });
+
+      // Check if exists
+      const checkR = await fetch(`${BASE}/rest/v1/makler?user_id=eq.${user.id}`, {
+        headers: { 'apikey': SVC, 'Authorization': `Bearer ${SVC}` }
+      });
+      const existing = await checkR.json();
+
+      const profileData = { name, firma, telefon, email, beschreibung, versicherungen, farbe, slug };
+
+      let r;
+      if (existing.length) {
+        r = await fetch(`${BASE}/rest/v1/makler?user_id=eq.${user.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', 'apikey': SVC, 'Authorization': `Bearer ${SVC}`, 'Prefer': 'return=representation' },
+          body: JSON.stringify(profileData)
+        });
+      } else {
+        r = await fetch(`${BASE}/rest/v1/makler`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': SVC, 'Authorization': `Bearer ${SVC}`, 'Prefer': 'return=representation' },
+          body: JSON.stringify({ ...profileData, user_id: user.id })
+        });
+      }
+      const data = await r.json();
+      return res.status(200).json(data[0]);
+    } catch (e) { return res.status(500).json({ error: e.message }); }
+  }
+
+  // ── MAKLER — SUBMIT LEAD FROM LANDING PAGE ──
+  if (tool === 'makler-lead') {
+    try {
+      const { makler_id, makler_email, makler_name, name, telefon, email, versicherung, nachricht } = body;
+      if (!name || !telefon) return res.status(400).json({ error: 'Name und Telefon sind Pflichtfelder' });
+
+      // Save lead to Supabase
+      await fetch(`${BASE}/rest/v1/leads`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SVC, 'Authorization': `Bearer ${SVC}` },
+        body: JSON.stringify({ name, telefon, email: email||null, versicherung: versicherung||'Allgemein', notiz: nachricht||null })
+      });
+
+      // Send email to makler
+      if (makler_email) {
+        await fetch(`${BASE.replace('/rest/v1','')}/api/tools`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tool: 'email', type: 'makler-lead', to: makler_email, data: { name, telefon, email, versicherung, nachricht, makler_name } })
+        }).catch(() => {});
+      }
+
+      return res.status(200).json({ success: true });
+    } catch (e) { return res.status(500).json({ error: e.message }); }
+  }
+
+  return res.status(400).json({ error: 'Unbekanntes Tool: ' + tool });
 }
