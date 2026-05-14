@@ -6,7 +6,7 @@ export default async function handler(req, res) {
 
   const BASE = process.env.SUPABASE_URL;
   const SVC = process.env.SUPABASE_SERVICE_KEY;
-  const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+  const MAKLER_PLANS = ['makler-starter', 'makler-pro', 'makler-business'];
 
   const token = req.headers.authorization?.replace('Bearer ', '').trim();
   if (!token) return res.status(401).json({ error: 'Nicht eingeloggt' });
@@ -18,12 +18,33 @@ export default async function handler(req, res) {
     const user = await userRes.json();
     if (!user?.id) return res.status(401).json({ error: 'Ungültiger Token' });
 
-    if (ADMIN_EMAIL && user.email !== ADMIN_EMAIL) {
-      return res.status(403).json({ error: 'Kein Zugriff' });
+    // Plan prüfen
+    const planRes = await fetch(`${BASE}/rest/v1/users?id=eq.${user.id}&select=plan`, {
+      headers: { 'apikey': SVC, 'Authorization': `Bearer ${SVC}` }
+    });
+    const planData = await planRes.json();
+    const plan = planData?.[0]?.plan || 'free';
+    const isAdmin = !!(process.env.ADMIN_EMAIL && user.email === process.env.ADMIN_EMAIL);
+
+    if (!MAKLER_PLANS.includes(plan) && !isAdmin) {
+      return res.status(403).json({ error: 'Kein Makler-Abo vorhanden' });
     }
 
+    // Makler-Profil laden um makler_id zu bekommen
+    const maklerRes = await fetch(`${BASE}/rest/v1/makler?user_id=eq.${user.id}&select=id`, {
+      headers: { 'apikey': SVC, 'Authorization': `Bearer ${SVC}` }
+    });
+    const maklerData = await maklerRes.json();
+    const maklerId = maklerData?.[0]?.id;
+
+    if (!maklerId && !isAdmin) {
+      return res.status(404).json({ error: 'Kein Makler-Profil gefunden. Bitte zuerst Profil einrichten.' });
+    }
+
+    const idFilter = maklerId ? `&makler_id=eq.${maklerId}` : '';
+
     if (req.method === 'GET') {
-      const r = await fetch(`${BASE}/rest/v1/leads?order=created_at.desc`, {
+      const r = await fetch(`${BASE}/rest/v1/leads?order=created_at.desc${idFilter}`, {
         headers: { 'apikey': SVC, 'Authorization': `Bearer ${SVC}` }
       });
       if (!r.ok) return res.status(500).json({ error: 'Datenbankfehler beim Laden' });
@@ -39,7 +60,7 @@ export default async function handler(req, res) {
       const r = await fetch(`${BASE}/rest/v1/leads`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'apikey': SVC, 'Authorization': `Bearer ${SVC}`, 'Prefer': 'return=representation' },
-        body: JSON.stringify({ name, telefon, email: email || null, versicherung, status, notiz: notiz || null })
+        body: JSON.stringify({ name, telefon, email: email || null, versicherung, status, notiz: notiz || null, makler_id: maklerId || null })
       });
       if (!r.ok) return res.status(500).json({ error: 'Datenbankfehler beim Erstellen' });
       const data = await r.json();
@@ -49,7 +70,7 @@ export default async function handler(req, res) {
     if (req.method === 'PUT') {
       const { id, ...updates } = req.body;
       if (!id) return res.status(400).json({ error: 'ID fehlt' });
-      const r = await fetch(`${BASE}/rest/v1/leads?id=eq.${id}`, {
+      const r = await fetch(`${BASE}/rest/v1/leads?id=eq.${id}${idFilter}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', 'apikey': SVC, 'Authorization': `Bearer ${SVC}`, 'Prefer': 'return=representation' },
         body: JSON.stringify(updates)
@@ -62,7 +83,7 @@ export default async function handler(req, res) {
     if (req.method === 'DELETE') {
       const { id } = req.body;
       if (!id) return res.status(400).json({ error: 'ID fehlt' });
-      const r = await fetch(`${BASE}/rest/v1/leads?id=eq.${id}`, {
+      const r = await fetch(`${BASE}/rest/v1/leads?id=eq.${id}${idFilter}`, {
         method: 'DELETE',
         headers: { 'apikey': SVC, 'Authorization': `Bearer ${SVC}` }
       });
