@@ -338,20 +338,37 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
 
 <!-- INVOICE MODAL -->
 <div class="modal" id="modal-invoice">
-  <div class="mb2" style="width:500px">
+  <div class="mb2" style="width:540px">
     <button class="mclose" onclick="closeM('modal-invoice')">×</button>
     <h2>🧾 Rechnung erstellen</h2>
-    <p>Erstelle eine professionelle Rechnung als HTML.</p>
+    <p style="font-size:11px;color:var(--tm);margin-bottom:16px;font-weight:400">Pflichtfelder mit * ausfüllen</p>
+    
+    <div style="font-size:11px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Ihre Daten (Absender)</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+      <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Ihr Name / Firma *</label><input class="minp" id="inv-absender-name" placeholder="Max Mustermann GmbH"></div>
+      <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Steuernummer</label><input class="minp" id="inv-steuer" placeholder="123/456/78901"></div>
+      <div style="grid-column:1/-1"><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Ihre Adresse</label><input class="minp" id="inv-absender-adresse" placeholder="Musterstraße 1, 40210 Düsseldorf"></div>
+      <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Ihre Email</label><input class="minp" id="inv-absender-email" placeholder="max@firma.de"></div>
+      <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Ihre Website</label><input class="minp" id="inv-absender-web" placeholder="www.firma.de"></div>
+    </div>
+
+    <div style="font-size:11px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Kundendaten</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+      <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Kundenname *</label><input class="minp" id="inv-kunde" placeholder="Max Mustermann"></div>
+      <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Kunden-Email</label><input class="minp" id="inv-kunde-email" placeholder="kunde@email.de"></div>
+      <div style="grid-column:1/-1"><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Kundenadresse</label><input class="minp" id="inv-kunde-adresse" placeholder="Kundenstraße 1, 10115 Berlin"></div>
+    </div>
+
+    <div style="font-size:11px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Rechnungsdetails</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
       <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Rechnungsnummer</label><input class="minp" id="inv-nr" placeholder="INV-001"></div>
       <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Datum</label><input class="minp" id="inv-datum" type="date"></div>
-      <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Kundenname *</label><input class="minp" id="inv-kunde" placeholder="Max Mustermann"></div>
-      <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Betrag (netto) *</label><input class="minp" id="inv-betrag" type="number" placeholder="100"></div>
+      <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Betrag (netto €) *</label><input class="minp" id="inv-betrag" type="number" placeholder="100"></div>
+      <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">MwSt. %</label><input class="minp" id="inv-mwst" type="number" placeholder="19" value="19"></div>
     </div>
     <label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Leistungsbeschreibung *</label>
-    <textarea class="minp" id="inv-leistung" placeholder="KI-Beratung, 1 Stunde..." style="margin-bottom:8px;min-height:60px;resize:vertical"></textarea>
-    <label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Ihre Adresse / Firma</label>
-    <input class="minp" id="inv-absender" placeholder="Virgo AI, virgoio.com">
+    <textarea class="minp" id="inv-leistung" placeholder="KI-Beratung, 2 Stunden..." style="margin-bottom:8px;min-height:60px;resize:vertical"></textarea>
+    
     <div id="inv-msg" style="font-size:12px;color:var(--red);margin:8px 0;display:none"></div>
     <div style="display:flex;gap:8px;margin-top:12px">
       <button class="mbtn sec" onclick="closeM('modal-invoice')">Abbrechen</button>
@@ -751,6 +768,27 @@ function copyCode(btn,id){
   });
 }
 
+function exportPDF(content, title){
+  const html = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<style>
+  body{font-family:Arial,sans-serif;max-width:800px;margin:40px auto;padding:0 20px;color:#111;line-height:1.7}
+  h1{font-size:13px;font-weight:200;letter-spacing:8px;margin-bottom:32px;color:#888}
+  h2,h3{font-weight:600;margin:20px 0 8px}
+  hr{border:none;border-top:1px solid #e8e8e8;margin:20px 0}
+  @media print{body{margin:20px}}
+</style>
+</head><body>
+<h1>V I R G O AI</h1>
+<div>${content}</div>
+<p style="font-size:11px;color:#bbb;margin-top:40px">Erstellt mit Virgo AI · virgoio.com</p>
+</body></html>`;
+  const blob = new Blob([html], {type:'text/html'});
+  const url = URL.createObjectURL(blob);
+  const w = window.open(url,'_blank');
+  if(w) setTimeout(()=>w.print(), 500);
+}
+
 // ═══════════════════════════════
 // CHAT
 // ═══════════════════════════════
@@ -830,7 +868,10 @@ async function genChat(txt){
     const reply=d.content?.[0]?.text||'Fehler beim Laden.';
     conversationHistory.push({role:'assistant',content:reply});
     if(conversationHistory.length>30)conversationHistory=conversationHistory.slice(-30);
-    addAIMsg(renderMD(reply));
+    const rendered=renderMD(reply);
+    const isBusinessReply=state.model.startsWith('business-');
+    const extra=isBusinessReply?`<div style="margin-top:12px"><button onclick="exportPDF('${rendered.replace(/'/g,"\'")}','Virgo Business')" style="padding:6px 14px;border:1px solid var(--bd);border-radius:6px;background:var(--t);color:#fff;font-family:Inter,sans-serif;font-size:11px;cursor:pointer">📄 Als PDF speichern</button></div>`:'';
+    addAIMsg(rendered+extra);
     saveChat(document.getElementById('chat-title').textContent,conversationHistory);
   }).catch(()=>{hideTyping();addAIMsg('Verbindungsfehler. Bitte nochmal versuchen.');});
 }
@@ -1053,28 +1094,58 @@ async function createInvoice(){
   const leistung=document.getElementById('inv-leistung').value.trim();
   const betrag=document.getElementById('inv-betrag').value;
   const msg=document.getElementById('inv-msg');
-  if(!kunde||!leistung||!betrag){msg.textContent='Bitte alle Pflichtfelder ausfüllen.';msg.style.display='block';return;}
+  if(!kunde||!leistung||!betrag){msg.textContent='Bitte Kundenname, Leistung und Betrag ausfüllen.';msg.style.display='block';return;}
   msg.style.display='none';
   try{
     const r=await fetch('/api/invoice',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
       invoice_nr:document.getElementById('inv-nr').value||'INV-'+Date.now(),
-      kunde,leistung,betrag,
+      kunde,
+      kunde_adresse:document.getElementById('inv-kunde-adresse').value,
+      leistung,betrag,
+      mwst:parseInt(document.getElementById('inv-mwst').value)||19,
       datum:document.getElementById('inv-datum').value,
-      absender_name:document.getElementById('inv-absender').value||'Virgo AI'
+      absender_name:document.getElementById('inv-absender-name').value||'Virgo AI',
+      absender_adresse:document.getElementById('inv-absender-adresse').value,
+      absender_email:document.getElementById('inv-absender-email').value,
+      absender_steuer:document.getElementById('inv-steuer').value
     })});
     const d=await r.json();
     if(d.error){msg.textContent=d.error;msg.style.display='block';return;}
-    const blob=new Blob([d.html],{type:'text/html'});
-    const url=URL.createObjectURL(blob);
-    window.open(url,'_blank');
+    // Store invoice HTML globally
+    const invId='inv_'+Date.now();
+    window[invId]=d.html;
+    // Add to chat
+    const msgEl=document.createElement('div');msgEl.className='mw ai';
+    const inner=document.createElement('div');
+    inner.innerHTML='<div class="aav">V</div>';
+    const bubble=document.createElement('div');
+    bubble.className='bb';bubble.style.maxWidth='480px';
+    bubble.innerHTML='<div style="font-size:12px;font-weight:600;margin-bottom:6px">Rechnung '+escHtml(d.invoice_nr)+'</div>'
+      +'<div style="font-size:11px;color:var(--tm);margin-bottom:4px">'+escHtml(d.leistung)+'</div>'
+      +'<div style="font-size:18px;font-weight:700;margin-bottom:12px">'+escHtml(d.brutto)+' €</div>';
+    const btns=document.createElement('div');btns.style.cssText='display:flex;gap:8px;flex-wrap:wrap';
+    const b1=document.createElement('button');
+    b1.textContent='🖨 Drucken / Als PDF';
+    b1.style.cssText='padding:7px 14px;background:var(--t);color:#fff;border:none;border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer';
+    b1.onclick=function(){const w=window.open('','_blank');w.document.write(window[invId]);w.document.close();setTimeout(()=>w.print(),500);};
+    const b2=document.createElement('button');
+    b2.textContent='↓ Datei speichern';
+    b2.style.cssText='padding:7px 14px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer';
+    b2.onclick=function(){const blob=new Blob([window[invId]],{type:'text/html'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='Rechnung-'+d.invoice_nr+'.html';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);};
+    btns.appendChild(b1);btns.appendChild(b2);
+    bubble.appendChild(btns);
+    const ts=document.createElement('div');ts.className='mt2';ts.textContent=now();
+    inner.appendChild(bubble);inner.appendChild(ts);
+    msgEl.appendChild(inner);
+    document.getElementById('fi').appendChild(msgEl);
+    scrollFeed();
     closeM('modal-invoice');
-    addAIMsg('✅ Rechnung erstellt! Zum Drucken: Datei → Drucken → Als PDF speichern.');
+    // Reset form
+    ['inv-nr','inv-kunde','inv-kunde-adresse','inv-kunde-email','inv-leistung','inv-betrag','inv-absender-name','inv-absender-adresse','inv-absender-email','inv-steuer'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   }catch(e){msg.textContent='Fehler: '+e.message;msg.style.display='block';}
 }
 
-// ═══════════════════════════════
-// TEXT TO SPEECH
-// ═══════════════════════════════
+
 function openTTSModal(){showM('modal-tts');closeSb();}
 
 async function generateTTS(){
