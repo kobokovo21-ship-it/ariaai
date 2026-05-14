@@ -36,7 +36,9 @@ export default async function handler(req, res) {
         Prägnant, überzeugend, für Investoren geeignet.`
     };
 
-    const systemPrompt = 'Du bist Virgo Business AI — der beste Business-Berater der Welt. Du erstellst professionelle Business-Dokumente, Marketingtexte und Strategien. Antworte immer vollständig und direkt verwendbar. Keine Platzhalter. Formatiere mit klaren Überschriften.';
+    const { type, messages = [], systemOverride } = req.body;
+    const defaultSystem = 'Du bist Virgo Business AI — der beste Business-Berater der Welt. Antworte immer vollständig und direkt verwendbar. Keine Platzhalter. Formatiere mit klaren Überschriften.';
+    const systemPrompt = systemOverride || defaultSystem;
 
     const userMessages = messages.length > 0 ? messages : [{ role: 'user', content: prompts[type] || `Erstelle für folgendes Business: ${JSON.stringify(data)}` }];
 
