@@ -145,7 +145,7 @@ export default async function handler(req, res) {
       });
       const existing = await checkR.json();
 
-      const profileData = { name, firma, telefon, email, beschreibung, versicherungen, farbe, slug };
+      const profileData = { name, firma: firma||null, telefon, email, beschreibung: beschreibung||null, versicherungen: Array.isArray(versicherungen)?versicherungen:[], farbe: farbe||'#111111', slug: slug.toLowerCase().replace(/[^a-z0-9-]/g,'-') };
 
       let r;
       if (existing.length) {
