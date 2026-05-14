@@ -675,7 +675,7 @@ function logout(){
   authToken=null;currentUser=null;credits=3;
   localStorage.removeItem('virgo_token');localStorage.removeItem('virgo_user');
   localStorage.removeItem('virgo_credits');localStorage.removeItem('virgo_plan');
-  updateUI();resetToChatMode();renderLocalChats();
+  updateUI();resetToChatMode();loadChats();
 }
 
 // ═══════════════════════════════
