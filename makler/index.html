@@ -140,6 +140,13 @@ function renderPage(d) {
   document.title = (d.name || 'Makler') + ' — Versicherungsberatung';
   document.documentElement.style.setProperty('--color', d.farbe || '#111');
 
+  if (d.header_image) {
+    const imgEl = document.createElement('img');
+    imgEl.src = d.header_image;
+    imgEl.style.cssText = 'width:100%;height:220px;object-fit:cover;margin-bottom:24px;border-radius:12px';
+    const hero = document.querySelector('.hero');
+    hero.insertBefore(imgEl, hero.firstChild);
+  }
   document.getElementById('hero-badge').style.borderColor = d.farbe || '#111';
   document.getElementById('hero-badge').style.color = d.farbe || '#111';
   document.getElementById('hero-title').textContent = 'Versicherungsberatung mit ' + d.name;
