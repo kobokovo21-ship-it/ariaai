@@ -6,18 +6,31 @@ export default async function handler(req, res) {
 
   const BASE = process.env.SUPABASE_URL;
   const SVC = process.env.SUPABASE_SERVICE_KEY;
+  const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+
+  const token = req.headers.authorization?.replace('Bearer ', '').trim();
+  if (!token) return res.status(401).json({ error: 'Nicht eingeloggt' });
 
   try {
-    // GET — alle Leads laden
+    const userRes = await fetch(`${BASE}/auth/v1/user`, {
+      headers: { 'apikey': SVC, 'Authorization': `Bearer ${token}` }
+    });
+    const user = await userRes.json();
+    if (!user?.id) return res.status(401).json({ error: 'Ungültiger Token' });
+
+    if (ADMIN_EMAIL && user.email !== ADMIN_EMAIL) {
+      return res.status(403).json({ error: 'Kein Zugriff' });
+    }
+
     if (req.method === 'GET') {
       const r = await fetch(`${BASE}/rest/v1/leads?order=created_at.desc`, {
         headers: { 'apikey': SVC, 'Authorization': `Bearer ${SVC}` }
       });
+      if (!r.ok) return res.status(500).json({ error: 'Datenbankfehler beim Laden' });
       const data = await r.json();
       return res.status(200).json(data);
     }
 
-    // POST — neuen Lead erstellen
     if (req.method === 'POST') {
       const { name, telefon, email, versicherung, status = 'neu', notiz } = req.body;
       if (!name || !telefon || !versicherung) {
@@ -28,11 +41,11 @@ export default async function handler(req, res) {
         headers: { 'Content-Type': 'application/json', 'apikey': SVC, 'Authorization': `Bearer ${SVC}`, 'Prefer': 'return=representation' },
         body: JSON.stringify({ name, telefon, email: email || null, versicherung, status, notiz: notiz || null })
       });
+      if (!r.ok) return res.status(500).json({ error: 'Datenbankfehler beim Erstellen' });
       const data = await r.json();
-      return res.status(200).json(data[0]);
+      return res.status(200).json(data[0] || {});
     }
 
-    // PUT — Lead aktualisieren
     if (req.method === 'PUT') {
       const { id, ...updates } = req.body;
       if (!id) return res.status(400).json({ error: 'ID fehlt' });
@@ -41,18 +54,19 @@ export default async function handler(req, res) {
         headers: { 'Content-Type': 'application/json', 'apikey': SVC, 'Authorization': `Bearer ${SVC}`, 'Prefer': 'return=representation' },
         body: JSON.stringify(updates)
       });
+      if (!r.ok) return res.status(500).json({ error: 'Datenbankfehler beim Aktualisieren' });
       const data = await r.json();
-      return res.status(200).json(data[0]);
+      return res.status(200).json(data[0] || {});
     }
 
-    // DELETE — Lead löschen
     if (req.method === 'DELETE') {
       const { id } = req.body;
       if (!id) return res.status(400).json({ error: 'ID fehlt' });
-      await fetch(`${BASE}/rest/v1/leads?id=eq.${id}`, {
+      const r = await fetch(`${BASE}/rest/v1/leads?id=eq.${id}`, {
         method: 'DELETE',
         headers: { 'apikey': SVC, 'Authorization': `Bearer ${SVC}` }
       });
+      if (!r.ok) return res.status(500).json({ error: 'Datenbankfehler beim Löschen' });
       return res.status(200).json({ success: true });
     }
 
