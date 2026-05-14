@@ -138,12 +138,35 @@ textarea{resize:vertical;min-height:80px}
       </div>
 
       <div style="margin-top:20px">
-        <label>KI-Headerbild generieren</label>
-        <p style="font-size:11px;color:var(--td);margin-bottom:8px">Virgo generiert automatisch ein professionelles Headerbild für deine Landing Page.</p>
-        <div id="ai-img-preview" style="display:none;margin-bottom:12px;border-radius:10px;overflow:hidden;height:160px;background:var(--sf2)">
-          <img id="ai-img" style="width:100%;height:100%;object-fit:cover" src="">
+        <label>Headerbild</label>
+        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+          <button type="button" id="tab-ai" onclick="switchImgTab('ai')" style="padding:7px 14px;border-radius:6px;border:1px solid var(--t);background:var(--t);color:#fff;font-family:Inter,sans-serif;font-size:11px;cursor:pointer">✨ KI generieren</button>
+          <button type="button" id="tab-upload" onclick="switchImgTab('upload')" style="padding:7px 14px;border-radius:6px;border:1px solid var(--bd);background:var(--bg);color:var(--tm);font-family:Inter,sans-serif;font-size:11px;cursor:pointer">📷 Foto hochladen</button>
         </div>
-        <button type="button" onclick="generateHeaderImage()" id="gen-img-btn" style="padding:9px 16px;border:1px solid var(--bd);border-radius:8px;font-family:Inter,sans-serif;font-size:12px;color:var(--tm);cursor:pointer;background:var(--bg);margin-bottom:16px">✨ KI-Headerbild generieren</button>
+
+        <!-- KI TAB -->
+        <div id="tab-ai-content">
+          <label style="margin-bottom:4px">Beschreibe dein Wunschbild (optional)</label>
+          <input id="img-prompt-custom" placeholder="z.B. Modernes Büro, Düsseldorf Skyline, professionell..." style="margin-bottom:8px">
+          <p style="font-size:10px;color:var(--td);margin-bottom:8px">Leer lassen = Virgo wählt automatisch das beste Bild für deine Versicherungsarten.</p>
+          <div id="ai-img-preview" style="display:none;margin-bottom:12px;border-radius:10px;overflow:hidden;height:180px;background:var(--sf2)">
+            <img id="ai-img" style="width:100%;height:100%;object-fit:cover" src="">
+          </div>
+          <button type="button" onclick="generateHeaderImage()" id="gen-img-btn" style="padding:9px 16px;border:1px solid var(--bd);border-radius:8px;font-family:Inter,sans-serif;font-size:12px;color:var(--tm);cursor:pointer;background:var(--bg)">✨ KI-Bild generieren</button>
+        </div>
+
+        <!-- UPLOAD TAB -->
+        <div id="tab-upload-content" style="display:none">
+          <div id="upload-preview" style="display:none;margin-bottom:12px;border-radius:10px;overflow:hidden;height:180px;background:var(--sf2)">
+            <img id="upload-img" style="width:100%;height:100%;object-fit:cover" src="">
+          </div>
+          <div style="border:2px dashed var(--bd);border-radius:10px;padding:24px;text-align:center;cursor:pointer" onclick="document.getElementById('file-input').click()">
+            <div style="font-size:24px;margin-bottom:8px">📷</div>
+            <div style="font-size:13px;color:var(--tm);margin-bottom:4px">Klicken zum Hochladen</div>
+            <div style="font-size:11px;color:var(--td)">JPG, PNG — max. 5MB</div>
+          </div>
+          <input type="file" id="file-input" accept="image/*" style="display:none" onchange="handleFileUpload(event)">
+        </div>
       </div>
 
       <div style="margin-top:20px">
@@ -276,14 +299,42 @@ function copyLink() {
 }
 
 let generatedImageUrl = '';
+let activeImgTab = 'ai';
+
+function switchImgTab(tab) {
+  activeImgTab = tab;
+  document.getElementById('tab-ai-content').style.display = tab === 'ai' ? 'block' : 'none';
+  document.getElementById('tab-upload-content').style.display = tab === 'upload' ? 'block' : 'none';
+  document.getElementById('tab-ai').style.background = tab === 'ai' ? 'var(--t)' : 'var(--bg)';
+  document.getElementById('tab-ai').style.color = tab === 'ai' ? '#fff' : 'var(--tm)';
+  document.getElementById('tab-ai').style.borderColor = tab === 'ai' ? 'var(--t)' : 'var(--bd)';
+  document.getElementById('tab-upload').style.background = tab === 'upload' ? 'var(--t)' : 'var(--bg)';
+  document.getElementById('tab-upload').style.color = tab === 'upload' ? '#fff' : 'var(--tm)';
+  document.getElementById('tab-upload').style.borderColor = tab === 'upload' ? 'var(--t)' : 'var(--bd)';
+}
+
+function handleFileUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { alert('Datei zu groß — max. 5MB'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    generatedImageUrl = e.target.result;
+    document.getElementById('upload-img').src = e.target.result;
+    document.getElementById('upload-preview').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
 
 async function generateHeaderImage() {
   const btn = document.getElementById('gen-img-btn');
   const versicherungen = Array.from(document.querySelectorAll('input[name="vers"]:checked')).map(cb => cb.value);
-  const name = document.getElementById('name').value.trim() || 'Versicherungsmakler';
-  
+  const customPrompt = document.getElementById('img-prompt-custom').value.trim();
   const versStr = versicherungen.length ? versicherungen.join(', ') : 'Versicherung';
-  const prompt = `Professional financial advisor background for ${versStr} insurance broker, clean modern office, ${selectedColor.replace('#','')} color accent, trust and security, high-end photography, 16:9 ratio, no people, abstract professional`;
+  
+  const prompt = customPrompt 
+    ? customPrompt + ', professional photography, high quality, 16:9, no text'
+    : `Professional background for ${versStr} insurance advisor, modern clean design, trust and security, high-end photography, 16:9 ratio, no people, no text`;
   
   btn.disabled = true;
   btn.textContent = '⏳ Generiert...';
@@ -292,7 +343,7 @@ async function generateHeaderImage() {
     const r = await fetch('/api/generate-image', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt, model: 'nano', negative_prompt: 'text, watermark, logo, people, face' })
+      body: JSON.stringify({ prompt, model: 'nano', negative_prompt: 'text, watermark, logo, people, face, letters' })
     });
     const d = await r.json();
     if (d.imageUrl) {
@@ -301,11 +352,11 @@ async function generateHeaderImage() {
       document.getElementById('ai-img-preview').style.display = 'block';
       btn.textContent = '✨ Neu generieren';
     } else {
-      btn.textContent = '✨ KI-Headerbild generieren';
+      btn.textContent = '✨ KI-Bild generieren';
       alert('Fehler: ' + (d.error || 'Bild konnte nicht generiert werden'));
     }
   } catch(e) {
-    btn.textContent = '✨ KI-Headerbild generieren';
+    btn.textContent = '✨ KI-Bild generieren';
     alert('Verbindungsfehler');
   }
   btn.disabled = false;
