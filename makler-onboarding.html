@@ -160,7 +160,25 @@ textarea{resize:vertical;min-height:80px}
         </div>
       </div>
 
-      <button class="btn" id="save-btn" onclick="saveProfile()" style="margin-top:24px">Profil speichern & Landing Page aktivieren</button>
+      <div style="display:flex;gap:12px;margin-top:24px">
+        <button class="btn" id="preview-btn" onclick="showPreview()" style="background:var(--sf2);color:var(--t);border:1px solid var(--bd)">👁 Vorschau anzeigen</button>
+        <button class="btn" id="save-btn" onclick="saveProfile()">Profil speichern & Live schalten</button>
+      </div>
+
+      <!-- PREVIEW MODAL -->
+      <div id="preview-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;overflow-y:auto;padding:20px">
+        <div style="max-width:600px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden">
+          <div style="padding:16px 20px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between">
+            <div style="font-size:13px;font-weight:600">Vorschau deiner Landing Page</div>
+            <button onclick="document.getElementById('preview-modal').style.display='none'" style="background:transparent;border:none;cursor:pointer;font-size:22px;color:var(--td)">×</button>
+          </div>
+          <iframe id="preview-frame" style="width:100%;height:70vh;border:none"></iframe>
+          <div style="padding:16px 20px;border-top:1px solid var(--bd);display:flex;gap:8px">
+            <button onclick="document.getElementById('preview-modal').style.display='none'" style="flex:1;padding:10px;border:1px solid var(--bd);border-radius:8px;font-family:Inter,sans-serif;font-size:13px;cursor:pointer;background:var(--bg)">Bearbeiten</button>
+            <button onclick="document.getElementById('preview-modal').style.display='none';saveProfile()" style="flex:1;padding:10px;background:var(--t);color:#fff;border:none;border-radius:8px;font-family:Inter,sans-serif;font-size:13px;cursor:pointer;font-weight:500">✅ Speichern & Live schalten</button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="card" id="leads-preview" style="display:none">
@@ -246,6 +264,57 @@ function copyLink() {
   if (!slug) return;
   navigator.clipboard.writeText('https://virgoio.com/makler/' + slug);
   alert('Link kopiert!');
+}
+
+function showPreview() {
+  const name = document.getElementById('name').value.trim() || 'Dein Name';
+  const firma = document.getElementById('firma').value.trim() || 'Versicherungsmakler';
+  const beschreibung = document.getElementById('beschreibung').value.trim() || 'Kostenlose und unverbindliche Beratung.';
+  const versicherungen = Array.from(document.querySelectorAll('input[name="vers"]:checked')).map(cb => cb.value);
+  
+  const previewHTML = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Inter,sans-serif;background:#fff;color:#111}
+.hero{padding:60px 20px 40px;text-align:center;background:linear-gradient(135deg,${selectedColor}08,transparent)}
+.badge{display:inline-block;padding:6px 16px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;border:1px solid ${selectedColor};color:${selectedColor}}
+h1{font-size:32px;font-weight:700;margin-bottom:12px}p{font-size:15px;color:#666;line-height:1.7;max-width:500px;margin:0 auto 24px}
+.av{width:48px;height:48px;border-radius:50%;background:${selectedColor};color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;margin-right:10px}
+.makler-row{display:inline-flex;align-items:center;padding:10px 20px;border-radius:40px;border:1px solid #e8e8e8;background:#f7f7f7;margin-bottom:24px}
+.vers-tags{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:32px}
+.tag{padding:6px 14px;border-radius:20px;border:1px solid #e8e8e8;font-size:12px;color:#666}
+.trust{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;font-size:12px;color:#888;margin-bottom:40px}
+.form-card{max-width:500px;margin:0 auto 40px;padding:32px;border:1px solid #e8e8e8;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,.06)}
+.form-card h2{font-size:20px;font-weight:600;margin-bottom:8px}.form-card p{font-size:13px;margin-bottom:20px}
+input,select,textarea{width:100%;padding:10px 14px;border:1.5px solid #e8e8e8;border-radius:8px;font-family:Inter,sans-serif;font-size:13px;outline:none;margin-bottom:12px;background:#fff}
+.btn{width:100%;padding:14px;background:${selectedColor};color:#fff;border:none;border-radius:10px;font-family:Inter,sans-serif;font-size:14px;font-weight:600;cursor:pointer}
+label{display:block;font-size:10px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+</style></head><body>
+<div class="hero">
+  <div class="badge">Kostenlose Beratung</div>
+  <h1>Versicherungsberatung mit ${name}</h1>
+  <p>${beschreibung}</p>
+  <div class="makler-row"><div class="av">${name[0]?.toUpperCase()||'M'}</div><div style="text-align:left"><div style="font-size:13px;font-weight:600">${name}</div><div style="font-size:11px;color:#888">${firma}</div></div></div>
+  <div class="vers-tags">${versicherungen.map(v=>`<span class="tag">${v}</span>`).join('')}</div>
+  <div class="trust"><span>✅ Kostenlos & unverbindlich</span><span>🔒 100% Datenschutz</span><span>⚡ Antwort in 24h</span></div>
+</div>
+<div style="padding:0 20px">
+<div class="form-card">
+  <h2>Jetzt kostenlose Beratung anfragen</h2>
+  <p style="color:#888">Füll das Formular aus — ich melde mich innerhalb von 24 Stunden.</p>
+  <label>Dein Name *</label><input placeholder="Max Mustermann">
+  <label>Telefon *</label><input placeholder="+49 ...">
+  <label>Email</label><input placeholder="max@email.de">
+  <label>Versicherung</label><select><option>Versicherung wählen...</option>${versicherungen.map(v=>`<option>${v}</option>`).join('')}</select>
+  <label>Nachricht</label><textarea placeholder="Was möchtest du wissen?" style="min-height:70px;resize:vertical;margin-bottom:16px"></textarea>
+  <button class="btn">Kostenlose Beratung anfragen →</button>
+</div></div>
+<div style="text-align:center;padding:16px;font-size:11px;color:#bbb;border-top:1px solid #f0f0f0">Powered by <strong>Virgo AI</strong></div>
+</body></html>`;
+  
+  const iframe = document.getElementById('preview-frame');
+  iframe.srcdoc = previewHTML;
+  document.getElementById('preview-modal').style.display = 'block';
 }
 
 async function saveProfile() {
