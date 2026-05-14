@@ -138,6 +138,15 @@ textarea{resize:vertical;min-height:80px}
       </div>
 
       <div style="margin-top:20px">
+        <label>KI-Headerbild generieren</label>
+        <p style="font-size:11px;color:var(--td);margin-bottom:8px">Virgo generiert automatisch ein professionelles Headerbild für deine Landing Page.</p>
+        <div id="ai-img-preview" style="display:none;margin-bottom:12px;border-radius:10px;overflow:hidden;height:160px;background:var(--sf2)">
+          <img id="ai-img" style="width:100%;height:100%;object-fit:cover" src="">
+        </div>
+        <button type="button" onclick="generateHeaderImage()" id="gen-img-btn" style="padding:9px 16px;border:1px solid var(--bd);border-radius:8px;font-family:Inter,sans-serif;font-size:12px;color:var(--tm);cursor:pointer;background:var(--bg);margin-bottom:16px">✨ KI-Headerbild generieren</button>
+      </div>
+
+      <div style="margin-top:20px">
         <label>Farbe deiner Landing Page</label>
         <div class="color-grid" style="margin-top:8px">
           <div class="color-swatch active" style="background:#111111" data-color="#111111" onclick="setColor(this)"></div>
@@ -266,6 +275,42 @@ function copyLink() {
   alert('Link kopiert!');
 }
 
+let generatedImageUrl = '';
+
+async function generateHeaderImage() {
+  const btn = document.getElementById('gen-img-btn');
+  const versicherungen = Array.from(document.querySelectorAll('input[name="vers"]:checked')).map(cb => cb.value);
+  const name = document.getElementById('name').value.trim() || 'Versicherungsmakler';
+  
+  const versStr = versicherungen.length ? versicherungen.join(', ') : 'Versicherung';
+  const prompt = `Professional financial advisor background for ${versStr} insurance broker, clean modern office, ${selectedColor.replace('#','')} color accent, trust and security, high-end photography, 16:9 ratio, no people, abstract professional`;
+  
+  btn.disabled = true;
+  btn.textContent = '⏳ Generiert...';
+  
+  try {
+    const r = await fetch('/api/generate-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, model: 'nano', negative_prompt: 'text, watermark, logo, people, face' })
+    });
+    const d = await r.json();
+    if (d.imageUrl) {
+      generatedImageUrl = d.imageUrl;
+      document.getElementById('ai-img').src = d.imageUrl;
+      document.getElementById('ai-img-preview').style.display = 'block';
+      btn.textContent = '✨ Neu generieren';
+    } else {
+      btn.textContent = '✨ KI-Headerbild generieren';
+      alert('Fehler: ' + (d.error || 'Bild konnte nicht generiert werden'));
+    }
+  } catch(e) {
+    btn.textContent = '✨ KI-Headerbild generieren';
+    alert('Verbindungsfehler');
+  }
+  btn.disabled = false;
+}
+
 function showPreview() {
   const name = document.getElementById('name').value.trim() || 'Dein Name';
   const firma = document.getElementById('firma').value.trim() || 'Versicherungsmakler';
@@ -349,7 +394,8 @@ async function saveProfile() {
         firma: document.getElementById('firma').value.trim(),
         beschreibung: document.getElementById('beschreibung').value.trim(),
         versicherungen,
-        farbe: selectedColor
+        farbe: selectedColor,
+        header_image: generatedImageUrl || null
       })
     });
     const d = await r.json();
@@ -365,7 +411,7 @@ async function saveProfile() {
     msg.textContent = 'Fehler: ' + e.message;
     msg.className = 'msg error'; msg.style.display = 'block';
   }
-  btn.disabled = false; btn.textContent = 'Profil speichern & Landing Page aktivieren';
+  btn.disabled = false; btn.textContent = 'Profil speichern & Live schalten';
 }
 </script>
 </body>
