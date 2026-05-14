@@ -6,7 +6,7 @@ let plan = 'free';
 const MAKLER_PLANS = ['makler-starter', 'makler-pro', 'makler-business'];
 
 async function checkAccess() {
-  if (!authToken) { document.getElementById('no-access').style.display = 'block'; return; }
+  if (!authToken) { window.location.href = '/makler-login.html?redirect=/makler-onboarding.html'; return; }
   try {
     const r = await fetch('/api/credits', { headers: { 'Authorization': 'Bearer ' + authToken } });
     if (!r.ok) { document.getElementById('no-access').style.display = 'block'; return; }
@@ -192,3 +192,4 @@ async function saveProfile() {
   btn.disabled = false; btn.textContent = 'Profil speichern & Live schalten';
 }
 </script>
+ 
