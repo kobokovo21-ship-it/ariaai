@@ -229,7 +229,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
     <button class="mc" onclick="setModel(this,'business-pitch','Pitch Deck')"><div class="md"></div>Pitch Deck<span class="mt" style="background:#dcfce7;color:#166534">AI</span></button>
     <button class="mc" onclick="openInvoiceModal()"><div class="md"></div>🧾 Rechnung erstellen<span class="mt">PDF</span></button>
     <button class="mc" onclick="openTTSModal()"><div class="md"></div>🔊 Text zu Sprache<span class="mt">ElevenLabs</span></button>
-    <button class="mc" onclick="window.open('/leads.html','_blank')"><div class="md"></div>📊 Leads Dashboard<span class="mt admin-only" id="leads-badge" style="display:none">Admin</span></button>
+    <button class="mc" id="leads-btn" onclick="window.open('/leads.html','_blank')" style="display:none"><div class="md"></div>📊 Leads Dashboard<span class="mt" style="background:#dcfce7;color:#166534">Makler</span></button>
     <button class="mc" id="makler-btn" onclick="window.open('/makler-onboarding.html','_blank')" style="display:none"><div class="md"></div>🏢 Meine Landing Page<span class="mt" style="background:#dcfce7;color:#166534">Makler</span></button>
     <button class="mc modelia" onclick="setModel(this,'img-modelia','Modelia Fashion Pro')"><div class="md"></div>Modelia Fashion Pro<span class="mt gold">✨ 2cr</span></button>
     <button class="mc" onclick="setModel(this,'img-nano','Nano Banana Pro')"><div class="md"></div>Nano Banana Pro<span class="mt">Bild · 1cr</span></button>
@@ -619,11 +619,12 @@ function updateUI(){
     if(PREMIUM.includes(m))btn.style.opacity=isPro()?'1':'0.45';
     if(m.startsWith('vid')&&!li)btn.style.opacity='0.45';
   });
-  const leadsB=document.getElementById('leads-badge');
-  if(leadsB)leadsB.style.display=isAdmin()?'inline-block':'none';
-  const maklerB=document.getElementById('makler-btn');
   const MAKLER_PLANS=['makler-starter','makler-pro','makler-business'];
-  if(maklerB)maklerB.style.display=(MAKLER_PLANS.includes(localStorage.getItem('virgo_plan')||'')||isAdmin())?'flex':'none';
+  const isMakler=MAKLER_PLANS.includes(localStorage.getItem('virgo_plan')||'')||isAdmin();
+  const leadsB=document.getElementById('leads-btn');
+  if(leadsB)leadsB.style.display=isMakler?'flex':'none';
+  const maklerB=document.getElementById('makler-btn');
+  if(maklerB)maklerB.style.display=isMakler?'flex':'none';
 }
 
 async function loadCredits(){
@@ -744,7 +745,6 @@ function clearRef(){refImages=[];renderRefZone();}
 // ═══════════════════════════════
 function renderMD(t){
   if(!t)return'';
-  // Handle code blocks first (before escaping)
   const codeBlocks=[];
   t=t.replace(/```([\w]*)?\n?([\s\S]*?)```/g,(match,lang,code)=>{
     const id='cb'+codeBlocks.length;
@@ -764,7 +764,6 @@ function renderMD(t){
   t=t.replace(/\|\s*[-:| ]+\s*\|[\s\S]*?(?=\n[^|]|\n$|$)/g,'');
   t=t.replace(/^\|(.+)\|$/gm,(_,c)=>'<div style="display:flex;border-bottom:1px solid var(--bd)">'+c.split('|').filter(x=>x.trim()).map(x=>'<div style="flex:1;padding:3px 6px;font-size:11px;border-right:1px solid var(--bd)">'+x.trim()+'</div>').join('')+'</div>');
   t=t.replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
-  // Restore code blocks with syntax highlighting
   codeBlocks.forEach(({id,lang,code})=>{
     const escaped=code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     const html=`<div class="code-block"><div class="code-header"><span class="code-lang">${lang}</span><button class="code-copy" onclick="copyCode(this,'${id}')">Kopieren</button></div><pre id="${id}"><code>${escaped}</code></pre></div>`;
@@ -1047,7 +1046,6 @@ function toggleVoice(){
   const btn=document.getElementById('mic-btn');
   if(recOn){stopRecording();return;}
 
-  // Try Web Speech API first (Chrome Desktop)
   if('webkitSpeechRecognition' in window||'SpeechRecognition' in window){
     const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
     const rec=new SR();
@@ -1062,7 +1060,6 @@ function toggleVoice(){
     try{rec.start();window._rec=rec;return;}catch(e){}
   }
 
-  // Fallback: MediaRecorder (iOS Safari)
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
     alert('Mikrofon wird auf diesem Gerät nicht unterstützt.');return;
   }
@@ -1077,7 +1074,6 @@ function toggleVoice(){
       stream.getTracks().forEach(t=>t.stop());
       recOn=false;btn.textContent='🎤';btn.style.color='';
       const blob=new Blob(audioChunks,{type:mimeType});
-      // Convert to text via FormData + Whisper if available, else show message
       addAIMsg('🎤 Audio aufgenommen ('+Math.round(blob.size/1024)+'KB). Tippe deinen Text oder aktiviere Whisper für automatische Transkription.');
     };
     mediaRecorder.start();
@@ -1097,7 +1093,6 @@ function stopRecording(){
   document.getElementById('mic-btn').style.color='';
 }
 
-// iOS mic button - touchstart for immediate permission
 const micBtn = document.getElementById('mic-btn');
 micBtn.addEventListener('touchstart', function(e){
   e.preventDefault();
@@ -1147,10 +1142,8 @@ async function createInvoice(){
     })});
     const d=await r.json();
     if(d.error){msg.textContent=d.error;msg.style.display='block';return;}
-    // Store invoice HTML globally
     const invId='inv_'+Date.now();
     window[invId]=d.html;
-    // Add to chat
     const msgEl=document.createElement('div');msgEl.className='mw ai';
     const inner=document.createElement('div');
     inner.innerHTML='<div class="aav">V</div>';
@@ -1176,11 +1169,9 @@ async function createInvoice(){
     document.getElementById('fi').appendChild(msgEl);
     scrollFeed();
     closeM('modal-invoice');
-    // Reset form
     ['inv-nr','inv-kunde','inv-kunde-adresse','inv-kunde-email','inv-leistung','inv-betrag','inv-absender-name','inv-absender-adresse','inv-absender-email','inv-steuer'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   }catch(e){msg.textContent='Fehler: '+e.message;msg.style.display='block';}
 }
-
 
 function openTTSModal(){showM('modal-tts');closeSb();}
 
@@ -1219,3 +1210,4 @@ if(localStorage.getItem('virgo_sb_closed')==='1'){
 <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('/sw.js').catch(()=>{});});}</script>
 </body>
 </html>
+
