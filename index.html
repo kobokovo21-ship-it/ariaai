@@ -873,8 +873,30 @@ async function genChat(txt){
   let endpoint='/api/chat';
   if(isAgentMode)endpoint='/api/agent';
   if(isBusinessMode)endpoint='/api/business';
+  const businessType = state.model.replace('business-','');
+  const businessPrompts = {
+    'plan': 'Erstelle einen vollständigen Businessplan auf Deutsch für: ',
+    'website': 'Erstelle professionelle Website-Texte auf Deutsch für: ',
+    'ads': 'Erstelle 5 verschiedene Meta/Facebook/Google Ad-Texte auf Deutsch für: ',
+    'social': 'Erstelle 10 abwechslungsreiche Social Media Posts (Instagram, LinkedIn, TikTok) auf Deutsch für: ',
+    'email': 'Erstelle eine 5-teilige Email-Sequenz auf Deutsch für: ',
+    'pitch': 'Erstelle ein vollständiges Pitch Deck auf Deutsch für: '
+  };
+  const businessSystemPrompts = {
+    'plan': 'Du bist ein Business-Experte. Erstelle NUR Businesspläne. Struktur: Executive Summary, Produkt, Markt, Wettbewerb, Marketing, Finanzen, Meilensteine.',
+    'website': 'Du bist ein Copywriter. Erstelle NUR Website-Texte. Struktur: Hero-Headline, Subheadline, USPs, Über uns, Leistungen, CTA.',
+    'ads': 'Du bist ein Performance Marketing Experte. Erstelle NUR Werbeanzeigen-Texte. Format: Headline (max 6 Wörter) + Text (max 125 Zeichen) + CTA.',
+    'social': 'Du bist ein Social Media Manager. Erstelle NUR Social Media Posts. Für jeden Post: Plattform + Caption + Hashtags (max 5). KEINE Businesspläne!',
+    'email': 'Du bist ein Email Marketing Experte. Erstelle NUR Email-Sequenzen. 5 Emails: Willkommen, Mehrwert, Beweis, Angebot, Follow-up.',
+    'pitch': 'Du bist ein Pitch-Experte. Erstelle NUR Pitch Decks. Struktur: Problem, Lösung, Markt, Geschäftsmodell, Team, Investment.'
+  };
+  const businessPrefix = businessPrompts[businessType] || '';
+  const businessSystem = businessSystemPrompts[businessType] || '';
+  const businessMessages = isBusinessMode 
+    ? [{role:'user', content: businessPrefix + txt}]
+    : conversationHistory;
   const bodyData=isBusinessMode
-    ?{type:state.model.replace('business-',''),messages:conversationHistory,data:{prompt:txt}}
+    ?{type:businessType, messages:businessMessages, systemOverride:businessSystem}
     :{messages:conversationHistory,codeMode:isCodeMode};
   fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(bodyData)})
   .then(r=>r.json()).then(async d=>{
