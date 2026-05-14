@@ -128,13 +128,13 @@ export default async function handler(req, res) {
   // ── MAKLER — CREATE/UPDATE PROFILE ──
   if (tool === 'makler-save') {
     try {
-      const token = req.headers.authorization?.replace('Bearer ', '');
-      if (!token) return res.status(401).json({ error: 'Nicht eingeloggt' });
+      const token = (req.headers.authorization || '').replace('Bearer ', '').trim();
+      if (!token) return res.status(401).json({ error: 'Nicht eingeloggt — bitte neu anmelden' });
       const userRes = await fetch(`${BASE}/auth/v1/user`, {
         headers: { 'apikey': SVC, 'Authorization': `Bearer ${token}` }
       });
       const user = await userRes.json();
-      if (!user?.id) return res.status(401).json({ error: 'Ungültiger Token' });
+      if (!user?.id) return res.status(401).json({ error: 'Token abgelaufen — bitte neu anmelden auf virgoio.com' });
 
       const { name, firma, telefon, email, beschreibung, versicherungen, farbe, slug } = body;
       if (!name || !slug) return res.status(400).json({ error: 'Name und Slug sind Pflichtfelder' });
