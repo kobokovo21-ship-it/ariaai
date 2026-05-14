@@ -4,5 +4,9 @@
     "api/*.js": {
       "maxDuration": 60
     }
-  }
+  },
+  "rewrites": [
+    { "source": "/makler/:slug", "destination": "/makler/index.html" },
+    { "source": "/makler/:slug/", "destination": "/makler/index.html" }
+  ]
 }
