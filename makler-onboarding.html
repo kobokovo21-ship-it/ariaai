@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIRGO | Makler Profil einrichten</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#fff;--sf:#f7f7f7;--sf2:#f0f0f0;--bd:#e8e8e8;--t:#111;--tm:#888;--td:#bbb;--blue:#2563eb;--green:#22c55e;--red:#ef4444}
+body{font-family:'Inter',sans-serif;background:var(--sf);color:var(--t);min-height:100vh}
+.header{background:var(--bg);border-bottom:1px solid var(--bd);padding:16px 24px;display:flex;align-items:center;justify-content:space-between}
+.logo{font-size:13px;font-weight:200;letter-spacing:8px}
+.back{font-size:12px;color:var(--tm);text-decoration:none;padding:6px 12px;border:1px solid var(--bd);border-radius:7px}
+.container{max-width:700px;margin:0 auto;padding:32px 20px}
+.hero{text-align:center;margin-bottom:40px}
+.hero h1{font-size:28px;font-weight:300;margin-bottom:8px}
+.hero p{font-size:14px;color:var(--tm);line-height:1.7}
+.card{background:var(--bg);border:1px solid var(--bd);border-radius:16px;padding:28px;margin-bottom:20px}
+.card h2{font-size:15px;font-weight:600;margin-bottom:4px}
+.card p{font-size:12px;color:var(--tm);margin-bottom:20px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.full{grid-column:1/-1}
+label{display:block;font-size:11px;color:var(--tm);margin-bottom:5px;font-weight:500;text-transform:uppercase;letter-spacing:.5px}
+input,select,textarea{width:100%;padding:10px 14px;border:1px solid var(--bd);border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;color:var(--t);outline:none;background:var(--bg)}
+input:focus,select:focus,textarea:focus{border-color:#999}
+textarea{resize:vertical;min-height:80px}
+.vers-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.vers-item{display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--bd);border-radius:8px;cursor:pointer;transition:all .15s;font-size:12px}
+.vers-item input{width:auto;margin:0}
+.vers-item:has(input:checked){border-color:var(--t);background:var(--t);color:#fff}
+.color-grid{display:flex;gap:8px;flex-wrap:wrap}
+.color-swatch{width:32px;height:32px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:all .15s}
+.color-swatch.active{border-color:#fff;box-shadow:0 0 0 2px var(--t)}
+.preview-box{background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:20px;margin-top:16px;text-align:center}
+.preview-url{font-size:13px;color:var(--blue);font-family:monospace;word-break:break-all}
+.msg{padding:12px 16px;border-radius:8px;font-size:13px;margin-bottom:16px;display:none}
+.msg.success{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534}
+.msg.error{background:#fef2f2;border:1px solid #fecaca;color:#991b1b}
+.btn{width:100%;padding:14px;background:var(--t);color:#fff;border:none;border-radius:10px;font-family:'Inter',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:opacity .15s}
+.btn:hover{opacity:.85}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.plan-badge{display:inline-block;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;background:#dbeafe;color:#1d4ed8;margin-bottom:16px}
+.step{display:flex;align-items:center;gap:12px;margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--bd)}
+.step:last-child{border-bottom:none;margin-bottom:0}
+.step-num{width:28px;height:28px;border-radius:50%;background:var(--t);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0}
+.step-text{font-size:13px;color:var(--tm);line-height:1.5}
+.step-text strong{color:var(--t)}
+@media(max-width:600px){.grid,.vers-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span class="logo">VIRGO</span>
+  <a href="/" class="back">← Zurück zu Virgo</a>
+</div>
+
+<div class="container">
+  <div id="no-access" style="display:none;text-align:center;padding:60px 20px">
+    <h2 style="font-size:22px;font-weight:300;margin-bottom:12px">Kein Zugriff</h2>
+    <p style="color:var(--tm);margin-bottom:24px">Du brauchst einen Virgo Makler Plan.</p>
+    <a href="/" style="padding:12px 24px;background:var(--t);color:#fff;text-decoration:none;border-radius:8px;font-size:13px">Plan auswählen</a>
+  </div>
+
+  <div id="app" style="display:none">
+    <div class="hero">
+      <div class="plan-badge" id="plan-badge">Makler Starter</div>
+      <h1>Deine Makler Landing Page</h1>
+      <p>Richte dein Profil ein — Virgo erstellt automatisch deine persönliche Landing Page auf der Interessenten ihre Daten hinterlassen können.</p>
+    </div>
+
+    <div class="card">
+      <h2>So funktioniert es</h2>
+      <p>3 einfache Schritte bis zu deinen ersten Leads</p>
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-text"><strong>Profil einrichten</strong> — Füll das Formular unten aus. Name, Versicherungen, Farbe.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-text"><strong>Link teilen</strong> — Du bekommst einen persönlichen Link z.B. <span style="color:var(--blue);font-family:monospace">virgoio.com/makler/dein-name</span>. Teile ihn auf Instagram, LinkedIn, WhatsApp oder schalte Ads.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-text"><strong>Leads erhalten</strong> — Interessenten füllen das Formular aus. Du bekommst sofort eine Email und siehst den Lead in deinem Dashboard.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Dein Profil</h2>
+      <p>Diese Daten erscheinen auf deiner Landing Page</p>
+      <div id="msg" class="msg"></div>
+      <div class="grid">
+        <div>
+          <label>Dein Name *</label>
+          <input id="name" placeholder="Max Mustermann">
+        </div>
+        <div>
+          <label>Firma (optional)</label>
+          <input id="firma" placeholder="Mustermann Versicherungen">
+        </div>
+        <div>
+          <label>Telefon *</label>
+          <input id="telefon" placeholder="+49 211 123456">
+        </div>
+        <div>
+          <label>Email *</label>
+          <input id="email" type="email" placeholder="max@email.de">
+        </div>
+        <div class="full">
+          <label>Deine URL — Seiten-Adresse *</label>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:13px;color:var(--tm);white-space:nowrap">virgoio.com/makler/</span>
+            <input id="slug" placeholder="max-mustermann" oninput="updatePreview()">
+          </div>
+          <div style="font-size:11px;color:var(--td);margin-top:4px">Nur Buchstaben, Zahlen und Bindestriche. Keine Leerzeichen.</div>
+        </div>
+        <div class="full">
+          <label>Über dich / Slogan</label>
+          <textarea id="beschreibung" placeholder="Ich helfe dir die beste Versicherung für deine Situation zu finden. Kostenlose und unverbindliche Beratung."></textarea>
+        </div>
+      </div>
+
+      <div style="margin-top:20px">
+        <label>Welche Versicherungen bietest du an? *</label>
+        <div class="vers-grid" style="margin-top:8px">
+          <label class="vers-item"><input type="checkbox" value="PKV" name="vers"> Private Krankenversicherung</label>
+          <label class="vers-item"><input type="checkbox" value="KFZ" name="vers"> KFZ-Versicherung</label>
+          <label class="vers-item"><input type="checkbox" value="Hausrat" name="vers"> Hausratversicherung</label>
+          <label class="vers-item"><input type="checkbox" value="Haftpflicht" name="vers"> Haftpflicht</label>
+          <label class="vers-item"><input type="checkbox" value="Berufsunfähigkeit" name="vers"> Berufsunfähigkeit</label>
+          <label class="vers-item"><input type="checkbox" value="Leben" name="vers"> Lebensversicherung</label>
+          <label class="vers-item"><input type="checkbox" value="Krankentagegeld" name="vers"> Krankentagegeld</label>
+          <label class="vers-item"><input type="checkbox" value="Pflege" name="vers"> Pflegeversicherung</label>
+          <label class="vers-item"><input type="checkbox" value="Rechtsschutz" name="vers"> Rechtsschutz</label>
+        </div>
+      </div>
+
+      <div style="margin-top:20px">
+        <label>Farbe deiner Landing Page</label>
+        <div class="color-grid" style="margin-top:8px">
+          <div class="color-swatch active" style="background:#111111" data-color="#111111" onclick="setColor(this)"></div>
+          <div class="color-swatch" style="background:#2563eb" data-color="#2563eb" onclick="setColor(this)"></div>
+          <div class="color-swatch" style="background:#16a34a" data-color="#16a34a" onclick="setColor(this)"></div>
+          <div class="color-swatch" style="background:#9333ea" data-color="#9333ea" onclick="setColor(this)"></div>
+          <div class="color-swatch" style="background:#dc2626" data-color="#dc2626" onclick="setColor(this)"></div>
+          <div class="color-swatch" style="background:#ea580c" data-color="#ea580c" onclick="setColor(this)"></div>
+          <div class="color-swatch" style="background:#0891b2" data-color="#0891b2" onclick="setColor(this)"></div>
+          <div class="color-swatch" style="background:#be123c" data-color="#be123c" onclick="setColor(this)"></div>
+        </div>
+      </div>
+
+      <div class="preview-box" id="preview-box" style="display:none">
+        <div style="font-size:11px;color:var(--td);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Deine Landing Page URL</div>
+        <div class="preview-url" id="preview-url">virgoio.com/makler/...</div>
+        <div style="margin-top:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+          <a id="preview-link" href="#" target="_blank" style="padding:7px 14px;background:var(--t);color:#fff;text-decoration:none;border-radius:6px;font-size:11px">🔗 Vorschau öffnen</a>
+          <button onclick="copyLink()" style="padding:7px 14px;border:1px solid var(--bd);border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer;background:var(--bg)">📋 Link kopieren</button>
+        </div>
+      </div>
+
+      <button class="btn" id="save-btn" onclick="saveProfile()" style="margin-top:24px">Profil speichern & Landing Page aktivieren</button>
+    </div>
+
+    <div class="card" id="leads-preview" style="display:none">
+      <h2>📊 Deine Leads</h2>
+      <p>Hier siehst du die letzten Anfragen von deiner Landing Page</p>
+      <div id="leads-list" style="font-size:13px;color:var(--td);padding:20px 0;text-align:center">Noch keine Leads. Teile deine Landing Page um erste Anfragen zu erhalten.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const ADMIN_EMAIL = 'holyencore@gmail.com';
+let selectedColor = '#111111';
+let authToken = localStorage.getItem('virgo_token');
+let currentUser = JSON.parse(localStorage.getItem('virgo_user') || 'null');
+let plan = localStorage.getItem('virgo_plan') || 'free';
+
+const MAKLER_PLANS = ['makler-starter', 'makler-pro', 'makler-business'];
+
+// Check access
+if (!currentUser || (!MAKLER_PLANS.includes(plan) && currentUser.email !== ADMIN_EMAIL)) {
+  document.getElementById('no-access').style.display = 'block';
+} else {
+  document.getElementById('app').style.display = 'block';
+  const planNames = {'makler-starter':'Makler Starter','makler-pro':'Makler Pro','makler-business':'Makler Business'};
+  document.getElementById('plan-badge').textContent = planNames[plan] || 'Makler';
+  loadProfile();
+}
+
+async function loadProfile() {
+  if (!authToken) return;
+  try {
+    const r = await fetch('/api/tools?tool=makler-mine', {
+      headers: { 'Authorization': 'Bearer ' + authToken }
+    });
+    const d = await r.json();
+    if (d && d.name) {
+      document.getElementById('name').value = d.name || '';
+      document.getElementById('firma').value = d.firma || '';
+      document.getElementById('telefon').value = d.telefon || '';
+      document.getElementById('email').value = d.email || '';
+      document.getElementById('slug').value = d.slug || '';
+      document.getElementById('beschreibung').value = d.beschreibung || '';
+      if (d.farbe) setColorByValue(d.farbe);
+      if (d.versicherungen) {
+        d.versicherungen.forEach(v => {
+          const cb = document.querySelector(`input[value="${v}"]`);
+          if (cb) cb.checked = true;
+        });
+      }
+      updatePreview();
+    }
+  } catch(e) {}
+}
+
+function updatePreview() {
+  const slug = document.getElementById('slug').value.trim().toLowerCase().replace(/[^a-z0-9-]/g,'');
+  document.getElementById('slug').value = slug;
+  if (slug) {
+    document.getElementById('preview-box').style.display = 'block';
+    const url = 'virgoio.com/makler/' + slug;
+    document.getElementById('preview-url').textContent = url;
+    document.getElementById('preview-link').href = '/makler/' + slug;
+  } else {
+    document.getElementById('preview-box').style.display = 'none';
+  }
+}
+
+function setColor(el) {
+  document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+  el.classList.add('active');
+  selectedColor = el.dataset.color;
+}
+
+function setColorByValue(color) {
+  const swatch = document.querySelector(`.color-swatch[data-color="${color}"]`);
+  if (swatch) { document.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('active')); swatch.classList.add('active'); }
+  selectedColor = color;
+}
+
+function copyLink() {
+  const slug = document.getElementById('slug').value.trim();
+  if (!slug) return;
+  navigator.clipboard.writeText('https://virgoio.com/makler/' + slug);
+  alert('Link kopiert!');
+}
+
+async function saveProfile() {
+  const name = document.getElementById('name').value.trim();
+  const slug = document.getElementById('slug').value.trim();
+  const telefon = document.getElementById('telefon').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const msg = document.getElementById('msg');
+
+  if (!name || !slug || !telefon || !email) {
+    msg.textContent = 'Bitte Name, URL, Telefon und Email ausfüllen.';
+    msg.className = 'msg error'; msg.style.display = 'block'; return;
+  }
+
+  const versicherungen = Array.from(document.querySelectorAll('input[name="vers"]:checked')).map(cb => cb.value);
+  if (!versicherungen.length) {
+    msg.textContent = 'Bitte mindestens eine Versicherungsart auswählen.';
+    msg.className = 'msg error'; msg.style.display = 'block'; return;
+  }
+
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true; btn.textContent = 'Wird gespeichert...';
+  msg.style.display = 'none';
+
+  try {
+    const r = await fetch('/api/tools', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+      body: JSON.stringify({
+        tool: 'makler-save',
+        name, slug, telefon, email,
+        firma: document.getElementById('firma').value.trim(),
+        beschreibung: document.getElementById('beschreibung').value.trim(),
+        versicherungen,
+        farbe: selectedColor
+      })
+    });
+    const d = await r.json();
+    if (d.error) {
+      msg.textContent = d.error;
+      msg.className = 'msg error'; msg.style.display = 'block';
+    } else {
+      msg.textContent = '✅ Profil gespeichert! Deine Landing Page ist jetzt live.';
+      msg.className = 'msg success'; msg.style.display = 'block';
+      updatePreview();
+    }
+  } catch(e) {
+    msg.textContent = 'Fehler: ' + e.message;
+    msg.className = 'msg error'; msg.style.display = 'block';
+  }
+  btn.disabled = false; btn.textContent = 'Profil speichern & Landing Page aktivieren';
+}
+</script>
+</body>
+</html>
