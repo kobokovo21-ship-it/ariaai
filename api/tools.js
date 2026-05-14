@@ -136,7 +136,7 @@ export default async function handler(req, res) {
       const user = await userRes.json();
       if (!user?.id) return res.status(401).json({ error: 'Token abgelaufen — bitte neu anmelden auf virgoio.com' });
 
-      const { name, firma, telefon, email, beschreibung, versicherungen, farbe, slug } = body;
+      const { name, firma, telefon, email, beschreibung, versicherungen, farbe, slug, header_image } = body;
       if (!name || !slug) return res.status(400).json({ error: 'Name und Slug sind Pflichtfelder' });
 
       // Check if exists
@@ -145,7 +145,7 @@ export default async function handler(req, res) {
       });
       const existing = await checkR.json();
 
-      const profileData = { name, firma: firma||null, telefon, email, beschreibung: beschreibung||null, versicherungen: Array.isArray(versicherungen)?versicherungen:[], farbe: farbe||'#111111', slug: slug.toLowerCase().replace(/[^a-z0-9-]/g,'-') };
+      const profileData = { name, firma: firma||null, telefon, email, beschreibung: beschreibung||null, versicherungen: Array.isArray(versicherungen)?versicherungen:[], farbe: farbe||'#111111', slug: slug.toLowerCase().replace(/[^a-z0-9-]/g,'-'), header_image: header_image||null };
 
       let r;
       if (existing.length) {
