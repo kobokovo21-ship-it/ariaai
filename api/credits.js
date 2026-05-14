@@ -10,12 +10,8 @@ export default async function handler(req, res) {
   if (!token) return res.status(401).json({ error: 'Nicht eingeloggt' });
 
   try {
-    // User aus Token
     const userRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-      headers: {
-        'apikey': SUPABASE_SERVICE_KEY,
-        'Authorization': `Bearer ${token}`
-      }
+      headers: { 'apikey': SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${token}` }
     });
     const user = await userRes.json();
     if (!user?.id) return res.status(401).json({ error: 'Ungültiger Token' });
@@ -25,7 +21,8 @@ export default async function handler(req, res) {
         headers: { 'apikey': SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}` }
       });
       const data = await r.json();
-      return res.status(200).json({ credits: data?.[0]?.credits ?? 0, plan: data?.[0]?.plan ?? 'free' });
+      const isAdmin = !!(process.env.ADMIN_EMAIL && user.email === process.env.ADMIN_EMAIL);
+      return res.status(200).json({ credits: data?.[0]?.credits ?? 0, plan: data?.[0]?.plan ?? 'free', is_admin: isAdmin });
     }
 
     if (req.method === 'POST') {
@@ -39,19 +36,14 @@ export default async function handler(req, res) {
 
       const upd = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${user.id}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': SUPABASE_SERVICE_KEY,
-          'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
-          'Prefer': 'return=representation'
-        },
+        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`, 'Prefer': 'return=representation' },
         body: JSON.stringify({ credits: current - amount })
       });
       const updated = await upd.json();
       return res.status(200).json({ success: true, credits: updated?.[0]?.credits ?? current - amount });
     }
-
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
 }
+
