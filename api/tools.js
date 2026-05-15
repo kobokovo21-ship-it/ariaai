@@ -164,11 +164,18 @@ export default async function handler(req, res) {
       const { name, firma, telefon, email, beschreibung, versicherungen, farbe, slug, header_image } = body;
       if (!name || !slug) return res.status(400).json({ error: 'Name und Slug sind Pflichtfelder' });
 
+      // Validate UUID format
+      const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRe.test(user.id)) return res.status(401).json({ error: 'Ungültige User-ID — bitte neu anmelden auf virgoio.com' });
+
       // Check if exists
-      const checkR = await fetch(`${BASE}/rest/v1/makler?user_id=eq.${user.id}`, {
+      const checkR = await fetch(`${BASE}/rest/v1/makler?user_id=eq.${user.id}&select=id`, {
         headers: { 'apikey': SVC, 'Authorization': `Bearer ${SVC}` }
       });
-      if (!checkR.ok) return res.status(500).json({ error: 'Datenbankfehler beim Prüfen des Profils' });
+      if (!checkR.ok) {
+        const errBody = await checkR.json().catch(() => ({}));
+        return res.status(500).json({ error: 'DB-Fehler: ' + (errBody.message || errBody.hint || errBody.details || JSON.stringify(errBody)) });
+      }
       const existing = await checkR.json();
 
       const profileData = { name, firma: firma||null, telefon, email, beschreibung: beschreibung||null, versicherungen: Array.isArray(versicherungen)?versicherungen:[], farbe: farbe||'#111111', slug: slug.toLowerCase().replace(/[^a-z0-9-]/g,'-'), header_image: header_image||null };
@@ -232,3 +239,4 @@ export default async function handler(req, res) {
 
   return res.status(400).json({ error: 'Unbekanntes Tool: ' + tool });
 }
+
