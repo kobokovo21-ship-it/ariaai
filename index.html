@@ -269,6 +269,25 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
         <div class="ll">V I R G O</div>
         <div class="lt">Was möchtest du erschaffen?</div>
         <div class="ls">Videos, Bilder und Inhalte mit den besten KI-Modellen der Welt.</div>
+        <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;justify-content:center;max-width:580px">
+          <div style="border-radius:12px;overflow:hidden;width:130px;height:170px;background:var(--sf2);flex-shrink:0;position:relative">
+            <img src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=300&q=80" style="width:100%;height:100%;object-fit:cover;display:block" alt="Fashion">
+            <div style="position:absolute;bottom:6px;left:6px;font-size:9px;background:rgba(0,0,0,.55);color:#fff;padding:2px 6px;border-radius:4px;letter-spacing:.5px">FASHION</div>
+          </div>
+          <div style="border-radius:12px;overflow:hidden;width:130px;height:170px;background:var(--sf2);flex-shrink:0;position:relative">
+            <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=300&q=80" style="width:100%;height:100%;object-fit:cover;display:block" alt="Product">
+            <div style="position:absolute;bottom:6px;left:6px;font-size:9px;background:rgba(0,0,0,.55);color:#fff;padding:2px 6px;border-radius:4px;letter-spacing:.5px">PRODUKT</div>
+          </div>
+          <div style="border-radius:12px;overflow:hidden;width:130px;height:170px;background:var(--sf2);flex-shrink:0;position:relative">
+            <img src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=300&q=80" style="width:100%;height:100%;object-fit:cover;display:block" alt="Style">
+            <div style="position:absolute;bottom:6px;left:6px;font-size:9px;background:rgba(0,0,0,.55);color:#fff;padding:2px 6px;border-radius:4px;letter-spacing:.5px">EDITORIAL</div>
+          </div>
+          <div style="border-radius:12px;overflow:hidden;width:130px;height:170px;background:var(--sf2);flex-shrink:0;position:relative">
+            <img src="https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=300&q=80" style="width:100%;height:100%;object-fit:cover;display:block" alt="Model">
+            <div style="position:absolute;bottom:6px;left:6px;font-size:9px;background:rgba(0,0,0,.55);color:#fff;padding:2px 6px;border-radius:4px;letter-spacing:.5px">CAMPAIGN</div>
+          </div>
+        </div>
+        <div style="font-size:10px;color:var(--td);margin-top:6px;margin-bottom:10px">Beispiel-Outputs · Erstellt mit Virgo AI</div>
         <div class="starters">
           <button class="starter" onclick="qs('Erstelle ein Fashion-Video für Instagram')">Fashion Video</button>
           <button class="starter" onclick="qs('Generiere ein Produktbild im Studio-Look')">Produktbild</button>
@@ -575,7 +594,6 @@ function openLocalChat(chat){
     else if(msg.role==='assistant')addAIMsg(renderMD(msg.content));
   });
   conversationHistory=(chat.messages||[]).slice();
-  loadChats();
   closeSb();
 }
 
@@ -1238,3 +1256,5 @@ if(localStorage.getItem('virgo_sb_closed')==='1'){
 <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('/sw.js').catch(()=>{});});}</script>
 </body>
 </html>
+
+
