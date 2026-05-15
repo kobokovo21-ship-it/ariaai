@@ -222,23 +222,39 @@ textarea{resize:vertical;min-height:80px}
 </div>
 
 <script>
-const ADMIN_EMAIL = 'holyencore@gmail.com';
 let selectedColor = '#111111';
 let authToken = localStorage.getItem('virgo_token');
-let currentUser = JSON.parse(localStorage.getItem('virgo_user') || 'null');
-let plan = localStorage.getItem('virgo_plan') || 'free';
+let plan = 'free';
 
 const MAKLER_PLANS = ['makler-starter', 'makler-pro', 'makler-business'];
+const ADMIN_EMAIL = 'holyencore@gmail.com';
+const _cu = JSON.parse(localStorage.getItem('virgo_user') || 'null');
+const isAdmin = _cu?.email === ADMIN_EMAIL;
 
-// Check access
-if (!currentUser || (!MAKLER_PLANS.includes(plan) && currentUser.email !== ADMIN_EMAIL)) {
-  document.getElementById('no-access').style.display = 'block';
-} else {
-  document.getElementById('app').style.display = 'block';
-  const planNames = {'makler-starter':'Makler Starter','makler-pro':'Makler Pro','makler-business':'Makler Business'};
-  document.getElementById('plan-badge').textContent = planNames[plan] || 'Makler';
-  loadProfile();
+async function checkAccess() {
+  if (!authToken) { window.location.href = '/'; return; }
+  if (isAdmin) {
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('plan-badge').textContent = 'Admin';
+    loadProfile();
+    return;
+  }
+  try {
+    const r = await fetch('/api/credits', { headers: { 'Authorization': 'Bearer ' + authToken } });
+    if (!r.ok) { document.getElementById('no-access').style.display = 'block'; return; }
+    const d = await r.json();
+    plan = d.plan || 'free';
+    if (!MAKLER_PLANS.includes(plan)) {
+      document.getElementById('no-access').style.display = 'block';
+      return;
+    }
+    document.getElementById('app').style.display = 'block';
+    const planNames = {'makler-starter':'Makler Starter','makler-pro':'Makler Pro','makler-business':'Makler Business'};
+    document.getElementById('plan-badge').textContent = planNames[plan] || 'Makler';
+    loadProfile();
+  } catch(e) { document.getElementById('no-access').style.display = 'block'; }
 }
+checkAccess();
 
 async function loadProfile() {
   if (!authToken) return;
@@ -367,56 +383,51 @@ function showPreview() {
   const firma = document.getElementById('firma').value.trim() || 'Versicherungsmakler';
   const beschreibung = document.getElementById('beschreibung').value.trim() || 'Kostenlose und unverbindliche Beratung.';
   const versicherungen = Array.from(document.querySelectorAll('input[name="vers"]:checked')).map(cb => cb.value);
-  const imgHtml = generatedImageUrl ? '<img src="' + generatedImageUrl + '" style="width:100%;height:220px;object-fit:cover;margin-bottom:24px;border-radius:12px">' : '';
-  const versTagsHtml = versicherungen.map(v => '<span class="tag">' + v + '</span>').join('');
-  const versOptsHtml = versicherungen.map(v => '<option>' + v + '</option>').join('');
   
-  const previewHTML = '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
-    + '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">'
-    + '<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Inter,sans-serif;background:#fff;color:#111}'
-    + '.hero{padding:60px 20px 40px;text-align:center}'
-    + '.badge{display:inline-block;padding:6px 16px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;border:1px solid ' + selectedColor + ';color:' + selectedColor + '}'
-    + 'h1{font-size:28px;font-weight:700;margin-bottom:12px}p{font-size:15px;color:#666;line-height:1.7;max-width:500px;margin:0 auto 20px}'
-    + '.av{width:44px;height:44px;border-radius:50%;background:' + selectedColor + ';color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;margin-right:8px}'
-    + '.row{display:inline-flex;align-items:center;padding:10px 20px;border-radius:40px;border:1px solid #e8e8e8;background:#f7f7f7;margin-bottom:20px}'
-    + '.tags{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:28px}'
-    + '.tag{padding:5px 12px;border-radius:20px;border:1px solid #e8e8e8;font-size:12px;color:#666}'
-    + '.trust{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;font-size:11px;color:#888;margin-bottom:32px}'
-    + '.form{max-width:480px;margin:0 auto 40px;padding:28px;border:1px solid #e8e8e8;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,.06)}'
-    + '.form h2{font-size:18px;font-weight:600;margin-bottom:8px}.form p{font-size:12px;color:#888;margin-bottom:16px}'
-    + 'input,select,textarea{width:100%;padding:10px 14px;border:1.5px solid #e8e8e8;border-radius:8px;font-family:Inter,sans-serif;font-size:13px;outline:none;margin-bottom:10px}'
-    + '.btn{width:100%;padding:13px;background:' + selectedColor + ';color:#fff;border:none;border-radius:10px;font-family:Inter,sans-serif;font-size:14px;font-weight:600;cursor:pointer}'
-    + 'label{display:block;font-size:10px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}'
-    + '.footer{text-align:center;padding:16px;font-size:11px;color:#bbb;border-top:1px solid #f0f0f0}'
-    + '</style></head><body>'
-    + '<div class="hero">'
-    + imgHtml
-    + '<div class="badge">Kostenlose Beratung</div>'
-    + '<h1>Versicherungsberatung mit ' + name + '</h1>'
-    + '<p>' + beschreibung + '</p>'
-    + '<div class="row"><div class="av">' + (name[0] || 'M').toUpperCase() + '</div><div style="text-align:left"><div style="font-size:13px;font-weight:600">' + name + '</div><div style="font-size:11px;color:#888">' + firma + '</div></div></div>'
-    + '<div class="tags">' + versTagsHtml + '</div>'
-    + '<div class="trust"><span>✅ Kostenlos & unverbindlich</span><span>🔒 100% Datenschutz</span><span>⚡ Antwort in 24h</span></div>'
-    + '</div>'
-    + '<div style="padding:0 20px">'
-    + '<div class="form">'
-    + '<h2>Jetzt kostenlose Beratung anfragen</h2>'
-    + '<p>Ich melde mich innerhalb von 24 Stunden persönlich bei dir.</p>'
-    + '<label>Dein Name *</label><input placeholder="Max Mustermann">'
-    + '<label>Telefon *</label><input placeholder="+49 ...">'
-    + '<label>Email</label><input placeholder="max@email.de">'
-    + '<label>Versicherung</label><select><option>Versicherung wählen...</option>' + versOptsHtml + '</select>'
-    + '<label>Nachricht</label><textarea placeholder="Was möchtest du wissen?" style="min-height:60px;resize:vertical;margin-bottom:14px"></textarea>'
-    + '<button class="btn">Kostenlose Beratung anfragen →</button>'
-    + '</div></div>'
-    + '<div class="footer">Powered by <strong>Virgo AI</strong></div>'
-    + '</body></html>';
+  const previewHTML = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Inter,sans-serif;background:#fff;color:#111}
+.hero{padding:60px 20px 40px;text-align:center;background:linear-gradient(135deg,${selectedColor}08,transparent)}
+.badge{display:inline-block;padding:6px 16px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;border:1px solid ${selectedColor};color:${selectedColor}}
+h1{font-size:32px;font-weight:700;margin-bottom:12px}p{font-size:15px;color:#666;line-height:1.7;max-width:500px;margin:0 auto 24px}
+.av{width:48px;height:48px;border-radius:50%;background:${selectedColor};color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;margin-right:10px}
+.makler-row{display:inline-flex;align-items:center;padding:10px 20px;border-radius:40px;border:1px solid #e8e8e8;background:#f7f7f7;margin-bottom:24px}
+.vers-tags{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:32px}
+.tag{padding:6px 14px;border-radius:20px;border:1px solid #e8e8e8;font-size:12px;color:#666}
+.trust{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;font-size:12px;color:#888;margin-bottom:40px}
+.form-card{max-width:500px;margin:0 auto 40px;padding:32px;border:1px solid #e8e8e8;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,.06)}
+.form-card h2{font-size:20px;font-weight:600;margin-bottom:8px}.form-card p{font-size:13px;margin-bottom:20px}
+input,select,textarea{width:100%;padding:10px 14px;border:1.5px solid #e8e8e8;border-radius:8px;font-family:Inter,sans-serif;font-size:13px;outline:none;margin-bottom:12px;background:#fff}
+.btn{width:100%;padding:14px;background:${selectedColor};color:#fff;border:none;border-radius:10px;font-family:Inter,sans-serif;font-size:14px;font-weight:600;cursor:pointer}
+label{display:block;font-size:10px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+</style></head><body>
+<div class="hero">
+  <div class="badge">Kostenlose Beratung</div>
+  <h1>Versicherungsberatung mit ${name}</h1>
+  <p>${beschreibung}</p>
+  <div class="makler-row"><div class="av">${name[0]?.toUpperCase()||'M'}</div><div style="text-align:left"><div style="font-size:13px;font-weight:600">${name}</div><div style="font-size:11px;color:#888">${firma}</div></div></div>
+  <div class="vers-tags">${versicherungen.map(v=>`<span class="tag">${v}</span>`).join('')}</div>
+  <div class="trust"><span>✅ Kostenlos & unverbindlich</span><span>🔒 100% Datenschutz</span><span>⚡ Antwort in 24h</span></div>
+</div>
+<div style="padding:0 20px">
+<div class="form-card">
+  <h2>Jetzt kostenlose Beratung anfragen</h2>
+  <p style="color:#888">Füll das Formular aus — ich melde mich innerhalb von 24 Stunden.</p>
+  <label>Dein Name *</label><input placeholder="Max Mustermann">
+  <label>Telefon *</label><input placeholder="+49 ...">
+  <label>Email</label><input placeholder="max@email.de">
+  <label>Versicherung</label><select><option>Versicherung wählen...</option>${versicherungen.map(v=>`<option>${v}</option>`).join('')}</select>
+  <label>Nachricht</label><textarea placeholder="Was möchtest du wissen?" style="min-height:70px;resize:vertical;margin-bottom:16px"></textarea>
+  <button class="btn">Kostenlose Beratung anfragen →</button>
+</div></div>
+<div style="text-align:center;padding:16px;font-size:11px;color:#bbb;border-top:1px solid #f0f0f0">Powered by <strong>Virgo AI</strong></div>
+</body></html>`;
   
   const iframe = document.getElementById('preview-frame');
   iframe.srcdoc = previewHTML;
   document.getElementById('preview-modal').style.display = 'block';
 }
-
 
 async function saveProfile() {
   const name = document.getElementById('name').value.trim();
