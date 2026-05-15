@@ -6,7 +6,7 @@
     }
   },
   "rewrites": [
-    { "source": "/makler/:slug", "destination": "/makler/index.html" },
-    { "source": "/makler/:slug/", "destination": "/makler/index.html" }
+    { "source": "/makler/:slug", "destination": "/makler.html" },
+    { "source": "/makler/:slug/", "destination": "/makler.html" }
   ]
 }
