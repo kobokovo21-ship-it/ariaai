@@ -1,3 +1,290 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Versicherungsberatung</title>
+<style>
+  :root { --color: #111; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Georgia', serif; background: #fafaf8; color: #111; min-height: 100vh; }
+
+  #loading {
+    display: flex; align-items: center; justify-content: center;
+    height: 100vh; font-size: 14px; color: #999; letter-spacing: 2px;
+  }
+  #not-found { display: none; text-align: center; padding: 80px 20px; }
+  #not-found h2 { font-size: 24px; margin-bottom: 12px; }
+  #not-found p { color: #888; font-size: 14px; }
+  #page { display: none; }
+
+  .hero {
+    background: var(--color);
+    color: #fff;
+    padding: 60px 24px 48px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 60% 40%, rgba(255,255,255,0.07) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-badge {
+    display: inline-block;
+    border: 1px solid rgba(255,255,255,0.4);
+    color: rgba(255,255,255,0.85);
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border-radius: 100px;
+    margin-bottom: 24px;
+  }
+  .hero h1 {
+    font-size: clamp(26px, 5vw, 42px);
+    font-weight: 400;
+    line-height: 1.2;
+    margin-bottom: 16px;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .hero p {
+    font-size: 15px;
+    color: rgba(255,255,255,0.72);
+    max-width: 480px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+  .hero-img {
+    width: 100%; max-height: 240px;
+    object-fit: cover;
+    margin-bottom: 32px;
+    border-radius: 8px;
+    opacity: 0.9;
+  }
+
+  .container { max-width: 680px; margin: 0 auto; padding: 0 20px; }
+
+  .profile-card {
+    background: #fff;
+    border: 1px solid #e8e8e4;
+    border-radius: 16px;
+    padding: 28px;
+    margin: -28px 20px 0;
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+  }
+  .avatar {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: var(--color);
+    color: #fff;
+    font-size: 22px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-family: Georgia, serif;
+  }
+  .profile-info h3 { font-size: 18px; font-weight: 600; margin-bottom: 2px; font-family: Georgia, serif; }
+  .profile-info span { font-size: 13px; color: #888; }
+
+  .vers-tags {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    margin: 28px 0 0;
+  }
+  .vers-tag {
+    background: #f2f2ef;
+    border-radius: 100px;
+    padding: 6px 14px;
+    font-size: 12px;
+    color: #444;
+    letter-spacing: 0.5px;
+  }
+
+  .section { margin-top: 40px; }
+  .section-label {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #bbb;
+    margin-bottom: 20px;
+  }
+
+  .form-card {
+    background: #fff;
+    border: 1px solid #e8e8e4;
+    border-radius: 16px;
+    padding: 32px 28px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  }
+  .form-card h2 {
+    font-size: 22px;
+    font-weight: 400;
+    margin-bottom: 6px;
+    font-family: Georgia, serif;
+  }
+  .form-card .subtitle {
+    font-size: 14px; color: #888; margin-bottom: 28px; line-height: 1.5;
+  }
+
+  .field { margin-bottom: 16px; }
+  .field label {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #999;
+    margin-bottom: 6px;
+  }
+  .field input, .field select, .field textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #e0e0db;
+    border-radius: 10px;
+    font-size: 15px;
+    font-family: Georgia, serif;
+    background: #fafaf8;
+    color: #111;
+    transition: border-color 0.2s;
+    outline: none;
+    appearance: none;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    border-color: var(--color);
+    background: #fff;
+  }
+  .field textarea { resize: vertical; min-height: 90px; }
+
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  #submit-btn {
+    width: 100%;
+    padding: 16px;
+    background: var(--color);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-family: Georgia, serif;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: opacity 0.2s;
+    letter-spacing: 0.5px;
+  }
+  #submit-btn:hover { opacity: 0.85; }
+  #submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  #success-msg {
+    display: none;
+    text-align: center;
+    padding: 40px 20px;
+  }
+  #success-msg .check {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: #111; color: #fff;
+    font-size: 24px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 20px;
+  }
+  #success-msg h3 { font-size: 22px; font-weight: 400; margin-bottom: 8px; font-family: Georgia, serif; }
+  #success-msg p { font-size: 14px; color: #888; line-height: 1.6; }
+
+  .footer {
+    text-align: center;
+    padding: 48px 20px 32px;
+    font-size: 12px;
+    color: #ccc;
+    letter-spacing: 1px;
+  }
+  .footer a { color: #ccc; text-decoration: none; }
+  .footer a:hover { color: #888; }
+
+  @media (max-width: 480px) {
+    .row { grid-template-columns: 1fr; }
+    .profile-card { margin: -24px 12px 0; }
+    .form-card { padding: 24px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="loading">Wird geladen…</div>
+
+<div id="not-found">
+  <h2>Seite nicht gefunden</h2>
+  <p>Dieser Makler existiert nicht oder der Link ist abgelaufen.</p>
+</div>
+
+<div id="page">
+  <div class="hero">
+    <div id="hero-badge" class="hero-badge">Versicherungsberatung</div>
+    <h1 id="hero-title">Versicherungsberatung</h1>
+    <p id="hero-desc"></p>
+  </div>
+
+  <div class="container">
+    <div class="profile-card">
+      <div class="avatar" id="makler-av"></div>
+      <div class="profile-info">
+        <h3 id="makler-name"></h3>
+        <span id="makler-firma"></span>
+      </div>
+    </div>
+
+    <div id="vers-tags" class="vers-tags"></div>
+
+    <div class="section">
+      <div class="section-label">Kostenlose Beratung</div>
+      <div class="form-card">
+        <div id="form-content">
+          <h2>Anfrage stellen</h2>
+          <p class="subtitle">Hinterlasse deine Daten — wir melden uns innerhalb von 24 Stunden bei dir.</p>
+
+          <div class="row">
+            <div class="field">
+              <label>Name *</label>
+              <input id="f-name" type="text" placeholder="Max Mustermann">
+            </div>
+            <div class="field">
+              <label>Telefon *</label>
+              <input id="f-tel" type="tel" placeholder="+49 211 123456">
+            </div>
+          </div>
+          <div class="field">
+            <label>Email</label>
+            <input id="f-email" type="email" placeholder="max@email.de">
+          </div>
+          <div class="field">
+            <label>Versicherung</label>
+            <select id="f-vers"><option value="">Versicherung wählen...</option></select>
+          </div>
+          <div class="field">
+            <label>Nachricht (optional)</label>
+            <textarea id="f-msg" placeholder="Was kann ich für dich tun?"></textarea>
+          </div>
+          <button id="submit-btn" onclick="submitLead()">Kostenlose Beratung anfragen →</button>
+        </div>
+
+        <div id="success-msg">
+          <div class="check">✓</div>
+          <h3>Anfrage gesendet!</h3>
+          <p><span id="success-name"></span> wird sich in Kürze bei dir melden.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <a href="https://virgoio.com">Powered by Virgo AI</a>
+  </div>
+</div>
+
 <script>
 let maklerData = null;
 
@@ -23,12 +310,11 @@ function renderPage(d) {
   if (d.header_image) {
     const imgEl = document.createElement('img');
     imgEl.src = d.header_image;
-    imgEl.style.cssText = 'width:100%;height:220px;object-fit:cover;margin-bottom:24px;border-radius:12px';
+    imgEl.className = 'hero-img';
     const hero = document.querySelector('.hero');
     hero.insertBefore(imgEl, hero.firstChild);
   }
-  document.getElementById('hero-badge').style.borderColor = d.farbe || '#111';
-  document.getElementById('hero-badge').style.color = d.farbe || '#111';
+
   document.getElementById('hero-title').textContent = 'Versicherungsberatung mit ' + d.name;
   document.getElementById('hero-desc').textContent = d.beschreibung || 'Kostenlose und unverbindliche Beratung.';
   document.getElementById('makler-av').textContent = d.name[0].toUpperCase();
@@ -51,10 +337,6 @@ function renderPage(d) {
     opt.value = v; opt.textContent = v;
     select.appendChild(opt);
   });
-
-  const btn = document.getElementById('submit-btn');
-  btn.style.background = d.farbe || '#111';
-  btn.style.color = '#fff';
 
   document.getElementById('loading').style.display = 'none';
   document.getElementById('page').style.display = 'block';
@@ -106,3 +388,5 @@ function showNotFound() {
 
 loadMakler();
 </script>
+</body>
+</html>
