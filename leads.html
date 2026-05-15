@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIRGO | Leads Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#fff;--sf:#f7f7f7;--sf2:#f0f0f0;--bd:#e8e8e8;--t:#111;--tm:#888;--td:#bbb;--blue:#2563eb;--red:#ef4444;--green:#22c55e}
+body{font-family:'Inter',sans-serif;background:var(--sf);color:var(--t);min-height:100vh}
+.header{background:var(--bg);border-bottom:1px solid var(--bd);padding:16px 24px;display:flex;align-items:center;justify-content:space-between}
+.logo{font-size:13px;font-weight:200;letter-spacing:8px}
+.back{font-size:12px;color:var(--tm);text-decoration:none;padding:6px 12px;border:1px solid var(--bd);border-radius:7px}
+.container{max-width:1100px;margin:0 auto;padding:24px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.stat{background:var(--bg);border:1px solid var(--bd);border-radius:12px;padding:16px}
+.stat-n{font-size:28px;font-weight:600;margin-bottom:2px}
+.stat-l{font-size:11px;color:var(--tm)}
+.stat.green .stat-n{color:var(--green)}
+.stat.blue .stat-n{color:var(--blue)}
+.top{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;padding:9px 14px;border:1px solid var(--bd);border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;outline:none;background:var(--bg)}
+.filter{padding:9px 14px;border:1px solid var(--bd);border-radius:8px;font-family:'Inter',sans-serif;font-size:12px;background:var(--bg);cursor:pointer;outline:none}
+.new-btn{padding:9px 16px;background:var(--t);color:#fff;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-size:12px;font-weight:500;cursor:pointer}
+.table-wrap{background:var(--bg);border:1px solid var(--bd);border-radius:12px;overflow:hidden}
+table{width:100%;border-collapse:collapse}
+th{padding:10px 16px;text-align:left;font-size:10px;font-weight:600;color:var(--td);text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--bd);background:var(--sf)}
+td{padding:12px 16px;font-size:12px;border-bottom:1px solid var(--sf);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--sf)}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:500}
+.badge.neu{background:#dbeafe;color:#1d4ed8}
+.badge.kontaktiert{background:#fef9c3;color:#92400e}
+.badge.abschluss{background:#dcfce7;color:#166534}
+.badge.verloren{background:#fee2e2;color:#991b1b}
+.act{display:flex;gap:6px}
+.act button{padding:4px 8px;border:1px solid var(--bd);border-radius:5px;background:transparent;font-family:'Inter',sans-serif;font-size:10px;color:var(--tm);cursor:pointer}
+.act button:hover{background:var(--sf2);color:var(--t)}
+.act button.del:hover{background:#fee2e2;color:var(--red);border-color:#fecaca}
+.empty{padding:48px;text-align:center;color:var(--td);font-size:13px}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;align-items:center;justify-content:center;padding:16px}
+.modal.vis{display:flex}
+.mb{background:var(--bg);border-radius:16px;padding:28px;width:480px;max-width:100%;max-height:90vh;overflow-y:auto}
+.mb h2{font-size:17px;font-weight:600;margin-bottom:20px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.form-full{grid-column:1/-1}
+label{display:block;font-size:11px;color:var(--tm);margin-bottom:4px;font-weight:500}
+input,select,textarea{width:100%;padding:9px 12px;border:1px solid var(--bd);border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;outline:none;background:var(--bg)}
+input:focus,select:focus{border-color:#999}
+textarea{resize:vertical;min-height:70px}
+.form-btns{display:flex;gap:8px;margin-top:16px}
+.mbtn{flex:1;padding:10px;border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;cursor:pointer;border:none;background:var(--t);color:#fff}
+.mbtn.sec{background:var(--sf);color:var(--tm);border:1px solid var(--bd)}
+.login-wall{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;gap:16px;text-align:center}
+.login-wall h2{font-size:22px;font-weight:300}
+.login-wall p{font-size:13px;color:var(--tm)}
+@media(max-width:768px){
+  .stats{grid-template-columns:1fr 1fr}
+  .form-grid{grid-template-columns:1fr}
+  th,td{padding:8px 10px;font-size:11px}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span class="logo">VIRGO</span>
+  <a href="/" class="back">← Zurück zu Virgo</a>
+</div>
+
+<div class="container">
+  <div id="login-wall" class="login-wall" style="display:none">
+    <h2>🔒 Kein Zugriff</h2>
+    <p>Diese Seite ist nur für autorisierte Nutzer.</p>
+    <a href="/" class="back">Zurück zu Virgo</a>
+  </div>
+
+  <div id="app" style="display:none">
+    <div class="stats">
+      <div class="stat"><div class="stat-n" id="s-total">0</div><div class="stat-l">Leads gesamt</div></div>
+      <div class="stat blue"><div class="stat-n" id="s-neu">0</div><div class="stat-l">Neue Leads</div></div>
+      <div class="stat"><div class="stat-n" id="s-kontaktiert">0</div><div class="stat-l">Kontaktiert</div></div>
+      <div class="stat green"><div class="stat-n" id="s-abschluss">0</div><div class="stat-l">Abschlüsse</div></div>
+    </div>
+
+    <div class="top">
+      <input class="search" id="search" placeholder="Suchen..." oninput="filterLeads()">
+      <select class="filter" id="filter-vers" onchange="filterLeads()">
+        <option value="">Alle Versicherungen</option>
+        <option>PKV</option><option>KFZ</option><option>Hausrat</option>
+        <option>Haftpflicht</option><option>Berufsunfähigkeit</option>
+        <option>Lebensversicherung</option><option>Krankentagegeld</option>
+        <option>Pflegeversicherung</option><option>Rechtsschutz</option>
+      </select>
+      <select class="filter" id="filter-status" onchange="filterLeads()">
+        <option value="">Alle Status</option>
+        <option>neu</option><option>kontaktiert</option>
+        <option>abschluss</option><option>verloren</option>
+      </select>
+      <button class="new-btn" onclick="openModal()">+ Neuer Lead</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th><th>Versicherung</th><th>Telefon</th>
+            <th>Email</th><th>Status</th><th>Datum</th><th>Aktionen</th>
+          </tr>
+        </thead>
+        <tbody id="leads-table">
+          <tr><td colspan="7" class="empty">Lade Leads...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="modal">
+  <div class="mb">
+    <h2 id="modal-title">Neuer Lead</h2>
+    <div class="form-grid">
+      <div><label>Name *</label><input id="f-name" placeholder="Max Mustermann"></div>
+      <div><label>Telefon *</label><input id="f-tel" placeholder="+49 211 ..."></div>
+      <div><label>Email</label><input id="f-email" type="email" placeholder="max@email.de"></div>
+      <div><label>Versicherung *</label>
+        <select id="f-vers">
+          <option>PKV</option><option>KFZ</option><option>Hausrat</option>
+          <option>Haftpflicht</option><option>Berufsunfähigkeit</option>
+          <option>Lebensversicherung</option><option>Krankentagegeld</option>
+          <option>Pflegeversicherung</option><option>Rechtsschutz</option>
+        </select>
+      </div>
+      <div><label>Status</label>
+        <select id="f-status">
+          <option value="neu">Neu</option><option value="kontaktiert">Kontaktiert</option>
+          <option value="abschluss">Abschluss</option><option value="verloren">Verloren</option>
+        </select>
+      </div>
+      <div class="form-full"><label>Notiz</label><textarea id="f-notiz" placeholder="Notizen..."></textarea></div>
+    </div>
+    <div id="modal-msg" style="font-size:12px;color:var(--red);margin-bottom:8px;display:none"></div>
+    <div class="form-btns">
+      <button class="mbtn sec" onclick="closeModal()">Abbrechen</button>
+      <button class="mbtn" id="save-btn" onclick="saveLead()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let allLeads = [];
+let editId = null;
+const authToken = localStorage.getItem('virgo_token');
+const ADMIN_EMAIL = 'holyencore@gmail.com';
+const _cu = JSON.parse(localStorage.getItem('virgo_user') || 'null');
+const isAdmin = _cu?.email === ADMIN_EMAIL;
+
+if (!authToken && !isAdmin) {
+  window.location.href = '/';
+} else {
+  loadLeads();
+}
+
+async function loadLeads() {
+  try {
+    const r = await fetch('/api/leads-api', {
+      headers: { 'Authorization': 'Bearer ' + authToken }
+    });
+    if (r.status === 401) {
+      window.location.href = '/';
+      return;
+    }
+    if (r.status === 403) {
+      document.getElementById('login-wall').style.display = 'flex';
+      document.getElementById('app').style.display = 'none';
+      return;
+    }
+    document.getElementById('app').style.display = 'block';
+    allLeads = await r.json();
+    if (!Array.isArray(allLeads)) allLeads = [];
+    renderStats();
+    renderTable(allLeads);
+  } catch(e) {
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('leads-table').innerHTML = '<tr><td colspan="7" class="empty">Fehler beim Laden: ' + e.message + '</td></tr>';
+  }
+}
+
+function renderStats() {
+  document.getElementById('s-total').textContent = allLeads.length;
+  document.getElementById('s-neu').textContent = allLeads.filter(l=>l.status==='neu').length;
+  document.getElementById('s-kontaktiert').textContent = allLeads.filter(l=>l.status==='kontaktiert').length;
+  document.getElementById('s-abschluss').textContent = allLeads.filter(l=>l.status==='abschluss').length;
+}
+
+function renderTable(leads) {
+  const tbody = document.getElementById('leads-table');
+  if (!leads.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty">Noch keine Leads.</td></tr>'; return; }
+  tbody.innerHTML = leads.map(l => `<tr>
+    <td><strong>${l.name}</strong></td>
+    <td>${l.versicherung}</td>
+    <td><a href="tel:${l.telefon}" style="color:var(--blue);text-decoration:none">${l.telefon}</a></td>
+    <td>${l.email||'—'}</td>
+    <td><span class="badge ${l.status}">${l.status}</span></td>
+    <td>${new Date(l.created_at).toLocaleDateString('de')}</td>
+    <td><div class="act">
+      <button onclick="editLead('${l.id}')">✏️</button>
+      <button onclick="window.open('tel:${l.telefon}')">📞</button>
+      <button class="del" onclick="deleteLead('${l.id}')">🗑️</button>
+    </div></td>
+  </tr>`).join('');
+}
+
+function filterLeads() {
+  const q = document.getElementById('search').value.toLowerCase();
+  const v = document.getElementById('filter-vers').value;
+  const s = document.getElementById('filter-status').value;
+  renderTable(allLeads.filter(l => {
+    const mq = !q || l.name.toLowerCase().includes(q) || l.telefon.includes(q) || (l.email||'').toLowerCase().includes(q);
+    return mq && (!v||l.versicherung===v) && (!s||l.status===s);
+  }));
+}
+
+function openModal() {
+  editId = null;
+  document.getElementById('modal-title').textContent = 'Neuer Lead';
+  ['f-name','f-tel','f-email','f-notiz'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f-vers').value = 'PKV';
+  document.getElementById('f-status').value = 'neu';
+  document.getElementById('modal-msg').style.display = 'none';
+  document.getElementById('modal').classList.add('vis');
+}
+
+function editLead(id) {
+  const l = allLeads.find(x=>x.id===id); if(!l) return;
+  editId = id;
+  document.getElementById('modal-title').textContent = 'Lead bearbeiten';
+  document.getElementById('f-name').value = l.name;
+  document.getElementById('f-tel').value = l.telefon;
+  document.getElementById('f-email').value = l.email||'';
+  document.getElementById('f-vers').value = l.versicherung;
+  document.getElementById('f-status').value = l.status;
+  document.getElementById('f-notiz').value = l.notiz||'';
+  document.getElementById('modal-msg').style.display = 'none';
+  document.getElementById('modal').classList.add('vis');
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('vis'); }
+
+async function saveLead() {
+  const name = document.getElementById('f-name').value.trim();
+  const telefon = document.getElementById('f-tel').value.trim();
+  const msg = document.getElementById('modal-msg');
+  if (!name||!telefon) { msg.textContent='Name und Telefon sind Pflichtfelder.'; msg.style.display='block'; return; }
+  const btn = document.getElementById('save-btn');
+  btn.disabled=true; btn.textContent='...';
+  const body = {
+    name, telefon,
+    email: document.getElementById('f-email').value.trim()||null,
+    versicherung: document.getElementById('f-vers').value,
+    status: document.getElementById('f-status').value,
+    notiz: document.getElementById('f-notiz').value.trim()||null
+  };
+  try {
+    const method = editId ? 'PUT' : 'POST';
+    if (editId) body.id = editId;
+    const r = await fetch('/api/leads-api', {
+      method,
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+      body: JSON.stringify(body)
+    });
+    const d = await r.json();
+    if (d.error) { msg.textContent=d.error; msg.style.display='block'; btn.disabled=false; btn.textContent='Speichern'; return; }
+    closeModal();
+    loadLeads();
+  } catch(e) { msg.textContent='Fehler beim Speichern.'; msg.style.display='block'; }
+  btn.disabled=false; btn.textContent='Speichern';
+}
+
+async function deleteLead(id) {
+  if (!confirm('Lead wirklich löschen?')) return;
+  const r = await fetch('/api/leads-api', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+    body: JSON.stringify({ id })
+  });
+  if (r.ok) {
+    loadLeads();
+  } else {
+    const d = await r.json().catch(() => ({}));
+    alert('Fehler beim Löschen: ' + (d.error || 'Unbekannter Fehler'));
+  }
+}
+
+document.getElementById('modal').addEventListener('click', function(e) { if(e.target===this)closeModal(); });
+</script>
+</body>
+</html>
