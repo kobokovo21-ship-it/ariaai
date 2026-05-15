@@ -154,11 +154,12 @@ let editId = null;
 const authToken = localStorage.getItem('virgo_token');
 const ADMIN_EMAIL = 'holyencore@gmail.com';
 const _cu = JSON.parse(localStorage.getItem('virgo_user') || 'null');
-const isAdmin = _cu?.email === ADMIN_EMAIL;
+const isAdmin = _cu && _cu.email === ADMIN_EMAIL;
 
-if (!authToken && !isAdmin) {
-  window.location.href = '/';
+if (!authToken) {
+  document.getElementById('login-wall').style.display = 'flex';
 } else {
+  document.getElementById('app').style.display = 'block';
   loadLeads();
 }
 
