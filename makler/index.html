@@ -162,6 +162,7 @@
   .field textarea { resize: vertical; min-height: 90px; }
 
   .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .row-3 { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
 
   #submit-btn {
     width: 100%;
@@ -207,6 +208,7 @@
 
   @media (max-width: 480px) {
     .row { grid-template-columns: 1fr; }
+    .row-3 { grid-template-columns: 1fr; }
     .profile-card { margin: -24px 12px 0; }
     .form-card { padding: 24px 20px; }
   }
@@ -260,6 +262,23 @@
             <label>Email</label>
             <input id="f-email" type="email" placeholder="max@email.de">
           </div>
+
+          <!-- Adresse (optional) -->
+          <div class="field">
+            <label>Straße & Hausnummer (optional)</label>
+            <input id="f-strasse" type="text" placeholder="Musterstraße 12">
+          </div>
+          <div class="row-3">
+            <div class="field">
+              <label>Ort (optional)</label>
+              <input id="f-ort" type="text" placeholder="Düsseldorf">
+            </div>
+            <div class="field">
+              <label>PLZ (optional)</label>
+              <input id="f-plz" type="text" placeholder="40210">
+            </div>
+          </div>
+
           <div class="field">
             <label>Versicherung</label>
             <select id="f-vers"><option value="">Versicherung wählen...</option></select>
@@ -348,6 +367,12 @@ async function submitLead() {
   const email = document.getElementById('f-email').value.trim();
   const vers = document.getElementById('f-vers').value;
   const msg = document.getElementById('f-msg').value.trim();
+  const strasse = document.getElementById('f-strasse').value.trim();
+  const ort = document.getElementById('f-ort').value.trim();
+  const plz = document.getElementById('f-plz').value.trim();
+
+  // Adresse zusammenbauen
+  const adresse = [strasse, plz && ort ? plz + ' ' + ort : ort || plz].filter(Boolean).join(', ');
 
   if (!name || !tel) { alert('Bitte Name und Telefon ausfüllen.'); return; }
 
@@ -363,7 +388,9 @@ async function submitLead() {
         makler_id: maklerData?.id,
         makler_email: maklerData?.email,
         makler_name: maklerData?.name,
-        name, telefon: tel, email, versicherung: vers, nachricht: msg
+        name, telefon: tel, email, versicherung: vers,
+        nachricht: msg,
+        adresse: adresse || null
       })
     });
     const d = await r.json();
@@ -390,3 +417,4 @@ loadMakler();
 </script>
 </body>
 </html>
+
