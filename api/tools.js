@@ -98,11 +98,13 @@ export default async function handler(req, res) {
     try {
       const slug = req.query.slug;
       if (!slug) return res.status(400).json({ error: 'Slug fehlt' });
-      const r = await fetch(`${BASE}/rest/v1/makler?slug=eq.${slug}&select=*`, {
+      if (!/^[a-z0-9-]+$/.test(slug)) return res.status(400).json({ error: 'Ungültiger Slug' });
+      const r = await fetch(`${BASE}/rest/v1/makler?slug=eq.${encodeURIComponent(slug)}&select=*`, {
         headers: { 'apikey': SVC, 'Authorization': `Bearer ${SVC}` }
       });
+      if (!r.ok) return res.status(500).json({ error: 'Datenbankfehler beim Laden des Maklers' });
       const data = await r.json();
-      if (!data.length) return res.status(404).json({ error: 'Makler nicht gefunden' });
+      if (!Array.isArray(data) || !data.length) return res.status(404).json({ error: 'Makler nicht gefunden' });
       return res.status(200).json(data[0]);
     } catch (e) { return res.status(500).json({ error: e.message }); }
   }
@@ -130,10 +132,33 @@ export default async function handler(req, res) {
     try {
       const token = (req.headers.authorization || '').replace('Bearer ', '').trim();
       if (!token) return res.status(401).json({ error: 'Nicht eingeloggt — bitte neu anmelden' });
-      const userRes = await fetch(`${BASE}/auth/v1/user`, {
-        headers: { 'apikey': SVC, 'Authorization': `Bearer ${token}` }
-      });
-      const user = await userRes.json();
+
+      const ADMIN_EMAIL_T = process.env.ADMIN_EMAIL || 'holyencore@gmail.com';
+
+      // Try normal token validation
+      let user = null;
+      try {
+        const userRes = await fetch(`${BASE}/auth/v1/user`, {
+          headers: { 'apikey': SVC, 'Authorization': `Bearer ${token}` }
+        });
+        user = await userRes.json();
+      } catch(e) {}
+
+      // If token expired, decode JWT payload manually for admin bypass
+      if (!user?.id) {
+        try {
+          const parts = token.split('.');
+          if (parts.length === 3) {
+            let b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+            while (b64.length % 4) b64 += '=';
+            const payload = JSON.parse(Buffer.from(b64, 'base64').toString('utf8'));
+            if (payload.email === ADMIN_EMAIL_T && payload.sub) {
+              user = { id: payload.sub, email: payload.email };
+            }
+          }
+        } catch(e) {}
+      }
+
       if (!user?.id) return res.status(401).json({ error: 'Token abgelaufen — bitte neu anmelden auf virgoio.com' });
 
       const { name, firma, telefon, email, beschreibung, versicherungen, farbe, slug, header_image } = body;
@@ -143,6 +168,7 @@ export default async function handler(req, res) {
       const checkR = await fetch(`${BASE}/rest/v1/makler?user_id=eq.${user.id}`, {
         headers: { 'apikey': SVC, 'Authorization': `Bearer ${SVC}` }
       });
+      if (!checkR.ok) return res.status(500).json({ error: 'Datenbankfehler beim Prüfen des Profils' });
       const existing = await checkR.json();
 
       const profileData = { name, firma: firma||null, telefon, email, beschreibung: beschreibung||null, versicherungen: Array.isArray(versicherungen)?versicherungen:[], farbe: farbe||'#111111', slug: slug.toLowerCase().replace(/[^a-z0-9-]/g,'-'), header_image: header_image||null };
@@ -161,8 +187,9 @@ export default async function handler(req, res) {
           body: JSON.stringify({ ...profileData, user_id: user.id })
         });
       }
+      if (!r.ok) return res.status(500).json({ error: 'Datenbankfehler beim Speichern des Profils' });
       const data = await r.json();
-      return res.status(200).json(data[0]);
+      return res.status(200).json(data[0] || {});
     } catch (e) { return res.status(500).json({ error: e.message }); }
   }
 
@@ -179,12 +206,23 @@ export default async function handler(req, res) {
         body: JSON.stringify({ name, telefon, email: email||null, versicherung: versicherung||'Allgemein', notiz: nachricht||null })
       });
 
-      // Send email to makler
-      if (makler_email) {
-        await fetch(`${BASE.replace('/rest/v1','')}/api/tools`, {
+      // Send email to makler directly via Resend
+      if (makler_email && RESEND) {
+        const emailHtml = `<div style="font-family:Inter,sans-serif;max-width:600px;margin:0 auto;padding:40px 20px">
+          <h1 style="font-size:13px;font-weight:200;letter-spacing:8px;color:#111;margin-bottom:24px">V I R G O</h1>
+          <h2 style="font-size:20px;font-weight:500;margin-bottom:16px">Neuer Lead!</h2>
+          <div style="background:#f7f7f7;border-radius:12px;padding:20px;margin-bottom:20px">
+            <p style="font-size:13px;margin-bottom:8px"><strong>Name:</strong> ${name||'—'}</p>
+            <p style="font-size:13px;margin-bottom:8px"><strong>Telefon:</strong> ${telefon||'—'}</p>
+            <p style="font-size:13px;margin-bottom:8px"><strong>Email:</strong> ${email||'—'}</p>
+            <p style="font-size:13px;margin-bottom:8px"><strong>Versicherung:</strong> ${versicherung||'—'}</p>
+            <p style="font-size:13px"><strong>Nachricht:</strong> ${nachricht||'—'}</p>
+          </div>
+          <p style="font-size:11px;color:#bbb;margin-top:32px">Virgo AI · virgoio.com</p></div>`;
+        await fetch('https://api.resend.com/emails', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tool: 'email', type: 'makler-lead', to: makler_email, data: { name, telefon, email, versicherung, nachricht, makler_name } })
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + RESEND },
+          body: JSON.stringify({ from: 'Virgo AI <onboarding@resend.dev>', to: makler_email, subject: 'Neuer Lead für ' + (makler_name || 'deine Landing Page'), html: emailHtml })
         }).catch(() => {});
       }
 
