@@ -6,14 +6,13 @@ export default async function handler(req, res) {
 
   const BASE = process.env.SUPABASE_URL;
   const SVC = process.env.SUPABASE_SERVICE_KEY;
-  const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+  const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'holyencore@gmail.com';
   const MAKLER_PLANS = ['makler-starter', 'makler-pro', 'makler-business'];
 
   const token = req.headers.authorization?.replace('Bearer ', '').trim();
   if (!token) return res.status(401).json({ error: 'Nicht eingeloggt' });
 
   try {
-    // User verifizieren
     const userRes = await fetch(`${BASE}/auth/v1/user`, {
       headers: { 'apikey': SVC, 'Authorization': `Bearer ${token}` }
     });
@@ -22,7 +21,6 @@ export default async function handler(req, res) {
 
     const isAdmin = !!(ADMIN_EMAIL && user.email === ADMIN_EMAIL);
 
-    // Plan prüfen
     if (!isAdmin) {
       const planRes = await fetch(`${BASE}/rest/v1/users?id=eq.${user.id}&select=plan`, {
         headers: { 'apikey': SVC, 'Authorization': `Bearer ${SVC}` }
@@ -34,7 +32,6 @@ export default async function handler(req, res) {
       }
     }
 
-    // Makler-Profil laden um makler_id zu bekommen
     let maklerId = null;
     if (!isAdmin) {
       const mkRes = await fetch(`${BASE}/rest/v1/makler?user_id=eq.${user.id}&select=id`, {
@@ -44,7 +41,6 @@ export default async function handler(req, res) {
       maklerId = mkData?.[0]?.id || null;
     }
 
-    // Filter: Admin sieht alle Leads, Makler nur seine eigenen
     const filter = maklerId ? `&makler_id=eq.${maklerId}` : '';
 
     if (req.method === 'GET') {
