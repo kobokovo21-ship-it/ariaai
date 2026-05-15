@@ -8,8 +8,6 @@ export default async function handler(req, res) {
   const SVC = process.env.SUPABASE_SERVICE_KEY;
   const RESEND = process.env.RESEND_API_KEY;
   const ELEVEN = process.env.ELEVENLABS_API_KEY;
-  const MAKLER_PLANS = ['makler-starter', 'makler-pro', 'makler-business'];
-  const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'holyencore@gmail.com';
 
   const body = req.method !== 'GET' ? (req.body || {}) : {};
   const tool = req.method === 'GET' ? req.query.tool : body.tool;
@@ -72,7 +70,6 @@ export default async function handler(req, res) {
             <p style="font-size:13px;margin-bottom:8px"><strong>Telefon:</strong> ${data.telefon||'—'}</p>
             <p style="font-size:13px;margin-bottom:8px"><strong>Email:</strong> ${data.email||'—'}</p>
             <p style="font-size:13px;margin-bottom:8px"><strong>Versicherung:</strong> ${data.versicherung||'—'}</p>
-            <p style="font-size:13px;margin-bottom:8px"><strong>Adresse:</strong> ${data.adresse||'—'}</p>
             <p style="font-size:13px"><strong>Nachricht:</strong> ${data.nachricht||'—'}</p>
           </div>
           <p style="font-size:11px;color:#bbb;margin-top:32px">Virgo AI · virgoio.com</p></div>`;
@@ -96,39 +93,19 @@ export default async function handler(req, res) {
     } catch (e) { return res.status(500).json({ error: e.message }); }
   }
 
-  // ── MAKLER — GET PROFILE BY SLUG (with plan check) ──
+  // ── MAKLER — GET PROFILE BY SLUG ──
   if (tool === 'makler-get' || (req.method === 'GET' && req.query.slug)) {
     try {
       const slug = req.query.slug;
       if (!slug) return res.status(400).json({ error: 'Slug fehlt' });
       if (!/^[a-z0-9-]+$/.test(slug)) return res.status(400).json({ error: 'Ungültiger Slug' });
-
-      // Makler-Profil laden
       const r = await fetch(`${BASE}/rest/v1/makler?slug=eq.${encodeURIComponent(slug)}&select=*`, {
         headers: { 'apikey': SVC, 'Authorization': `Bearer ${SVC}` }
       });
       if (!r.ok) return res.status(500).json({ error: 'Datenbankfehler beim Laden des Maklers' });
       const data = await r.json();
       if (!Array.isArray(data) || !data.length) return res.status(404).json({ error: 'Makler nicht gefunden' });
-
-      const makler = data[0];
-
-      // Plan prüfen — Admin immer erlaubt
-      if (makler.user_id) {
-        const userRes = await fetch(`${BASE}/rest/v1/users?id=eq.${makler.user_id}&select=plan,email`, {
-          headers: { 'apikey': SVC, 'Authorization': `Bearer ${SVC}` }
-        });
-        const userData = await userRes.json();
-        const userEmail = userData?.[0]?.email || '';
-        const plan = userData?.[0]?.plan || 'free';
-
-        // Wenn kein Makler-Plan und kein Admin → Link ungültig
-        if (!MAKLER_PLANS.includes(plan) && userEmail !== ADMIN_EMAIL) {
-          return res.status(403).json({ error: 'Diese Landing Page ist nicht mehr aktiv.' });
-        }
-      }
-
-      return res.status(200).json(makler);
+      return res.status(200).json(data[0]);
     } catch (e) { return res.status(500).json({ error: e.message }); }
   }
 
@@ -156,6 +133,9 @@ export default async function handler(req, res) {
       const token = (req.headers.authorization || '').replace('Bearer ', '').trim();
       if (!token) return res.status(401).json({ error: 'Nicht eingeloggt — bitte neu anmelden' });
 
+      const ADMIN_EMAIL_T = process.env.ADMIN_EMAIL || 'holyencore@gmail.com';
+
+      // Try normal token validation
       let user = null;
       try {
         const userRes = await fetch(`${BASE}/auth/v1/user`, {
@@ -164,6 +144,7 @@ export default async function handler(req, res) {
         user = await userRes.json();
       } catch(e) {}
 
+      // If token expired, decode JWT payload manually for admin bypass
       if (!user?.id) {
         try {
           const parts = token.split('.');
@@ -171,7 +152,7 @@ export default async function handler(req, res) {
             let b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
             while (b64.length % 4) b64 += '=';
             const payload = JSON.parse(Buffer.from(b64, 'base64').toString('utf8'));
-            if (payload.email === ADMIN_EMAIL && payload.sub) {
+            if (payload.email === ADMIN_EMAIL_T && payload.sub) {
               user = { id: payload.sub, email: payload.email };
             }
           }
@@ -183,9 +164,11 @@ export default async function handler(req, res) {
       const { name, firma, telefon, email, beschreibung, versicherungen, farbe, slug, header_image } = body;
       if (!name || !slug) return res.status(400).json({ error: 'Name und Slug sind Pflichtfelder' });
 
+      // Validate UUID format
       const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       if (!uuidRe.test(user.id)) return res.status(401).json({ error: 'Ungültige User-ID — bitte neu anmelden auf virgoio.com' });
 
+      // Check if exists
       const checkR = await fetch(`${BASE}/rest/v1/makler?user_id=eq.${user.id}&select=id`, {
         headers: { 'apikey': SVC, 'Authorization': `Bearer ${SVC}` }
       });
@@ -195,14 +178,7 @@ export default async function handler(req, res) {
       }
       const existing = await checkR.json();
 
-      const profileData = {
-        name, firma: firma||null, telefon, email,
-        beschreibung: beschreibung||null,
-        versicherungen: Array.isArray(versicherungen) ? versicherungen : [],
-        farbe: farbe||'#111111',
-        slug: slug.toLowerCase().replace(/[^a-z0-9-]/g,'-'),
-        header_image: header_image||null
-      };
+      const profileData = { name, firma: firma||null, telefon, email, beschreibung: beschreibung||null, versicherungen: Array.isArray(versicherungen)?versicherungen:[], farbe: farbe||'#111111', slug: slug.toLowerCase().replace(/[^a-z0-9-]/g,'-'), header_image: header_image||null };
 
       let r;
       if (existing.length) {
@@ -227,25 +203,17 @@ export default async function handler(req, res) {
   // ── MAKLER — SUBMIT LEAD FROM LANDING PAGE ──
   if (tool === 'makler-lead') {
     try {
-      const { makler_id, makler_email, makler_name, name, telefon, email, versicherung, nachricht, adresse } = body;
+      const { makler_id, makler_email, makler_name, name, telefon, email, versicherung, nachricht } = body;
       if (!name || !telefon) return res.status(400).json({ error: 'Name und Telefon sind Pflichtfelder' });
 
-      // Lead in Supabase speichern
+      // Save lead to Supabase
       await fetch(`${BASE}/rest/v1/leads`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'apikey': SVC, 'Authorization': `Bearer ${SVC}` },
-        body: JSON.stringify({
-          name,
-          telefon,
-          email: email||null,
-          versicherung: versicherung||'Allgemein',
-          notiz: nachricht||null,
-          adresse: adresse||null,
-          makler_id: makler_id||null
-        })
+        body: JSON.stringify({ name, telefon, email: email||null, versicherung: versicherung||'Allgemein', notiz: nachricht||null })
       });
 
-      // Email an Makler
+      // Send email to makler directly via Resend
       if (makler_email && RESEND) {
         const emailHtml = `<div style="font-family:Inter,sans-serif;max-width:600px;margin:0 auto;padding:40px 20px">
           <h1 style="font-size:13px;font-weight:200;letter-spacing:8px;color:#111;margin-bottom:24px">V I R G O</h1>
@@ -254,7 +222,6 @@ export default async function handler(req, res) {
             <p style="font-size:13px;margin-bottom:8px"><strong>Name:</strong> ${name||'—'}</p>
             <p style="font-size:13px;margin-bottom:8px"><strong>Telefon:</strong> ${telefon||'—'}</p>
             <p style="font-size:13px;margin-bottom:8px"><strong>Email:</strong> ${email||'—'}</p>
-            <p style="font-size:13px;margin-bottom:8px"><strong>Adresse:</strong> ${adresse||'—'}</p>
             <p style="font-size:13px;margin-bottom:8px"><strong>Versicherung:</strong> ${versicherung||'—'}</p>
             <p style="font-size:13px"><strong>Nachricht:</strong> ${nachricht||'—'}</p>
           </div>
@@ -262,12 +229,7 @@ export default async function handler(req, res) {
         await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + RESEND },
-          body: JSON.stringify({
-            from: 'Virgo AI <onboarding@resend.dev>',
-            to: makler_email,
-            subject: 'Neuer Lead für ' + (makler_name || 'deine Landing Page'),
-            html: emailHtml
-          })
+          body: JSON.stringify({ from: 'Virgo AI <onboarding@resend.dev>', to: makler_email, subject: 'Neuer Lead für ' + (makler_name || 'deine Landing Page'), html: emailHtml })
         }).catch(() => {});
       }
 
