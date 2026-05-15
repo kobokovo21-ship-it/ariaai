@@ -72,7 +72,7 @@ textarea{resize:vertical;min-height:70px}
 <div class="container">
   <div id="login-wall" class="login-wall" style="display:none">
     <h2>🔒 Kein Zugriff</h2>
-    <p>Diese Seite ist nur für autorisierte Nutzer.</p>
+    <p>Bitte melde dich an um das Dashboard zu sehen.</p>
     <a href="/" class="back">Zurück zu Virgo</a>
   </div>
 
@@ -151,12 +151,14 @@ textarea{resize:vertical;min-height:70px}
 <script>
 let allLeads = [];
 let editId = null;
-const authToken = localStorage.getItem('virgo_token');
+
+// Admin bypass: auch bei abgelaufenem Token zeigen
+const authToken = localStorage.getItem('virgo_token') || localStorage.getItem('sb-token') || localStorage.getItem('supabase_token');
 const ADMIN_EMAIL = 'holyencore@gmail.com';
-const _cu = JSON.parse(localStorage.getItem('virgo_user') || 'null');
+const _cu = JSON.parse(localStorage.getItem('virgo_user') || localStorage.getItem('virgo-user') || 'null');
 const isAdmin = _cu && _cu.email === ADMIN_EMAIL;
 
-if (!authToken) {
+if (!authToken && !isAdmin) {
   document.getElementById('login-wall').style.display = 'flex';
 } else {
   document.getElementById('app').style.display = 'block';
@@ -166,20 +168,25 @@ if (!authToken) {
 async function loadLeads() {
   try {
     const r = await fetch('/api/leads-api', {
-      headers: { 'Authorization': 'Bearer ' + authToken }
+      headers: { 'Authorization': 'Bearer ' + (authToken || '') }
     });
-    if (r.status === 401) {
-      window.location.href = '/';
+
+    // Bei 401 oder 403 nicht weiterleiten — Login-Wall zeigen
+    if (r.status === 401 || r.status === 403) {
+      if (isAdmin) {
+        // Admin: trotzdem App zeigen, Leads leer lassen
+        document.getElementById('app').style.display = 'block';
+        document.getElementById('leads-table').innerHTML = '<tr><td colspan="7" class="empty">Bitte neu einloggen auf virgoio.com und dann diese Seite öffnen.</td></tr>';
+      } else {
+        document.getElementById('login-wall').style.display = 'flex';
+        document.getElementById('app').style.display = 'none';
+      }
       return;
     }
-    if (r.status === 403) {
-      document.getElementById('login-wall').style.display = 'flex';
-      document.getElementById('app').style.display = 'none';
-      return;
-    }
+
+    const data = await r.json();
+    allLeads = Array.isArray(data) ? data : [];
     document.getElementById('app').style.display = 'block';
-    allLeads = await r.json();
-    if (!Array.isArray(allLeads)) allLeads = [];
     renderStats();
     renderTable(allLeads);
   } catch(e) {
@@ -199,12 +206,12 @@ function renderTable(leads) {
   const tbody = document.getElementById('leads-table');
   if (!leads.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty">Noch keine Leads.</td></tr>'; return; }
   tbody.innerHTML = leads.map(l => `<tr>
-    <td><strong>${l.name}</strong></td>
-    <td>${l.versicherung}</td>
-    <td><a href="tel:${l.telefon}" style="color:var(--blue);text-decoration:none">${l.telefon}</a></td>
+    <td><strong>${l.name||'—'}</strong></td>
+    <td>${l.versicherung||'—'}</td>
+    <td><a href="tel:${l.telefon}" style="color:var(--blue);text-decoration:none">${l.telefon||'—'}</a></td>
     <td>${l.email||'—'}</td>
-    <td><span class="badge ${l.status}">${l.status}</span></td>
-    <td>${new Date(l.created_at).toLocaleDateString('de')}</td>
+    <td><span class="badge ${l.status||'neu'}">${l.status||'neu'}</span></td>
+    <td>${l.created_at ? new Date(l.created_at).toLocaleDateString('de') : '—'}</td>
     <td><div class="act">
       <button onclick="editLead('${l.id}')">✏️</button>
       <button onclick="window.open('tel:${l.telefon}')">📞</button>
@@ -218,7 +225,7 @@ function filterLeads() {
   const v = document.getElementById('filter-vers').value;
   const s = document.getElementById('filter-status').value;
   renderTable(allLeads.filter(l => {
-    const mq = !q || l.name.toLowerCase().includes(q) || l.telefon.includes(q) || (l.email||'').toLowerCase().includes(q);
+    const mq = !q || (l.name||'').toLowerCase().includes(q) || (l.telefon||'').includes(q) || (l.email||'').toLowerCase().includes(q);
     return mq && (!v||l.versicherung===v) && (!s||l.status===s);
   }));
 }
@@ -237,11 +244,11 @@ function editLead(id) {
   const l = allLeads.find(x=>x.id===id); if(!l) return;
   editId = id;
   document.getElementById('modal-title').textContent = 'Lead bearbeiten';
-  document.getElementById('f-name').value = l.name;
-  document.getElementById('f-tel').value = l.telefon;
+  document.getElementById('f-name').value = l.name||'';
+  document.getElementById('f-tel').value = l.telefon||'';
   document.getElementById('f-email').value = l.email||'';
-  document.getElementById('f-vers').value = l.versicherung;
-  document.getElementById('f-status').value = l.status;
+  document.getElementById('f-vers').value = l.versicherung||'PKV';
+  document.getElementById('f-status').value = l.status||'neu';
   document.getElementById('f-notiz').value = l.notiz||'';
   document.getElementById('modal-msg').style.display = 'none';
   document.getElementById('modal').classList.add('vis');
@@ -268,7 +275,7 @@ async function saveLead() {
     if (editId) body.id = editId;
     const r = await fetch('/api/leads-api', {
       method,
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (authToken || '') },
       body: JSON.stringify(body)
     });
     const d = await r.json();
@@ -283,7 +290,7 @@ async function deleteLead(id) {
   if (!confirm('Lead wirklich löschen?')) return;
   const r = await fetch('/api/leads-api', {
     method: 'DELETE',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (authToken || '') },
     body: JSON.stringify({ id })
   });
   if (r.ok) {
