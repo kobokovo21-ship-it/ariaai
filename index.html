@@ -212,6 +212,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
       <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
       Neuer Chat
     </button>
+    <!-- GALLERY BUTTON -->
+    <button class="new-btn" style="background:var(--sf);color:var(--t);border:1px solid var(--bd)" onclick="openGallery();closeSb()">
+      🗂 Meine Galerie
+    </button>
   </div>
   <div class="ms">
     <span class="sl">Modell</span>
@@ -343,7 +347,6 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
     <button class="mclose" onclick="closeM('modal-invoice')">×</button>
     <h2>🧾 Rechnung erstellen</h2>
     <p style="font-size:11px;color:var(--tm);margin-bottom:16px;font-weight:400">Pflichtfelder mit * ausfüllen</p>
-    
     <div style="font-size:11px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Ihre Daten (Absender)</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
       <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Ihr Name / Firma *</label><input class="minp" id="inv-absender-name" placeholder="Max Mustermann GmbH"></div>
@@ -352,14 +355,12 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
       <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Ihre Email</label><input class="minp" id="inv-absender-email" placeholder="max@firma.de"></div>
       <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Ihre Website</label><input class="minp" id="inv-absender-web" placeholder="www.firma.de"></div>
     </div>
-
     <div style="font-size:11px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Kundendaten</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
       <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Kundenname *</label><input class="minp" id="inv-kunde" placeholder="Max Mustermann"></div>
       <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Kunden-Email</label><input class="minp" id="inv-kunde-email" placeholder="kunde@email.de"></div>
       <div style="grid-column:1/-1"><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Kundenadresse</label><input class="minp" id="inv-kunde-adresse" placeholder="Kundenstraße 1, 10115 Berlin"></div>
     </div>
-
     <div style="font-size:11px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Rechnungsdetails</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
       <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Rechnungsnummer</label><input class="minp" id="inv-nr" placeholder="INV-001"></div>
@@ -369,7 +370,6 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
     </div>
     <label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Leistungsbeschreibung *</label>
     <textarea class="minp" id="inv-leistung" placeholder="KI-Beratung, 2 Stunden..." style="margin-bottom:8px;min-height:60px;resize:vertical"></textarea>
-    
     <div id="inv-msg" style="font-size:12px;color:var(--red);margin:8px 0;display:none"></div>
     <div style="display:flex;gap:8px;margin-top:12px">
       <button class="mbtn sec" onclick="closeM('modal-invoice')">Abbrechen</button>
@@ -425,8 +425,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
         <div class="pc"><div class="pct">Makler Business</div><div class="pcp">€199</div><div class="pcc">Alle Versicherungen</div><div class="pcf">✓ Alles aus Pro<br>✓ Dedicated Support<br>✓ Account Manager</div><div class="pbs"><button class="pbtn" onclick="window.open('https://buy.stripe.com/dRmeVe5Ap2xc9DockkbjW08','_blank')">💳 Kaufen</button></div></div>
       </div>
     </div>
-    <div style="display:none">
-    </div>
+    <div style="display:none"></div>
     <button class="mbtn sec" onclick="closeM('modal-upgrade')">Später</button>
   </div>
 </div>
@@ -533,9 +532,8 @@ function setModel(el,model,name){
 function isPro(){return PRO_PLANS.includes(localStorage.getItem('virgo_plan')||'free');}
 
 // ═══════════════════════════════
-// CHAT HISTORY (Supabase)
+// CHAT HISTORY
 // ═══════════════════════════════
-// ── CHAT STORAGE (localStorage primary) ──
 function getLocalChats(){return JSON.parse(localStorage.getItem('virgo_chats_v2')||'[]');}
 function setLocalChats(chats){localStorage.setItem('virgo_chats_v2',JSON.stringify(chats));}
 
@@ -571,8 +569,9 @@ function openLocalChat(chat){
   document.getElementById('fi').innerHTML='';
   conversationHistory=[];
   (chat.messages||[]).forEach(msg=>{
-    if(msg.role==='user')addUserMsg(msg.content);
-    else if(msg.role==='assistant')addAIMsg(renderMD(msg.content));
+    const content=typeof msg.content==='string'?msg.content:(msg.content.find(b=>b.type==='text')?.text||'');
+    if(msg.role==='user')addUserMsg(content);
+    else if(msg.role==='assistant')addAIMsg(renderMD(content));
   });
   conversationHistory=(chat.messages||[]).slice();
   loadChats();
@@ -580,14 +579,22 @@ function openLocalChat(chat){
 }
 
 function saveChat(title,messages){
+  // Strip base64 image data before saving to localStorage
+  const cleanMessages=messages.map(msg=>{
+    if(Array.isArray(msg.content)){
+      const textBlock=msg.content.find(b=>b.type==='text');
+      return{role:msg.role,content:textBlock?.text||''};
+    }
+    return msg;
+  });
   const chats=getLocalChats();
   if(state.activeChatId){
     const idx=chats.findIndex(c=>c.id===state.activeChatId);
-    if(idx>=0){chats[idx].messages=messages;chats[idx].title=title;chats[idx].updated=Date.now();}
-    else{chats.unshift({id:state.activeChatId,title,messages,updated:Date.now()});}
+    if(idx>=0){chats[idx].messages=cleanMessages;chats[idx].title=title;chats[idx].updated=Date.now();}
+    else{chats.unshift({id:state.activeChatId,title,messages:cleanMessages,updated:Date.now()});}
   }else{
     state.activeChatId='chat_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
-    chats.unshift({id:state.activeChatId,title,messages,updated:Date.now()});
+    chats.unshift({id:state.activeChatId,title,messages:cleanMessages,updated:Date.now()});
   }
   if(chats.length>30)chats.splice(30);
   setLocalChats(chats);
@@ -746,7 +753,6 @@ function clearRef(){refImages=[];renderRefZone();}
 // ═══════════════════════════════
 function renderMD(t){
   if(!t)return'';
-  // Handle code blocks first (before escaping)
   const codeBlocks=[];
   t=t.replace(/```([\w]*)?\n?([\s\S]*?)```/g,(match,lang,code)=>{
     const id='cb'+codeBlocks.length;
@@ -766,7 +772,6 @@ function renderMD(t){
   t=t.replace(/\|\s*[-:| ]+\s*\|[\s\S]*?(?=\n[^|]|\n$|$)/g,'');
   t=t.replace(/^\|(.+)\|$/gm,(_,c)=>'<div style="display:flex;border-bottom:1px solid var(--bd)">'+c.split('|').filter(x=>x.trim()).map(x=>'<div style="flex:1;padding:3px 6px;font-size:11px;border-right:1px solid var(--bd)">'+x.trim()+'</div>').join('')+'</div>');
   t=t.replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
-  // Restore code blocks with syntax highlighting
   codeBlocks.forEach(({id,lang,code})=>{
     const escaped=code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     const html=`<div class="code-block"><div class="code-header"><span class="code-lang">${lang}</span><button class="code-copy" onclick="copyCode(this,'${id}')">Kopieren</button></div><pre id="${id}"><code>${escaped}</code></pre></div>`;
@@ -828,17 +833,32 @@ async function send(){
     chatTitle=txt.substring(0,40)+(txt.length>40?'...':'');
     document.getElementById('chat-title').textContent=chatTitle;
   }
-  conversationHistory.push({role:'user',content:txt});
+
+  // ── BILD IM CHAT: als content-Array an Anthropic ──
+  const hasImgs=refImages.length>0 && mode==='chat';
+  if(hasImgs){
+    const content=[
+      ...refImages.map(img=>({type:'image',source:{type:'base64',media_type:img.mime,data:img.b64}})),
+      {type:'text',text:txt}
+    ];
+    conversationHistory.push({role:'user',content});
+    clearRef();
+  } else {
+    conversationHistory.push({role:'user',content:txt});
+  }
+
   saveChat(chatTitle,conversationHistory);
-  addUserMsg(txt);inp.value='';inp.style.height='24px';
+  addUserMsg(txt, hasImgs);
+  inp.value='';inp.style.height='24px';
   if(mode==='vid')genVideo(txt);
   else if(mode==='img')genImage(txt);
   else genChat(txt);
 }
 
-function addUserMsg(txt){
+function addUserMsg(txt, hasImage=false){
   const d=document.createElement('div');d.className='mw user';
-  d.innerHTML='<div><div class="bb">'+escHtml(txt)+'</div><div class="mt2">'+now()+'</div></div>';
+  const hint=hasImage?'<div style="font-size:10px;color:rgba(255,255,255,.6);margin-top:4px">📎 Bild analysiert — wird nicht gespeichert, bitte selbst sichern.</div>':'';
+  d.innerHTML='<div><div class="bb">'+escHtml(txt)+hint+'</div><div class="mt2">'+now()+'</div></div>';
   document.getElementById('fi').appendChild(d);scrollFeed();
 }
 function addAIMsg(html){
@@ -894,7 +914,7 @@ async function genChat(txt){
   };
   const businessPrefix = businessPrompts[businessType] || '';
   const businessSystem = businessSystemPrompts[businessType] || '';
-  const businessMessages = isBusinessMode 
+  const businessMessages = isBusinessMode
     ? [{role:'user', content: businessPrefix + txt}]
     : conversationHistory;
   const bodyData=isBusinessMode
@@ -924,8 +944,12 @@ function genImage(prompt){
   fetch('/api/generate-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
   .then(r=>r.json()).then(async d=>{
     hideTyping();endGen();
-    if(d.imageUrl)addImageCard(prompt,d.imageUrl);
-    else addAIMsg('❌ ' + (d.error || 'Bild konnte nicht generiert werden.'));
+    if(d.imageUrl){
+      addImageCard(prompt,d.imageUrl);
+      saveGeneration('image',d.imageUrl,prompt,state.modelName);
+    } else {
+      addAIMsg('❌ ' + (d.error || 'Bild konnte nicht generiert werden.'));
+    }
     clearRef();
   }).catch(()=>{hideTyping();endGen();addAIMsg('Fehler bei der Bildgenerierung.');});
 }
@@ -951,11 +975,17 @@ function genVideo(prompt){
   fetch('/api/generate-video',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
   .then(r=>r.json()).then(async d=>{
     if(d.videoUrl){
-      hideTyping();endGen();addVideoCard(prompt,d.videoUrl,state.modelName);clearRef();
+      hideTyping();endGen();
+      addVideoCard(prompt,d.videoUrl,state.modelName);
+      saveGeneration('video',d.videoUrl,prompt,state.modelName);
+      clearRef();
     }else if(d.taskId){
       try{
         const videoUrl=await pollVideo(d.taskId,d.model||pm);
-        hideTyping();endGen();addVideoCard(prompt,videoUrl,state.modelName);clearRef();
+        hideTyping();endGen();
+        addVideoCard(prompt,videoUrl,state.modelName);
+        saveGeneration('video',videoUrl,prompt,state.modelName);
+        clearRef();
       }catch(e){hideTyping();endGen();addAIMsg('❌ '+(e.message||'Video fehlgeschlagen.'));clearRef();}
     }else{
       hideTyping();endGen();addAIMsg('❌ '+(d.error||'Video konnte nicht generiert werden.'));clearRef();
@@ -976,6 +1006,7 @@ function addImageCard(prompt,imgUrl){
         <button class="ca" onclick="doUpscale('${imgUrl}','image')">⬆ Upscale</button>
         <button class="ca" onclick="doVariant('${prompt.replace(/'/g,"\\'").replace(/"/g,'&quot;')}')">↺ Variante</button>
       </div>
+      <div style="font-size:10px;color:var(--td);margin-top:6px">💾 In Galerie gespeichert — jetzt downloaden!</div>
     </div>
   </div><div class="mt2">${now()}</div></div>`;
   document.getElementById('fi').appendChild(d);scrollFeed();
@@ -995,6 +1026,7 @@ function addVideoCard(prompt,videoUrl,modelName){
         <button class="ca" onclick="doUpscale('${videoUrl}','video')">⬆ Upscale</button>
         <button class="ca" onclick="doLipsync('${videoUrl}')">👄 Lip Sync</button>
       </div>
+      <div style="font-size:10px;color:var(--td);margin-top:6px">💾 In Galerie gespeichert — jetzt downloaden!</div>
       <div class="ep" id="ep-${id}">
         <div class="el">Export</div>
         <div class="fbs">
@@ -1065,8 +1097,6 @@ function toggleVoice(){
   }
   const btn=document.getElementById('mic-btn');
   if(recOn){stopRecording();return;}
-
-  // Try Web Speech API first (Chrome Desktop)
   if('webkitSpeechRecognition' in window||'SpeechRecognition' in window){
     const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
     const rec=new SR();
@@ -1080,8 +1110,6 @@ function toggleVoice(){
     rec.onend=()=>{recOn=false;btn.textContent='🎤';btn.style.color='';};
     try{rec.start();window._rec=rec;return;}catch(e){}
   }
-
-  // Fallback: MediaRecorder (iOS Safari)
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
     alert('Mikrofon wird auf diesem Gerät nicht unterstützt.');return;
   }
@@ -1096,7 +1124,6 @@ function toggleVoice(){
       stream.getTracks().forEach(t=>t.stop());
       recOn=false;btn.textContent='🎤';btn.style.color='';
       const blob=new Blob(audioChunks,{type:mimeType});
-      // Convert to text via FormData + Whisper if available, else show message
       addAIMsg('🎤 Audio aufgenommen ('+Math.round(blob.size/1024)+'KB). Tippe deinen Text oder aktiviere Whisper für automatische Transkription.');
     };
     mediaRecorder.start();
@@ -1116,7 +1143,6 @@ function stopRecording(){
   document.getElementById('mic-btn').style.color='';
 }
 
-// iOS mic button - touchstart for immediate permission
 const micBtn = document.getElementById('mic-btn');
 micBtn.addEventListener('touchstart', function(e){
   e.preventDefault();
@@ -1166,10 +1192,8 @@ async function createInvoice(){
     })});
     const d=await r.json();
     if(d.error){msg.textContent=d.error;msg.style.display='block';return;}
-    // Store invoice HTML globally
     const invId='inv_'+Date.now();
     window[invId]=d.html;
-    // Add to chat
     const msgEl=document.createElement('div');msgEl.className='mw ai';
     const inner=document.createElement('div');
     inner.innerHTML='<div class="aav">V</div>';
@@ -1195,11 +1219,9 @@ async function createInvoice(){
     document.getElementById('fi').appendChild(msgEl);
     scrollFeed();
     closeM('modal-invoice');
-    // Reset form
     ['inv-nr','inv-kunde','inv-kunde-adresse','inv-kunde-email','inv-leistung','inv-betrag','inv-absender-name','inv-absender-adresse','inv-absender-email','inv-steuer'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   }catch(e){msg.textContent='Fehler: '+e.message;msg.style.display='block';}
 }
-
 
 function openTTSModal(){showM('modal-tts');closeSb();}
 
@@ -1222,6 +1244,63 @@ async function generateTTS(){
     player.play();
   }catch(e){msg.textContent='Fehler: '+e.message;msg.style.display='block';}
   btn.disabled=false;btn.textContent='Generieren';
+}
+
+// ═══════════════════════════════
+// GALLERY
+// ═══════════════════════════════
+async function saveGeneration(type, url, prompt, model) {
+  if (!authToken) return;
+  try {
+    await fetch('/api/chats', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+      body: JSON.stringify({ gallery: true, type, url, prompt, model })
+    });
+  } catch(e) {}
+}
+
+async function openGallery() {
+  if (!authToken) { showM('modal-login'); return; }
+  if (!state.chatStarted) {
+    state.chatStarted = true;
+    document.getElementById('landing').style.display = 'none';
+    document.getElementById('chat-title').textContent = '🗂 Meine Galerie';
+  }
+  addAIMsg('<span style="font-size:12px;color:var(--td)">Galerie wird geladen...</span>');
+  try {
+    const r = await fetch('/api/chats?gallery=true', {
+      headers: { 'Authorization': 'Bearer ' + authToken }
+    });
+    const items = await r.json();
+    // Remove loading message
+    const msgs = document.getElementById('fi').querySelectorAll('.mw.ai');
+    if (msgs.length) msgs[msgs.length - 1].remove();
+
+    if (!items.length) {
+      addAIMsg('Noch keine Generierungen gespeichert. Erstelle dein erstes Bild oder Video!');
+      return;
+    }
+    const html = `
+      <div style="font-size:13px;font-weight:600;margin-bottom:12px">🗂 Deine Galerie (${items.length})</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:480px">
+        ${items.map(item => `
+          <div style="position:relative;border-radius:8px;overflow:hidden;border:1px solid var(--bd);aspect-ratio:1;background:var(--sf2)">
+            ${item.type === 'image'
+              ? `<img src="${item.url}" style="width:100%;height:100%;object-fit:cover;cursor:pointer" onclick="window.open('${item.url}','_blank')" onerror="this.parentElement.style.display='flex';this.parentElement.style.alignItems='center';this.parentElement.style.padding='8px';this.remove();this.parentElement.innerHTML+='<span style=font-size:10px;color:var(--td)>URL abgelaufen</span>'">`
+              : `<video src="${item.url}" style="width:100%;height:100%;object-fit:cover;cursor:pointer" muted playsinline onclick="window.open('${item.url}','_blank')" onerror="this.parentElement.innerHTML='<div style=padding:8px;font-size:10px;color:var(--td)>URL abgelaufen</div>'"></video>`
+            }
+            <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.55);padding:4px 6px">
+              <div style="font-size:9px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml((item.prompt||'').substring(0,30))}</div>
+            </div>
+            <a href="${item.url}" download target="_blank" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,.6);color:#fff;border-radius:4px;padding:2px 6px;font-size:10px;text-decoration:none">↓</a>
+          </div>
+        `).join('')}
+      </div>`;
+    addAIMsg(html);
+  } catch(e) {
+    addAIMsg('Galerie konnte nicht geladen werden.');
+  }
 }
 
 // ═══════════════════════════════
