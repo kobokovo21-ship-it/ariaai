@@ -7,9 +7,13 @@ export default async function handler(req, res) {
   try {
     const { messages = [], codeMode = false } = req.body;
 
-    // Check if user wants prompt generation
-    const lastMessage = messages[messages.length - 1]?.content || '';
-    const isPromptMode = lastMessage.toLowerCase().startsWith('prompt ') || lastMessage.toLowerCase().startsWith('prompt:');
+    // Extract text from last message — content can be string OR array (image+text)
+    const lastContent = messages[messages.length - 1]?.content || '';
+    const lastText = Array.isArray(lastContent)
+      ? (lastContent.find(b => b.type === 'text')?.text || '')
+      : lastContent;
+
+    const isPromptMode = lastText.toLowerCase().startsWith('prompt ') || lastText.toLowerCase().startsWith('prompt:');
 
     const systemPrompt = isPromptMode
       ? `Du bist ein professioneller KI-Prompt-Generator fuer Bildgenerierung. Wenn der User Stichwoerter gibt, wandelst du sie in einen perfekten englischen Bild-Prompt um. Format: Gib NUR den fertigen Prompt zurueck, ohne Erklaerung. Der Prompt soll detailliert sein mit: Motiv, Stil, Beleuchtung, Qualitaet, Kamera-Details. Beispiel Input: "shampoo sommer blumen" → Output: "Luxury shampoo bottle on white marble, surrounded by fresh summer flowers and tropical leaves, soft golden sunlight, minimalist studio setting, high-end beauty product photography, 8K resolution, commercial photography"`
@@ -37,3 +41,4 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: err.message });
   }
 }
+
