@@ -579,7 +579,7 @@ async function deleteChat(id){
 
 function openChat(chat){
   state.chatStarted=true;state.activeChatId=chat.id;
-  document.getElementById('landing').style.display='none';
+  const _l=document.getElementById('landing');if(_l)_l.style.display='none';
   document.getElementById('chat-title').textContent=chat.title||'Chat';
   document.getElementById('fi').innerHTML='';
   conversationHistory=[];
@@ -804,7 +804,7 @@ async function send(){
   let chatTitle=document.getElementById('chat-title').textContent;
   if(!state.chatStarted){
     state.chatStarted=true;
-    document.getElementById('landing').style.display='none';
+    const _l2=document.getElementById('landing');if(_l2)_l2.style.display='none';
     chatTitle=txt.substring(0,40)+(txt.length>40?'...':'');
     document.getElementById('chat-title').textContent=chatTitle;
   }
@@ -1075,7 +1075,7 @@ async function openGallery(){
   if(!authToken){showM('modal-login');return;}
   if(!state.chatStarted){
     state.chatStarted=true;
-    document.getElementById('landing').style.display='none';
+    const _lg=document.getElementById('landing');if(_lg)_lg.style.display='none';
     document.getElementById('chat-title').textContent='Meine Galerie';
   }
   addAIMsg('<span style="font-size:12px;color:var(--td)">Galerie wird geladen...</span>');
@@ -1111,5 +1111,3 @@ if(localStorage.getItem('virgo_sb_closed')==='1'){
 <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('/sw.js').catch(()=>{});});}</script>
 </body>
 </html>
-
-
