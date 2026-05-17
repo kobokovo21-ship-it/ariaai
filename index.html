@@ -18,15 +18,16 @@
 :root{--bg:#fff;--sf:#f7f7f7;--sf2:#f0f0f0;--bd:#e8e8e8;--t:#111;--tm:#888;--td:#bbb;--blue:#2563eb;--red:#ef4444;--green:#22c55e}
 html{height:100%;height:-webkit-fill-available}
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:flex;height:100vh;height:100dvh;overflow:hidden;position:fixed;width:100%}
-
 .sb{width:260px;flex-shrink:0;background:var(--sf);border-right:1px solid var(--bd);display:flex;flex-direction:column;overflow:hidden}
-.sb-top{padding:16px;border-bottom:1px solid var(--bd);display:flex;flex-direction:column;gap:12px}
+.sb-top{padding:16px;border-bottom:1px solid var(--bd);display:flex;flex-direction:column;gap:8px}
 .sb-logo-row{display:flex;align-items:center;justify-content:space-between}
 .logo{font-size:13px;font-weight:200;letter-spacing:8px}
 .sb-close-btn{display:none;background:transparent;border:none;cursor:pointer;color:var(--td);font-size:24px;min-width:44px;min-height:44px;align-items:center;justify-content:center;border-radius:6px}
 .sb-close-btn:hover{background:var(--sf2)}
 .new-btn{width:100%;padding:9px 14px;background:var(--t);color:#fff;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-size:12px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:7px}
 .new-btn:hover{opacity:.85}
+.new-btn.sec{background:var(--sf);color:var(--t);border:1px solid var(--bd)}
+.new-btn.sec:hover{background:var(--sf2)}
 .ms{padding:12px 16px;border-bottom:1px solid var(--bd);overflow-y:auto;max-height:280px}
 .sl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--td);margin-bottom:8px;display:block}
 .mc{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;cursor:pointer;font-size:12px;color:var(--tm);margin-bottom:2px;border:none;background:transparent;font-family:'Inter',sans-serif;width:100%;text-align:left;-webkit-tap-highlight-color:transparent;transition:all .1s}
@@ -38,7 +39,6 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
 .mc.on .md{background:var(--blue)}
 .mt{margin-left:auto;font-size:9px;padding:2px 6px;border-radius:4px;background:var(--sf2);color:var(--td);white-space:nowrap}
 .mt.gold{background:#fef9c3;color:#92400e}
-.mt.premium{background:#eef2ff;color:#4338ca}
 .hist{flex:1;overflow-y:auto;padding:8px}
 .hl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--td);padding:8px 8px 4px;display:block}
 .hi{display:flex;align-items:center;gap:4px;padding:7px 10px;border-radius:7px;font-size:12px;color:var(--tm);cursor:pointer;margin-bottom:1px;-webkit-tap-highlight-color:transparent;transition:all .1s}
@@ -49,8 +49,6 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
 .hi:hover .hi-del,.hi:active .hi-del{color:var(--td)}
 .hi-del:hover{color:var(--red)!important}
 .hist-empty{padding:14px 10px;font-size:11px;color:var(--td);line-height:1.7}
-.clear-btn{width:100%;padding:6px 10px;background:transparent;border:none;font-family:'Inter',sans-serif;font-size:10px;color:var(--td);cursor:pointer;text-align:left}
-.clear-btn:hover{color:var(--red)}
 .ubar{padding:12px 16px;border-top:1px solid var(--bd);display:flex;align-items:center;gap:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;flex-shrink:0}
 .ubar:hover{background:var(--sf2)}
 .av{width:28px;height:28px;border-radius:50%;background:var(--t);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0}
@@ -173,8 +171,6 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
 .pbtn{flex:1;padding:8px;border-radius:7px;font-family:'Inter',sans-serif;font-size:10px;font-weight:500;cursor:pointer;border:none;background:var(--t);color:#fff;-webkit-tap-highlight-color:transparent}
 .footer-links{padding:6px 16px;border-top:1px solid var(--bd);display:flex;gap:12px;flex-shrink:0}
 .footer-links a{font-size:10px;color:var(--td);text-decoration:none}
-
-/* Code Blocks */
 .code-block{background:#1e1e1e;border-radius:10px;overflow:hidden;margin:8px 0;max-width:100%}
 .code-header{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#2d2d2d;font-size:10px;color:#888}
 .code-lang{color:#569cd6;font-weight:600;text-transform:uppercase;letter-spacing:1px}
@@ -182,7 +178,6 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
 .code-copy:hover{border-color:#888;color:#fff}
 .code-block pre{margin:0;padding:12px;overflow-x:auto;font-family:'Courier New',monospace;font-size:12px;line-height:1.6;color:#d4d4d4}
 .code-block code{color:#d4d4d4}
-
 @media(max-width:768px){
   .sb{position:fixed;top:0;left:0;bottom:0;width:280px;z-index:99;transform:translateX(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1)}
   .sb.open{transform:translateX(0)}
@@ -206,22 +201,19 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
   <div class="sb-top">
     <div class="sb-logo-row">
       <span class="logo">VIRGO</span>
-      <button class="sb-close-btn" id="sb-close-btn">×</button>
+      <button class="sb-close-btn" id="sb-close-btn">x</button>
     </div>
     <button class="new-btn" onclick="newChat()">
       <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
       Neuer Chat
     </button>
-    <!-- GALLERY BUTTON -->
-    <button class="new-btn" style="background:var(--sf);color:var(--t);border:1px solid var(--bd)" onclick="openGallery();closeSb()">
-      🗂 Meine Galerie
-    </button>
+    <button class="new-btn sec" onclick="openGallery();closeSb()">Meine Galerie</button>
   </div>
   <div class="ms">
     <span class="sl">Modell</span>
     <button class="mc on" onclick="setModel(this,'chat','Virgo Chat')"><div class="md"></div>Virgo Chat</button>
     <button class="mc" onclick="setModel(this,'code','Code AI')"><div class="md"></div>Code AI<span class="mt" style="background:#dbeafe;color:#1d4ed8">Dev</span></button>
-    <button class="mc" onclick="setModel(this,'agent','Virgo Agent')"><div class="md"></div>Virgo Agent ⚡<span class="mt" style="background:#fce7f3;color:#9d174d">AI Agent</span></button>
+    <button class="mc" onclick="setModel(this,'agent','Virgo Agent')"><div class="md"></div>Virgo Agent<span class="mt" style="background:#fce7f3;color:#9d174d">AI Agent</span></button>
   </div>
   <div class="ms" style="max-height:220px">
     <span class="sl">Business Tools</span>
@@ -231,17 +223,17 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
     <button class="mc" onclick="setModel(this,'business-social','Social Media')"><div class="md"></div>Social Media Posts<span class="mt" style="background:#dcfce7;color:#166534">AI</span></button>
     <button class="mc" onclick="setModel(this,'business-email','Email Sequenz')"><div class="md"></div>Email Sequenz<span class="mt" style="background:#dcfce7;color:#166534">AI</span></button>
     <button class="mc" onclick="setModel(this,'business-pitch','Pitch Deck')"><div class="md"></div>Pitch Deck<span class="mt" style="background:#dcfce7;color:#166534">AI</span></button>
-    <button class="mc" onclick="openInvoiceModal()"><div class="md"></div>🧾 Rechnung erstellen<span class="mt">PDF</span></button>
-    <button class="mc" onclick="openTTSModal()"><div class="md"></div>🔊 Text zu Sprache<span class="mt">ElevenLabs</span></button>
-    <button class="mc" id="leads-btn" onclick="window.location.href='/leads.html'" style="display:none"><div class="md"></div>📊 Leads Dashboard<span class="mt" style="background:#dcfce7;color:#166534">Makler</span></button>
-    <button class="mc" id="makler-btn" onclick="window.location.href='/makler-onboarding.html'" style="display:none"><div class="md"></div>🏢 Meine Landing Page<span class="mt" style="background:#dcfce7;color:#166534">Makler</span></button>
-    <button class="mc modelia" onclick="setModel(this,'img-modelia','Modelia Fashion Pro')"><div class="md"></div>Modelia Fashion Pro<span class="mt gold">✨ 2cr</span></button>
-    <button class="mc" onclick="setModel(this,'img-nano','Nano Banana Pro')"><div class="md"></div>Nano Banana Pro<span class="mt">Bild · 1cr</span></button>
-    <button class="mc" onclick="setModel(this,'img-seed','Seedream 5.0')"><div class="md"></div>Seedream 5.0<span class="mt">Bild · 1cr</span></button>
-    <button class="mc" onclick="setModel(this,'vid-hailuo','Hailuo 2.3')"><div class="md"></div>Hailuo 2.3<span class="mt">Video · 10cr</span></button>
-    <button class="mc" onclick="alert('Veo 3.1 — Coming Soon!')"><div class="md"></div>Veo 3.1<span class="mt" style="background:#FEF3C7;color:#92400E">Soon</span></button>
-    <button class="mc" onclick="alert('Sora 2.0 — Coming Soon! Aktuell noch nicht öffentlich verfügbar.')"><div class="md"></div>Sora 2.0<span class="mt soon" style="background:#FEF3C7;color:#92400E">Soon</span></button>
-    <button class="mc" onclick="alert('Higgsfield 1.1 — Coming Soon!')"><div class="md"></div>Higgsfield 1.1<span class="mt" style="background:#FEF3C7;color:#92400E">Soon</span></button>
+    <button class="mc" onclick="openInvoiceModal()"><div class="md"></div>Rechnung erstellen<span class="mt">PDF</span></button>
+    <button class="mc" onclick="openTTSModal()"><div class="md"></div>Text zu Sprache<span class="mt">ElevenLabs</span></button>
+    <button class="mc" id="leads-btn" onclick="window.location.href='/leads.html'" style="display:none"><div class="md"></div>Leads Dashboard<span class="mt" style="background:#dcfce7;color:#166534">Makler</span></button>
+    <button class="mc" id="makler-btn" onclick="window.location.href='/makler-onboarding.html'" style="display:none"><div class="md"></div>Meine Landing Page<span class="mt" style="background:#dcfce7;color:#166534">Makler</span></button>
+    <button class="mc modelia" onclick="setModel(this,'img-modelia','Modelia Fashion Pro')"><div class="md"></div>Modelia Fashion Pro<span class="mt gold">2cr</span></button>
+    <button class="mc" onclick="setModel(this,'img-nano','Nano Banana Pro')"><div class="md"></div>Nano Banana Pro<span class="mt">Bild 1cr</span></button>
+    <button class="mc" onclick="setModel(this,'img-seed','Seedream 5.0')"><div class="md"></div>Seedream 5.0<span class="mt">Bild 1cr</span></button>
+    <button class="mc" onclick="setModel(this,'vid-hailuo','Hailuo 2.3')"><div class="md"></div>Hailuo 2.3<span class="mt">Video 10cr</span></button>
+    <button class="mc" onclick="alert('Veo 3.1 - Coming Soon!')"><div class="md"></div>Veo 3.1<span class="mt" style="background:#FEF3C7;color:#92400E">Soon</span></button>
+    <button class="mc" onclick="alert('Sora 2.0 - Coming Soon!')"><div class="md"></div>Sora 2.0<span class="mt" style="background:#FEF3C7;color:#92400E">Soon</span></button>
+    <button class="mc" onclick="alert('Higgsfield 1.1 - Coming Soon!')"><div class="md"></div>Higgsfield 1.1<span class="mt" style="background:#FEF3C7;color:#92400E">Soon</span></button>
   </div>
   <div class="hist" id="hist">
     <div class="hist-empty" id="hist-empty">Deine Chats erscheinen hier.</div>
@@ -257,12 +249,12 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
 
 <div class="main">
   <div class="topbar">
-    <button class="hamburger" id="mobile-menu-btn">☰</button>
-    <button class="sb-toggle" id="sb-toggle-btn" onclick="toggleSbDesktop()" title="Sidebar">◀</button>
+    <button class="hamburger" id="mobile-menu-btn">&#9776;</button>
+    <button class="sb-toggle" id="sb-toggle-btn" onclick="toggleSbDesktop()">&#9664;</button>
     <div class="topbar-title" id="chat-title">Neuer Chat</div>
     <div class="topbar-right">
       <div class="cbadge" onclick="showM('modal-upgrade')"><div class="cdot" id="cdot"></div><span id="cr-display">5 Credits</span></div>
-      <button class="tb-btn primary" onclick="showM('modal-upgrade')">Upgrade ⭐</button>
+      <button class="tb-btn primary" onclick="showM('modal-upgrade')">Upgrade</button>
       <button class="tb-btn" id="auth-btn" onclick="showM('modal-login')">Anmelden</button>
     </div>
   </div>
@@ -271,13 +263,13 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
     <div class="fi" id="fi">
       <div class="landing" id="landing">
         <div class="ll">V I R G O</div>
-        <div class="lt">Was möchtest du erschaffen?</div>
+        <div class="lt">Was moechtest du erschaffen?</div>
         <div class="ls">Videos, Bilder und Inhalte mit den besten KI-Modellen der Welt.</div>
         <div class="starters">
-          <button class="starter" onclick="qs('Erstelle ein Fashion-Video für Instagram')">Fashion Video</button>
+          <button class="starter" onclick="qs('Erstelle ein Fashion-Video fuer Instagram')">Fashion Video</button>
           <button class="starter" onclick="qs('Generiere ein Produktbild im Studio-Look')">Produktbild</button>
           <button class="starter" onclick="qs('TikTok Clip, cinematic, New York')">TikTok Clip</button>
-          <button class="starter" onclick="qs('Kampagnen-Idee für meine Marke')">Kampagne</button>
+          <button class="starter" onclick="qs('Kampagnen-Idee fuer meine Marke')">Kampagne</button>
         </div>
       </div>
     </div>
@@ -286,7 +278,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
   <div class="gs" id="gs">
     <span id="gl">Generiert...</span>
     <div class="gb"><div class="gf" id="gf" style="width:0%"></div></div>
-    <button class="gc" onclick="cancelGen()">✕</button>
+    <button class="gc" onclick="cancelGen()">x</button>
   </div>
 
   <div class="rz" id="rz">
@@ -296,7 +288,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
         <div style="font-size:11px;color:var(--tm)">Referenzbilder (max. 4)</div>
         <button onclick="uploadRef()" style="font-size:10px;color:var(--blue);background:transparent;border:none;cursor:pointer;font-family:Inter,sans-serif;padding:2px 0">+ Weiteres</button>
       </div>
-      <button class="rr" onclick="clearRef()">×</button>
+      <button class="rr" onclick="clearRef()">x</button>
     </div>
   </div>
 
@@ -304,19 +296,19 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
     <div class="pi">
       <div class="pt">
         <textarea class="pinp" id="prompt" rows="1" placeholder="Frag Virgo alles..." onkeydown="onKey(event)" oninput="autoResize(this)"></textarea>
-        <button class="psnd" id="send-btn" onclick="send()">↑</button>
+        <button class="psnd" id="send-btn" onclick="send()">&#8593;</button>
       </div>
       <div class="pb">
         <button class="mp on" id="mode-chat" onclick="switchMode('chat',this)"><div class="pd"></div>Chat</button>
         <button class="mp" id="mode-img" onclick="switchMode('img',this)"><div class="pd"></div>Bild</button>
         <button class="mp" id="mode-vid" onclick="switchMode('vid',this)"><div class="pd"></div>Video</button>
         <div class="pts">
-          <button class="pt2" id="img-btn" onclick="uploadRef()">📎</button>
-          <button class="pt2" id="mic-btn" onclick="toggleVoice()">🎤</button>
+          <button class="pt2" id="img-btn" onclick="uploadRef()">&#128206;</button>
+          <button class="pt2" id="mic-btn" onclick="toggleVoice()">&#127908;</button>
         </div>
       </div>
     </div>
-    <div class="ph">1 Bild = 1 Credit · 1 Video = 10 Credits · virgoio.com</div>
+    <div class="ph">1 Bild = 1 Credit &middot; 1 Video = 10 Credits &middot; virgoio.com</div>
   </div>
   <div class="footer-links">
     <a href="/impressum.html">Impressum</a>
@@ -325,9 +317,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
   </div>
 </div>
 
+<!-- MODALS -->
 <div class="modal" id="modal-login">
   <div class="mb2">
-    <button class="mclose" onclick="closeM('modal-login')">×</button>
+    <button class="mclose" onclick="closeM('modal-login')">x</button>
     <h2>Willkommen bei Virgo</h2>
     <p id="auth-msg">Melde dich an oder erstelle ein kostenloses Konto.</p>
     <div class="tab-row">
@@ -341,17 +334,16 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
   </div>
 </div>
 
-<!-- INVOICE MODAL -->
 <div class="modal" id="modal-invoice">
   <div class="mb2" style="width:540px">
-    <button class="mclose" onclick="closeM('modal-invoice')">×</button>
-    <h2>🧾 Rechnung erstellen</h2>
-    <p style="font-size:11px;color:var(--tm);margin-bottom:16px;font-weight:400">Pflichtfelder mit * ausfüllen</p>
+    <button class="mclose" onclick="closeM('modal-invoice')">x</button>
+    <h2>Rechnung erstellen</h2>
+    <p style="font-size:11px;color:var(--tm);margin-bottom:16px;font-weight:400">Pflichtfelder mit * ausfuellen</p>
     <div style="font-size:11px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Ihre Daten (Absender)</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
       <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Ihr Name / Firma *</label><input class="minp" id="inv-absender-name" placeholder="Max Mustermann GmbH"></div>
       <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Steuernummer</label><input class="minp" id="inv-steuer" placeholder="123/456/78901"></div>
-      <div style="grid-column:1/-1"><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Ihre Adresse</label><input class="minp" id="inv-absender-adresse" placeholder="Musterstraße 1, 40210 Düsseldorf"></div>
+      <div style="grid-column:1/-1"><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Ihre Adresse</label><input class="minp" id="inv-absender-adresse" placeholder="Musterstrasse 1, 40210 Duesseldorf"></div>
       <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Ihre Email</label><input class="minp" id="inv-absender-email" placeholder="max@firma.de"></div>
       <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Ihre Website</label><input class="minp" id="inv-absender-web" placeholder="www.firma.de"></div>
     </div>
@@ -359,13 +351,13 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
       <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Kundenname *</label><input class="minp" id="inv-kunde" placeholder="Max Mustermann"></div>
       <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Kunden-Email</label><input class="minp" id="inv-kunde-email" placeholder="kunde@email.de"></div>
-      <div style="grid-column:1/-1"><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Kundenadresse</label><input class="minp" id="inv-kunde-adresse" placeholder="Kundenstraße 1, 10115 Berlin"></div>
+      <div style="grid-column:1/-1"><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Kundenadresse</label><input class="minp" id="inv-kunde-adresse" placeholder="Kundenstrasse 1, 10115 Berlin"></div>
     </div>
     <div style="font-size:11px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Rechnungsdetails</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
       <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Rechnungsnummer</label><input class="minp" id="inv-nr" placeholder="INV-001"></div>
       <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Datum</label><input class="minp" id="inv-datum" type="date"></div>
-      <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Betrag (netto €) *</label><input class="minp" id="inv-betrag" type="number" placeholder="100"></div>
+      <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Betrag (netto Euro) *</label><input class="minp" id="inv-betrag" type="number" placeholder="100"></div>
       <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">MwSt. %</label><input class="minp" id="inv-mwst" type="number" placeholder="19" value="19"></div>
     </div>
     <label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Leistungsbeschreibung *</label>
@@ -378,27 +370,26 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
   </div>
 </div>
 
-<!-- TTS MODAL -->
 <div class="modal" id="modal-tts">
   <div class="mb2" style="width:480px">
-    <button class="mclose" onclick="closeM('modal-tts')">×</button>
-    <h2>🔊 Text zu Sprache</h2>
-    <p>Powered by ElevenLabs — natürliche KI-Stimmen.</p>
+    <button class="mclose" onclick="closeM('modal-tts')">x</button>
+    <h2>Text zu Sprache</h2>
+    <p>Powered by ElevenLabs - natuerliche KI-Stimmen.</p>
     <label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Text eingeben</label>
     <textarea class="minp" id="tts-text" placeholder="Gib deinen Text ein..." style="min-height:100px;resize:vertical;margin-bottom:12px"></textarea>
     <label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Stimme</label>
     <select class="minp" id="tts-voice" style="margin-bottom:12px">
-      <option value="pNInz6obpgDQGcFmaJgB">Adam — männlich, amerikanisch</option>
-      <option value="EXAVITQu4vr4xnSDxMaL">Bella — weiblich, amerikanisch</option>
-      <option value="VR6AewLTigWG4xSOukaG">Arnold — männlich, amerikanisch</option>
-      <option value="MF3mGyEYCl7XYWbV9V6O">Elli — weiblich, deutsch</option>
+      <option value="pNInz6obpgDQGcFmaJgB">Adam - maennlich, amerikanisch</option>
+      <option value="EXAVITQu4vr4xnSDxMaL">Bella - weiblich, amerikanisch</option>
+      <option value="VR6AewLTigWG4xSOukaG">Arnold - maennlich, amerikanisch</option>
+      <option value="MF3mGyEYCl7XYWbV9V6O">Elli - weiblich, deutsch</option>
     </select>
     <div id="tts-audio" style="display:none;margin-bottom:12px">
       <audio id="tts-player" controls style="width:100%;border-radius:8px"></audio>
     </div>
     <div id="tts-msg" style="font-size:12px;color:var(--red);margin:8px 0;display:none"></div>
     <div style="display:flex;gap:8px">
-      <button class="mbtn sec" onclick="closeM('modal-tts')">Schließen</button>
+      <button class="mbtn sec" onclick="closeM('modal-tts')">Schliessen</button>
       <button class="mbtn" id="tts-btn" onclick="generateTTS()">Generieren</button>
     </div>
   </div>
@@ -406,50 +397,47 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
 
 <div class="modal" id="modal-upgrade">
   <div class="mb2 wide">
-    <button class="mclose" onclick="closeM('modal-upgrade')">×</button>
-    <h2>Virgo Pläne</h2>
-    <p id="up-msg">Kein Vertrag, jederzeit kündbar.</p>
-    <div class="ci2"><strong>Credits:</strong> Bild = 1cr · Modelia = 2cr · Video = 10cr · Upscale/Lip Sync = 5cr</div>
+    <button class="mclose" onclick="closeM('modal-upgrade')">x</button>
+    <h2>Virgo Plaene</h2>
+    <p id="up-msg">Kein Vertrag, jederzeit kuendbar.</p>
+    <div class="ci2"><strong>Credits:</strong> Bild = 1cr - Modelia = 2cr - Video = 10cr - Upscale/Lip Sync = 5cr</div>
     <div class="pg">
-      <div class="pc"><div class="pct">Standard</div><div class="pcp">$19.99</div><div class="pcc">500cr/Mo</div><div class="pcf">✓ Alle Bildmodelle<br>✓ Hailuo 2.3<br>✗ Veo/Sora</div><div class="pbs"><button class="pbtn" onclick="window.open('https://buy.stripe.com/00w8wQ2od3BgcPAfwwbjW00','_blank')">💳 Kaufen</button></div></div>
-      <div class="pc feat"><div class="pct">Pro ⭐</div><div class="pcp">$49.99</div><div class="pcc">2.000cr/Mo</div><div class="pcf">✓ Alle Modelle<br>✓ Veo + Sora<br>✓ Upscale + Lip Sync</div><div class="pbs"><button class="pbtn" onclick="window.open('https://buy.stripe.com/00waEY4wl0p4dTEaccbjW01','_blank')">💳 Kaufen</button></div></div>
-      <div class="pc"><div class="pct">Master</div><div class="pcp">$99.99</div><div class="pcc">5.000cr/Mo</div><div class="pcf">✓ Alles aus Pro<br>✓ Music Gen<br>✓ Priorität</div><div class="pbs"><button class="pbtn" onclick="window.open('https://buy.stripe.com/7sY28s1k9fjY16SgAAbjW02','_blank')">💳 Kaufen</button></div></div>
-      <div class="pc"><div class="pct">Ultra</div><div class="pcp">$149.99</div><div class="pcc">8.000cr/Mo</div><div class="pcf">✓ Higgsfield 1.1<br>✓ ∞ Hailuo<br>✓ Priority Support</div><div class="pbs"><button class="pbtn" onclick="window.open('https://buy.stripe.com/aFafZi6Et6Ns6rcbggbjW03','_blank')">💳 Kaufen</button></div></div>
-      <div class="pc"><div class="pct">Max 👑</div><div class="pcp">$249.99</div><div class="pcc">15.000cr/Mo</div><div class="pcf">✓ Alles inklusive<br>✓ White-Label<br>✓ Dedicated</div><div class="pbs"><button class="pbtn" onclick="window.open('https://buy.stripe.com/fZuaEYd2Rb3IaHs2JKbjW04','_blank')">💳 Kaufen</button></div></div>
+      <div class="pc"><div class="pct">Standard</div><div class="pcp">$19.99</div><div class="pcc">500cr/Mo</div><div class="pcf">Alle Bildmodelle<br>Hailuo 2.3<br>kein Veo/Sora</div><div class="pbs"><button class="pbtn" onclick="window.open('https://buy.stripe.com/00w8wQ2od3BgcPAfwwbjW00','_blank')">Kaufen</button></div></div>
+      <div class="pc feat"><div class="pct">Pro</div><div class="pcp">$49.99</div><div class="pcc">2.000cr/Mo</div><div class="pcf">Alle Modelle<br>Veo + Sora<br>Upscale + Lip Sync</div><div class="pbs"><button class="pbtn" onclick="window.open('https://buy.stripe.com/00waEY4wl0p4dTEaccbjW01','_blank')">Kaufen</button></div></div>
+      <div class="pc"><div class="pct">Master</div><div class="pcp">$99.99</div><div class="pcc">5.000cr/Mo</div><div class="pcf">Alles aus Pro<br>Music Gen<br>Prioritaet</div><div class="pbs"><button class="pbtn" onclick="window.open('https://buy.stripe.com/7sY28s1k9fjY16SgAAbjW02','_blank')">Kaufen</button></div></div>
+      <div class="pc"><div class="pct">Ultra</div><div class="pcp">$149.99</div><div class="pcc">8.000cr/Mo</div><div class="pcf">Higgsfield 1.1<br>unlimitiert Hailuo<br>Priority Support</div><div class="pbs"><button class="pbtn" onclick="window.open('https://buy.stripe.com/aFafZi6Et6Ns6rcbggbjW03','_blank')">Kaufen</button></div></div>
+      <div class="pc"><div class="pct">Max</div><div class="pcp">$249.99</div><div class="pcc">15.000cr/Mo</div><div class="pcf">Alles inklusive<br>White-Label<br>Dedicated</div><div class="pbs"><button class="pbtn" onclick="window.open('https://buy.stripe.com/fZuaEYd2Rb3IaHs2JKbjW04','_blank')">Kaufen</button></div></div>
     </div>
     <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--bd)">
-      <div style="font-size:11px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Für Versicherungsmakler</div>
+      <div style="font-size:11px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Fuer Versicherungsmakler</div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
-        <div class="pc"><div class="pct">Makler Starter</div><div class="pcp">€49</div><div class="pcc">1 Landing Page</div><div class="pcf">✓ Lead Dashboard<br>✓ Email-Alerts<br>✓ bis 50 Leads/Mo</div><div class="pbs"><button class="pbtn" onclick="window.open('https://buy.stripe.com/dRm4gAfaZ8VAbLw4RSbjW06','_blank')">💳 Kaufen</button></div></div>
-        <div class="pc feat"><div class="pct">Makler Pro</div><div class="pcp">€99</div><div class="pcc">3 Landing Pages</div><div class="pcf">✓ Unbegrenzte Leads<br>✓ Email-Alerts<br>✓ Priority Support</div><div class="pbs"><button class="pbtn" onclick="window.open('https://buy.stripe.com/3cIdRaaUJ6Ns3f00BCbjW07','_blank')">💳 Kaufen</button></div></div>
-        <div class="pc"><div class="pct">Makler Business</div><div class="pcp">€199</div><div class="pcc">Alle Versicherungen</div><div class="pcf">✓ Alles aus Pro<br>✓ Dedicated Support<br>✓ Account Manager</div><div class="pbs"><button class="pbtn" onclick="window.open('https://buy.stripe.com/dRmeVe5Ap2xc9DockkbjW08','_blank')">💳 Kaufen</button></div></div>
+        <div class="pc"><div class="pct">Makler Starter</div><div class="pcp">49 Euro</div><div class="pcc">1 Landing Page</div><div class="pcf">Lead Dashboard<br>Email-Alerts<br>bis 50 Leads/Mo</div><div class="pbs"><button class="pbtn" onclick="window.open('https://buy.stripe.com/dRm4gAfaZ8VAbLw4RSbjW06','_blank')">Kaufen</button></div></div>
+        <div class="pc feat"><div class="pct">Makler Pro</div><div class="pcp">99 Euro</div><div class="pcc">3 Landing Pages</div><div class="pcf">Unbegrenzte Leads<br>Email-Alerts<br>Priority Support</div><div class="pbs"><button class="pbtn" onclick="window.open('https://buy.stripe.com/3cIdRaaUJ6Ns3f00BCbjW07','_blank')">Kaufen</button></div></div>
+        <div class="pc"><div class="pct">Makler Business</div><div class="pcp">199 Euro</div><div class="pcc">Alle Versicherungen</div><div class="pcf">Alles aus Pro<br>Dedicated Support<br>Account Manager</div><div class="pbs"><button class="pbtn" onclick="window.open('https://buy.stripe.com/dRmeVe5Ap2xc9DockkbjW08','_blank')">Kaufen</button></div></div>
       </div>
     </div>
-    <div style="display:none"></div>
-    <button class="mbtn sec" onclick="closeM('modal-upgrade')">Später</button>
+    <button class="mbtn sec" onclick="closeM('modal-upgrade')" style="margin-top:16px">Spaeter</button>
   </div>
 </div>
 
 <script>
-// ═══════════════════════════════
 // STATE
-// ═══════════════════════════════
 const state={mode:'chat',model:'chat',modelName:'Virgo Chat',generating:false,chatStarted:false,activeChatId:null};
 const COST={img:1,vid:10,tool:5,modelia:2};
 const PREMIUM=['vid-veo','vid-sora','vid-higgsfield'];
 const PRO_PLANS=['pro','master','ultra','max'];
 const PH={
-  chat:'Frag Virgo alles — Code, Business, Strategie...',
+  chat:'Frag Virgo alles - Code, Business, Strategie...',
   img:'Beschreibe dein Bild...',
   vid:'Beschreibe dein Video...',
-  code:'Beschreibe deinen Code — Sprache, Funktion, Problem...',
-  agent:'Gib dem Agent ein Ziel — er erledigt es automatisch...',
-  'business-plan':'Z.B.: Ich habe eine Streetwear Marke namens HOLYENCORE für junge Menschen 18-35...',
-  'business-website':'Z.B.: Ich verkaufe Bio-Kaffee online, Zielgruppe sind Kaffeeliebhaber...',
-  'business-ads':'Z.B.: PKV für Selbstständige — günstig, schnell, ohne Wartezeit...',
-  'business-social':'Z.B.: Ich bin Personal Trainer in Düsseldorf, Zielgruppe Frauen 25-40...',
-  'business-email':'Z.B.: Ich verkaufe Online-Kurse für Fotografie, Preis 297€...',
-  'business-pitch':'Z.B.: KI App für Creator, 500 User, suche 50.000€ Seed Investment...'
+  code:'Beschreibe deinen Code - Sprache, Funktion, Problem...',
+  agent:'Gib dem Agent ein Ziel - er erledigt es automatisch...',
+  'business-plan':'Z.B.: Ich habe eine Streetwear Marke namens HOLYENCORE...',
+  'business-website':'Z.B.: Ich verkaufe Bio-Kaffee online...',
+  'business-ads':'Z.B.: PKV fuer Selbstaendige - guenstig, schnell...',
+  'business-social':'Z.B.: Ich bin Personal Trainer in Duesseldorf...',
+  'business-email':'Z.B.: Ich verkaufe Online-Kurse fuer Fotografie...',
+  'business-pitch':'Z.B.: KI App fuer Creator, 500 User, suche 50.000 Euro Seed...'
 };
 
 let authToken=localStorage.getItem('virgo_token')||null;
@@ -457,9 +445,7 @@ let currentUser=JSON.parse(localStorage.getItem('virgo_user')||'null');
 let credits=parseInt(localStorage.getItem('virgo_credits')||'3');
 let curTab='login',genTimer=null,refImages=[],conversationHistory=[];
 
-// ═══════════════════════════════
 // SIDEBAR
-// ═══════════════════════════════
 function openSb(){
   document.getElementById('sb').classList.add('open');
   const ov=document.getElementById('sb-overlay');
@@ -476,10 +462,9 @@ function toggleSbDesktop(){
   const sb=document.getElementById('sb');
   const btn=document.getElementById('sb-toggle-btn');
   sb.classList.toggle('collapsed');
-  btn.textContent=sb.classList.contains('collapsed')?'▶':'◀';
+  btn.textContent=sb.classList.contains('collapsed')?'►':'◄';
   localStorage.setItem('virgo_sb_closed',sb.classList.contains('collapsed')?'1':'0');
 }
-
 const ham=document.getElementById('mobile-menu-btn');
 ham.addEventListener('click',openSb);
 ham.addEventListener('touchend',e=>{e.preventDefault();openSb();},{passive:false});
@@ -490,9 +475,7 @@ const ov=document.getElementById('sb-overlay');
 ov.addEventListener('click',closeSb);
 ov.addEventListener('touchend',e=>{e.preventDefault();closeSb();},{passive:false});
 
-// ═══════════════════════════════
 // MODE
-// ═══════════════════════════════
 function switchMode(mode,el){
   state.mode=mode;
   document.querySelectorAll('.mp').forEach(p=>p.classList.remove('on'));
@@ -511,12 +494,12 @@ function resetToChatMode(){
 function setModel(el,model,name){
   if(PREMIUM.includes(model)&&!isPro()&&!isAdmin()){
     const m=document.getElementById('up-msg');m.className='alert';
-    m.textContent='Veo 3.1, Sora und Higgsfield sind nur für Pro-Mitglieder.';
+    m.textContent='Veo 3.1, Sora und Higgsfield sind nur fuer Pro-Mitglieder.';
     showM('modal-upgrade');return;
   }
   if(model.startsWith('vid')&&!currentUser){
     const m=document.getElementById('up-msg');m.className='alert';
-    m.textContent='Erstelle ein kostenloses Konto für dein erstes Video — 10 Gratis-Credits!';
+    m.textContent='Erstelle ein kostenloses Konto fuer dein erstes Video - 10 Gratis-Credits!';
     showM('modal-upgrade');return;
   }
   document.querySelectorAll('.mc').forEach(c=>c.classList.remove('on'));
@@ -531,108 +514,141 @@ function setModel(el,model,name){
 }
 function isPro(){return PRO_PLANS.includes(localStorage.getItem('virgo_plan')||'free');}
 
-// ═══════════════════════════════
-// CHAT HISTORY
-// ═══════════════════════════════
+// ═══════════════════════════════════════════════════
+// CHAT STORAGE — Supabase wenn eingeloggt, sonst localStorage
+// ═══════════════════════════════════════════════════
 function getLocalChats(){return JSON.parse(localStorage.getItem('virgo_chats_v2')||'[]');}
 function setLocalChats(chats){localStorage.setItem('virgo_chats_v2',JSON.stringify(chats));}
+function isSupabaseId(id){return id&&!String(id).startsWith('chat_');}
 
-function loadChats(){
-  const chats=getLocalChats();
+function cleanMessages(messages){
+  return messages.map(msg=>{
+    if(Array.isArray(msg.content)){
+      const txt=msg.content.find(b=>b.type==='text');
+      return{role:msg.role,content:txt?txt.text:''};
+    }
+    return msg;
+  });
+}
+
+async function loadChats(){
+  if(authToken){
+    try{
+      const r=await fetch('/api/chats',{headers:{'Authorization':'Bearer '+authToken}});
+      if(r.ok){
+        const data=await r.json();
+        if(Array.isArray(data)){renderChatHistory(data);return;}
+      }
+    }catch(e){}
+  }
+  renderChatHistory(getLocalChats());
+}
+
+function renderChatHistory(chats){
   const hist=document.getElementById('hist');
   const empty=document.getElementById('hist-empty');
   hist.querySelectorAll('.hi,.hl,.clear-btn').forEach(el=>el.remove());
   if(!chats.length){if(empty)empty.style.display='block';return;}
   if(empty)empty.style.display='none';
   const lbl=document.createElement('span');lbl.className='hl';lbl.textContent='Chats';hist.appendChild(lbl);
-  chats.forEach((chat,i)=>{
-    const d=document.createElement('div');d.className='hi'+(chat.id===state.activeChatId?' on':'');
-    d.innerHTML='<span class="hi-title">'+escHtml(chat.title)+'</span><button class="hi-del" onclick="event.stopPropagation();deleteLocalChat(\''+chat.id+'\')">×</button>';
-    d.querySelector('.hi-title').addEventListener('click',()=>openLocalChat(chat));
+  chats.forEach(chat=>{
+    const d=document.createElement('div');
+    d.className='hi'+(chat.id===state.activeChatId?' on':'');
+    d.innerHTML='<span class="hi-title">'+escHtml(chat.title||'Chat')+'</span><button class="hi-del" onclick="event.stopPropagation();deleteChat(\''+chat.id+'\')">x</button>';
+    d.querySelector('.hi-title').addEventListener('click',()=>openChat(chat));
     hist.appendChild(d);
   });
-  const cb=document.createElement('button');cb.className='clear-btn';cb.textContent='Alle löschen';
-  cb.onclick=()=>{setLocalChats([]);loadChats();};
-  hist.appendChild(cb);
+  if(!authToken){
+    const cb=document.createElement('button');cb.className='clear-btn';cb.textContent='Alle loeschen';
+    cb.onclick=()=>{setLocalChats([]);loadChats();};
+    hist.appendChild(cb);
+  }
 }
 
-function deleteLocalChat(id){
-  setLocalChats(getLocalChats().filter(c=>c.id!==id));
+async function deleteChat(id){
+  if(authToken&&isSupabaseId(id)){
+    try{
+      await fetch('/api/chats',{method:'DELETE',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({id})});
+    }catch(e){}
+  }else{
+    setLocalChats(getLocalChats().filter(c=>c.id!==id));
+  }
   if(state.activeChatId===id)newChat();
   else loadChats();
 }
 
-function openLocalChat(chat){
+function openChat(chat){
   state.chatStarted=true;state.activeChatId=chat.id;
   document.getElementById('landing').style.display='none';
-  document.getElementById('chat-title').textContent=chat.title;
+  document.getElementById('chat-title').textContent=chat.title||'Chat';
   document.getElementById('fi').innerHTML='';
   conversationHistory=[];
   (chat.messages||[]).forEach(msg=>{
-    const content=typeof msg.content==='string'?msg.content:(msg.content.find(b=>b.type==='text')?.text||'');
+    const content=typeof msg.content==='string'?msg.content:(Array.isArray(msg.content)?(msg.content.find(b=>b.type==='text')||{}).text||'':msg.content||'');
     if(msg.role==='user')addUserMsg(content);
     else if(msg.role==='assistant')addAIMsg(renderMD(content));
   });
-  conversationHistory=(chat.messages||[]).slice();
-  loadChats();
-  closeSb();
+  conversationHistory=cleanMessages(chat.messages||[]);
+  loadChats();closeSb();
 }
 
-function saveChat(title,messages){
-  // Strip base64 image data before saving to localStorage
-  const cleanMessages=messages.map(msg=>{
-    if(Array.isArray(msg.content)){
-      const textBlock=msg.content.find(b=>b.type==='text');
-      return{role:msg.role,content:textBlock?.text||''};
-    }
-    return msg;
-  });
+async function saveChat(title,messages){
+  const clean=cleanMessages(messages);
+  if(authToken){
+    try{
+      if(state.activeChatId&&isSupabaseId(state.activeChatId)){
+        await fetch('/api/chats',{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({id:state.activeChatId,title,messages:clean})});
+      }else{
+        const r=await fetch('/api/chats',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({title,messages:clean})});
+        const data=await r.json();
+        if(data.id)state.activeChatId=data.id;
+      }
+      loadChats();return;
+    }catch(e){}
+  }
+  // localStorage fallback
   const chats=getLocalChats();
-  if(state.activeChatId){
+  if(state.activeChatId&&!isSupabaseId(state.activeChatId)){
     const idx=chats.findIndex(c=>c.id===state.activeChatId);
-    if(idx>=0){chats[idx].messages=cleanMessages;chats[idx].title=title;chats[idx].updated=Date.now();}
-    else{chats.unshift({id:state.activeChatId,title,messages:cleanMessages,updated:Date.now()});}
+    if(idx>=0){chats[idx].messages=clean;chats[idx].title=title;chats[idx].updated=Date.now();}
+    else chats.unshift({id:state.activeChatId,title,messages:clean,updated:Date.now()});
   }else{
     state.activeChatId='chat_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
-    chats.unshift({id:state.activeChatId,title,messages:cleanMessages,updated:Date.now()});
+    chats.unshift({id:state.activeChatId,title,messages:clean,updated:Date.now()});
   }
-  if(chats.length>30)chats.splice(30);
-  setLocalChats(chats);
-  loadChats();
+  if(chats.length>50)chats.splice(50);
+  setLocalChats(chats);loadChats();
 }
 
-// ═══════════════════════════════
 // AUTH
-// ═══════════════════════════════
-const ADMIN_EMAIL = 'holyencore@gmail.com';
-function isAdmin(){return currentUser?.email === ADMIN_EMAIL;}
+const ADMIN_EMAIL='holyencore@gmail.com';
+function isAdmin(){return currentUser&&currentUser.email===ADMIN_EMAIL;}
 
 function updateUI(){
   const li=!!currentUser;
   const plan=localStorage.getItem('virgo_plan')||'free';
   document.getElementById('uav').textContent=li?(currentUser.email?.[0]?.toUpperCase()||'U'):'?';
   document.getElementById('uname').textContent=li?currentUser.email:'Anmelden';
-  document.getElementById('uplan').textContent=li?(plan.charAt(0).toUpperCase()+plan.slice(1)+' · '+credits+' Credits'):'Kostenlos starten';
+  document.getElementById('uplan').textContent=li?(plan.charAt(0).toUpperCase()+plan.slice(1)+' - '+credits+' Credits'):'Kostenlos starten';
   document.getElementById('auth-btn').textContent=li?'Abmelden':'Anmelden';
   document.getElementById('auth-btn').onclick=li?logout:()=>showM('modal-login');
   if(isAdmin()){
-    document.getElementById('cr-display').textContent='∞ Credits';
+    document.getElementById('cr-display').textContent='Credits';
     document.getElementById('cdot').className='cdot';
-  } else {
+  }else{
     document.getElementById('cr-display').textContent=credits+' Credits';
     document.getElementById('cdot').className='cdot'+(credits<10?' low':'');
   }
   document.querySelectorAll('.mc').forEach(btn=>{
-    const m=btn.getAttribute('onclick')?.match(/'([^']+)'/)?.[1]||'';
-    if(PREMIUM.includes(m))btn.style.opacity=isPro()?'1':'0.45';
-    if(m.startsWith('vid')&&!li)btn.style.opacity='0.45';
+    const m=(btn.getAttribute('onclick')||'').match(/'([^']+)'/);
+    const mv=m?m[1]:'';
+    if(PREMIUM.includes(mv))btn.style.opacity=isPro()?'1':'0.45';
+    if(mv.startsWith('vid')&&!li)btn.style.opacity='0.45';
   });
   const MAKLER_PLANS=['makler-starter','makler-pro','makler-business'];
   const isMakler=MAKLER_PLANS.includes(localStorage.getItem('virgo_plan')||'')||isAdmin();
-  const leadsB=document.getElementById('leads-btn');
-  if(leadsB)leadsB.style.display=isMakler?'flex':'none';
-  const maklerB=document.getElementById('makler-btn');
-  if(maklerB)maklerB.style.display=isMakler?'flex':'none';
+  const leadsB=document.getElementById('leads-btn');if(leadsB)leadsB.style.display=isMakler?'flex':'none';
+  const maklerB=document.getElementById('makler-btn');if(maklerB)maklerB.style.display=isMakler?'flex':'none';
 }
 
 async function loadCredits(){
@@ -660,21 +676,21 @@ async function doAuth(){
   const email=document.getElementById('auth-email').value.trim();
   const password=document.getElementById('auth-password').value;
   const btn=document.getElementById('auth-submit');
-  if(!email||!password){setAuthMsg('Bitte alle Felder ausfüllen.','alert');return;}
+  if(!email||!password){setAuthMsg('Bitte alle Felder ausfuellen.','alert');return;}
   if(password.length<6){setAuthMsg('Passwort mind. 6 Zeichen.','alert');return;}
   btn.disabled=true;btn.textContent='...';
   try{
     const r=await fetch('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:curTab,email,password})});
     const d=await r.json();
     if(d.error){setAuthMsg(d.error,'alert');btn.disabled=false;btn.textContent=curTab==='login'?'Anmelden':'Konto erstellen';return;}
-    authToken=d.session?.access_token;currentUser=d.user;
+    authToken=d.session&&d.session.access_token;currentUser=d.user;
     credits=d.credits||(curTab==='register'?10:3);
     localStorage.setItem('virgo_token',authToken);
     localStorage.setItem('virgo_user',JSON.stringify(currentUser));
     localStorage.setItem('virgo_credits',credits);
     localStorage.setItem('virgo_plan',d.plan||'free');
     updateUI();closeM('modal-login');loadChats();
-    if(curTab==='register')addAIMsg('🎉 Willkommen bei Virgo! Du hast 10 Start-Credits.');
+    if(curTab==='register')addAIMsg('Willkommen bei Virgo! Du hast 10 Start-Credits.');
   }catch(e){setAuthMsg('Verbindungsfehler. Bitte nochmal versuchen.','alert');}
   btn.disabled=false;btn.textContent=curTab==='login'?'Anmelden':'Konto erstellen';
 }
@@ -686,15 +702,13 @@ function logout(){
   updateUI();resetToChatMode();loadChats();
 }
 
-// ═══════════════════════════════
 // CREDITS
-// ═══════════════════════════════
 async function useCredits(type){
-  if(isAdmin()) return true;
+  if(isAdmin())return true;
   const cost=COST[type]||1;
   if(credits<cost){
     const m=document.getElementById('up-msg');m.className='alert';
-    m.textContent=!currentUser?'Erstelle ein kostenloses Konto für 10 Gratis-Credits!':'Nicht genug Credits. Upgrade auf Virgo Pro!';
+    m.textContent=!currentUser?'Erstelle ein kostenloses Konto fuer 10 Gratis-Credits!':'Nicht genug Credits. Upgrade auf Virgo Pro!';
     showM('modal-upgrade');return false;
   }
   if(authToken){
@@ -705,33 +719,25 @@ async function useCredits(type){
       credits=d.credits;localStorage.setItem('virgo_credits',credits);
     }catch(e){credits-=cost;localStorage.setItem('virgo_credits',credits);}
   }else{credits-=cost;localStorage.setItem('virgo_credits',credits);}
-  if(isAdmin()){
-    document.getElementById('cr-display').textContent='∞ Credits';
-    document.getElementById('cdot').className='cdot';
-  } else {
-    document.getElementById('cr-display').textContent=credits+' Credits';
-    document.getElementById('cdot').className='cdot'+(credits<10?' low':'');
-  }
+  document.getElementById('cr-display').textContent=isAdmin()?'Credits':credits+' Credits';
+  document.getElementById('cdot').className='cdot'+((!isAdmin()&&credits<10)?' low':'');
   return true;
 }
 
-// ═══════════════════════════════
 // UPLOAD
-// ═══════════════════════════════
 function compressImg(file,maxW=1024){
   return new Promise(res=>{
     const img=new Image();const url=URL.createObjectURL(file);
     img.onload=()=>{
       const scale=Math.min(1,maxW/Math.max(img.width,img.height));
       const c=document.createElement('canvas');c.width=img.width*scale;c.height=img.height*scale;
-      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-      URL.revokeObjectURL(url);
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);
       c.toBlob(blob=>{const r=new FileReader();r.onload=e=>res({b64:e.target.result.split(',')[1],mime:'image/jpeg',url:e.target.result,name:file.name});r.readAsDataURL(blob);},'image/jpeg',.85);
     };img.src=url;
   });
 }
 function uploadRef(){
-  if(refImages.length>=4){return;}
+  if(refImages.length>=4)return;
   const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.multiple=true;
   inp.onchange=async e=>{
     const files=Array.from(e.target.files).slice(0,4-refImages.length);
@@ -743,22 +749,17 @@ function renderRefZone(){
   const zone=document.getElementById('rz');const container=document.getElementById('ref-imgs');
   if(!refImages.length){zone.classList.remove('vis');document.getElementById('img-btn').classList.remove('has');document.getElementById('img-btn').textContent='📎';return;}
   zone.classList.add('vis');document.getElementById('img-btn').classList.add('has');document.getElementById('img-btn').textContent='📎'+refImages.length;
-  container.innerHTML=refImages.map((img,i)=>`<div style="position:relative;display:inline-block"><img src="${img.url}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;border:1px solid var(--bd)"><button onclick="removeRef(${i})" style="position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:var(--t);color:#fff;border:none;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center">×</button></div>`).join('');
+  container.innerHTML=refImages.map((img,i)=>'<div style="position:relative;display:inline-block"><img src="'+img.url+'" style="width:40px;height:40px;border-radius:6px;object-fit:cover;border:1px solid var(--bd)"><button onclick="removeRef('+i+')" style="position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:var(--t);color:#fff;border:none;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center">x</button></div>').join('');
 }
 function removeRef(i){refImages.splice(i,1);renderRefZone();}
 function clearRef(){refImages=[];renderRefZone();}
 
-// ═══════════════════════════════
 // MARKDOWN
-// ═══════════════════════════════
 function renderMD(t){
   if(!t)return'';
   const codeBlocks=[];
   t=t.replace(/```([\w]*)?\n?([\s\S]*?)```/g,(match,lang,code)=>{
-    const id='cb'+codeBlocks.length;
-    const langLabel=lang||'code';
-    codeBlocks.push({id,lang:langLabel,code:code.trim()});
-    return '%%%CODEBLOCK_'+id+'%%%';
+    const id='cb'+codeBlocks.length;codeBlocks.push({id,lang:lang||'code',code:code.trim()});return'%%%CODEBLOCK_'+id+'%%%';
   });
   t=t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   t=t.replace(/^### (.+)$/gm,'<b style="display:block;margin:8px 0 3px;font-size:13px">$1</b>');
@@ -767,52 +768,26 @@ function renderMD(t){
   t=t.replace(/\*\*([^*\n]+)\*\*/g,'<b>$1</b>');
   t=t.replace(/\*([^*\n]+)\*/g,'<i>$1</i>');
   t=t.replace(/^---$/gm,'<hr style="border:none;border-top:1px solid var(--bd);margin:8px 0">');
-  t=t.replace(/^[-•] (.+)$/gm,'<div style="margin:2px 0 2px 12px">• $1</div>');
+  t=t.replace(/^[-] (.+)$/gm,'<div style="margin:2px 0 2px 12px">- $1</div>');
   t=t.replace(/`([^`]+)`/g,'<code style="background:var(--sf2);padding:1px 4px;border-radius:3px;font-size:11px;font-family:monospace">$1</code>');
-  t=t.replace(/\|\s*[-:| ]+\s*\|[\s\S]*?(?=\n[^|]|\n$|$)/g,'');
-  t=t.replace(/^\|(.+)\|$/gm,(_,c)=>'<div style="display:flex;border-bottom:1px solid var(--bd)">'+c.split('|').filter(x=>x.trim()).map(x=>'<div style="flex:1;padding:3px 6px;font-size:11px;border-right:1px solid var(--bd)">'+x.trim()+'</div>').join('')+'</div>');
   t=t.replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
   codeBlocks.forEach(({id,lang,code})=>{
     const escaped=code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    const html=`<div class="code-block"><div class="code-header"><span class="code-lang">${lang}</span><button class="code-copy" onclick="copyCode(this,'${id}')">Kopieren</button></div><pre id="${id}"><code>${escaped}</code></pre></div>`;
+    const html='<div class="code-block"><div class="code-header"><span class="code-lang">'+lang+'</span><button class="code-copy" onclick="copyCode(this,\''+id+'\')">Kopieren</button></div><pre id="'+id+'"><code>'+escaped+'</code></pre></div>';
     t=t.replace('%%%CODEBLOCK_'+id+'%%%',html);
   });
   return t;
 }
-
 function copyCode(btn,id){
-  const el=document.getElementById(id);
-  if(!el)return;
-  navigator.clipboard.writeText(el.innerText).then(()=>{
-    btn.textContent='✓ Kopiert';
-    setTimeout(()=>btn.textContent='Kopieren',2000);
-  });
+  const el=document.getElementById(id);if(!el)return;
+  navigator.clipboard.writeText(el.innerText).then(()=>{btn.textContent='Kopiert';setTimeout(()=>btn.textContent='Kopieren',2000);});
+}
+function exportPDF(content,title){
+  const html='<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;max-width:800px;margin:40px auto;padding:0 20px;color:#111;line-height:1.7}h1{font-size:13px;font-weight:200;letter-spacing:8px;margin-bottom:32px;color:#888}</style></head><body><h1>V I R G O AI</h1><div>'+content+'</div><p style="font-size:11px;color:#bbb;margin-top:40px">Erstellt mit Virgo AI - virgoio.com</p></body></html>';
+  const blob=new Blob([html],{type:'text/html'});const url=URL.createObjectURL(blob);const w=window.open(url,'_blank');if(w)setTimeout(()=>w.print(),500);
 }
 
-function exportPDF(content, title){
-  const html = `<!DOCTYPE html>
-<html><head><meta charset="UTF-8">
-<style>
-  body{font-family:Arial,sans-serif;max-width:800px;margin:40px auto;padding:0 20px;color:#111;line-height:1.7}
-  h1{font-size:13px;font-weight:200;letter-spacing:8px;margin-bottom:32px;color:#888}
-  h2,h3{font-weight:600;margin:20px 0 8px}
-  hr{border:none;border-top:1px solid #e8e8e8;margin:20px 0}
-  @media print{body{margin:20px}}
-</style>
-</head><body>
-<h1>V I R G O AI</h1>
-<div>${content}</div>
-<p style="font-size:11px;color:#bbb;margin-top:40px">Erstellt mit Virgo AI · virgoio.com</p>
-</body></html>`;
-  const blob = new Blob([html], {type:'text/html'});
-  const url = URL.createObjectURL(blob);
-  const w = window.open(url,'_blank');
-  if(w) setTimeout(()=>w.print(), 500);
-}
-
-// ═══════════════════════════════
 // CHAT
-// ═══════════════════════════════
 function onKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}
 function autoResize(el){el.style.height='24px';el.style.height=Math.min(el.scrollHeight,120)+'px';}
 function qs(txt){document.getElementById('prompt').value=txt;send();}
@@ -823,7 +798,7 @@ async function send(){
   const inp=document.getElementById('prompt');
   const txt=inp.value.trim();if(!txt||state.generating)return;
   const mode=state.model.startsWith('vid')?'vid':state.model.startsWith('img')?'img':'chat';
-  if(mode==='vid'&&!currentUser&&!isAdmin()){const m=document.getElementById('up-msg');m.className='alert';m.textContent='Erstelle ein kostenloses Konto für Videos — 10 Gratis-Credits!';showM('modal-upgrade');return;}
+  if(mode==='vid'&&!currentUser&&!isAdmin()){const m=document.getElementById('up-msg');m.className='alert';m.textContent='Erstelle ein kostenloses Konto fuer Videos!';showM('modal-upgrade');return;}
   const ct=state.model==='img-modelia'?'modelia':mode;
   if(mode!=='chat'&&!(await useCredits(ct)))return;
   let chatTitle=document.getElementById('chat-title').textContent;
@@ -833,31 +808,25 @@ async function send(){
     chatTitle=txt.substring(0,40)+(txt.length>40?'...':'');
     document.getElementById('chat-title').textContent=chatTitle;
   }
-
-  // ── BILD IM CHAT: als content-Array an Anthropic ──
-  const hasImgs=refImages.length>0 && mode==='chat';
+  const hasImgs=refImages.length>0&&mode==='chat';
   if(hasImgs){
-    const content=[
-      ...refImages.map(img=>({type:'image',source:{type:'base64',media_type:img.mime,data:img.b64}})),
-      {type:'text',text:txt}
-    ];
+    const content=[...refImages.map(img=>({type:'image',source:{type:'base64',media_type:img.mime,data:img.b64}})),{type:'text',text:txt}];
     conversationHistory.push({role:'user',content});
     clearRef();
-  } else {
+  }else{
     conversationHistory.push({role:'user',content:txt});
   }
-
   saveChat(chatTitle,conversationHistory);
-  addUserMsg(txt, hasImgs);
+  addUserMsg(txt,hasImgs);
   inp.value='';inp.style.height='24px';
   if(mode==='vid')genVideo(txt);
   else if(mode==='img')genImage(txt);
   else genChat(txt);
 }
 
-function addUserMsg(txt, hasImage=false){
+function addUserMsg(txt,hasImage){
   const d=document.createElement('div');d.className='mw user';
-  const hint=hasImage?'<div style="font-size:10px;color:rgba(255,255,255,.6);margin-top:4px">📎 Bild analysiert — wird nicht gespeichert, bitte selbst sichern.</div>':'';
+  const hint=hasImage?'<div style="font-size:10px;color:rgba(255,255,255,.6);margin-top:4px">Bild analysiert - wird nicht gespeichert, bitte selbst sichern.</div>':'';
   d.innerHTML='<div><div class="bb">'+escHtml(txt)+hint+'</div><div class="mt2">'+now()+'</div></div>';
   document.getElementById('fi').appendChild(d);scrollFeed();
 }
@@ -872,7 +841,6 @@ function showTyping(){
   document.getElementById('fi').appendChild(d);scrollFeed();
 }
 function hideTyping(){const t=document.getElementById('typing');if(t)t.remove();}
-
 function startGen(label){
   state.generating=true;document.getElementById('gl').textContent=label;
   document.getElementById('gs').classList.add('vis');document.getElementById('send-btn').disabled=true;
@@ -887,48 +855,25 @@ function endGen(){
 function cancelGen(){clearInterval(genTimer);endGen();hideTyping();}
 
 async function genChat(txt){
-  if(state.model==='agent')document.getElementById('gl').textContent='Agent arbeitet...';
   showTyping();
   const isCodeMode=state.model==='code';
-  const isAgentMode=state.model==='agent';
   const isBusinessMode=state.model.startsWith('business-');
   let endpoint='/api/chat';
-  if(isAgentMode)endpoint='/api/agent';
+  if(state.model==='agent')endpoint='/api/agent';
   if(isBusinessMode)endpoint='/api/business';
-  const businessType = state.model.replace('business-','');
-  const businessPrompts = {
-    'plan': 'Erstelle einen vollständigen Businessplan auf Deutsch für: ',
-    'website': 'Erstelle professionelle Website-Texte auf Deutsch für: ',
-    'ads': 'Erstelle 5 verschiedene Meta/Facebook/Google Ad-Texte auf Deutsch für: ',
-    'social': 'Erstelle 10 abwechslungsreiche Social Media Posts (Instagram, LinkedIn, TikTok) auf Deutsch für: ',
-    'email': 'Erstelle eine 5-teilige Email-Sequenz auf Deutsch für: ',
-    'pitch': 'Erstelle ein vollständiges Pitch Deck auf Deutsch für: '
-  };
-  const businessSystemPrompts = {
-    'plan': 'Du bist ein Business-Experte. Erstelle NUR Businesspläne. Struktur: Executive Summary, Produkt, Markt, Wettbewerb, Marketing, Finanzen, Meilensteine.',
-    'website': 'Du bist ein Copywriter. Erstelle NUR Website-Texte. Struktur: Hero-Headline, Subheadline, USPs, Über uns, Leistungen, CTA.',
-    'ads': 'Du bist ein Performance Marketing Experte. Erstelle NUR Werbeanzeigen-Texte. Format: Headline (max 6 Wörter) + Text (max 125 Zeichen) + CTA.',
-    'social': 'Du bist ein Social Media Manager. Erstelle NUR Social Media Posts. Für jeden Post: Plattform + Caption + Hashtags (max 5). KEINE Businesspläne!',
-    'email': 'Du bist ein Email Marketing Experte. Erstelle NUR Email-Sequenzen. 5 Emails: Willkommen, Mehrwert, Beweis, Angebot, Follow-up.',
-    'pitch': 'Du bist ein Pitch-Experte. Erstelle NUR Pitch Decks. Struktur: Problem, Lösung, Markt, Geschäftsmodell, Team, Investment.'
-  };
-  const businessPrefix = businessPrompts[businessType] || '';
-  const businessSystem = businessSystemPrompts[businessType] || '';
-  const businessMessages = isBusinessMode
-    ? [{role:'user', content: businessPrefix + txt}]
-    : conversationHistory;
-  const bodyData=isBusinessMode
-    ?{type:businessType, messages:businessMessages, systemOverride:businessSystem}
-    :{messages:conversationHistory,codeMode:isCodeMode};
+  const businessType=state.model.replace('business-','');
+  const bPre={'plan':'Erstelle einen vollstaendigen Businessplan auf Deutsch fuer: ','website':'Erstelle professionelle Website-Texte auf Deutsch fuer: ','ads':'Erstelle 5 verschiedene Ad-Texte auf Deutsch fuer: ','social':'Erstelle 10 Social Media Posts auf Deutsch fuer: ','email':'Erstelle eine 5-teilige Email-Sequenz auf Deutsch fuer: ','pitch':'Erstelle ein vollstaendiges Pitch Deck auf Deutsch fuer: '};
+  const bSys={'plan':'Du bist ein Business-Experte. Erstelle NUR Businessplaene.','website':'Du bist ein Copywriter. Erstelle NUR Website-Texte.','ads':'Du bist ein Performance Marketing Experte. Erstelle NUR Werbeanzeigen-Texte.','social':'Du bist ein Social Media Manager. Erstelle NUR Social Media Posts.','email':'Du bist ein Email Marketing Experte. Erstelle NUR Email-Sequenzen.','pitch':'Du bist ein Pitch-Experte. Erstelle NUR Pitch Decks.'};
+  const bMessages=isBusinessMode?[{role:'user',content:(bPre[businessType]||'')+txt}]:conversationHistory;
+  const bodyData=isBusinessMode?{type:businessType,messages:bMessages,systemOverride:bSys[businessType]||''}:{messages:conversationHistory,codeMode:isCodeMode};
   fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(bodyData)})
-  .then(r=>r.json()).then(async d=>{
+  .then(r=>r.json()).then(d=>{
     hideTyping();
-    const reply=d.content?.[0]?.text||'Fehler beim Laden.';
+    const reply=(d.content&&d.content[0]&&d.content[0].text)||'Fehler beim Laden.';
     conversationHistory.push({role:'assistant',content:reply});
     if(conversationHistory.length>30)conversationHistory=conversationHistory.slice(-30);
     const rendered=renderMD(reply);
-    const isBusinessReply=state.model.startsWith('business-');
-    const extra=isBusinessReply?`<div style="margin-top:12px"><button onclick="exportPDF('${rendered.replace(/'/g,"\'")}','Virgo Business')" style="padding:6px 14px;border:1px solid var(--bd);border-radius:6px;background:var(--t);color:#fff;font-family:Inter,sans-serif;font-size:11px;cursor:pointer">📄 Als PDF speichern</button></div>`:'';
+    const extra=isBusinessMode?'<div style="margin-top:12px"><button onclick="exportPDF(\''+rendered.replace(/'/g,"\\'")+'\')" style="padding:6px 14px;border:1px solid var(--bd);border-radius:6px;background:var(--t);color:#fff;font-family:Inter,sans-serif;font-size:11px;cursor:pointer">Als PDF speichern</button></div>':'';
     addAIMsg(rendered+extra);
     saveChat(document.getElementById('chat-title').textContent,conversationHistory);
   }).catch(()=>{hideTyping();addAIMsg('Verbindungsfehler. Bitte nochmal versuchen.');});
@@ -942,14 +887,10 @@ function genImage(prompt){
   const body={prompt:fp,model:mm[state.model]||'nano',negative_prompt:'ai-look,plastic skin,cartoon,deformed'};
   if(refImages.length){body.image_base64=refImages[0].b64;body.image_mime=refImages[0].mime;}
   fetch('/api/generate-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
-  .then(r=>r.json()).then(async d=>{
+  .then(r=>r.json()).then(d=>{
     hideTyping();endGen();
-    if(d.imageUrl){
-      addImageCard(prompt,d.imageUrl);
-      saveGeneration('image',d.imageUrl,prompt,state.modelName);
-    } else {
-      addAIMsg('❌ ' + (d.error || 'Bild konnte nicht generiert werden.'));
-    }
+    if(d.imageUrl){addImageCard(prompt,d.imageUrl);saveGeneration('image',d.imageUrl,prompt,state.modelName);}
+    else addAIMsg('Fehler: '+(d.error||'Bild konnte nicht generiert werden.'));
     clearRef();
   }).catch(()=>{hideTyping();endGen();addAIMsg('Fehler bei der Bildgenerierung.');});
 }
@@ -961,7 +902,6 @@ function genVideo(prompt){
   startGen(labels[pm]);showTyping();
   const body={prompt,model:pm,duration:6,resolution:768};
   if(refImages.length&&pm!=='sora')body.imageUrl=refImages[0].url;
-
   async function pollVideo(taskId,model){
     for(let i=0;i<60;i++){
       await new Promise(r=>setTimeout(r,5000));
@@ -969,75 +909,34 @@ function genVideo(prompt){
       if(pd.videoUrl)return pd.videoUrl;
       if(pd.error)throw new Error(pd.error);
     }
-    throw new Error('Timeout — Video hat zu lange gedauert.');
+    throw new Error('Timeout');
   }
-
   fetch('/api/generate-video',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
   .then(r=>r.json()).then(async d=>{
     if(d.videoUrl){
-      hideTyping();endGen();
-      addVideoCard(prompt,d.videoUrl,state.modelName);
-      saveGeneration('video',d.videoUrl,prompt,state.modelName);
-      clearRef();
+      hideTyping();endGen();addVideoCard(prompt,d.videoUrl,state.modelName);
+      saveGeneration('video',d.videoUrl,prompt,state.modelName);clearRef();
     }else if(d.taskId){
       try{
         const videoUrl=await pollVideo(d.taskId,d.model||pm);
-        hideTyping();endGen();
-        addVideoCard(prompt,videoUrl,state.modelName);
-        saveGeneration('video',videoUrl,prompt,state.modelName);
-        clearRef();
-      }catch(e){hideTyping();endGen();addAIMsg('❌ '+(e.message||'Video fehlgeschlagen.'));clearRef();}
-    }else{
-      hideTyping();endGen();addAIMsg('❌ '+(d.error||'Video konnte nicht generiert werden.'));clearRef();
-    }
+        hideTyping();endGen();addVideoCard(prompt,videoUrl,state.modelName);
+        saveGeneration('video',videoUrl,prompt,state.modelName);clearRef();
+      }catch(e){hideTyping();endGen();addAIMsg('Fehler: '+(e.message||'Video fehlgeschlagen.'));clearRef();}
+    }else{hideTyping();endGen();addAIMsg('Fehler: '+(d.error||'Video konnte nicht generiert werden.'));clearRef();}
   }).catch(()=>{hideTyping();endGen();addAIMsg('Fehler bei der Video-Generierung.');});
 }
 
 function addImageCard(prompt,imgUrl){
   const id='ic'+Date.now();const cr=state.model==='img-modelia'?'2':'1';
   const d=document.createElement('div');d.className='mw ai';
-  d.innerHTML=`<div class="aav">V</div><div><div class="card" id="${id}">
-    <div class="cp2 img"><img src="${imgUrl}" onclick="window.open('${imgUrl}','_blank')" style="cursor:pointer" onload="this.style.opacity=1"></div>
-    <div class="cm">
-      <div class="cmod">${state.modelName} · ${cr}cr</div>
-      <div class="cprompt">${escHtml(prompt.substring(0,70))}${prompt.length>70?'...':''}</div>
-      <div class="cas">
-        <a href="${imgUrl}" download class="ca p">↓ Download</a>
-        <button class="ca" onclick="doUpscale('${imgUrl}','image')">⬆ Upscale</button>
-        <button class="ca" onclick="doVariant('${prompt.replace(/'/g,"\\'").replace(/"/g,'&quot;')}')">↺ Variante</button>
-      </div>
-      <div style="font-size:10px;color:var(--td);margin-top:6px">💾 In Galerie gespeichert — jetzt downloaden!</div>
-    </div>
-  </div><div class="mt2">${now()}</div></div>`;
+  d.innerHTML='<div class="aav">V</div><div><div class="card" id="'+id+'"><div class="cp2 img"><img src="'+imgUrl+'" onclick="window.open(\''+imgUrl+'\',\'_blank\')" style="cursor:pointer" onload="this.style.opacity=1"></div><div class="cm"><div class="cmod">'+state.modelName+' - '+cr+'cr</div><div class="cprompt">'+escHtml(prompt.substring(0,70))+(prompt.length>70?'...':'')+'</div><div class="cas"><a href="'+imgUrl+'" download class="ca p">Download</a><button class="ca" onclick="doUpscale(\''+imgUrl+'\',\'image\')">Upscale</button><button class="ca" onclick="doVariant(\''+prompt.replace(/'/g,"\\'").replace(/"/g,'&quot;')+'\')">Variante</button></div><div style="font-size:10px;color:var(--td);margin-top:6px">In Galerie gespeichert - jetzt downloaden!</div></div></div><div class="mt2">'+now()+'</div></div>';
   document.getElementById('fi').appendChild(d);scrollFeed();
 }
 
 function addVideoCard(prompt,videoUrl,modelName){
   const id='vc'+Date.now();
   const d=document.createElement('div');d.className='mw ai';
-  d.innerHTML=`<div class="aav">V</div><div><div class="card" id="${id}">
-    <div class="cp2 vid"><video src="${videoUrl}" controls preload="metadata" playsinline></video></div>
-    <div class="cm">
-      <div class="cmod">${modelName} · 10cr</div>
-      <div class="cprompt">${escHtml(prompt.substring(0,70))}${prompt.length>70?'...':''}</div>
-      <div class="cas">
-        <a href="${videoUrl}" download class="ca p">↓ Download</a>
-        <button class="ca" onclick="toggleEp('ep-${id}')">✂ Format</button>
-        <button class="ca" onclick="doUpscale('${videoUrl}','video')">⬆ Upscale</button>
-        <button class="ca" onclick="doLipsync('${videoUrl}')">👄 Lip Sync</button>
-      </div>
-      <div style="font-size:10px;color:var(--td);margin-top:6px">💾 In Galerie gespeichert — jetzt downloaden!</div>
-      <div class="ep" id="ep-${id}">
-        <div class="el">Export</div>
-        <div class="fbs">
-          <button class="fb" onclick="window.open('${videoUrl}','_blank')">📱 TikTok</button>
-          <button class="fb" onclick="window.open('${videoUrl}','_blank')">📸 Reels</button>
-          <button class="fb" onclick="window.open('${videoUrl}','_blank')">▶ Shorts</button>
-          <button class="fb" onclick="window.open('${videoUrl}','_blank')">💾 Original</button>
-        </div>
-      </div>
-    </div>
-  </div><div class="mt2">${now()}</div></div>`;
+  d.innerHTML='<div class="aav">V</div><div><div class="card" id="'+id+'"><div class="cp2 vid"><video src="'+videoUrl+'" controls preload="metadata" playsinline></video></div><div class="cm"><div class="cmod">'+modelName+' - 10cr</div><div class="cprompt">'+escHtml(prompt.substring(0,70))+(prompt.length>70?'...':'')+'</div><div class="cas"><a href="'+videoUrl+'" download class="ca p">Download</a><button class="ca" onclick="toggleEp(\'ep-'+id+'\')">Format</button><button class="ca" onclick="doUpscale(\''+videoUrl+'\',\'video\')">Upscale</button><button class="ca" onclick="doLipsync(\''+videoUrl+'\')">Lip Sync</button></div><div style="font-size:10px;color:var(--td);margin-top:6px">In Galerie gespeichert - jetzt downloaden!</div><div class="ep" id="ep-'+id+'"><div class="el">Export</div><div class="fbs"><button class="fb" onclick="window.open(\''+videoUrl+'\',\'_blank\')">TikTok</button><button class="fb" onclick="window.open(\''+videoUrl+'\',\'_blank\')">Reels</button><button class="fb" onclick="window.open(\''+videoUrl+'\',\'_blank\')">Shorts</button></div></div></div></div><div class="mt2">'+now()+'</div></div>';
   document.getElementById('fi').appendChild(d);scrollFeed();
 }
 
@@ -1045,19 +944,19 @@ function toggleEp(id){const p=document.getElementById(id);if(p)p.classList.toggl
 
 async function doUpscale(url,type){
   if(!(await useCredits('tool')))return;
-  addAIMsg('⬆ Upscale gestartet...');
+  addAIMsg('Upscale gestartet...');
   try{
     const r=await fetch('/api/upscale',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,type})});
     const d=await r.json();
-    if(d.url)addAIMsg('✅ Fertig! <a href="'+d.url+'" download target="_blank" style="color:var(--blue);text-decoration:underline">4K Download</a>');
-    else addAIMsg('❌ Upscale: '+(d.error||'Fehlgeschlagen'));
+    if(d.url)addAIMsg('Fertig! <a href="'+d.url+'" download target="_blank" style="color:var(--blue);text-decoration:underline">4K Download</a>');
+    else addAIMsg('Upscale Fehler: '+(d.error||'Fehlgeschlagen'));
   }catch(e){addAIMsg('Upscale Fehler.');}
 }
 async function doLipsync(videoUrl){
   if(!(await useCredits('tool')))return;
   const audioUrl=prompt('Audio URL (MP3/WAV):');
   if(!audioUrl){credits+=5;return;}
-  addAIMsg('👄 Lip Sync gestartet...');
+  addAIMsg('Lip Sync gestartet...');
   try{
     const r=await fetch('/api/lipsync',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({video_url:videoUrl,audio_url:audioUrl})});
     const d=await r.json();
@@ -1065,255 +964,152 @@ async function doLipsync(videoUrl){
     else addAIMsg('Lip Sync fehlgeschlagen.');
   }catch(e){addAIMsg('Lip Sync Fehler.');}
 }
-function doVariant(p){document.getElementById('prompt').value=p+' — Variante';document.getElementById('prompt').focus();}
+function doVariant(p){document.getElementById('prompt').value=p+' - Variante';document.getElementById('prompt').focus();}
 
 function newChat(){
   state.chatStarted=false;state.activeChatId=null;
   document.getElementById('chat-title').textContent='Neuer Chat';
   document.getElementById('prompt').value='';
   conversationHistory=[];clearRef();resetToChatMode();
-  document.getElementById('fi').innerHTML=`<div class="landing" id="landing">
-    <div class="ll">V I R G O</div>
-    <div class="lt">Was möchtest du erschaffen?</div>
-    <div class="ls">Videos, Bilder und Inhalte mit den besten KI-Modellen der Welt.</div>
-    <div class="starters">
-      <button class="starter" onclick="qs('Erstelle ein Fashion-Video für Instagram')">Fashion Video</button>
-      <button class="starter" onclick="qs('Generiere ein Produktbild im Studio-Look')">Produktbild</button>
-      <button class="starter" onclick="qs('TikTok Clip, cinematic, New York')">TikTok Clip</button>
-      <button class="starter" onclick="qs('Kampagnen-Idee für meine Marke')">Kampagne</button>
-    </div>
-  </div>`;
+  document.getElementById('fi').innerHTML='<div class="landing" id="landing"><div class="ll">V I R G O</div><div class="lt">Was moechtest du erschaffen?</div><div class="ls">Videos, Bilder und Inhalte mit den besten KI-Modellen der Welt.</div><div class="starters"><button class="starter" onclick="qs(\'Erstelle ein Fashion-Video fuer Instagram\')">Fashion Video</button><button class="starter" onclick="qs(\'Generiere ein Produktbild im Studio-Look\')">Produktbild</button><button class="starter" onclick="qs(\'TikTok Clip, cinematic, New York\')">TikTok Clip</button><button class="starter" onclick="qs(\'Kampagnen-Idee fuer meine Marke\')">Kampagne</button></div></div>';
   closeSb();
 }
 
-// ═══════════════════════════════
 // VOICE
-// ═══════════════════════════════
-let recOn=false, mediaRecorder=null, audioChunks=[];
-
+let recOn=false,mediaRecorder=null,audioChunks=[];
 function toggleVoice(){
-  if(!location.protocol.startsWith('https')&&location.hostname!=='localhost'){
-    alert('Mikrofon nur über HTTPS verfügbar.');return;
-  }
+  if(!location.protocol.startsWith('https')&&location.hostname!=='localhost'){alert('Mikrofon nur ueber HTTPS verfuegbar.');return;}
   const btn=document.getElementById('mic-btn');
   if(recOn){stopRecording();return;}
   if('webkitSpeechRecognition' in window||'SpeechRecognition' in window){
     const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-    const rec=new SR();
-    rec.lang='de-DE';rec.continuous=false;rec.interimResults=false;
-    rec.onstart=()=>{recOn=true;btn.textContent='🔴';btn.style.color='#ef4444';};
-    rec.onresult=e=>{
-      document.getElementById('prompt').value=e.results[0][0].transcript;
-      recOn=false;btn.textContent='🎤';btn.style.color='';
-    };
-    rec.onerror=()=>{recOn=false;btn.textContent='🎤';btn.style.color='';};
-    rec.onend=()=>{recOn=false;btn.textContent='🎤';btn.style.color='';};
+    const rec=new SR();rec.lang='de-DE';rec.continuous=false;rec.interimResults=false;
+    rec.onstart=()=>{recOn=true;btn.textContent='REC';btn.style.color='#ef4444';};
+    rec.onresult=e=>{document.getElementById('prompt').value=e.results[0][0].transcript;recOn=false;btn.textContent='Mic';btn.style.color='';};
+    rec.onerror=()=>{recOn=false;btn.textContent='Mic';btn.style.color='';};
+    rec.onend=()=>{recOn=false;btn.textContent='Mic';btn.style.color='';};
     try{rec.start();window._rec=rec;return;}catch(e){}
   }
-  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
-    alert('Mikrofon wird auf diesem Gerät nicht unterstützt.');return;
-  }
-  navigator.mediaDevices.getUserMedia({audio:true})
-  .then(stream=>{
-    recOn=true;btn.textContent='🔴';btn.style.color='#ef4444';
-    audioChunks=[];
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){alert('Mikrofon nicht unterstuetzt.');return;}
+  navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
+    recOn=true;btn.textContent='REC';btn.style.color='#ef4444';audioChunks=[];
     const mimeType=MediaRecorder.isTypeSupported('audio/webm')?'audio/webm':'audio/mp4';
     mediaRecorder=new MediaRecorder(stream,{mimeType});
     mediaRecorder.ondataavailable=e=>{if(e.data.size>0)audioChunks.push(e.data);};
-    mediaRecorder.onstop=async()=>{
-      stream.getTracks().forEach(t=>t.stop());
-      recOn=false;btn.textContent='🎤';btn.style.color='';
-      const blob=new Blob(audioChunks,{type:mimeType});
-      addAIMsg('🎤 Audio aufgenommen ('+Math.round(blob.size/1024)+'KB). Tippe deinen Text oder aktiviere Whisper für automatische Transkription.');
-    };
+    mediaRecorder.onstop=async()=>{stream.getTracks().forEach(t=>t.stop());recOn=false;btn.textContent='Mic';btn.style.color='';addAIMsg('Audio aufgenommen.');};
     mediaRecorder.start();
-  })
-  .catch(err=>{
-    recOn=false;btn.textContent='🎤';btn.style.color='';
-    if(err.name==='NotAllowedError')alert('Bitte erlaube den Mikrofon-Zugriff in den Einstellungen.');
-    else alert('Mikrofon Fehler: '+err.message);
-  });
+  }).catch(err=>{recOn=false;btn.textContent='Mic';btn.style.color='';alert('Mikrofon Fehler: '+err.message);});
 }
-
 function stopRecording(){
   if(window._rec)window._rec.stop();
   if(mediaRecorder&&mediaRecorder.state!=='inactive')mediaRecorder.stop();
-  recOn=false;
-  document.getElementById('mic-btn').textContent='🎤';
-  document.getElementById('mic-btn').style.color='';
+  recOn=false;document.getElementById('mic-btn').textContent='Mic';document.getElementById('mic-btn').style.color='';
 }
+document.getElementById('mic-btn').addEventListener('touchstart',function(e){e.preventDefault();toggleVoice();},{passive:false});
 
-const micBtn = document.getElementById('mic-btn');
-micBtn.addEventListener('touchstart', function(e){
-  e.preventDefault();
-  toggleVoice();
-}, {passive: false});
-
-// ═══════════════════════════════
 // MODALS
-// ═══════════════════════════════
 function showM(id){document.getElementById(id).classList.add('vis');}
 function closeM(id){
   document.getElementById(id).classList.remove('vis');
-  if(id==='modal-upgrade'){const m=document.getElementById('up-msg');m.className='';m.textContent='Kein Vertrag, jederzeit kündbar.';}
+  if(id==='modal-upgrade'){const m=document.getElementById('up-msg');m.className='';m.textContent='Kein Vertrag, jederzeit kuendbar.';}
   if(id==='modal-login')setAuthMsg('','');
 }
 document.querySelectorAll('.modal').forEach(m=>{m.addEventListener('click',function(e){if(e.target===this)closeM(this.id);});});
 function scrollFeed(){document.getElementById('feed').scrollTop=99999;}
 
-// ═══════════════════════════════
 // INVOICE
-// ═══════════════════════════════
-function openInvoiceModal(){
-  document.getElementById('inv-datum').value=new Date().toISOString().split('T')[0];
-  showM('modal-invoice');
-  closeSb();
-}
-
+function openInvoiceModal(){document.getElementById('inv-datum').value=new Date().toISOString().split('T')[0];showM('modal-invoice');closeSb();}
 async function createInvoice(){
   const kunde=document.getElementById('inv-kunde').value.trim();
   const leistung=document.getElementById('inv-leistung').value.trim();
   const betrag=document.getElementById('inv-betrag').value;
   const msg=document.getElementById('inv-msg');
-  if(!kunde||!leistung||!betrag){msg.textContent='Bitte Kundenname, Leistung und Betrag ausfüllen.';msg.style.display='block';return;}
+  if(!kunde||!leistung||!betrag){msg.textContent='Bitte Kundenname, Leistung und Betrag ausfuellen.';msg.style.display='block';return;}
   msg.style.display='none';
   try{
-    const r=await fetch('/api/invoice',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-      invoice_nr:document.getElementById('inv-nr').value||'INV-'+Date.now(),
-      kunde,
-      kunde_adresse:document.getElementById('inv-kunde-adresse').value,
-      leistung,betrag,
-      mwst:parseInt(document.getElementById('inv-mwst').value)||19,
-      datum:document.getElementById('inv-datum').value,
-      absender_name:document.getElementById('inv-absender-name').value||'Virgo AI',
-      absender_adresse:document.getElementById('inv-absender-adresse').value,
-      absender_email:document.getElementById('inv-absender-email').value,
-      absender_steuer:document.getElementById('inv-steuer').value
-    })});
+    const r=await fetch('/api/invoice',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({invoice_nr:document.getElementById('inv-nr').value||'INV-'+Date.now(),kunde,kunde_adresse:document.getElementById('inv-kunde-adresse').value,leistung,betrag,mwst:parseInt(document.getElementById('inv-mwst').value)||19,datum:document.getElementById('inv-datum').value,absender_name:document.getElementById('inv-absender-name').value||'Virgo AI',absender_adresse:document.getElementById('inv-absender-adresse').value,absender_email:document.getElementById('inv-absender-email').value,absender_steuer:document.getElementById('inv-steuer').value})});
     const d=await r.json();
     if(d.error){msg.textContent=d.error;msg.style.display='block';return;}
-    const invId='inv_'+Date.now();
-    window[invId]=d.html;
+    const invId='inv_'+Date.now();window[invId]=d.html;
     const msgEl=document.createElement('div');msgEl.className='mw ai';
-    const inner=document.createElement('div');
-    inner.innerHTML='<div class="aav">V</div>';
-    const bubble=document.createElement('div');
-    bubble.className='bb';bubble.style.maxWidth='480px';
-    bubble.innerHTML='<div style="font-size:12px;font-weight:600;margin-bottom:6px">Rechnung '+escHtml(d.invoice_nr)+'</div>'
-      +'<div style="font-size:11px;color:var(--tm);margin-bottom:4px">'+escHtml(d.leistung)+'</div>'
-      +'<div style="font-size:18px;font-weight:700;margin-bottom:12px">'+escHtml(d.brutto)+' €</div>';
+    const inner=document.createElement('div');inner.innerHTML='<div class="aav">V</div>';
+    const bubble=document.createElement('div');bubble.className='bb';bubble.style.maxWidth='480px';
+    bubble.innerHTML='<div style="font-size:12px;font-weight:600;margin-bottom:6px">Rechnung '+escHtml(d.invoice_nr)+'</div><div style="font-size:11px;color:var(--tm);margin-bottom:4px">'+escHtml(d.leistung)+'</div><div style="font-size:18px;font-weight:700;margin-bottom:12px">'+escHtml(d.brutto)+' Euro</div>';
     const btns=document.createElement('div');btns.style.cssText='display:flex;gap:8px;flex-wrap:wrap';
-    const b1=document.createElement('button');
-    b1.textContent='🖨 Drucken / Als PDF';
-    b1.style.cssText='padding:7px 14px;background:var(--t);color:#fff;border:none;border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer';
-    b1.onclick=function(){const w=window.open('','_blank');w.document.write(window[invId]);w.document.close();setTimeout(()=>w.print(),500);};
-    const b2=document.createElement('button');
-    b2.textContent='↓ Datei speichern';
-    b2.style.cssText='padding:7px 14px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer';
-    b2.onclick=function(){const blob=new Blob([window[invId]],{type:'text/html'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='Rechnung-'+d.invoice_nr+'.html';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);};
-    btns.appendChild(b1);btns.appendChild(b2);
-    bubble.appendChild(btns);
+    const b1=document.createElement('button');b1.textContent='Drucken / Als PDF';b1.style.cssText='padding:7px 14px;background:var(--t);color:#fff;border:none;border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer';b1.onclick=function(){const w=window.open('','_blank');w.document.write(window[invId]);w.document.close();setTimeout(()=>w.print(),500);};
+    const b2=document.createElement('button');b2.textContent='Datei speichern';b2.style.cssText='padding:7px 14px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer';b2.onclick=function(){const blob=new Blob([window[invId]],{type:'text/html'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='Rechnung-'+d.invoice_nr+'.html';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);};
+    btns.appendChild(b1);btns.appendChild(b2);bubble.appendChild(btns);
     const ts=document.createElement('div');ts.className='mt2';ts.textContent=now();
-    inner.appendChild(bubble);inner.appendChild(ts);
-    msgEl.appendChild(inner);
-    document.getElementById('fi').appendChild(msgEl);
-    scrollFeed();
-    closeM('modal-invoice');
+    inner.appendChild(bubble);inner.appendChild(ts);msgEl.appendChild(inner);
+    document.getElementById('fi').appendChild(msgEl);scrollFeed();closeM('modal-invoice');
     ['inv-nr','inv-kunde','inv-kunde-adresse','inv-kunde-email','inv-leistung','inv-betrag','inv-absender-name','inv-absender-adresse','inv-absender-email','inv-steuer'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   }catch(e){msg.textContent='Fehler: '+e.message;msg.style.display='block';}
 }
 
 function openTTSModal(){showM('modal-tts');closeSb();}
-
 async function generateTTS(){
   const text=document.getElementById('tts-text').value.trim();
   const voice=document.getElementById('tts-voice').value;
-  const msg=document.getElementById('tts-msg');
-  const btn=document.getElementById('tts-btn');
+  const msg=document.getElementById('tts-msg');const btn=document.getElementById('tts-btn');
   if(!text){msg.textContent='Bitte Text eingeben.';msg.style.display='block';return;}
-  msg.style.display='none';
-  btn.disabled=true;btn.textContent='Generiert...';
+  msg.style.display='none';btn.disabled=true;btn.textContent='Generiert...';
   try{
     const r=await fetch('/api/tools',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tool:'tts',text,voice_id:voice})});
     const d=await r.json();
     if(d.error){msg.textContent=d.error;msg.style.display='block';btn.disabled=false;btn.textContent='Generieren';return;}
-    const audioSrc='data:audio/mpeg;base64,'+d.audio;
-    const player=document.getElementById('tts-player');
-    player.src=audioSrc;
-    document.getElementById('tts-audio').style.display='block';
-    player.play();
+    const player=document.getElementById('tts-player');player.src='data:audio/mpeg;base64,'+d.audio;
+    document.getElementById('tts-audio').style.display='block';player.play();
   }catch(e){msg.textContent='Fehler: '+e.message;msg.style.display='block';}
   btn.disabled=false;btn.textContent='Generieren';
 }
 
-// ═══════════════════════════════
 // GALLERY
-// ═══════════════════════════════
-async function saveGeneration(type, url, prompt, model) {
-  if (!authToken) return;
-  try {
-    await fetch('/api/chats', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
-      body: JSON.stringify({ gallery: true, type, url, prompt, model })
-    });
-  } catch(e) {}
+async function saveGeneration(type,url,prompt,model){
+  if(!authToken)return;
+  try{
+    await fetch('/api/chats',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({gallery:true,type,url,prompt,model})});
+  }catch(e){}
 }
 
-async function openGallery() {
-  if (!authToken) { showM('modal-login'); return; }
-  if (!state.chatStarted) {
-    state.chatStarted = true;
-    document.getElementById('landing').style.display = 'none';
-    document.getElementById('chat-title').textContent = '🗂 Meine Galerie';
+async function openGallery(){
+  if(!authToken){showM('modal-login');return;}
+  if(!state.chatStarted){
+    state.chatStarted=true;
+    document.getElementById('landing').style.display='none';
+    document.getElementById('chat-title').textContent='Meine Galerie';
   }
   addAIMsg('<span style="font-size:12px;color:var(--td)">Galerie wird geladen...</span>');
-  try {
-    const r = await fetch('/api/chats?gallery=true', {
-      headers: { 'Authorization': 'Bearer ' + authToken }
+  try{
+    const r=await fetch('/api/chats?gallery=true',{headers:{'Authorization':'Bearer '+authToken}});
+    const items=await r.json();
+    const msgs=document.getElementById('fi').querySelectorAll('.mw.ai');
+    if(msgs.length)msgs[msgs.length-1].remove();
+    if(!items.length){addAIMsg('Noch keine Generierungen gespeichert. Erstelle dein erstes Bild oder Video!');return;}
+    let gridHtml='<div style="font-size:13px;font-weight:600;margin-bottom:12px">Deine Galerie ('+items.length+')</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:480px">';
+    items.forEach(item=>{
+      const isImg=item.type==='image';
+      gridHtml+='<div style="position:relative;border-radius:8px;overflow:hidden;border:1px solid var(--bd);aspect-ratio:1;background:var(--sf2)">';
+      if(isImg)gridHtml+='<img src="'+item.url+'" style="width:100%;height:100%;object-fit:cover;cursor:pointer" onclick="window.open(\''+item.url+'\',\'_blank\')">';
+      else gridHtml+='<video src="'+item.url+'" style="width:100%;height:100%;object-fit:cover;cursor:pointer" muted playsinline onclick="window.open(\''+item.url+'\',\'_blank\')"></video>';
+      gridHtml+='<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.55);padding:4px 6px"><div style="font-size:9px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escHtml((item.prompt||'').substring(0,30))+'</div></div>';
+      gridHtml+='<a href="'+item.url+'" download target="_blank" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,.6);color:#fff;border-radius:4px;padding:2px 6px;font-size:10px;text-decoration:none">DL</a></div>';
     });
-    const items = await r.json();
-    // Remove loading message
-    const msgs = document.getElementById('fi').querySelectorAll('.mw.ai');
-    if (msgs.length) msgs[msgs.length - 1].remove();
-
-    if (!items.length) {
-      addAIMsg('Noch keine Generierungen gespeichert. Erstelle dein erstes Bild oder Video!');
-      return;
-    }
-    const html = `
-      <div style="font-size:13px;font-weight:600;margin-bottom:12px">🗂 Deine Galerie (${items.length})</div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:480px">
-        ${items.map(item => `
-          <div style="position:relative;border-radius:8px;overflow:hidden;border:1px solid var(--bd);aspect-ratio:1;background:var(--sf2)">
-            ${item.type === 'image'
-              ? `<img src="${item.url}" style="width:100%;height:100%;object-fit:cover;cursor:pointer" onclick="window.open('${item.url}','_blank')" onerror="this.parentElement.style.display='flex';this.parentElement.style.alignItems='center';this.parentElement.style.padding='8px';this.remove();this.parentElement.innerHTML+='<span style=font-size:10px;color:var(--td)>URL abgelaufen</span>'">`
-              : `<video src="${item.url}" style="width:100%;height:100%;object-fit:cover;cursor:pointer" muted playsinline onclick="window.open('${item.url}','_blank')" onerror="this.parentElement.innerHTML='<div style=padding:8px;font-size:10px;color:var(--td)>URL abgelaufen</div>'"></video>`
-            }
-            <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.55);padding:4px 6px">
-              <div style="font-size:9px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml((item.prompt||'').substring(0,30))}</div>
-            </div>
-            <a href="${item.url}" download target="_blank" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,.6);color:#fff;border-radius:4px;padding:2px 6px;font-size:10px;text-decoration:none">↓</a>
-          </div>
-        `).join('')}
-      </div>`;
-    addAIMsg(html);
-  } catch(e) {
-    addAIMsg('Galerie konnte nicht geladen werden.');
-  }
+    gridHtml+='</div>';
+    addAIMsg(gridHtml);
+  }catch(e){addAIMsg('Galerie konnte nicht geladen werden.');}
 }
 
-// ═══════════════════════════════
 // INIT
-// ═══════════════════════════════
 updateUI();
 loadChats();
 if(authToken)loadCredits();
 if(localStorage.getItem('virgo_sb_closed')==='1'){
   document.getElementById('sb').classList.add('collapsed');
-  document.getElementById('sb-toggle-btn').textContent='▶';
+  document.getElementById('sb-toggle-btn').textContent='►';
 }
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('/sw.js').catch(()=>{});});}</script>
 </body>
 </html>
+
+
