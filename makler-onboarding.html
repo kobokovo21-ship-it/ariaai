@@ -271,8 +271,84 @@ textarea{resize:vertical;min-height:80px}
       </div>
     </div>
 
+    <!-- TERMINBUCHUNG -->
+    <div class="card">
+      <h2>Terminbuchung</h2>
+      <p class="sub">Interessenten koennen direkt auf deiner Landing Page einen Termin buchen</p>
+
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;padding:14px 16px;background:var(--sf);border-radius:10px;border:1px solid var(--bd)">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;flex:1">
+          <div style="position:relative;width:44px;height:24px;flex-shrink:0">
+            <input type="checkbox" id="booking-enabled" style="opacity:0;width:0;height:0;position:absolute" onchange="toggleBooking(this)">
+            <div id="booking-toggle-bg" style="position:absolute;inset:0;background:var(--bd);border-radius:12px;transition:background .2s"></div>
+            <div id="booking-toggle-dot" style="position:absolute;top:3px;left:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)"></div>
+          </div>
+          <div>
+            <div style="font-size:13px;font-weight:500">Terminbuchung aktivieren</div>
+            <div style="font-size:11px;color:var(--tm)">Interessenten sehen einen Kalender auf deiner Landing Page</div>
+          </div>
+        </label>
+      </div>
+
+      <div id="booking-settings" style="display:none">
+        <div style="margin-bottom:16px">
+          <label>Verfuegbare Wochentage</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px" id="days-container">
+            <label class="day-item"><input type="checkbox" name="bday" value="mo"> Mo</label>
+            <label class="day-item"><input type="checkbox" name="bday" value="di"> Di</label>
+            <label class="day-item"><input type="checkbox" name="bday" value="mi"> Mi</label>
+            <label class="day-item"><input type="checkbox" name="bday" value="do"> Do</label>
+            <label class="day-item"><input type="checkbox" name="bday" value="fr"> Fr</label>
+            <label class="day-item"><input type="checkbox" name="bday" value="sa"> Sa</label>
+          </div>
+          <div class="hint">Waehle die Tage an denen du Termine annimmst.</div>
+        </div>
+
+        <div class="grid" style="margin-bottom:16px">
+          <div>
+            <label>Von (Uhrzeit)</label>
+            <select id="booking-start">
+              <option value="08:00">08:00 Uhr</option>
+              <option value="09:00" selected>09:00 Uhr</option>
+              <option value="10:00">10:00 Uhr</option>
+              <option value="11:00">11:00 Uhr</option>
+              <option value="12:00">12:00 Uhr</option>
+              <option value="13:00">13:00 Uhr</option>
+              <option value="14:00">14:00 Uhr</option>
+            </select>
+          </div>
+          <div>
+            <label>Bis (Uhrzeit)</label>
+            <select id="booking-end">
+              <option value="14:00">14:00 Uhr</option>
+              <option value="15:00">15:00 Uhr</option>
+              <option value="16:00">16:00 Uhr</option>
+              <option value="17:00" selected>17:00 Uhr</option>
+              <option value="18:00">18:00 Uhr</option>
+              <option value="19:00">19:00 Uhr</option>
+              <option value="20:00">20:00 Uhr</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="padding:12px 14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;font-size:12px;color:#166534;margin-bottom:16px">
+          Jeder Termin dauert 60 Minuten. Virgo berechnet automatisch alle freien Slots und zeigt sie auf deiner Landing Page an.
+        </div>
+      </div>
+
+      <button class="btn" id="booking-save-btn" onclick="saveBookingSettings()">Terminbuchung speichern</button>
+      <div id="booking-msg" class="msg" style="margin-top:12px;margin-bottom:0"></div>
+    </div>
+
+
   </div>
 </div>
+
+<style>
+.day-item{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:1px solid var(--bd);border-radius:8px;cursor:pointer;font-size:12px;font-weight:500;transition:all .15s;user-select:none}
+.day-item:has(input:checked){border-color:var(--t);background:var(--t);color:#fff}
+.day-item input{display:none}
+</style>
 
 <script>
 'use strict';
@@ -346,6 +422,16 @@ async function loadProfile() {
     }
     updatePreview();
     if (d.slug) showLinkBanner(d.slug);
+    // Terminbuchung laden
+    if (d.booking_enabled) setBookingEnabled(true);
+    if (Array.isArray(d.booking_days)) {
+      d.booking_days.forEach(day => {
+        const cb = document.querySelector('input[name="bday"][value="' + day + '"]');
+        if (cb) cb.checked = true;
+      });
+    }
+    if (d.booking_start) { const s = document.getElementById('booking-start'); if(s) s.value = d.booking_start; }
+    if (d.booking_end) { const e = document.getElementById('booking-end'); if(e) e.value = d.booking_end; }
   } catch(e) {}
 }
 
@@ -608,6 +694,68 @@ function showMsg(el, text, type) {
   el.textContent = text;
   el.className = 'msg ' + type;
   el.style.display = 'block';
+}
+
+
+// ─── TERMINBUCHUNG ───
+function toggleBooking(cb) {
+  const bg = document.getElementById('booking-toggle-bg');
+  const dot = document.getElementById('booking-toggle-dot');
+  const settings = document.getElementById('booking-settings');
+  if (cb.checked) {
+    bg.style.background = 'var(--t)';
+    dot.style.transform = 'translateX(20px)';
+    settings.style.display = 'block';
+  } else {
+    bg.style.background = 'var(--bd)';
+    dot.style.transform = 'translateX(0)';
+    settings.style.display = 'none';
+  }
+}
+
+function setBookingEnabled(enabled) {
+  const cb = document.getElementById('booking-enabled');
+  cb.checked = enabled;
+  toggleBooking(cb);
+}
+
+async function saveBookingSettings() {
+  const enabled = document.getElementById('booking-enabled').checked;
+  const days = Array.from(document.querySelectorAll('input[name="bday"]:checked')).map(c => c.value);
+  const start = document.getElementById('booking-start').value;
+  const end = document.getElementById('booking-end').value;
+  const msg = document.getElementById('booking-msg');
+  const btn = document.getElementById('booking-save-btn');
+
+  if (enabled && !days.length) {
+    showMsg(msg, 'Bitte mindestens einen Wochentag auswaehlen.', 'error'); return;
+  }
+  if (enabled && start >= end) {
+    showMsg(msg, 'Endzeit muss nach der Startzeit liegen.', 'error'); return;
+  }
+
+  btn.disabled = true; btn.textContent = 'Wird gespeichert...';
+  msg.style.display = 'none';
+
+  try {
+    const r = await fetch('/api/tools', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+      body: JSON.stringify({
+        tool: 'makler-booking-settings',
+        booking_enabled: enabled,
+        booking_days: days,
+        booking_start: start,
+        booking_end: end
+      })
+    });
+    const d = await r.json();
+    if (d.error) showMsg(msg, d.error, 'error');
+    else showMsg(msg, enabled ? 'Terminbuchung aktiviert! Interessenten koennen jetzt Termine buchen.' : 'Terminbuchung deaktiviert.', 'success');
+  } catch(e) {
+    showMsg(msg, 'Fehler: ' + e.message, 'error');
+  }
+  btn.disabled = false; btn.textContent = 'Terminbuchung speichern';
 }
 
 checkAccess();
