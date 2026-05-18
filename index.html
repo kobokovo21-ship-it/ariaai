@@ -230,10 +230,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
     <button class="mc modelia" onclick="setModel(this,'img-modelia','Modelia Fashion Pro')"><div class="md"></div>Modelia Fashion Pro<span class="mt gold">2cr</span></button>
     <button class="mc" onclick="setModel(this,'img-nano','Nano Banana Pro')"><div class="md"></div>Nano Banana Pro<span class="mt">Bild 1cr</span></button>
     <button class="mc" onclick="setModel(this,'img-seed','Seedream 5.0')"><div class="md"></div>Seedream 5.0<span class="mt">Bild 1cr</span></button>
-    <button class="mc" onclick="setModel(this,'vid-hailuo','Hailuo 2.3')"><div class="md"></div>Hailuo 2.3<span class="mt">Video 10cr</span></button>
-    <button class="mc" onclick="alert('Veo 3.1 - Coming Soon!')"><div class="md"></div>Veo 3.1<span class="mt" style="background:#FEF3C7;color:#92400E">Soon</span></button>
-    <button class="mc" onclick="alert('Sora 2.0 - Coming Soon!')"><div class="md"></div>Sora 2.0<span class="mt" style="background:#FEF3C7;color:#92400E">Soon</span></button>
-    <button class="mc" onclick="alert('Higgsfield 1.1 - Coming Soon!')"><div class="md"></div>Higgsfield 1.1<span class="mt" style="background:#FEF3C7;color:#92400E">Soon</span></button>
+    <button class="mc" onclick="setModel(this,'vid-kling','Kling 2.6')"><div class="md"></div>Kling 2.6<span class="mt">Video 10cr</span></button>
+    <button class="mc" onclick="setModel(this,'vid-wan','Wan 2.6')"><div class="md"></div>Wan 2.6<span class="mt">Video 10cr</span></button>
+    <button class="mc" onclick="setModel(this,'vid-higgsfield','Higgsfield')"><div class="md"></div>Higgsfield<span class="mt" style="background:#fce7f3;color:#9d174d">Premium</span></button>
   </div>
   <div class="hist" id="hist">
     <div class="hist-empty" id="hist-empty">Deine Chats erscheinen hier.</div>
@@ -402,10 +401,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
     <p id="up-msg">Kein Vertrag, jederzeit kuendbar.</p>
     <div class="ci2"><strong>Credits:</strong> Bild = 1cr - Modelia = 2cr - Video = 10cr - Upscale/Lip Sync = 5cr</div>
     <div class="pg">
-      <div class="pc"><div class="pct">Standard</div><div class="pcp">$19.99</div><div class="pcc">500cr/Mo</div><div class="pcf">Alle Bildmodelle<br>Hailuo 2.3<br>kein Veo/Sora</div><div class="pbs"><button class="pbtn" onclick="window.open('https://buy.stripe.com/00w8wQ2od3BgcPAfwwbjW00','_blank')">Kaufen</button></div></div>
-      <div class="pc feat"><div class="pct">Pro</div><div class="pcp">$49.99</div><div class="pcc">2.000cr/Mo</div><div class="pcf">Alle Modelle<br>Veo + Sora<br>Upscale + Lip Sync</div><div class="pbs"><button class="pbtn" onclick="window.open('https://buy.stripe.com/00waEY4wl0p4dTEaccbjW01','_blank')">Kaufen</button></div></div>
+      <div class="pc"><div class="pct">Standard</div><div class="pcp">$19.99</div><div class="pcc">500cr/Mo</div><div class="pcf">Alle Bildmodelle<br>Kling 2.6<br>Wan 2.6</div><div class="pbs"><button class="pbtn" onclick="window.open('https://buy.stripe.com/00w8wQ2od3BgcPAfwwbjW00','_blank')">Kaufen</button></div></div>
+      <div class="pc feat"><div class="pct">Pro</div><div class="pcp">$49.99</div><div class="pcc">2.000cr/Mo</div><div class="pcf">Alle Modelle<br>Kling + Wan<br>Higgsfield Premium</div><div class="pbs"><button class="pbtn" onclick="window.open('https://buy.stripe.com/00waEY4wl0p4dTEaccbjW01','_blank')">Kaufen</button></div></div>
       <div class="pc"><div class="pct">Master</div><div class="pcp">$99.99</div><div class="pcc">5.000cr/Mo</div><div class="pcf">Alles aus Pro<br>Music Gen<br>Prioritaet</div><div class="pbs"><button class="pbtn" onclick="window.open('https://buy.stripe.com/7sY28s1k9fjY16SgAAbjW02','_blank')">Kaufen</button></div></div>
-      <div class="pc"><div class="pct">Ultra</div><div class="pcp">$149.99</div><div class="pcc">8.000cr/Mo</div><div class="pcf">Higgsfield 1.1<br>unlimitiert Hailuo<br>Priority Support</div><div class="pbs"><button class="pbtn" onclick="window.open('https://buy.stripe.com/aFafZi6Et6Ns6rcbggbjW03','_blank')">Kaufen</button></div></div>
+      <div class="pc"><div class="pct">Ultra</div><div class="pcp">$149.99</div><div class="pcc">8.000cr/Mo</div><div class="pcf">Higgsfield Premium<br>Alle Video-Modelle<br>Priority Support</div><div class="pbs"><button class="pbtn" onclick="window.open('https://buy.stripe.com/aFafZi6Et6Ns6rcbggbjW03','_blank')">Kaufen</button></div></div>
       <div class="pc"><div class="pct">Max</div><div class="pcp">$249.99</div><div class="pcc">15.000cr/Mo</div><div class="pcf">Alles inklusive<br>White-Label<br>Dedicated</div><div class="pbs"><button class="pbtn" onclick="window.open('https://buy.stripe.com/fZuaEYd2Rb3IaHs2JKbjW04','_blank')">Kaufen</button></div></div>
     </div>
     <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--bd)">
@@ -423,7 +422,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
 // STATE
 const state={mode:'chat',model:'chat',modelName:'Virgo Chat',generating:false,chatStarted:false,activeChatId:null};
 const COST={img:1,vid:10,tool:5,modelia:2};
-const PREMIUM=['vid-veo','vid-sora','vid-higgsfield'];
+const PREMIUM=['vid-higgsfield'];
 const PRO_PLANS=['pro','master','ultra','max'];
 const PH={
   chat:'Frag Virgo alles - Code, Business, Strategie...',
@@ -493,7 +492,7 @@ function resetToChatMode(){
 function setModel(el,model,name){
   if(PREMIUM.includes(model)&&!isPro()&&!isAdmin()){
     const m=document.getElementById('up-msg');m.className='alert';
-    m.textContent='Veo 3.1, Sora und Higgsfield sind nur fuer Pro-Mitglieder.';
+    m.textContent='Higgsfield ist nur fuer Pro-Mitglieder.';
     showM('modal-upgrade');return;
   }
   if(model.startsWith('vid')&&!currentUser){
@@ -895,9 +894,9 @@ function genImage(prompt){
 }
 
 function genVideo(prompt){
-  const mm={'vid-hailuo':'hailuo','vid-veo':'veo','vid-sora':'sora','vid-higgsfield':'higgsfield'};
+  const mm={'vid-kling':'kling','vid-wan':'wan','vid-higgsfield':'higgsfield'};
   const pm=mm[state.model]||'hailuo';
-  const labels={hailuo:'Hailuo 2.3 generiert (60-90 Sek.)...',veo:'Veo 3.1 generiert (2-3 Min.)...',sora:'Sora 2.0 generiert...',higgsfield:'Higgsfield generiert...'};
+  const labels={kling:'Kling 2.6 generiert...',wan:'Wan 2.6 generiert...',higgsfield:'Higgsfield generiert...'};
   startGen(labels[pm]);showTyping();
   const body={prompt,model:pm,duration:6,resolution:768};
   if(refImages.length&&pm!=='sora')body.imageUrl=refImages[0].url;
