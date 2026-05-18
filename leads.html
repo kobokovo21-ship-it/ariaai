@@ -7,7 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#fff;--sf:#f7f7f7;--sf2:#f0f0f0;--bd:#e8e8e8;--t:#111;--tm:#888;--td:#bbb;--blue:#2563eb;--red:#ef4444;--green:#22c55e}
+:root{--bg:#fff;--sf:#f7f7f7;--sf2:#f0f0f0;--bd:#e8e8e8;--t:#111;--tm:#888;--td:#bbb;--blue:#2563eb;--red:#ef4444;--green:#22c55e;--wa:#25d366}
 body{font-family:'Inter',sans-serif;background:var(--sf);color:var(--t);min-height:100vh}
 .header{background:var(--bg);border-bottom:1px solid var(--bd);padding:16px 24px;display:flex;align-items:center;justify-content:space-between}
 .logo{font-size:13px;font-weight:200;letter-spacing:8px}
@@ -23,9 +23,9 @@ body{font-family:'Inter',sans-serif;background:var(--sf);color:var(--t);min-heig
 .search{flex:1;min-width:200px;padding:9px 14px;border:1px solid var(--bd);border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;outline:none;background:var(--bg)}
 .filter{padding:9px 14px;border:1px solid var(--bd);border-radius:8px;font-family:'Inter',sans-serif;font-size:12px;background:var(--bg);cursor:pointer;outline:none}
 .new-btn{padding:9px 16px;background:var(--t);color:#fff;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-size:12px;font-weight:500;cursor:pointer}
-.table-wrap{background:var(--bg);border:1px solid var(--bd);border-radius:12px;overflow:hidden}
-table{width:100%;border-collapse:collapse}
-th{padding:10px 16px;text-align:left;font-size:10px;font-weight:600;color:var(--td);text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--bd);background:var(--sf)}
+.table-wrap{background:var(--bg);border:1px solid var(--bd);border-radius:12px;overflow:hidden;overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:600px}
+th{padding:10px 16px;text-align:left;font-size:10px;font-weight:600;color:var(--td);text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--bd);background:var(--sf);white-space:nowrap}
 td{padding:12px 16px;font-size:12px;border-bottom:1px solid var(--sf);vertical-align:middle}
 tr:last-child td{border-bottom:none}
 tr:hover td{background:var(--sf)}
@@ -34,10 +34,12 @@ tr:hover td{background:var(--sf)}
 .badge.kontaktiert{background:#fef9c3;color:#92400e}
 .badge.abschluss{background:#dcfce7;color:#166534}
 .badge.verloren{background:#fee2e2;color:#991b1b}
-.act{display:flex;gap:6px}
-.act button{padding:4px 8px;border:1px solid var(--bd);border-radius:5px;background:transparent;font-family:'Inter',sans-serif;font-size:10px;color:var(--tm);cursor:pointer}
-.act button:hover{background:var(--sf2);color:var(--t)}
-.act button.del:hover{background:#fee2e2;color:var(--red);border-color:#fecaca}
+.act{display:flex;gap:5px;flex-wrap:nowrap}
+.act a,.act button{padding:5px 8px;border:1px solid var(--bd);border-radius:5px;background:transparent;font-family:'Inter',sans-serif;font-size:11px;color:var(--tm);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;min-width:30px}
+.act a:hover,.act button:hover{background:var(--sf2);color:var(--t)}
+.act .wa{border-color:#bbf7d0;color:var(--wa)}
+.act .wa:hover{background:#f0fdf4}
+.act .del:hover{background:#fee2e2;color:var(--red);border-color:#fecaca}
 .empty{padding:48px;text-align:center;color:var(--td);font-size:13px}
 .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;align-items:center;justify-content:center;padding:16px}
 .modal.vis{display:flex}
@@ -46,8 +48,8 @@ tr:hover td{background:var(--sf)}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
 .form-full{grid-column:1/-1}
 label{display:block;font-size:11px;color:var(--tm);margin-bottom:4px;font-weight:500}
-input,select,textarea{width:100%;padding:9px 12px;border:1px solid var(--bd);border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;outline:none;background:var(--bg)}
-input:focus,select:focus{border-color:#999}
+input,select,textarea{width:100%;padding:9px 12px;border:1px solid var(--bd);border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;outline:none;background:var(--bg);color:var(--t)}
+input:focus,select:focus,textarea:focus{border-color:#999}
 textarea{resize:vertical;min-height:70px}
 .form-btns{display:flex;gap:8px;margin-top:16px}
 .mbtn{flex:1;padding:10px;border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;cursor:pointer;border:none;background:var(--t);color:#fff}
@@ -58,7 +60,6 @@ textarea{resize:vertical;min-height:70px}
 @media(max-width:768px){
   .stats{grid-template-columns:1fr 1fr}
   .form-grid{grid-template-columns:1fr}
-  th,td{padding:8px 10px;font-size:11px}
 }
 </style>
 </head>
@@ -66,14 +67,14 @@ textarea{resize:vertical;min-height:70px}
 
 <div class="header">
   <span class="logo">VIRGO</span>
-  <a href="/" class="back">← Zurück zu Virgo</a>
+  <a href="/" class="back">Zurueck zu Virgo</a>
 </div>
 
 <div class="container">
   <div id="login-wall" class="login-wall" style="display:none">
-    <h2>🔒 Kein Zugriff</h2>
+    <h2>Kein Zugriff</h2>
     <p>Bitte melde dich an um das Dashboard zu sehen.</p>
-    <a href="/" class="back">Zurück zu Virgo</a>
+    <a href="/" class="back">Zurueck zu Virgo</a>
   </div>
 
   <div id="app" style="display:none">
@@ -81,7 +82,7 @@ textarea{resize:vertical;min-height:70px}
       <div class="stat"><div class="stat-n" id="s-total">0</div><div class="stat-l">Leads gesamt</div></div>
       <div class="stat blue"><div class="stat-n" id="s-neu">0</div><div class="stat-l">Neue Leads</div></div>
       <div class="stat"><div class="stat-n" id="s-kontaktiert">0</div><div class="stat-l">Kontaktiert</div></div>
-      <div class="stat green"><div class="stat-n" id="s-abschluss">0</div><div class="stat-l">Abschlüsse</div></div>
+      <div class="stat green"><div class="stat-n" id="s-abschluss">0</div><div class="stat-l">Abschluesse</div></div>
     </div>
 
     <div class="top">
@@ -89,7 +90,7 @@ textarea{resize:vertical;min-height:70px}
       <select class="filter" id="filter-vers" onchange="filterLeads()">
         <option value="">Alle Versicherungen</option>
         <option>PKV</option><option>KFZ</option><option>Hausrat</option>
-        <option>Haftpflicht</option><option>Berufsunfähigkeit</option>
+        <option>Haftpflicht</option><option>Berufsunfaehigkeit</option>
         <option>Lebensversicherung</option><option>Krankentagegeld</option>
         <option>Pflegeversicherung</option><option>Rechtsschutz</option>
       </select>
@@ -117,28 +118,31 @@ textarea{resize:vertical;min-height:70px}
   </div>
 </div>
 
+<!-- MODAL -->
 <div class="modal" id="modal">
   <div class="mb">
     <h2 id="modal-title">Neuer Lead</h2>
     <div class="form-grid">
-      <div><label>Name *</label><input id="f-name" placeholder="Max Mustermann"></div>
-      <div><label>Telefon *</label><input id="f-tel" placeholder="+49 211 ..."></div>
-      <div><label>Email</label><input id="f-email" type="email" placeholder="max@email.de"></div>
+      <div><label>Name *</label><input id="f-name" placeholder="Max Mustermann" autocomplete="off"></div>
+      <div><label>Telefon *</label><input id="f-tel" placeholder="+49 211 ..." autocomplete="off"></div>
+      <div><label>Email</label><input id="f-email" type="email" placeholder="max@email.de" autocomplete="off"></div>
       <div><label>Versicherung *</label>
         <select id="f-vers">
           <option>PKV</option><option>KFZ</option><option>Hausrat</option>
-          <option>Haftpflicht</option><option>Berufsunfähigkeit</option>
+          <option>Haftpflicht</option><option>Berufsunfaehigkeit</option>
           <option>Lebensversicherung</option><option>Krankentagegeld</option>
           <option>Pflegeversicherung</option><option>Rechtsschutz</option>
         </select>
       </div>
       <div><label>Status</label>
         <select id="f-status">
-          <option value="neu">Neu</option><option value="kontaktiert">Kontaktiert</option>
-          <option value="abschluss">Abschluss</option><option value="verloren">Verloren</option>
+          <option value="neu">Neu</option>
+          <option value="kontaktiert">Kontaktiert</option>
+          <option value="abschluss">Abschluss</option>
+          <option value="verloren">Verloren</option>
         </select>
       </div>
-      <div class="form-full"><label>Notiz</label><textarea id="f-notiz" placeholder="Notizen..."></textarea></div>
+      <div class="form-full"><label>Notiz</label><textarea id="f-notiz" placeholder="Notizen zum Lead..."></textarea></div>
     </div>
     <div id="modal-msg" style="font-size:12px;color:var(--red);margin-bottom:8px;display:none"></div>
     <div class="form-btns">
@@ -149,14 +153,26 @@ textarea{resize:vertical;min-height:70px}
 </div>
 
 <script>
+'use strict';
+
 let allLeads = [];
 let editId = null;
 
-// Admin bypass: auch bei abgelaufenem Token zeigen
-const authToken = localStorage.getItem('virgo_token') || localStorage.getItem('sb-token') || localStorage.getItem('supabase_token');
 const ADMIN_EMAIL = 'holyencore@gmail.com';
-const _cu = JSON.parse(localStorage.getItem('virgo_user') || localStorage.getItem('virgo-user') || 'null');
-const isAdmin = _cu && _cu.email === ADMIN_EMAIL;
+const authToken = (function() {
+  try {
+    return localStorage.getItem('virgo_token') ||
+           localStorage.getItem('sb-token') ||
+           localStorage.getItem('supabase_token') || null;
+  } catch(e) { return null; }
+})();
+const currentUser = (function() {
+  try {
+    return JSON.parse(localStorage.getItem('virgo_user') ||
+           localStorage.getItem('virgo-user') || 'null');
+  } catch(e) { return null; }
+})();
+const isAdmin = !!(currentUser && currentUser.email === ADMIN_EMAIL);
 
 if (!authToken && !isAdmin) {
   document.getElementById('login-wall').style.display = 'flex';
@@ -170,63 +186,73 @@ async function loadLeads() {
     const r = await fetch('/api/leads-api', {
       headers: { 'Authorization': 'Bearer ' + (authToken || '') }
     });
-
-    // Bei 401 oder 403 nicht weiterleiten — Login-Wall zeigen
     if (r.status === 401 || r.status === 403) {
       if (isAdmin) {
-        // Admin: trotzdem App zeigen, Leads leer lassen
-        document.getElementById('app').style.display = 'block';
-        document.getElementById('leads-table').innerHTML = '<tr><td colspan="7" class="empty">Bitte neu einloggen auf virgoio.com und dann diese Seite öffnen.</td></tr>';
+        document.getElementById('leads-table').innerHTML = '<tr><td colspan="7" class="empty">Bitte neu einloggen auf virgoio.com und dann diese Seite oeffnen.</td></tr>';
       } else {
         document.getElementById('login-wall').style.display = 'flex';
         document.getElementById('app').style.display = 'none';
       }
       return;
     }
-
     const data = await r.json();
     allLeads = Array.isArray(data) ? data : [];
-    document.getElementById('app').style.display = 'block';
     renderStats();
     renderTable(allLeads);
   } catch(e) {
-    document.getElementById('app').style.display = 'block';
-    document.getElementById('leads-table').innerHTML = '<tr><td colspan="7" class="empty">Fehler beim Laden: ' + e.message + '</td></tr>';
+    document.getElementById('leads-table').innerHTML = '<tr><td colspan="7" class="empty">Fehler beim Laden: ' + escHtml(e.message) + '</td></tr>';
   }
 }
 
 function renderStats() {
   document.getElementById('s-total').textContent = allLeads.length;
-  document.getElementById('s-neu').textContent = allLeads.filter(l=>l.status==='neu').length;
-  document.getElementById('s-kontaktiert').textContent = allLeads.filter(l=>l.status==='kontaktiert').length;
-  document.getElementById('s-abschluss').textContent = allLeads.filter(l=>l.status==='abschluss').length;
+  document.getElementById('s-neu').textContent = allLeads.filter(l => l.status === 'neu').length;
+  document.getElementById('s-kontaktiert').textContent = allLeads.filter(l => l.status === 'kontaktiert').length;
+  document.getElementById('s-abschluss').textContent = allLeads.filter(l => l.status === 'abschluss').length;
+}
+
+function escHtml(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 function renderTable(leads) {
   const tbody = document.getElementById('leads-table');
-  if (!leads.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty">Noch keine Leads.</td></tr>'; return; }
-  tbody.innerHTML = leads.map(l => `<tr>
-    <td><strong>${l.name||'—'}</strong></td>
-    <td>${l.versicherung||'—'}</td>
-    <td><a href="tel:${l.telefon}" style="color:var(--blue);text-decoration:none">${l.telefon||'—'}</a></td>
-    <td>${l.email||'—'}</td>
-    <td><span class="badge ${l.status||'neu'}">${l.status||'neu'}</span></td>
-    <td>${l.created_at ? new Date(l.created_at).toLocaleDateString('de') : '—'}</td>
-    <td><div class="act">
-      <button onclick="editLead('${l.id}')">✏️</button>
-      <button onclick="window.open('tel:${l.telefon}')">📞</button>
-      <button class="del" onclick="deleteLead('${l.id}')">🗑️</button>
-    </div></td>
-  </tr>`).join('');
+  if (!leads.length) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty">Noch keine Leads.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = leads.map(l => {
+    const tel = escHtml(l.telefon || '');
+    const waNum = (l.telefon || '').replace(/\s+/g,'').replace(/^00/,'+');
+    const waLink = 'https://wa.me/' + encodeURIComponent(waNum);
+    const date = l.created_at ? new Date(l.created_at).toLocaleDateString('de') : '—';
+    return '<tr>' +
+      '<td><strong>' + escHtml(l.name) + '</strong></td>' +
+      '<td>' + escHtml(l.versicherung) + '</td>' +
+      '<td><a href="tel:' + tel + '" style="color:var(--blue);text-decoration:none">' + tel + '</a></td>' +
+      '<td>' + escHtml(l.email) + '</td>' +
+      '<td><span class="badge ' + escHtml(l.status || 'neu') + '">' + escHtml(l.status || 'neu') + '</span></td>' +
+      '<td>' + date + '</td>' +
+      '<td><div class="act">' +
+        '<button onclick="editLead(\'' + escHtml(l.id) + '\')">Bearbeiten</button>' +
+        '<a href="tel:' + tel + '" title="Anrufen">Anruf</a>' +
+        '<a href="' + waLink + '" target="_blank" rel="noopener noreferrer" class="wa" title="WhatsApp">WA</a>' +
+        '<button class="del" onclick="deleteLead(\'' + escHtml(l.id) + '\')">Loeschen</button>' +
+      '</div></td>' +
+    '</tr>';
+  }).join('');
 }
 
 function filterLeads() {
-  const q = document.getElementById('search').value.toLowerCase();
+  const q = (document.getElementById('search').value || '').toLowerCase();
   const v = document.getElementById('filter-vers').value;
   const s = document.getElementById('filter-status').value;
   renderTable(allLeads.filter(l => {
-    const mq = !q || (l.name||'').toLowerCase().includes(q) || (l.telefon||'').includes(q) || (l.email||'').toLowerCase().includes(q);
-    return mq && (!v||l.versicherung===v) && (!s||l.status===s);
+    const mq = !q ||
+      (l.name || '').toLowerCase().includes(q) ||
+      (l.telefon || '').includes(q) ||
+      (l.email || '').toLowerCase().includes(q);
+    return mq && (!v || l.versicherung === v) && (!s || l.status === s);
   }));
 }
 
@@ -241,15 +267,16 @@ function openModal() {
 }
 
 function editLead(id) {
-  const l = allLeads.find(x=>x.id===id); if(!l) return;
+  const l = allLeads.find(x => x.id === id);
+  if (!l) return;
   editId = id;
   document.getElementById('modal-title').textContent = 'Lead bearbeiten';
-  document.getElementById('f-name').value = l.name||'';
-  document.getElementById('f-tel').value = l.telefon||'';
-  document.getElementById('f-email').value = l.email||'';
-  document.getElementById('f-vers').value = l.versicherung||'PKV';
-  document.getElementById('f-status').value = l.status||'neu';
-  document.getElementById('f-notiz').value = l.notiz||'';
+  document.getElementById('f-name').value = l.name || '';
+  document.getElementById('f-tel').value = l.telefon || '';
+  document.getElementById('f-email').value = l.email || '';
+  document.getElementById('f-vers').value = l.versicherung || 'PKV';
+  document.getElementById('f-status').value = l.status || 'neu';
+  document.getElementById('f-notiz').value = l.notiz || '';
   document.getElementById('modal-msg').style.display = 'none';
   document.getElementById('modal').classList.add('vis');
 }
@@ -257,18 +284,22 @@ function editLead(id) {
 function closeModal() { document.getElementById('modal').classList.remove('vis'); }
 
 async function saveLead() {
-  const name = document.getElementById('f-name').value.trim();
-  const telefon = document.getElementById('f-tel').value.trim();
+  const name = (document.getElementById('f-name').value || '').trim();
+  const telefon = (document.getElementById('f-tel').value || '').trim();
   const msg = document.getElementById('modal-msg');
-  if (!name||!telefon) { msg.textContent='Name und Telefon sind Pflichtfelder.'; msg.style.display='block'; return; }
+  if (!name || !telefon) {
+    msg.textContent = 'Name und Telefon sind Pflichtfelder.';
+    msg.style.display = 'block';
+    return;
+  }
   const btn = document.getElementById('save-btn');
-  btn.disabled=true; btn.textContent='...';
+  btn.disabled = true; btn.textContent = '...';
   const body = {
     name, telefon,
-    email: document.getElementById('f-email').value.trim()||null,
+    email: (document.getElementById('f-email').value || '').trim() || null,
     versicherung: document.getElementById('f-vers').value,
     status: document.getElementById('f-status').value,
-    notiz: document.getElementById('f-notiz').value.trim()||null
+    notiz: (document.getElementById('f-notiz').value || '').trim() || null
   };
   try {
     const method = editId ? 'PUT' : 'POST';
@@ -279,29 +310,43 @@ async function saveLead() {
       body: JSON.stringify(body)
     });
     const d = await r.json();
-    if (d.error) { msg.textContent=d.error; msg.style.display='block'; btn.disabled=false; btn.textContent='Speichern'; return; }
+    if (d.error) {
+      msg.textContent = d.error;
+      msg.style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Speichern';
+      return;
+    }
     closeModal();
     loadLeads();
-  } catch(e) { msg.textContent='Fehler beim Speichern.'; msg.style.display='block'; }
-  btn.disabled=false; btn.textContent='Speichern';
+  } catch(e) {
+    msg.textContent = 'Fehler beim Speichern.';
+    msg.style.display = 'block';
+  }
+  btn.disabled = false; btn.textContent = 'Speichern';
 }
 
 async function deleteLead(id) {
-  if (!confirm('Lead wirklich löschen?')) return;
-  const r = await fetch('/api/leads-api', {
-    method: 'DELETE',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (authToken || '') },
-    body: JSON.stringify({ id })
-  });
-  if (r.ok) {
-    loadLeads();
-  } else {
-    const d = await r.json().catch(() => ({}));
-    alert('Fehler beim Löschen: ' + (d.error || 'Unbekannter Fehler'));
+  if (!confirm('Lead wirklich loeschen?')) return;
+  try {
+    const r = await fetch('/api/leads-api', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (authToken || '') },
+      body: JSON.stringify({ id })
+    });
+    if (r.ok) {
+      loadLeads();
+    } else {
+      const d = await r.json().catch(() => ({}));
+      alert('Fehler beim Loeschen: ' + (d.error || 'Unbekannter Fehler'));
+    }
+  } catch(e) {
+    alert('Fehler: ' + e.message);
   }
 }
 
-document.getElementById('modal').addEventListener('click', function(e) { if(e.target===this)closeModal(); });
+document.getElementById('modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
 </script>
 </body>
 </html>
