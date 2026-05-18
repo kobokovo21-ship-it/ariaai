@@ -373,5 +373,52 @@ export default async function handler(req, res) {
     } catch(e) { return res.status(500).json({ error: e.message }); }
   }
 
+  // ─── MAKLER — BUCHUNGS-EINSTELLUNGEN SPEICHERN ───
+  if (tool === 'makler-booking-settings') {
+    try {
+      const token = (req.headers.authorization || '').replace('Bearer ', '').trim();
+      const user = await validateToken(token);
+      if (!user) return res.status(401).json({ error: 'Nicht eingeloggt' });
+
+      const { booking_enabled, booking_days, booking_start, booking_end } = body;
+
+      // Validierung
+      if (booking_enabled) {
+        if (!Array.isArray(booking_days) || !booking_days.length) {
+          return res.status(400).json({ error: 'Mindestens einen Wochentag auswaehlen' });
+        }
+        const validDays = ['mo','di','mi','do','fr','sa','so'];
+        for (const d of booking_days) {
+          if (!validDays.includes(d)) return res.status(400).json({ error: 'Ungültiger Wochentag' });
+        }
+        if (booking_start && booking_end && booking_start >= booking_end) {
+          return res.status(400).json({ error: 'Endzeit muss nach der Startzeit liegen' });
+        }
+      }
+
+      // Prüfen ob Makler-Profil existiert
+      const checkR = await fetch(`${BASE}/rest/v1/makler?user_id=eq.${user.id}&select=id&limit=1`, {
+        headers: { 'apikey': SVC, 'Authorization': `Bearer ${SVC}` }
+      });
+      const existing = await checkR.json();
+      if (!Array.isArray(existing) || !existing.length) {
+        return res.status(400).json({ error: 'Bitte zuerst das Profil speichern.' });
+      }
+
+      const r = await fetch(`${BASE}/rest/v1/makler?user_id=eq.${user.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'apikey': SVC, 'Authorization': `Bearer ${SVC}`, 'Prefer': 'return=representation' },
+        body: JSON.stringify({
+          booking_enabled: !!booking_enabled,
+          booking_days: Array.isArray(booking_days) ? booking_days : [],
+          booking_start: booking_start || '09:00',
+          booking_end: booking_end || '17:00'
+        })
+      });
+      if (!r.ok) return res.status(500).json({ error: 'Datenbankfehler beim Speichern' });
+      return res.status(200).json({ success: true });
+    } catch(e) { return res.status(500).json({ error: e.message }); }
+  }
+
   return res.status(400).json({ error: 'Unbekanntes Tool: ' + (tool || 'keines angegeben') });
 }
