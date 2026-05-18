@@ -373,6 +373,70 @@ export default async function handler(req, res) {
     } catch(e) { return res.status(500).json({ error: e.message }); }
   }
 
+  // ─── MAKLER — TERMIN BUCHEN (von Landing Page) ───
+  if (tool === 'makler-booking') {
+    try {
+      const { makler_slug, name, telefon, email, versicherung, nachricht, date, time } = body;
+
+      if (!name || !telefon) return res.status(400).json({ error: 'Name und Telefon sind Pflichtfelder' });
+      if (!date || !time) return res.status(400).json({ error: 'Datum und Uhrzeit fehlen' });
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return res.status(400).json({ error: 'Ungultiges Datum' });
+      if (!/^\d{2}:\d{2}$/.test(time)) return res.status(400).json({ error: 'Ungultige Uhrzeit' });
+      if (!makler_slug || !/^[a-z0-9-]{1,80}$/.test(makler_slug)) return res.status(400).json({ error: 'Ungultiger Makler' });
+
+      // Makler laden
+      const maklerR = await fetch(`${BASE}/rest/v1/makler?slug=eq.${encodeURIComponent(makler_slug)}&select=*&limit=1`, {
+        headers: { 'apikey': SVC, 'Authorization': `Bearer ${SVC}` }
+      });
+      const maklerData = await maklerR.json();
+      const makler = Array.isArray(maklerData) && maklerData.length ? maklerData[0] : null;
+      if (!makler) return res.status(404).json({ error: 'Makler nicht gefunden' });
+      if (!makler.booking_enabled) return res.status(400).json({ error: 'Terminbuchung nicht verfugbar' });
+
+      // Termin in Supabase speichern
+      await fetch(`${BASE}/rest/v1/bookings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SVC, 'Authorization': `Bearer ${SVC}` },
+        body: JSON.stringify({
+          makler_id: makler.id,
+          name: name.trim(),
+          telefon: telefon.trim(),
+          email: email ? email.trim() : null,
+          versicherung: versicherung || null,
+          nachricht: nachricht ? nachricht.trim() : null,
+          date, time, status: 'neu'
+        })
+      });
+
+      // Email-Alert an Makler
+      const alertEmail = makler.alert_email || makler.email;
+      if (alertEmail) {
+        const safe = (s) => String(s || '-').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        const html = `<div style="font-family:Inter,sans-serif;max-width:600px;margin:0 auto;padding:40px 20px">
+          <h1 style="font-size:13px;font-weight:200;letter-spacing:8px;color:#111;margin-bottom:24px">V I R G O</h1>
+          <h2 style="font-size:20px;font-weight:500;margin-bottom:16px">Neuer Termin!</h2>
+          <div style="background:#f7f7f7;border-radius:12px;padding:20px;margin-bottom:20px">
+            <p style="font-size:13px;margin-bottom:8px"><strong>Termin:</strong> ${safe(date)} um ${safe(time)} Uhr (60 Min.)</p>
+            <p style="font-size:13px;margin-bottom:8px"><strong>Name:</strong> ${safe(name)}</p>
+            <p style="font-size:13px;margin-bottom:8px"><strong>Telefon:</strong> ${safe(telefon)}</p>
+            <p style="font-size:13px;margin-bottom:8px"><strong>Email:</strong> ${safe(email)}</p>
+            <p style="font-size:13px"><strong>Versicherung:</strong> ${safe(versicherung)}</p>
+          </div>
+          <p style="font-size:11px;color:#bbb;margin-top:32px">Virgo AI - virgoio.com</p>
+        </div>`;
+        await sendEmail(alertEmail, 'Neuer Termin: ' + date + ' um ' + time + ' Uhr', html).catch(() => {});
+      }
+
+      // SMS-Alert
+      if (makler.whatsapp_number) {
+        const sms = 'Neuer Termin! ' + name.trim() + ' - ' + date + ' um ' + time + ' Uhr - Tel: ' + telefon.trim();
+        await sendSMS(makler.whatsapp_number, sms).catch(() => {});
+      }
+
+      return res.status(200).json({ success: true });
+    } catch(e) { return res.status(500).json({ error: e.message }); }
+  }
+
   // ─── MAKLER — BUCHUNGS-EINSTELLUNGEN SPEICHERN ───
   if (tool === 'makler-booking-settings') {
     try {
