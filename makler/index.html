@@ -9,13 +9,13 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Georgia', serif; background: #fafaf8; color: #111; min-height: 100vh; }
 
-  #loading {
-    display: flex; align-items: center; justify-content: center;
-    height: 100vh; font-size: 14px; color: #999; letter-spacing: 2px;
-  }
+  #loading { display: flex; align-items: center; justify-content: center; height: 100vh; font-size: 14px; color: #999; letter-spacing: 2px; }
   #not-found { display: none; text-align: center; padding: 80px 20px; }
   #not-found h2 { font-size: 24px; margin-bottom: 12px; }
   #not-found p { color: #888; font-size: 14px; }
+  #inactive { display: none; text-align: center; padding: 80px 20px; }
+  #inactive h2 { font-size: 24px; margin-bottom: 12px; }
+  #inactive p { color: #888; font-size: 14px; }
   #page { display: none; }
 
   .hero {
@@ -94,10 +94,7 @@
   .profile-info h3 { font-size: 18px; font-weight: 600; margin-bottom: 2px; font-family: Georgia, serif; }
   .profile-info span { font-size: 13px; color: #888; }
 
-  .vers-tags {
-    display: flex; flex-wrap: wrap; gap: 8px;
-    margin: 28px 0 0;
-  }
+  .vers-tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 28px 0 0; }
   .vers-tag {
     background: #f2f2ef;
     border-radius: 100px;
@@ -116,6 +113,32 @@
     margin-bottom: 20px;
   }
 
+  /* TAB SWITCHER */
+  .tab-switch {
+    display: flex;
+    gap: 0;
+    border: 1px solid #e8e8e4;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 24px;
+    background: #fff;
+  }
+  .tab-switch button {
+    flex: 1;
+    padding: 14px;
+    background: transparent;
+    border: none;
+    font-family: Georgia, serif;
+    font-size: 14px;
+    color: #999;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .tab-switch button.active {
+    background: var(--color);
+    color: #fff;
+  }
+
   .form-card {
     background: #fff;
     border: 1px solid #e8e8e4;
@@ -123,15 +146,8 @@
     padding: 32px 28px;
     box-shadow: 0 2px 12px rgba(0,0,0,0.04);
   }
-  .form-card h2 {
-    font-size: 22px;
-    font-weight: 400;
-    margin-bottom: 6px;
-    font-family: Georgia, serif;
-  }
-  .form-card .subtitle {
-    font-size: 14px; color: #888; margin-bottom: 28px; line-height: 1.5;
-  }
+  .form-card h2 { font-size: 22px; font-weight: 400; margin-bottom: 6px; font-family: Georgia, serif; }
+  .form-card .subtitle { font-size: 14px; color: #888; margin-bottom: 28px; line-height: 1.5; }
 
   .field { margin-bottom: 16px; }
   .field label {
@@ -164,7 +180,7 @@
   .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
   .row-3 { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
 
-  #submit-btn {
+  .submit-btn {
     width: 100%;
     padding: 16px;
     background: var(--color);
@@ -178,8 +194,83 @@
     transition: opacity 0.2s;
     letter-spacing: 0.5px;
   }
-  #submit-btn:hover { opacity: 0.85; }
-  #submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .submit-btn:hover { opacity: 0.85; }
+  .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* KALENDER */
+  .calendar-wrap { margin-bottom: 24px; }
+  .cal-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .cal-nav button {
+    background: transparent;
+    border: 1px solid #e0e0db;
+    border-radius: 8px;
+    padding: 8px 14px;
+    cursor: pointer;
+    font-size: 16px;
+    color: #666;
+    transition: all 0.15s;
+  }
+  .cal-nav button:hover { background: #f2f2ef; }
+  .cal-nav button:disabled { opacity: 0.3; cursor: not-allowed; }
+  .cal-month { font-size: 16px; font-weight: 600; font-family: Georgia, serif; }
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+  }
+  .cal-day-label {
+    text-align: center;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #bbb;
+    padding: 4px 0 8px;
+  }
+  .cal-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: Georgia, serif;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.15s;
+  }
+  .cal-day.empty { cursor: default; }
+  .cal-day.past { color: #ddd; cursor: not-allowed; }
+  .cal-day.unavailable { color: #ddd; cursor: not-allowed; }
+  .cal-day.available {
+    background: #f2f2ef;
+    color: #111;
+    cursor: pointer;
+  }
+  .cal-day.available:hover { background: var(--color); color: #fff; }
+  .cal-day.selected { background: var(--color); color: #fff; border-color: var(--color); }
+  .cal-day.today { font-weight: 700; }
+
+  .slots-wrap { margin-top: 20px; }
+  .slots-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #bbb; margin-bottom: 12px; }
+  .slots-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+  .slot {
+    padding: 8px 16px;
+    border: 1px solid #e0e0db;
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: Georgia, serif;
+    cursor: pointer;
+    background: #fafaf8;
+    transition: all 0.15s;
+  }
+  .slot:hover { background: var(--color); color: #fff; border-color: var(--color); }
+  .slot.selected { background: var(--color); color: #fff; border-color: var(--color); }
+  .slots-empty { font-size: 13px; color: #bbb; font-style: italic; }
 
   #success-msg {
     display: none;
@@ -196,13 +287,7 @@
   #success-msg h3 { font-size: 22px; font-weight: 400; margin-bottom: 8px; font-family: Georgia, serif; }
   #success-msg p { font-size: 14px; color: #888; line-height: 1.6; }
 
-  .footer {
-    text-align: center;
-    padding: 48px 20px 32px;
-    font-size: 12px;
-    color: #ccc;
-    letter-spacing: 1px;
-  }
+  .footer { text-align: center; padding: 48px 20px 32px; font-size: 12px; color: #ccc; letter-spacing: 1px; }
   .footer a { color: #ccc; text-decoration: none; }
   .footer a:hover { color: #888; }
 
@@ -211,16 +296,22 @@
     .row-3 { grid-template-columns: 1fr; }
     .profile-card { margin: -24px 12px 0; }
     .form-card { padding: 24px 20px; }
+    .cal-day { font-size: 12px; }
   }
 </style>
 </head>
 <body>
 
-<div id="loading">Wird geladen…</div>
+<div id="loading">Wird geladen...</div>
 
 <div id="not-found">
   <h2>Seite nicht gefunden</h2>
-  <p>Dieser Makler existiert nicht oder der Link ist abgelaufen.</p>
+  <p>Dieser Makler existiert nicht oder der Link ist ungueltig.</p>
+</div>
+
+<div id="inactive">
+  <h2>Seite nicht verfuegbar</h2>
+  <p>Diese Beratungsseite ist momentan nicht aktiv.</p>
 </div>
 
 <div id="page">
@@ -243,57 +334,110 @@
 
     <div class="section">
       <div class="section-label">Kostenlose Beratung</div>
+
+      <!-- Tab Switcher — nur wenn Terminbuchung aktiv -->
+      <div class="tab-switch" id="tab-switch" style="display:none">
+        <button class="active" onclick="showTab('anfrage',this)">Anfrage senden</button>
+        <button onclick="showTab('termin',this)">Termin buchen</button>
+      </div>
+
       <div class="form-card">
-        <div id="form-content">
+        <div id="success-msg">
+          <div class="check">&#10003;</div>
+          <h3>Gesendet!</h3>
+          <p><span id="success-name"></span> wird sich in Kuerze bei dir melden.</p>
+        </div>
+
+        <!-- TAB: ANFRAGE -->
+        <div id="tab-anfrage">
           <h2>Anfrage stellen</h2>
-          <p class="subtitle">Hinterlasse deine Daten — wir melden uns innerhalb von 24 Stunden bei dir.</p>
+          <p class="subtitle">Hinterlasse deine Daten - wir melden uns innerhalb von 24 Stunden bei dir.</p>
 
           <div class="row">
             <div class="field">
               <label>Name *</label>
-              <input id="f-name" type="text" placeholder="Max Mustermann">
+              <input id="f-name" type="text" placeholder="Max Mustermann" autocomplete="name">
             </div>
             <div class="field">
               <label>Telefon *</label>
-              <input id="f-tel" type="tel" placeholder="+49 211 123456">
+              <input id="f-tel" type="tel" placeholder="+49 211 123456" autocomplete="tel">
             </div>
           </div>
           <div class="field">
             <label>Email</label>
-            <input id="f-email" type="email" placeholder="max@email.de">
+            <input id="f-email" type="email" placeholder="max@email.de" autocomplete="email">
           </div>
-
-          <!-- Adresse (optional) -->
           <div class="field">
-            <label>Straße & Hausnummer (optional)</label>
-            <input id="f-strasse" type="text" placeholder="Musterstraße 12">
+            <label>Strasse und Hausnummer (optional)</label>
+            <input id="f-strasse" type="text" placeholder="Musterstrasse 12" autocomplete="street-address">
           </div>
           <div class="row-3">
             <div class="field">
               <label>Ort (optional)</label>
-              <input id="f-ort" type="text" placeholder="Düsseldorf">
+              <input id="f-ort" type="text" placeholder="Duesseldorf" autocomplete="address-level2">
             </div>
             <div class="field">
               <label>PLZ (optional)</label>
-              <input id="f-plz" type="text" placeholder="40210">
+              <input id="f-plz" type="text" placeholder="40210" autocomplete="postal-code">
             </div>
           </div>
-
           <div class="field">
             <label>Versicherung</label>
-            <select id="f-vers"><option value="">Versicherung wählen...</option></select>
+            <select id="f-vers"><option value="">Versicherung waehlen...</option></select>
           </div>
           <div class="field">
             <label>Nachricht (optional)</label>
-            <textarea id="f-msg" placeholder="Was kann ich für dich tun?"></textarea>
+            <textarea id="f-msg" placeholder="Was kann ich fuer dich tun?"></textarea>
           </div>
-          <button id="submit-btn" onclick="submitLead()">Kostenlose Beratung anfragen →</button>
+          <button class="submit-btn" id="submit-anfrage-btn" onclick="submitLead()">Kostenlose Beratung anfragen</button>
         </div>
 
-        <div id="success-msg">
-          <div class="check">✓</div>
-          <h3>Anfrage gesendet!</h3>
-          <p><span id="success-name"></span> wird sich in Kürze bei dir melden.</p>
+        <!-- TAB: TERMIN -->
+        <div id="tab-termin" style="display:none">
+          <h2>Termin buchen</h2>
+          <p class="subtitle">Waehle einen passenden Termin fuer deine Beratung (60 Minuten).</p>
+
+          <div class="calendar-wrap">
+            <div class="cal-nav">
+              <button id="cal-prev" onclick="calPrev()">&#8249;</button>
+              <span class="cal-month" id="cal-month-label"></span>
+              <button id="cal-next" onclick="calNext()">&#8250;</button>
+            </div>
+            <div class="cal-grid" id="cal-grid"></div>
+          </div>
+
+          <div class="slots-wrap" id="slots-wrap" style="display:none">
+            <div class="slots-label">Freie Zeiten am <span id="slots-date-label"></span></div>
+            <div class="slots-grid" id="slots-grid"></div>
+          </div>
+
+          <!-- Buchungsformular — erscheint nach Slot-Auswahl -->
+          <div id="booking-form" style="display:none;margin-top:24px;padding-top:24px;border-top:1px solid #e8e8e4">
+            <p class="subtitle" style="margin-bottom:16px">Deine Kontaktdaten fuer den Termin:</p>
+            <div class="row">
+              <div class="field">
+                <label>Name *</label>
+                <input id="b-name" type="text" placeholder="Max Mustermann" autocomplete="name">
+              </div>
+              <div class="field">
+                <label>Telefon *</label>
+                <input id="b-tel" type="tel" placeholder="+49 211 123456" autocomplete="tel">
+              </div>
+            </div>
+            <div class="field">
+              <label>Email</label>
+              <input id="b-email" type="email" placeholder="max@email.de" autocomplete="email">
+            </div>
+            <div class="field">
+              <label>Versicherung</label>
+              <select id="b-vers"><option value="">Versicherung waehlen...</option></select>
+            </div>
+            <div class="field">
+              <label>Nachricht (optional)</label>
+              <textarea id="b-msg" placeholder="Kurze Info zu deiner Situation..."></textarea>
+            </div>
+            <button class="submit-btn" id="submit-booking-btn" onclick="submitBooking()">Termin verbindlich buchen</button>
+          </div>
         </div>
       </div>
     </div>
@@ -305,42 +449,58 @@
 </div>
 
 <script>
-let maklerData = null;
+'use strict';
 
+let maklerData = null;
+let calYear, calMonth, selectedDate = null, selectedSlot = null;
+
+// ─── MAKLER LADEN ───
 async function loadMakler() {
   const path = window.location.pathname;
-  const slug = path.split('/makler/')[1]?.replace(/\//g,'');
-  if (!slug || !/^[a-z0-9-]+$/.test(slug)) { showNotFound(); return; }
+  const parts = path.split('/makler/');
+  const slug = parts[1] ? parts[1].replace(/\//g, '') : '';
+  if (!slug || !/^[a-z0-9-]{1,80}$/.test(slug)) { showNotFound(); return; }
 
   try {
-    const r = await fetch('/api/tools?tool=makler-get&slug=' + slug);
+    const r = await fetch('/api/tools?tool=makler-get&slug=' + encodeURIComponent(slug));
     if (!r.ok) { showNotFound(); return; }
     const data = await r.json();
     if (!data || data.error) { showNotFound(); return; }
+
+    // Plan-Pruefung: Abo abgelaufen
+    if (data.active === false) {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('inactive').style.display = 'block';
+      return;
+    }
+
     maklerData = data;
     renderPage(data);
   } catch(e) { showNotFound(); }
 }
 
 function renderPage(d) {
-  document.title = (d.name || 'Makler') + ' — Versicherungsberatung';
-  document.documentElement.style.setProperty('--color', d.farbe || '#111');
+  document.title = (d.name || 'Makler') + ' - Versicherungsberatung';
+  document.documentElement.style.setProperty('--color', /^#[0-9a-fA-F]{6}$/.test(d.farbe) ? d.farbe : '#111');
 
   if (d.header_image) {
     const imgEl = document.createElement('img');
     imgEl.src = d.header_image;
     imgEl.className = 'hero-img';
+    imgEl.alt = 'Headerbild';
     const hero = document.querySelector('.hero');
     hero.insertBefore(imgEl, hero.firstChild);
   }
 
-  document.getElementById('hero-title').textContent = 'Versicherungsberatung mit ' + d.name;
+  const safeName = (d.name || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  document.getElementById('hero-title').textContent = 'Versicherungsberatung mit ' + (d.name || '');
   document.getElementById('hero-desc').textContent = d.beschreibung || 'Kostenlose und unverbindliche Beratung.';
-  document.getElementById('makler-av').textContent = d.name[0].toUpperCase();
-  document.getElementById('makler-av').style.background = d.farbe || '#111';
-  document.getElementById('makler-name').textContent = d.name;
+  document.getElementById('makler-av').textContent = (d.name || 'M')[0].toUpperCase();
+  document.getElementById('makler-av').style.background = /^#[0-9a-fA-F]{6}$/.test(d.farbe) ? d.farbe : '#111';
+  document.getElementById('makler-name').textContent = d.name || '';
   document.getElementById('makler-firma').textContent = d.firma || 'Versicherungsmakler';
 
+  // Versicherungs-Tags
   const tags = document.getElementById('vers-tags');
   (d.versicherungen || []).forEach(v => {
     const tag = document.createElement('span');
@@ -349,34 +509,191 @@ function renderPage(d) {
     tags.appendChild(tag);
   });
 
-  const select = document.getElementById('f-vers');
-  select.innerHTML = '<option value="">Versicherung wählen...</option>';
-  (d.versicherungen || []).forEach(v => {
-    const opt = document.createElement('option');
-    opt.value = v; opt.textContent = v;
-    select.appendChild(opt);
+  // Versicherungs-Dropdowns
+  const selects = ['f-vers', 'b-vers'];
+  selects.forEach(selId => {
+    const sel = document.getElementById(selId);
+    sel.innerHTML = '<option value="">Versicherung waehlen...</option>';
+    (d.versicherungen || []).forEach(v => {
+      const opt = document.createElement('option');
+      opt.value = v; opt.textContent = v;
+      sel.appendChild(opt);
+    });
   });
+
+  // Terminbuchung Tab anzeigen wenn aktiviert
+  if (d.booking_enabled) {
+    document.getElementById('tab-switch').style.display = 'flex';
+    initCalendar();
+  }
 
   document.getElementById('loading').style.display = 'none';
   document.getElementById('page').style.display = 'block';
 }
 
+// ─── TABS ───
+function showTab(tab, btn) {
+  document.querySelectorAll('.tab-switch button').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  document.getElementById('tab-anfrage').style.display = tab === 'anfrage' ? 'block' : 'none';
+  document.getElementById('tab-termin').style.display = tab === 'termin' ? 'block' : 'none';
+}
+
+// ─── KALENDER ───
+const DAY_NAMES = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+const MONTH_NAMES = ['Januar','Februar','Maerz','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+const DAY_MAP = { 'so':0,'mo':1,'di':2,'mi':3,'do':4,'fr':5,'sa':6 };
+
+function initCalendar() {
+  const now = new Date();
+  calYear = now.getFullYear();
+  calMonth = now.getMonth();
+  renderCalendar();
+}
+
+function calPrev() {
+  const now = new Date();
+  if (calYear === now.getFullYear() && calMonth === now.getMonth()) return;
+  calMonth--;
+  if (calMonth < 0) { calMonth = 11; calYear--; }
+  selectedDate = null; selectedSlot = null;
+  document.getElementById('slots-wrap').style.display = 'none';
+  document.getElementById('booking-form').style.display = 'none';
+  renderCalendar();
+}
+
+function calNext() {
+  calMonth++;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  selectedDate = null; selectedSlot = null;
+  document.getElementById('slots-wrap').style.display = 'none';
+  document.getElementById('booking-form').style.display = 'none';
+  renderCalendar();
+}
+
+function renderCalendar() {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const label = document.getElementById('cal-month-label');
+  label.textContent = MONTH_NAMES[calMonth] + ' ' + calYear;
+
+  // Prev button: disable if current month
+  document.getElementById('cal-prev').disabled = (calYear === now.getFullYear() && calMonth === now.getMonth());
+
+  const grid = document.getElementById('cal-grid');
+  grid.innerHTML = '';
+
+  // Day labels
+  DAY_NAMES.forEach(d => {
+    const el = document.createElement('div');
+    el.className = 'cal-day-label';
+    el.textContent = d;
+    grid.appendChild(el);
+  });
+
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  const availableDays = (maklerData && maklerData.booking_days) || [];
+  const availableNums = availableDays.map(d => DAY_MAP[d]).filter(n => n !== undefined);
+
+  // Empty cells before first day
+  for (let i = 0; i < firstDay; i++) {
+    const el = document.createElement('div');
+    el.className = 'cal-day empty';
+    grid.appendChild(el);
+  }
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const date = new Date(calYear, calMonth, day);
+    const dayOfWeek = date.getDay();
+    const isPast = date < today;
+    const isAvail = !isPast && availableNums.includes(dayOfWeek);
+    const dateStr = calYear + '-' + String(calMonth+1).padStart(2,'0') + '-' + String(day).padStart(2,'0');
+    const isToday = date.getTime() === today.getTime();
+    const isSel = selectedDate === dateStr;
+
+    const el = document.createElement('div');
+    el.textContent = day;
+    el.className = 'cal-day' +
+      (isAvail ? ' available' : (isPast ? ' past' : ' unavailable')) +
+      (isToday ? ' today' : '') +
+      (isSel ? ' selected' : '');
+
+    if (isAvail) {
+      el.addEventListener('click', () => selectDate(dateStr, day));
+    }
+    grid.appendChild(el);
+  }
+}
+
+function selectDate(dateStr, day) {
+  selectedDate = dateStr;
+  selectedSlot = null;
+  document.getElementById('booking-form').style.display = 'none';
+  renderCalendar();
+  renderSlots(dateStr);
+}
+
+function renderSlots(dateStr) {
+  const start = maklerData.booking_start || '09:00';
+  const end = maklerData.booking_end || '17:00';
+  const [sh, sm] = start.split(':').map(Number);
+  const [eh, em] = end.split(':').map(Number);
+
+  const slots = [];
+  let h = sh, m = sm;
+  while (h * 60 + m + 60 <= eh * 60 + em) {
+    slots.push(String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0'));
+    m += 60;
+    if (m >= 60) { h += m / 60 | 0; m = m % 60; }
+  }
+
+  const wrap = document.getElementById('slots-wrap');
+  const grid = document.getElementById('slots-grid');
+  const dateLabel = document.getElementById('slots-date-label');
+
+  const d = new Date(dateStr + 'T12:00:00');
+  dateLabel.textContent = d.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' });
+
+  grid.innerHTML = '';
+  if (!slots.length) {
+    grid.innerHTML = '<span class="slots-empty">Keine freien Termine an diesem Tag.</span>';
+  } else {
+    slots.forEach(slot => {
+      const el = document.createElement('div');
+      el.className = 'slot' + (selectedSlot === slot ? ' selected' : '');
+      el.textContent = slot + ' Uhr';
+      el.addEventListener('click', () => selectSlot(slot));
+      grid.appendChild(el);
+    });
+  }
+  wrap.style.display = 'block';
+}
+
+function selectSlot(slot) {
+  selectedSlot = slot;
+  document.querySelectorAll('.slot').forEach(s => {
+    s.classList.toggle('selected', s.textContent === slot + ' Uhr');
+  });
+  document.getElementById('booking-form').style.display = 'block';
+  document.getElementById('booking-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ─── LEAD SENDEN ───
 async function submitLead() {
-  const name = document.getElementById('f-name').value.trim();
-  const tel = document.getElementById('f-tel').value.trim();
-  const email = document.getElementById('f-email').value.trim();
+  const name = (document.getElementById('f-name').value || '').trim();
+  const tel = (document.getElementById('f-tel').value || '').trim();
+  const email = (document.getElementById('f-email').value || '').trim();
   const vers = document.getElementById('f-vers').value;
-  const msg = document.getElementById('f-msg').value.trim();
-  const strasse = document.getElementById('f-strasse').value.trim();
-  const ort = document.getElementById('f-ort').value.trim();
-  const plz = document.getElementById('f-plz').value.trim();
+  const msg = (document.getElementById('f-msg').value || '').trim();
+  const strasse = (document.getElementById('f-strasse').value || '').trim();
+  const ort = (document.getElementById('f-ort').value || '').trim();
+  const plz = (document.getElementById('f-plz').value || '').trim();
+  const adresse = [strasse, plz && ort ? plz + ' ' + ort : (ort || plz)].filter(Boolean).join(', ');
 
-  // Adresse zusammenbauen
-  const adresse = [strasse, plz && ort ? plz + ' ' + ort : ort || plz].filter(Boolean).join(', ');
+  if (!name || !tel) { alert('Bitte Name und Telefon ausfuellen.'); return; }
 
-  if (!name || !tel) { alert('Bitte Name und Telefon ausfüllen.'); return; }
-
-  const btn = document.getElementById('submit-btn');
+  const btn = document.getElementById('submit-anfrage-btn');
   btn.disabled = true; btn.textContent = 'Wird gesendet...';
 
   try {
@@ -385,26 +702,72 @@ async function submitLead() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         tool: 'makler-lead',
-        makler_id: maklerData?.id,
-        makler_email: maklerData?.email,
-        makler_name: maklerData?.name,
+        makler_slug: maklerData.slug,
+        makler_id: maklerData.id,
+        makler_email: maklerData.alert_email || maklerData.email,
+        makler_name: maklerData.name,
         name, telefon: tel, email, versicherung: vers,
-        nachricht: msg,
-        adresse: adresse || null
+        nachricht: msg, adresse: adresse || null
       })
     });
     const d = await r.json();
     if (d.success) {
-      document.getElementById('form-content').style.display = 'none';
+      document.getElementById('tab-anfrage').style.display = 'none';
       document.getElementById('success-msg').style.display = 'block';
-      document.getElementById('success-name').textContent = maklerData?.name || 'Der Makler';
+      document.getElementById('success-name').textContent = maklerData.name || 'Der Makler';
     } else {
       alert(d.error || 'Fehler beim Senden.');
-      btn.disabled = false; btn.textContent = 'Kostenlose Beratung anfragen →';
+      btn.disabled = false; btn.textContent = 'Kostenlose Beratung anfragen';
     }
   } catch(e) {
     alert('Verbindungsfehler.');
-    btn.disabled = false; btn.textContent = 'Kostenlose Beratung anfragen →';
+    btn.disabled = false; btn.textContent = 'Kostenlose Beratung anfragen';
+  }
+}
+
+// ─── TERMIN BUCHEN ───
+async function submitBooking() {
+  if (!selectedDate || !selectedSlot) { alert('Bitte Datum und Uhrzeit auswaehlen.'); return; }
+
+  const name = (document.getElementById('b-name').value || '').trim();
+  const tel = (document.getElementById('b-tel').value || '').trim();
+  const email = (document.getElementById('b-email').value || '').trim();
+  const vers = document.getElementById('b-vers').value;
+  const msg = (document.getElementById('b-msg').value || '').trim();
+
+  if (!name || !tel) { alert('Bitte Name und Telefon ausfuellen.'); return; }
+
+  const btn = document.getElementById('submit-booking-btn');
+  btn.disabled = true; btn.textContent = 'Wird gebucht...';
+
+  try {
+    const r = await fetch('/api/tools', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tool: 'makler-booking',
+        makler_slug: maklerData.slug,
+        makler_id: maklerData.id,
+        makler_email: maklerData.alert_email || maklerData.email,
+        makler_name: maklerData.name,
+        name, telefon: tel, email, versicherung: vers,
+        nachricht: msg,
+        date: selectedDate,
+        time: selectedSlot
+      })
+    });
+    const d = await r.json();
+    if (d.success) {
+      document.getElementById('tab-termin').style.display = 'none';
+      document.getElementById('success-msg').style.display = 'block';
+      document.getElementById('success-name').textContent = maklerData.name || 'Der Makler';
+    } else {
+      alert(d.error || 'Fehler beim Buchen.');
+      btn.disabled = false; btn.textContent = 'Termin verbindlich buchen';
+    }
+  } catch(e) {
+    alert('Verbindungsfehler.');
+    btn.disabled = false; btn.textContent = 'Termin verbindlich buchen';
   }
 }
 
