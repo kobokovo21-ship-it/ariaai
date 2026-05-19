@@ -248,15 +248,20 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
     <button class="mc" onclick="setModel(this,'business-website','Website Text')"><div class="md"></div>Website Text<span class="mt" style="background:#dcfce7;color:#166534">AI</span></button>
     <button class="mc" onclick="openWebsiteGen();closeSb()" style="border:1px solid rgba(139,92,246,.25)"><div class="md" style="background:#8b5cf6"></div>Website Generator<span class="mt" style="background:#ede9fe;color:#6d28d9">Neu</span></button>
     <button class="mc" onclick="setModel(this,'business-ads','Ads Generator')"><div class="md"></div>Ads Generator<span class="mt" style="background:#dcfce7;color:#166534">AI</span></button>
-    <!-- ── NEU: MAKLER ADS ── -->
-    <button class="mc" onclick="openMaklerAds();closeSb()" style="border:1px solid rgba(37,99,235,.25)"><div class="md" style="background:#2563eb"></div>Makler Ads<span class="mt" style="background:#dbeafe;color:#1d4ed8">Google & Meta</span></button>
     <button class="mc" onclick="setModel(this,'business-social','Social Media')"><div class="md"></div>Social Media Posts<span class="mt" style="background:#dcfce7;color:#166534">AI</span></button>
     <button class="mc" onclick="setModel(this,'business-email','Email Sequenz')"><div class="md"></div>Email Sequenz<span class="mt" style="background:#dcfce7;color:#166534">AI</span></button>
     <button class="mc" onclick="setModel(this,'business-pitch','Pitch Deck')"><div class="md"></div>Pitch Deck<span class="mt" style="background:#dcfce7;color:#166534">AI</span></button>
     <button class="mc" onclick="openInvoiceModal()"><div class="md"></div>Rechnung erstellen<span class="mt">PDF</span></button>
     <button class="mc" onclick="openTTSModal()"><div class="md"></div>Text zu Sprache<span class="mt">ElevenLabs</span></button>
-    <button class="mc" id="leads-btn" onclick="window.location.href='/leads.html'" style="display:none"><div class="md"></div>Leads Dashboard<span class="mt" style="background:#dcfce7;color:#166534">Makler</span></button>
-    <button class="mc" id="makler-btn" onclick="window.location.href='/makler-onboarding.html'" style="display:none"><div class="md"></div>Meine Landing Page<span class="mt" style="background:#dcfce7;color:#166534">Makler</span></button>
+  </div>
+  <div class="ms" id="makler-section" style="display:none;max-height:180px">
+    <span class="sl">Makler</span>
+    <button class="mc" onclick="openMaklerAds();closeSb()" style="border:1px solid rgba(37,99,235,.25)"><div class="md" style="background:#2563eb"></div>Makler Ads<span class="mt" style="background:#dbeafe;color:#1d4ed8">Google & Meta</span></button>
+    <button class="mc" onclick="window.location.href='/makler-onboarding.html'"><div class="md"></div>Meine Landing Page<span class="mt" style="background:#dcfce7;color:#166534">Makler</span></button>
+    <button class="mc" onclick="window.location.href='/leads.html'"><div class="md"></div>Leads Dashboard<span class="mt" style="background:#dcfce7;color:#166534">Makler</span></button>
+  </div>
+  <div class="ms" style="max-height:140px">
+    <span class="sl">Bildmodelle</span>
     <button class="mc modelia" onclick="setModel(this,'img-modelia','Modelia Fashion Pro')"><div class="md"></div>Modelia Fashion Pro<span class="mt gold">2cr</span></button>
     <button class="mc" onclick="setModel(this,'img-nano','Nano Banana Pro')"><div class="md"></div>Nano Banana Pro<span class="mt">Bild 1cr</span></button>
     <button class="mc" onclick="setModel(this,'img-seed','Seedream 5.0')"><div class="md"></div>Seedream 5.0<span class="mt">Bild 1cr</span></button>
@@ -578,12 +583,21 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
     <h2>Virgo Plaene</h2>
     <p id="up-msg">Kein Vertrag, jederzeit kuendbar.</p>
     <div class="ci2"><strong>Credits:</strong> Bild = 1cr &middot; Modelia = 2cr &middot; Upscale = 5cr</div>
-    <div class="pg">
-      <div class="pc"><div class="pct">Standard</div><div class="pcp">$19.99</div><div class="pcc">500cr/Mo</div><div class="pcf">Alle Bildmodelle<br>Chat & Code AI<br>Business Tools</div><div class="pbs"><button class="pbtn" onclick="window.open('https://buy.stripe.com/00w8wQ2od3BgcPAfwwbjW00','_blank')">Kaufen</button></div></div>
-      <div class="pc feat"><div class="pct">Pro</div><div class="pcp">$49.99</div><div class="pcc">2.000cr/Mo</div><div class="pcf">Alle Bildmodelle<br>Higgsfield (bald)<br>Makler Ads Generator</div><div class="pbs"><button class="pbtn" onclick="window.open('https://buy.stripe.com/00waEY4wl0p4dTEaccbjW01','_blank')">Kaufen</button></div></div>
-      <div class="pc"><div class="pct">Master</div><div class="pcp">$99.99</div><div class="pcc">5.000cr/Mo</div><div class="pcf">Alles aus Pro<br>Music Gen<br>Prioritaet</div><div class="pbs"><button class="pbtn" onclick="window.open('https://buy.stripe.com/7sY28s1k9fjY16SgAAbjW02','_blank')">Kaufen</button></div></div>
-      <div class="pc"><div class="pct">Ultra</div><div class="pcp">$149.99</div><div class="pcc">8.000cr/Mo</div><div class="pcf">Higgsfield Premium<br>Alle Features<br>Priority Support</div><div class="pbs"><button class="pbtn" onclick="window.open('https://buy.stripe.com/aFafZi6Et6Ns6rcbggbjW03','_blank')">Kaufen</button></div></div>
-      <div class="pc"><div class="pct">Max</div><div class="pcp">$249.99</div><div class="pcc">15.000cr/Mo</div><div class="pcf">Alles inklusive<br>White-Label<br>Dedicated</div><div class="pbs"><button class="pbtn" onclick="window.open('https://buy.stripe.com/fZuaEYd2Rb3IaHs2JKbjW04','_blank')">Kaufen</button></div></div>
+    <div class="pg" style="grid-template-columns:1fr 1fr">
+      <div class="pc">
+        <div class="pct">Standard</div>
+        <div class="pcp">$24.99</div>
+        <div class="pcc">500cr/Mo</div>
+        <div class="pcf">Virgo Chat & Code AI<br>Business Plan, Ads, Social<br>Email, Pitch Deck<br>Rechnung PDF<br>Nano + Seedream Bilder</div>
+        <div class="pbs"><button class="pbtn" onclick="window.open('https://buy.stripe.com/28EbJ29QF5Jo8zk988bjW0b','_blank')">Kaufen</button></div>
+      </div>
+      <div class="pc feat">
+        <div class="pct">Pro</div>
+        <div class="pcp">$49.99</div>
+        <div class="pcc">2.000cr/Mo</div>
+        <div class="pcf">Alles aus Standard<br>Website Generator<br>Modelia Fashion Pro<br>Upscale<br>Text zu Sprache<br>Priority Support</div>
+        <div class="pbs"><button class="pbtn" onclick="window.open('https://buy.stripe.com/9B6dRa0g56Ns6rc2JKbjW0c','_blank')">Kaufen</button></div>
+      </div>
     </div>
     <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--bd)">
       <div style="font-size:11px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Fuer Versicherungsmakler</div>
@@ -628,8 +642,15 @@ let maklerAdData=null;
 let maklerPlatform='google'; // 'google' | 'meta' | 'both'
 
 function openMaklerAds(){
+  const MAKLER_PLANS=['makler-starter','makler-pro','makler-business'];
+  const isMakler=MAKLER_PLANS.includes(localStorage.getItem('virgo_plan')||'')||isAdmin();
+  if(!isMakler){
+    const m=document.getElementById('up-msg');
+    m.className='alert';
+    m.textContent='Makler Ads ist nur fuer Virgo Makler Kunden. Upgrade auf Makler Pro oder Business.';
+    showM('modal-upgrade');return;
+  }
   showM('modal-makler-ads');
-  // Live URL Preview beim Tippen
   setTimeout(()=>{
     const slugInp=document.getElementById('mak-slug');
     if(slugInp){
@@ -1083,8 +1104,8 @@ function updateUI(){
   });
   const MAKLER_PLANS=['makler-starter','makler-pro','makler-business'];
   const isMakler=MAKLER_PLANS.includes(localStorage.getItem('virgo_plan')||'')||isAdmin();
-  const leadsB=document.getElementById('leads-btn');if(leadsB)leadsB.style.display=isMakler?'flex':'none';
-  const maklerB=document.getElementById('makler-btn');if(maklerB)maklerB.style.display=isMakler?'flex':'none';
+  const maklerSec=document.getElementById('makler-section');
+  if(maklerSec)maklerSec.style.display=isMakler?'block':'none';
 }
 
 async function loadCredits(){
