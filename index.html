@@ -137,7 +137,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
 .pt2{padding:5px 8px;border:1px solid var(--bd);border-radius:6px;background:transparent;font-family:'Inter',sans-serif;font-size:11px;color:var(--td);cursor:pointer;-webkit-tap-highlight-color:transparent;white-space:nowrap}
 .pt2.has{border-color:var(--blue);color:var(--blue)}
 .ph{font-size:9px;color:var(--td);text-align:center;margin-top:4px}
-.modal{display:none;position:fixed;inset:0;background:rgba(255,255,255,.88);backdrop-filter:blur(8px);z-index:100;align-items:center;justify-content:center;padding:16px}
+.modal{display:none;position:fixed;inset:0;background:rgba(255,255,255,.88);backdrop-filter:blur(8px);z-index:200;align-items:center;justify-content:center;padding:16px}
 .modal.vis{display:flex}
 .mb2{background:var(--bg);border:1px solid var(--bd);border-radius:16px;padding:28px;width:370px;max-width:100%;box-shadow:0 8px 40px rgba(0,0,0,.12);position:relative;max-height:90vh;overflow-y:auto}
 .mb2.wide{width:600px}
@@ -396,13 +396,12 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
           </select>
         </div>
         <div class="mak-field-full">
-          <label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Deine Landing Page URL (Ziel-URL für Ads) *</label>
-          <div style="display:flex;align-items:center;gap:6px">
-            <span style="font-size:12px;color:var(--td);white-space:nowrap">virgoio.com/makler/</span>
-            <input class="minp" id="mak-slug" placeholder="max-mustermann" style="margin-bottom:0;flex:1">
-          </div>
-          <div style="font-size:10px;color:var(--td);margin-top:4px">Diese URL trägst du bei Google/Meta Ads als Ziel-URL ein.</div>
+          <label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Deine Landing Page URL — hier reinkopieren oder eintippen *</label>
+          <input class="minp" id="mak-slug" placeholder="z.B. max-mustermann (dein Virgo Makler Link)" style="margin-bottom:2px;border:2px solid var(--t)">
+          <div style="font-size:10px;color:var(--td);margin-top:2px">Deine fertige URL: virgoio.com/makler/<b id="mak-slug-preview">dein-name</b> — diese URL trägst du bei Google & Meta Ads ein.</div>
         </div>
+        <div class="mak-field-full">
+          <label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Angebot *</label>
           <input class="minp" id="mak-angebot" placeholder="z.B. Private Krankenversicherung fuer Selbstaendige" style="margin-bottom:0">
         </div>
         <div class="mak-field-full">
@@ -627,7 +626,19 @@ let curTab='login',genTimer=null,refImages=[],conversationHistory=[];
 let maklerAdData=null;
 let maklerPlatform='google'; // 'google' | 'meta' | 'both'
 
-function openMaklerAds(){showM('modal-makler-ads');}
+function openMaklerAds(){
+  showM('modal-makler-ads');
+  // Live URL Preview beim Tippen
+  setTimeout(()=>{
+    const slugInp=document.getElementById('mak-slug');
+    if(slugInp){
+      slugInp.addEventListener('input',()=>{
+        const preview=document.getElementById('mak-slug-preview');
+        if(preview)preview.textContent=slugInp.value.trim()||'dein-name';
+      });
+    }
+  },100);
+}
 
 function setMaklerPlatform(p){
   maklerPlatform=p;
