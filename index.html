@@ -397,6 +397,19 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
           <input class="minp" id="mak-angebot" placeholder="z.B. Private Krankenversicherung fuer Selbstaendige" style="margin-bottom:0">
         </div>
         <div class="mak-field-full">
+          <label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Werbeziel / Was soll der Kunde tun? *</label>
+          <select class="minp" id="mak-ziel" style="margin-bottom:0">
+            <option value="Erstgespraech / Beratung buchen">Erstgespräch / Beratung buchen</option>
+            <option value="Vergleich anfordern">Vergleich anfordern</option>
+            <option value="Lead-Formular ausfuellen">Lead-Formular ausfüllen</option>
+            <option value="Rueckruf anfordern">Rückruf anfordern</option>
+            <option value="Kostenloses Angebot erhalten">Kostenloses Angebot erhalten</option>
+            <option value="Online-Rechner nutzen">Online-Rechner / Beitragsrechner nutzen</option>
+            <option value="PDF / E-Book herunterladen">PDF / E-Book herunterladen</option>
+            <option value="Termin online buchen">Termin online buchen</option>
+          </select>
+        </div>
+        <div class="mak-field-full">
           <label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Zielgruppe</label>
           <input class="minp" id="mak-zielgruppe" placeholder="z.B. Selbstaendige 30–50 Jahre in Deutschland" style="margin-bottom:0">
         </div>
@@ -631,6 +644,7 @@ async function generateMaklerAd(){
   const angebot=document.getElementById('mak-angebot').value.trim();
   const zielgruppe=document.getElementById('mak-zielgruppe').value.trim();
   const usp=document.getElementById('mak-usp').value.trim();
+  const ziel=document.getElementById('mak-ziel').value;
   const msgEl=document.getElementById('mak-msg');
   const btn=document.getElementById('mak-btn');
 
@@ -663,7 +677,10 @@ async function generateMaklerAd(){
   const adPrompt=`Erstelle professionelle Werbeanzeigen fuer einen ${branche}-Makler auf Deutsch.
 
 Makler: ${name}
-Angebot: ${angebot}${zielgruppe?'\nZielgruppe: '+zielgruppe:''}${usp?'\nBesonderheit: '+usp:''}
+Angebot: ${angebot}
+Werbeziel: ${ziel}${zielgruppe?'\nZielgruppe: '+zielgruppe:''}${usp?'\nBesonderheit: '+usp:''}
+
+WICHTIG: Alle Texte muessen auf das Werbeziel ausgerichtet sein: "${ziel}". Der CTA muss direkt dazu auffordern.
 
 Erstelle exakt dieses JSON (kein anderer Text, kein Markdown):
 ${jsonTemplate}
