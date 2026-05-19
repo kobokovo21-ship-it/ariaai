@@ -139,17 +139,17 @@ textarea{resize:vertical;min-height:80px}
       </div>
 
       <div style="margin-top:20px">
+        <label>Land</label>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button type="button" id="land-de" onclick="setLand('DE')" style="flex:1;padding:10px;border-radius:8px;border:2px solid var(--t);background:var(--t);color:#fff;font-family:Inter,sans-serif;font-size:13px;font-weight:500;cursor:pointer">🇩🇪 Deutschland</button>
+          <button type="button" id="land-at" onclick="setLand('AT')" style="flex:1;padding:10px;border-radius:8px;border:2px solid var(--bd);background:var(--bg);color:var(--tm);font-family:Inter,sans-serif;font-size:13px;font-weight:500;cursor:pointer">🇦🇹 Österreich</button>
+        </div>
+      </div>
+
+      <div style="margin-top:20px">
         <label>Welche Versicherungen bietest du an? *</label>
-        <div class="vers-grid" style="margin-top:8px">
-          <label class="vers-item"><input type="checkbox" value="PKV" name="vers"> Private Krankenversicherung</label>
-          <label class="vers-item"><input type="checkbox" value="KFZ" name="vers"> KFZ-Versicherung</label>
-          <label class="vers-item"><input type="checkbox" value="Hausrat" name="vers"> Hausratversicherung</label>
-          <label class="vers-item"><input type="checkbox" value="Haftpflicht" name="vers"> Haftpflicht</label>
-          <label class="vers-item"><input type="checkbox" value="Berufsunfaehigkeit" name="vers"> Berufsunfaehigkeit</label>
-          <label class="vers-item"><input type="checkbox" value="Leben" name="vers"> Lebensversicherung</label>
-          <label class="vers-item"><input type="checkbox" value="Krankentagegeld" name="vers"> Krankentagegeld</label>
-          <label class="vers-item"><input type="checkbox" value="Pflege" name="vers"> Pflegeversicherung</label>
-          <label class="vers-item"><input type="checkbox" value="Rechtsschutz" name="vers"> Rechtsschutz</label>
+        <div class="vers-grid" style="margin-top:8px" id="vers-container">
+          <!-- Wird dynamisch per JS geladen -->
         </div>
       </div>
 
@@ -334,8 +334,63 @@ textarea{resize:vertical;min-height:80px}
 
 let selectedColor = '#111111';
 let generatedImageUrl = '';
+let selectedLand = 'DE';
 const ADMIN_EMAIL = 'holyencore@gmail.com';
 const MAKLER_PLANS = ['makler-starter', 'makler-pro', 'makler-business'];
+
+const VERSICHERUNGEN = {
+  DE: [
+    {value:'PKV', label:'Private Krankenversicherung'},
+    {value:'KFZ', label:'KFZ-Versicherung'},
+    {value:'Hausrat', label:'Hausratversicherung'},
+    {value:'Haftpflicht', label:'Haftpflicht'},
+    {value:'Berufsunfaehigkeit', label:'Berufsunfähigkeit'},
+    {value:'Leben', label:'Lebensversicherung'},
+    {value:'Krankentagegeld', label:'Krankentagegeld'},
+    {value:'Pflege', label:'Pflegeversicherung'},
+    {value:'Rechtsschutz', label:'Rechtsschutz'}
+  ],
+  AT: [
+    {value:'Zusatzkrankenversicherung', label:'Zusatzkrankenversicherung'},
+    {value:'KFZ', label:'KFZ-Versicherung'},
+    {value:'Haushaltsversicherung', label:'Haushaltsversicherung'},
+    {value:'Privathaftpflicht', label:'Privathaftpflicht'},
+    {value:'Berufsunfaehigkeit', label:'Berufsunfähigkeit'},
+    {value:'Lebensversicherung', label:'Lebensversicherung'},
+    {value:'Krankentagegeld', label:'Krankentagegeld'},
+    {value:'Pflegegeldversicherung', label:'Pflegegeldversicherung'},
+    {value:'Rechtsschutz', label:'Rechtsschutz'},
+    {value:'Pensionsvorsorge', label:'Pensionsvorsorge'},
+    {value:'Unfallversicherung', label:'Unfallversicherung'},
+    {value:'Zukunftsvorsorge', label:'Zukunftsvorsorge'}
+  ]
+};
+
+function setLand(land) {
+  selectedLand = land;
+  const deBt = document.getElementById('land-de');
+  const atBt = document.getElementById('land-at');
+  if (land === 'DE') {
+    deBt.style.background = 'var(--t)'; deBt.style.color = '#fff'; deBt.style.borderColor = 'var(--t)';
+    atBt.style.background = 'var(--bg)'; atBt.style.color = 'var(--tm)'; atBt.style.borderColor = 'var(--bd)';
+    document.getElementById('telefon').placeholder = '+49 211 123456';
+    document.getElementById('email').placeholder = 'max@email.de';
+  } else {
+    atBt.style.background = 'var(--t)'; atBt.style.color = '#fff'; atBt.style.borderColor = 'var(--t)';
+    deBt.style.background = 'var(--bg)'; deBt.style.color = 'var(--tm)'; deBt.style.borderColor = 'var(--bd)';
+    document.getElementById('telefon').placeholder = '+43 1 123456';
+    document.getElementById('email').placeholder = 'max@firma.at';
+  }
+  renderVersicherungen(land);
+}
+
+function renderVersicherungen(land) {
+  const container = document.getElementById('vers-container');
+  const checked = Array.from(document.querySelectorAll('input[name="vers"]:checked')).map(c => c.value);
+  container.innerHTML = VERSICHERUNGEN[land].map(v =>
+    `<label class="vers-item"><input type="checkbox" value="${v.value}" name="vers"${checked.includes(v.value) ? ' checked' : ''}> ${v.label}</label>`
+  ).join('');
+}
 
 const authToken = (function() {
   try { return localStorage.getItem('virgo_token') || null; } catch(e) { return null; }
@@ -347,6 +402,7 @@ const isAdmin = !!(currentUser && currentUser.email === ADMIN_EMAIL);
 
 async function checkAccess() {
   if (!authToken) { window.location.href = '/'; return; }
+  renderVersicherungen('DE'); // Standard DE beim Start
   if (isAdmin) {
     show('app');
     document.getElementById('plan-badge').textContent = 'Admin';
@@ -382,6 +438,7 @@ async function loadProfile() {
     setVal('beschreibung', d.beschreibung);
     setVal('alert-email', d.alert_email);
     if (d.farbe) setColorByValue(d.farbe);
+    if (d.land) setLand(d.land);
     if (Array.isArray(d.versicherungen)) {
       d.versicherungen.forEach(v => {
         const cb = document.querySelector('input[name="vers"][value="' + v + '"]');
@@ -566,6 +623,7 @@ async function saveProfile() {
       body: JSON.stringify({
         tool: 'makler-save',
         name, slug, telefon, email,
+        land: selectedLand,
         firma: (document.getElementById('firma').value || '').trim(),
         beschreibung: (document.getElementById('beschreibung').value || '').trim(),
         versicherungen,
