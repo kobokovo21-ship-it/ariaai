@@ -277,6 +277,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
     <div class="topbar-title" id="chat-title">Neuer Chat</div>
     <div class="topbar-right">
       <div class="cbadge" onclick="showM('modal-upgrade')"><div class="cdot" id="cdot"></div><span id="cr-display">5 Credits</span></div>
+      <button class="tb-btn" onclick="openHelp()" style="border-color:var(--bd)" title="Hilfe">?</button>
       <button class="tb-btn primary" onclick="showM('modal-upgrade')">Upgrade</button>
       <button class="tb-btn" id="auth-btn" onclick="showM('modal-login')">Anmelden</button>
     </div>
@@ -899,16 +900,23 @@ function cleanMessages(messages){
 }
 
 async function loadChats(){
+  // Immer zuerst localStorage zeigen — sofort sichtbar
+  renderChatHistory(getLocalChats());
+  // Dann Supabase nachladen und zusammenführen
   if(authToken){
     try{
       const r=await fetch('/api/chats',{headers:{'Authorization':'Bearer '+authToken}});
       if(r.ok){
         const data=await r.json();
-        if(Array.isArray(data)){renderChatHistory(data);return;}
+        if(Array.isArray(data)&&data.length){
+          // Supabase-Chats mit lokalem zusammenführen (Supabase hat Vorrang)
+          const local=getLocalChats().filter(c=>!isSupabaseId(c.id));
+          const merged=[...data,...local];
+          renderChatHistory(merged);
+        }
       }
-    }catch(e){}
+    }catch(e){/* localStorage bleibt sichtbar */}
   }
-  renderChatHistory(getLocalChats());
 }
 
 function renderChatHistory(chats){
@@ -961,6 +969,25 @@ function openChat(chat){
 
 async function saveChat(title,messages){
   const clean=cleanMessages(messages);
+  // ── Immer in localStorage speichern (Sidebar bleibt immer gefüllt) ──
+  const chats=getLocalChats();
+  if(state.activeChatId&&!isSupabaseId(state.activeChatId)){
+    const idx=chats.findIndex(c=>c.id===state.activeChatId);
+    if(idx>=0){chats[idx].messages=clean;chats[idx].title=title;chats[idx].updated=Date.now();}
+    else chats.unshift({id:state.activeChatId,title,messages:clean,updated:Date.now()});
+  }else if(!state.activeChatId||!isSupabaseId(state.activeChatId)){
+    if(!state.activeChatId)state.activeChatId='chat_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+    chats.unshift({id:state.activeChatId,title,messages:clean,updated:Date.now()});
+  }else{
+    // Hat Supabase-ID → auch lokal spiegeln mit dieser ID
+    const idx=chats.findIndex(c=>c.id===state.activeChatId);
+    if(idx>=0){chats[idx].messages=clean;chats[idx].title=title;chats[idx].updated=Date.now();}
+    else chats.unshift({id:state.activeChatId,title,messages:clean,updated:Date.now()});
+  }
+  if(chats.length>100)chats.splice(100);
+  setLocalChats(chats);
+  loadChats();
+  // ── Zusätzlich in Supabase wenn eingeloggt ──
   if(authToken){
     try{
       if(state.activeChatId&&isSupabaseId(state.activeChatId)){
@@ -968,22 +995,18 @@ async function saveChat(title,messages){
       }else{
         const r=await fetch('/api/chats',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({title,messages:clean})});
         const data=await r.json();
-        if(data.id)state.activeChatId=data.id;
+        if(data.id){
+          // Supabase-ID zurück → lokal updaten
+          const localChats=getLocalChats();
+          const idx=localChats.findIndex(c=>c.id===state.activeChatId);
+          if(idx>=0)localChats[idx].id=data.id;
+          state.activeChatId=data.id;
+          setLocalChats(localChats);
+          loadChats();
+        }
       }
-      loadChats();return;
-    }catch(e){}
+    }catch(e){/* Supabase Fehler — localStorage reicht */}
   }
-  const chats=getLocalChats();
-  if(state.activeChatId&&!isSupabaseId(state.activeChatId)){
-    const idx=chats.findIndex(c=>c.id===state.activeChatId);
-    if(idx>=0){chats[idx].messages=clean;chats[idx].title=title;chats[idx].updated=Date.now();}
-    else chats.unshift({id:state.activeChatId,title,messages:clean,updated:Date.now()});
-  }else{
-    state.activeChatId='chat_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
-    chats.unshift({id:state.activeChatId,title,messages:clean,updated:Date.now()});
-  }
-  if(chats.length>50)chats.splice(50);
-  setLocalChats(chats);loadChats();
 }
 
 // AUTH
@@ -1503,6 +1526,89 @@ async function openGallery(){
   }catch(e){addAIMsg('Galerie konnte nicht geladen werden.');}
 }
 
+// ════════════════════════════════════════
+// VIRGO HILFE CHAT
+// ════════════════════════════════════════
+let helpHistory=[];
+const VIRGO_HELP_SYSTEM=`Du bist Virgo Support – ein freundlicher deutscher KI-Assistent der Makler bei der Nutzung der Virgo App hilft.
+
+VIRGO FEATURES:
+- Virgo Chat: KI-Chat fuer alle Fragen (Code, Business, Strategie)
+- Business Tools: Business Plan, Website Text, Ads Generator, Makler Ads (Google+Meta), Social Media Posts (inkl. automatischem Bild), Email Sequenz, Pitch Deck
+- Makler Ads Generator: Name/Branche/Angebot eingeben → Virgo generiert Google Ads (3 Headlines max.30 Zeichen, 2 Descriptions max.90 Zeichen) + Meta Ads (Primary Text, Headline, Description) + Bild-Creative. Tabs: Google Ads / Meta Ads / Beide.
+- Bildgenerierung: Nano Banana Pro (1cr), Seedream 5.0 (1cr), Modelia Fashion Pro (2cr)
+- Higgsfield Video: Coming Soon
+- Rechnung erstellen: PDF-Rechnungen direkt in Virgo
+- Text zu Sprache: ElevenLabs KI-Stimmen
+- Makler Landing Page (/makler-onboarding.html): Profil einrichten, URL festlegen, Versicherungen auswählen, Farbe wählen, KI-Headerbild generieren, Terminbuchung aktivieren, Email-Alert
+- Leads Dashboard (/leads.html): Alle eingegangenen Leads sehen
+- QR Code: Auf der Makler-Seite unter Marketing Tools generieren
+- Galerie: Alle generierten Bilder speichern und downloaden
+- Credits: Bild=1cr, Modelia=2cr, Upscale=5cr
+
+PLÄNE: Standard $19.99/500cr, Pro $49.99/2000cr, Master $99.99/5000cr, Ultra $149.99/8000cr, Max $249.99/15000cr. Makler Pro 149€/Mo, Makler Business 249€/Mo.
+
+Antworte immer auf Deutsch. Kurz, konkret, Schritt fuer Schritt wenn noetig. Kein Fachjargon. Freundlich und direkt.`;
+
+function openHelp(){
+  showM('modal-help');
+  document.getElementById('help-inp').focus();
+}
+
+function askHelp(question){
+  document.getElementById('help-inp').value=question;
+  sendHelp();
+}
+
+async function sendHelp(){
+  const inp=document.getElementById('help-inp');
+  const txt=inp.value.trim();
+  if(!txt)return;
+  inp.value='';
+  const feed=document.getElementById('help-feed');
+  // Starter-Buttons ausblenden nach erster Frage
+  const starters=feed.querySelector('div[style*="flex-wrap"]');
+  if(starters)starters.style.display='none';
+  // User Bubble
+  const uBubble=document.createElement('div');
+  uBubble.style.cssText='align-self:flex-end;background:var(--t);color:#fff;border-radius:12px;border-bottom-right-radius:3px;padding:10px 14px;font-size:13px;line-height:1.7;font-weight:300;max-width:85%';
+  uBubble.textContent=txt;
+  feed.appendChild(uBubble);
+  // Typing
+  const typing=document.createElement('div');
+  typing.style.cssText='background:var(--sf);border:1px solid var(--bd);border-radius:12px;border-bottom-left-radius:3px;padding:10px 14px;max-width:85%';
+  typing.innerHTML='<div style="display:flex;gap:4px"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+  feed.appendChild(typing);
+  feed.scrollTop=99999;
+  helpHistory.push({role:'user',content:txt});
+  try{
+    const r=await fetch('/api/chat',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        messages:helpHistory,
+        systemOverride:VIRGO_HELP_SYSTEM
+      })
+    });
+    const d=await r.json();
+    const reply=(d.content&&d.content[0]&&d.content[0].text)||'Entschuldigung, bitte nochmal versuchen.';
+    helpHistory.push({role:'assistant',content:reply});
+    if(helpHistory.length>20)helpHistory=helpHistory.slice(-20);
+    typing.remove();
+    const aBubble=document.createElement('div');
+    aBubble.style.cssText='background:var(--sf);border:1px solid var(--bd);border-radius:12px;border-bottom-left-radius:3px;padding:10px 14px;font-size:13px;line-height:1.7;font-weight:300;max-width:85%';
+    aBubble.innerHTML=renderMD(reply);
+    feed.appendChild(aBubble);
+  }catch(e){
+    typing.remove();
+    const err=document.createElement('div');
+    err.style.cssText='background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:10px 14px;font-size:12px;color:var(--red);max-width:85%';
+    err.textContent='Verbindungsfehler. Bitte nochmal versuchen.';
+    feed.appendChild(err);
+  }
+  feed.scrollTop=99999;
+}
+
 // INIT
 updateUI();
 loadChats();
@@ -1512,6 +1618,43 @@ if(localStorage.getItem('virgo_sb_closed')==='1'){
   document.getElementById('sb-toggle-btn').textContent='►';
 }
 </script>
+<!-- ════════════════════════════════════════
+     MODAL: VIRGO HILFE CHAT
+════════════════════════════════════════ -->
+<div class="modal" id="modal-help">
+  <div class="mb2" style="width:460px;padding:0;display:flex;flex-direction:column;height:560px;max-height:90vh">
+    <!-- Header -->
+    <div style="padding:18px 20px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px;flex-shrink:0">
+      <div style="width:28px;height:28px;border-radius:50%;background:var(--t);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">V</div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600">Virgo Support</div>
+        <div style="font-size:10px;color:var(--green)">● Online</div>
+      </div>
+      <button class="mclose" style="position:static;margin:0" onclick="closeM('modal-help')">x</button>
+    </div>
+    <!-- Chat Feed -->
+    <div id="help-feed" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px">
+      <div style="background:var(--sf);border:1px solid var(--bd);border-radius:12px;border-bottom-left-radius:3px;padding:10px 14px;font-size:13px;line-height:1.7;font-weight:300;max-width:85%">
+        Hallo! Ich bin Virgo. Wie kann ich dir helfen?<br><br>
+        <span style="font-size:11px;color:var(--tm)">Frag mich z.B. wie du deine Landing Page einrichtest, Ads generierst oder Leads bekommst.</span>
+      </div>
+      <!-- Starter-Fragen -->
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        <button onclick="askHelp('Wie richte ich meine Landing Page ein?')" style="padding:6px 11px;border-radius:8px;border:1px solid var(--bd);background:transparent;font-family:Inter,sans-serif;font-size:11px;color:var(--tm);cursor:pointer">Landing Page einrichten</button>
+        <button onclick="askHelp('Wie generiere ich Google Ads?')" style="padding:6px 11px;border-radius:8px;border:1px solid var(--bd);background:transparent;font-family:Inter,sans-serif;font-size:11px;color:var(--tm);cursor:pointer">Google Ads erstellen</button>
+        <button onclick="askHelp('Wie bekomme ich meinen QR Code?')" style="padding:6px 11px;border-radius:8px;border:1px solid var(--bd);background:transparent;font-family:Inter,sans-serif;font-size:11px;color:var(--tm);cursor:pointer">QR Code</button>
+        <button onclick="askHelp('Wie funktioniert die Terminbuchung?')" style="padding:6px 11px;border-radius:8px;border:1px solid var(--bd);background:transparent;font-family:Inter,sans-serif;font-size:11px;color:var(--tm);cursor:pointer">Terminbuchung</button>
+        <button onclick="askHelp('Wie sehe ich meine Leads?')" style="padding:6px 11px;border-radius:8px;border:1px solid var(--bd);background:transparent;font-family:Inter,sans-serif;font-size:11px;color:var(--tm);cursor:pointer">Leads ansehen</button>
+      </div>
+    </div>
+    <!-- Input -->
+    <div style="padding:12px 14px;border-top:1px solid var(--bd);display:flex;gap:8px;flex-shrink:0">
+      <input id="help-inp" class="minp" placeholder="Stell eine Frage..." style="margin:0;flex:1;font-size:13px" onkeydown="if(event.key==='Enter')sendHelp()">
+      <button onclick="sendHelp()" style="width:34px;height:34px;border-radius:8px;background:var(--t);color:#fff;border:none;cursor:pointer;font-size:16px;flex-shrink:0;display:flex;align-items:center;justify-content:center">↑</button>
+    </div>
+  </div>
+</div>
+
 <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('/sw.js').catch(()=>{});});}</script>
 </body>
 </html>
