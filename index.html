@@ -200,6 +200,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
 .mak-loader-txt{font-size:12px;color:var(--tm)}
 .mak-progress{flex:1;height:2px;background:var(--bd);border-radius:2px;overflow:hidden}
 .mak-progress-fill{height:100%;background:var(--blue);border-radius:2px;transition:width .5s;width:0%}
+.mak-ziel-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--bd);border-radius:8px;cursor:pointer;font-size:12px;color:var(--tm);transition:all .15s;user-select:none}
+.mak-ziel-item:has(input:checked){border-color:var(--t);background:var(--t);color:#fff}
+.mak-ziel-item input{width:auto;margin:0;accent-color:#fff;flex-shrink:0}
 
 @media(max-width:768px){
   .sb{position:fixed;top:0;left:0;bottom:0;width:280px;z-index:99;transform:translateX(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1)}
@@ -397,17 +400,17 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
           <input class="minp" id="mak-angebot" placeholder="z.B. Private Krankenversicherung fuer Selbstaendige" style="margin-bottom:0">
         </div>
         <div class="mak-field-full">
-          <label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Werbeziel / Was soll der Kunde tun? *</label>
-          <select class="minp" id="mak-ziel" style="margin-bottom:0">
-            <option value="Erstgespraech / Beratung buchen">Erstgespräch / Beratung buchen</option>
-            <option value="Vergleich anfordern">Vergleich anfordern</option>
-            <option value="Lead-Formular ausfuellen">Lead-Formular ausfüllen</option>
-            <option value="Rueckruf anfordern">Rückruf anfordern</option>
-            <option value="Kostenloses Angebot erhalten">Kostenloses Angebot erhalten</option>
-            <option value="Online-Rechner nutzen">Online-Rechner / Beitragsrechner nutzen</option>
-            <option value="PDF / E-Book herunterladen">PDF / E-Book herunterladen</option>
-            <option value="Termin online buchen">Termin online buchen</option>
-          </select>
+          <label style="font-size:11px;color:var(--tm);display:block;margin-bottom:6px">Werbeziel / Was soll der Kunde tun? * (Mehrfachauswahl möglich)</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px" id="mak-ziel-grid">
+            <label class="mak-ziel-item"><input type="checkbox" name="mak-ziel" value="Erstgespraech buchen"> Erstgespräch buchen</label>
+            <label class="mak-ziel-item"><input type="checkbox" name="mak-ziel" value="Vergleich anfordern"> Vergleich anfordern</label>
+            <label class="mak-ziel-item"><input type="checkbox" name="mak-ziel" value="Lead-Formular ausfuellen"> Lead-Formular ausfüllen</label>
+            <label class="mak-ziel-item"><input type="checkbox" name="mak-ziel" value="Rueckruf anfordern"> Rückruf anfordern</label>
+            <label class="mak-ziel-item"><input type="checkbox" name="mak-ziel" value="Kostenloses Angebot erhalten"> Kostenloses Angebot</label>
+            <label class="mak-ziel-item"><input type="checkbox" name="mak-ziel" value="Beitragsrechner nutzen"> Beitragsrechner</label>
+            <label class="mak-ziel-item"><input type="checkbox" name="mak-ziel" value="PDF herunterladen"> PDF / E-Book</label>
+            <label class="mak-ziel-item"><input type="checkbox" name="mak-ziel" value="Termin online buchen"> Termin online buchen</label>
+          </div>
         </div>
         <div class="mak-field-full">
           <label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Zielgruppe</label>
@@ -550,6 +553,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
     </select>
     <div id="tts-audio" style="display:none;margin-bottom:12px">
       <audio id="tts-player" controls style="width:100%;border-radius:8px"></audio>
+      <a id="tts-download" href="#" download="virgo-audio.mp3" style="display:block;margin-top:8px;padding:9px;background:var(--t);color:#fff;border-radius:8px;text-align:center;font-size:12px;font-weight:500;text-decoration:none">MP3 herunterladen</a>
     </div>
     <div id="tts-msg" style="font-size:12px;color:var(--red);margin:8px 0;display:none"></div>
     <div style="display:flex;gap:8px">
@@ -644,14 +648,13 @@ async function generateMaklerAd(){
   const angebot=document.getElementById('mak-angebot').value.trim();
   const zielgruppe=document.getElementById('mak-zielgruppe').value.trim();
   const usp=document.getElementById('mak-usp').value.trim();
-  const ziel=document.getElementById('mak-ziel').value;
+  const zielArr=Array.from(document.querySelectorAll('input[name="mak-ziel"]:checked')).map(c=>c.value);
+  const ziel=zielArr.join(', ');
   const msgEl=document.getElementById('mak-msg');
   const btn=document.getElementById('mak-btn');
 
-  if(!name||!angebot){
-    msgEl.textContent='Bitte Name und Angebot ausfuellen.';
-    msgEl.style.display='block';return;
-  }
+  if(!name||!angebot){msgEl.textContent='Bitte Name und Angebot ausfuellen.';msgEl.style.display='block';return;}
+  if(!zielArr.length){msgEl.textContent='Bitte mindestens ein Werbeziel auswaehlen.';msgEl.style.display='block';return;}
   msgEl.style.display='none';
   document.getElementById('mak-result').style.display='none';
   document.getElementById('mak-loader').style.display='flex';
@@ -958,12 +961,13 @@ function renderChatHistory(chats){
 }
 
 async function deleteChat(id){
+  // Immer aus localStorage entfernen
+  setLocalChats(getLocalChats().filter(c=>c.id!==id));
+  // Zusätzlich aus Supabase wenn eingeloggt
   if(authToken&&isSupabaseId(id)){
     try{
       await fetch('/api/chats',{method:'DELETE',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({id})});
     }catch(e){}
-  }else{
-    setLocalChats(getLocalChats().filter(c=>c.id!==id));
   }
   if(state.activeChatId===id)newChat();
   else loadChats();
@@ -986,20 +990,16 @@ function openChat(chat){
 
 async function saveChat(title,messages){
   const clean=cleanMessages(messages);
-  // ── Immer in localStorage speichern (Sidebar bleibt immer gefüllt) ──
+  // ── Immer zuerst in localStorage speichern ──
+  if(!state.activeChatId){
+    state.activeChatId='chat_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+  }
   const chats=getLocalChats();
-  if(state.activeChatId&&!isSupabaseId(state.activeChatId)){
-    const idx=chats.findIndex(c=>c.id===state.activeChatId);
-    if(idx>=0){chats[idx].messages=clean;chats[idx].title=title;chats[idx].updated=Date.now();}
-    else chats.unshift({id:state.activeChatId,title,messages:clean,updated:Date.now()});
-  }else if(!state.activeChatId||!isSupabaseId(state.activeChatId)){
-    if(!state.activeChatId)state.activeChatId='chat_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
-    chats.unshift({id:state.activeChatId,title,messages:clean,updated:Date.now()});
+  const idx=chats.findIndex(c=>c.id===state.activeChatId);
+  if(idx>=0){
+    chats[idx].messages=clean;chats[idx].title=title;chats[idx].updated=Date.now();
   }else{
-    // Hat Supabase-ID → auch lokal spiegeln mit dieser ID
-    const idx=chats.findIndex(c=>c.id===state.activeChatId);
-    if(idx>=0){chats[idx].messages=clean;chats[idx].title=title;chats[idx].updated=Date.now();}
-    else chats.unshift({id:state.activeChatId,title,messages:clean,updated:Date.now()});
+    chats.unshift({id:state.activeChatId,title,messages:clean,updated:Date.now()});
   }
   if(chats.length>100)chats.splice(100);
   setLocalChats(chats);
@@ -1007,16 +1007,16 @@ async function saveChat(title,messages){
   // ── Zusätzlich in Supabase wenn eingeloggt ──
   if(authToken){
     try{
-      if(state.activeChatId&&isSupabaseId(state.activeChatId)){
+      if(isSupabaseId(state.activeChatId)){
         await fetch('/api/chats',{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({id:state.activeChatId,title,messages:clean})});
       }else{
         const r=await fetch('/api/chats',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({title,messages:clean})});
         const data=await r.json();
         if(data.id){
-          // Supabase-ID zurück → lokal updaten
+          // Lokale ID durch Supabase-ID ersetzen
           const localChats=getLocalChats();
-          const idx=localChats.findIndex(c=>c.id===state.activeChatId);
-          if(idx>=0)localChats[idx].id=data.id;
+          const li=localChats.findIndex(c=>c.id===state.activeChatId);
+          if(li>=0)localChats[li].id=data.id;
           state.activeChatId=data.id;
           setLocalChats(localChats);
           loadChats();
@@ -1224,6 +1224,7 @@ async function send(){
   }
   saveChat(chatTitle,conversationHistory);
   addUserMsg(txt,hasImgs);
+  lastUserMsg=txt;
   inp.value='';inp.style.height='24px';
   if(mode==='vid')genVideo(txt);
   else if(mode==='img')genImage(txt);
@@ -1273,10 +1274,12 @@ async function genChat(txt){
   const bSys={'plan':'Du bist ein Business-Experte. Erstelle NUR Businessplaene.','website':'Du bist ein Copywriter. Erstelle NUR Website-Texte.','ads':'Du bist ein Performance Marketing Experte. Erstelle NUR Werbeanzeigen-Texte.','social':'Du bist ein Social Media Manager. Erstelle NUR Social Media Posts fuer Instagram, LinkedIn und TikTok. Trenne die Posts klar mit Plattform-Label.','email':'Du bist ein Email Marketing Experte. Erstelle NUR Email-Sequenzen.','pitch':'Du bist ein Pitch-Experte. Erstelle NUR Pitch Decks.'};
   const bMessages=isBusinessMode?[{role:'user',content:(bPre[businessType]||'')+txt}]:conversationHistory;
   const bodyData=isBusinessMode?{type:businessType,messages:bMessages,systemOverride:bSys[businessType]||''}:{messages:conversationHistory,codeMode:isCodeMode};
-  fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(bodyData)})
+  fetchWithRetry(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(bodyData)})
   .then(r=>r.json()).then(async d=>{
     hideTyping();
     const reply=(d.content&&d.content[0]&&d.content[0].text)||'Fehler beim Laden.';
+    // Zeige subtilen Hinweis wenn Gemini Fallback aktiv
+    if(d._fallback==='gemini')updateApiStatus('warn');
     conversationHistory.push({role:'assistant',content:reply});
     if(conversationHistory.length>30)conversationHistory=conversationHistory.slice(-30);
     const rendered=renderMD(reply);
@@ -1296,7 +1299,7 @@ async function genChat(txt){
       </div></div>`;
       document.getElementById('fi').appendChild(imgBox);scrollFeed();
     }
-  }).catch(()=>{hideTyping();addAIMsg('Verbindungsfehler. Bitte nochmal versuchen.');});
+  }).catch(()=>{hideTyping();showFallbackMsg();});
 }
 
 async function genSocialImg(imgId,topic){
@@ -1330,13 +1333,13 @@ function genImage(prompt){
   startGen('Generiert Bild mit '+state.modelName+'...');showTyping();
   const body={prompt:fp,model:mm[state.model]||'nano',negative_prompt:'ai-look,plastic skin,cartoon,deformed'};
   if(refImages.length){body.image_base64=refImages[0].b64;body.image_mime=refImages[0].mime;}
-  fetch('/api/generate-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+  fetchWithRetry('/api/generate-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
   .then(r=>r.json()).then(d=>{
     hideTyping();endGen();
     if(d.imageUrl){addImageCard(prompt,d.imageUrl);saveGeneration('image',d.imageUrl,prompt,state.modelName);}
     else addAIMsg('Fehler: '+(d.error||'Bild konnte nicht generiert werden.'));
     clearRef();
-  }).catch(()=>{hideTyping();endGen();addAIMsg('Fehler bei der Bildgenerierung.');});
+  }).catch(()=>{hideTyping();endGen();showFallbackMsg();clearRef();});
 }
 
 function genVideo(prompt){
@@ -1501,8 +1504,12 @@ async function generateTTS(){
     const r=await fetch('/api/tools',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tool:'tts',text,voice_id:voice})});
     const d=await r.json();
     if(d.error){msg.textContent=d.error;msg.style.display='block';btn.disabled=false;btn.textContent='Generieren';return;}
-    const player=document.getElementById('tts-player');player.src='data:audio/mpeg;base64,'+d.audio;
-    document.getElementById('tts-audio').style.display='block';player.play();
+    const player=document.getElementById('tts-player');
+    const audioSrc='data:audio/mpeg;base64,'+d.audio;
+    player.src=audioSrc;
+    document.getElementById('tts-download').href=audioSrc;
+    document.getElementById('tts-audio').style.display='block';
+    player.play();
   }catch(e){msg.textContent='Fehler: '+e.message;msg.style.display='block';}
   btn.disabled=false;btn.textContent='Generieren';
 }
@@ -1624,6 +1631,68 @@ async function sendHelp(){
     feed.appendChild(err);
   }
   feed.scrollTop=99999;
+}
+
+// ════════════════════════════════════════
+// FALLBACK SYSTEM
+// ════════════════════════════════════════
+let apiFailCount=0;
+
+async function fetchWithRetry(url,options,retries=3,delay=2000){
+  for(let i=0;i<retries;i++){
+    try{
+      const r=await fetch(url,options);
+      if(r.ok||r.status===400||r.status===401||r.status===403){
+        apiFailCount=0;updateApiStatus('ok');
+        return r;
+      }
+      // 500, 529 (overloaded), 503 → retry
+      if(i<retries-1){
+        updateApiStatus('warn');
+        await new Promise(res=>setTimeout(res,delay*(i+1)));
+        continue;
+      }
+      throw new Error('HTTP '+r.status);
+    }catch(e){
+      if(i<retries-1){
+        updateApiStatus('warn');
+        await new Promise(res=>setTimeout(res,delay*(i+1)));
+      }else{
+        apiFailCount++;
+        updateApiStatus('error');
+        throw e;
+      }
+    }
+  }
+}
+
+function updateApiStatus(status){
+  const dot=document.getElementById('cdot');
+  if(!dot)return;
+  if(status==='ok')dot.style.background='var(--green)';
+  else if(status==='warn')dot.style.background='#f59e0b';
+  else dot.style.background='var(--red)';
+}
+
+function showFallbackMsg(){
+  const d=document.createElement('div');d.className='mw ai';
+  d.innerHTML=`<div class="aav">V</div><div><div class="bb" style="max-width:420px;background:#fef9c3;border-color:#fde68a">
+    <div style="font-size:13px;font-weight:500;margin-bottom:6px">Virgo ist gleich wieder da</div>
+    <div style="font-size:12px;color:var(--tm);line-height:1.6;margin-bottom:10px">Die KI ist gerade kurz überlastet — das passiert manchmal bei hoher Nachfrage. Deine Eingabe ist noch da.</div>
+    <button onclick="retryLastMsg()" style="padding:8px 16px;background:var(--t);color:#fff;border:none;border-radius:7px;font-family:Inter,sans-serif;font-size:12px;font-weight:500;cursor:pointer">Nochmal versuchen</button>
+    <span style="font-size:10px;color:var(--td);margin-left:10px">oder warte 30 Sekunden</span>
+  </div></div>`;
+  document.getElementById('fi').appendChild(d);scrollFeed();
+}
+
+let lastUserMsg='';
+function retryLastMsg(){
+  if(!lastUserMsg)return;
+  // Fallback-Nachricht entfernen
+  const msgs=document.getElementById('fi').querySelectorAll('.mw.ai');
+  if(msgs.length)msgs[msgs.length-1].remove();
+  document.getElementById('prompt').value=lastUserMsg;
+  send();
 }
 
 // INIT
