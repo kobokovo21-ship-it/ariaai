@@ -396,7 +396,13 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
           </select>
         </div>
         <div class="mak-field-full">
-          <label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Angebot *</label>
+          <label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Deine Landing Page URL (Ziel-URL für Ads) *</label>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:12px;color:var(--td);white-space:nowrap">virgoio.com/makler/</span>
+            <input class="minp" id="mak-slug" placeholder="max-mustermann" style="margin-bottom:0;flex:1">
+          </div>
+          <div style="font-size:10px;color:var(--td);margin-top:4px">Diese URL trägst du bei Google/Meta Ads als Ziel-URL ein.</div>
+        </div>
           <input class="minp" id="mak-angebot" placeholder="z.B. Private Krankenversicherung fuer Selbstaendige" style="margin-bottom:0">
         </div>
         <div class="mak-field-full">
@@ -648,12 +654,14 @@ async function generateMaklerAd(){
   const angebot=document.getElementById('mak-angebot').value.trim();
   const zielgruppe=document.getElementById('mak-zielgruppe').value.trim();
   const usp=document.getElementById('mak-usp').value.trim();
+  const slug=document.getElementById('mak-slug').value.trim();
   const zielArr=Array.from(document.querySelectorAll('input[name="mak-ziel"]:checked')).map(c=>c.value);
   const ziel=zielArr.join(', ');
   const msgEl=document.getElementById('mak-msg');
   const btn=document.getElementById('mak-btn');
 
   if(!name||!angebot){msgEl.textContent='Bitte Name und Angebot ausfuellen.';msgEl.style.display='block';return;}
+  if(!slug){msgEl.textContent='Bitte deine Landing Page URL eintragen.';msgEl.style.display='block';return;}
   if(!zielArr.length){msgEl.textContent='Bitte mindestens ein Werbeziel auswaehlen.';msgEl.style.display='block';return;}
   msgEl.style.display='none';
   document.getElementById('mak-result').style.display='none';
@@ -803,6 +811,16 @@ function renderMaklerResult(adData,imgUrl,name){
 
   const platform=maklerPlatform==='both'?'Google & Meta':maklerPlatform==='meta'?'Meta Ads':'Google Ads';
   document.getElementById('mak-result-title').textContent=platform+' Paket – '+name;
+  // URL-Box anzeigen
+  const fullUrl='https://virgoio.com/makler/'+slug;
+  const urlBoxId='mak-url-box';
+  let urlBox=document.getElementById(urlBoxId);
+  if(!urlBox){
+    urlBox=document.createElement('div');urlBox.id=urlBoxId;
+    urlBox.style.cssText='background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px;margin-bottom:14px';
+    document.getElementById('mak-result').insertBefore(urlBox,document.getElementById('mak-result').firstChild);
+  }
+  urlBox.innerHTML='<div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#166534;margin-bottom:6px;font-weight:600">Deine Ziel-URL für Google & Meta Ads</div><div style="display:flex;align-items:center;gap:8px"><span style="font-size:12px;font-family:monospace;color:#166534;flex:1;word-break:break-all">'+fullUrl+'</span><button onclick="navigator.clipboard.writeText(\''+fullUrl+'\').then(()=>{this.textContent=\'Kopiert!\';setTimeout(()=>this.textContent=\'Kopieren\',2000)})" style="padding:5px 12px;background:#166534;color:#fff;border:none;border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer;white-space:nowrap">Kopieren</button></div><div style="font-size:10px;color:#16a34a;margin-top:6px">Diese URL bei Google Ads und Meta Ads als Ziel-URL eintragen.</div>';
   document.getElementById('mak-result').style.display='block';
   document.getElementById('modal-makler-ads').querySelector('.mb2').scrollTop=9999;
 }
