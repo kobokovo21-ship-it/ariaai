@@ -56,7 +56,7 @@ textarea{resize:vertical;min-height:80px}
 .link-banner-btns a:hover{background:rgba(255,255,255,.25)}
 .link-banner-btns button{background:#fff;color:#111}
 .link-banner-btns button:hover{background:#f0f0f0}
-.tool-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px}
+.tool-grid{display:grid;grid-template-columns:1fr;gap:12px;margin-top:4px}
 .tool-card{border:1px solid var(--bd);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:10px}
 .tool-card h3{font-size:13px;font-weight:600}
 .tool-card p{font-size:11px;color:var(--tm);line-height:1.6;flex:1}
@@ -113,7 +113,7 @@ textarea{resize:vertical;min-height:80px}
       </div>
       <div class="step">
         <div class="step-num">3</div>
-        <div class="step-text"><strong>Leads erhalten</strong> — Interessenten fuellen das Formular aus. Du bekommst sofort eine Email und SMS und siehst den Lead in deinem Dashboard.</div>
+        <div class="step-text"><strong>Leads erhalten</strong> — Interessenten fuellen das Formular aus. Du bekommst sofort eine Email und siehst den Lead in deinem Dashboard.</div>
       </div>
     </div>
 
@@ -219,21 +219,14 @@ textarea{resize:vertical;min-height:80px}
       </div>
     </div>
 
-    <!-- BENACHRICHTIGUNGEN -->
+    <!-- BENACHRICHTIGUNGEN — nur Email, kein SMS -->
     <div class="card">
       <h2>Benachrichtigungen</h2>
       <p class="sub">Werde sofort informiert wenn ein neuer Lead reinkommt</p>
-      <div class="grid">
-        <div>
-          <label>Email-Alert</label>
-          <input id="alert-email" type="email" placeholder="deine@email.de" autocomplete="email">
-          <div class="hint">Du bekommst eine Email bei jedem neuen Lead.</div>
-        </div>
-        <div>
-          <label>SMS-Alert (WhatsApp-Nummer)</label>
-          <input id="whatsapp-number" type="tel" placeholder="+49 1XX XXXXXXX" autocomplete="tel">
-          <div class="hint">Du bekommst eine SMS bei jedem neuen Lead. Format: +49...</div>
-        </div>
+      <div>
+        <label>Email-Alert</label>
+        <input id="alert-email" type="email" placeholder="deine@email.de" autocomplete="email">
+        <div class="hint">Du bekommst eine Email bei jedem neuen Lead.</div>
       </div>
       <div style="margin-top:16px">
         <button class="btn" id="notif-save-btn" onclick="saveNotifications()">Benachrichtigungen speichern</button>
@@ -241,13 +234,11 @@ textarea{resize:vertical;min-height:80px}
       <div id="notif-msg" class="msg" style="margin-top:12px;margin-bottom:0"></div>
     </div>
 
-    <!-- MARKETING TOOLS -->
+    <!-- MARKETING TOOLS — nur QR Code -->
     <div class="card">
       <h2>Marketing Tools</h2>
       <p class="sub">Mehr Reichweite fuer deine Landing Page</p>
       <div class="tool-grid">
-
-        <!-- QR CODE -->
         <div class="tool-card">
           <h3>QR-Code</h3>
           <p>Drucke deinen persoenlichen QR-Code auf Visitenkarten, Flyer oder Plakate. Interessenten scannen ihn und landen direkt auf deiner Landing Page.</p>
@@ -259,15 +250,6 @@ textarea{resize:vertical;min-height:80px}
             </div>
           </div>
         </div>
-
-        <!-- WERBE-VIDEO -->
-        <div class="tool-card">
-          <h3>Werbe-Video erstellen</h3>
-          <p>Erstelle mit KI ein professionelles Video fuer deine Meta Ads. Wähle Hailuo 2.3 in Virgo, beschreibe dein Video und lade es fuer Instagram und Facebook herunter.</p>
-          <a href="/" class="tool-btn" onclick="openVideoMode(event)">Video erstellen</a>
-          <div class="hint">Öffnet Virgo im Video-Modus mit Hailuo 2.3.</div>
-        </div>
-
       </div>
     </div>
 
@@ -303,7 +285,6 @@ textarea{resize:vertical;min-height:80px}
           </div>
           <div class="hint">Waehle die Tage an denen du Termine annimmst.</div>
         </div>
-
         <div class="grid" style="margin-bottom:16px">
           <div>
             <label>Von (Uhrzeit)</label>
@@ -330,7 +311,6 @@ textarea{resize:vertical;min-height:80px}
             </select>
           </div>
         </div>
-
         <div style="padding:12px 14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;font-size:12px;color:#166534;margin-bottom:16px">
           Jeder Termin dauert 60 Minuten. Virgo berechnet automatisch alle freien Slots und zeigt sie auf deiner Landing Page an.
         </div>
@@ -339,7 +319,6 @@ textarea{resize:vertical;min-height:80px}
       <button class="btn" id="booking-save-btn" onclick="saveBookingSettings()">Terminbuchung speichern</button>
       <div id="booking-msg" class="msg" style="margin-top:12px;margin-bottom:0"></div>
     </div>
-
 
   </div>
 </div>
@@ -358,7 +337,6 @@ let generatedImageUrl = '';
 const ADMIN_EMAIL = 'holyencore@gmail.com';
 const MAKLER_PLANS = ['makler-starter', 'makler-pro', 'makler-business'];
 
-// Sichere Token-Abfrage
 const authToken = (function() {
   try { return localStorage.getItem('virgo_token') || null; } catch(e) { return null; }
 })();
@@ -367,7 +345,6 @@ const currentUser = (function() {
 })();
 const isAdmin = !!(currentUser && currentUser.email === ADMIN_EMAIL);
 
-// ─── ZUGRIFFSPRÜFUNG ───
 async function checkAccess() {
   if (!authToken) { window.location.href = '/'; return; }
   if (isAdmin) {
@@ -389,11 +366,8 @@ async function checkAccess() {
   } catch(e) { show('no-access'); }
 }
 
-function show(id) {
-  document.getElementById(id).style.display = 'block';
-}
+function show(id) { document.getElementById(id).style.display = 'block'; }
 
-// ─── PROFIL LADEN ───
 async function loadProfile() {
   try {
     const r = await fetch('/api/tools?tool=makler-mine', { headers: { 'Authorization': 'Bearer ' + authToken } });
@@ -407,7 +381,6 @@ async function loadProfile() {
     setVal('slug', d.slug);
     setVal('beschreibung', d.beschreibung);
     setVal('alert-email', d.alert_email);
-    setVal('whatsapp-number', d.whatsapp_number);
     if (d.farbe) setColorByValue(d.farbe);
     if (Array.isArray(d.versicherungen)) {
       d.versicherungen.forEach(v => {
@@ -422,7 +395,6 @@ async function loadProfile() {
     }
     updatePreview();
     if (d.slug) showLinkBanner(d.slug);
-    // Terminbuchung laden
     if (d.booking_enabled) setBookingEnabled(true);
     if (Array.isArray(d.booking_days)) {
       d.booking_days.forEach(day => {
@@ -440,7 +412,6 @@ function setVal(id, val) {
   if (el && val != null) el.value = val;
 }
 
-// ─── LINK BANNER ───
 function showLinkBanner(slug) {
   const fullUrl = 'https://virgoio.com/makler/' + encodeURIComponent(slug);
   document.getElementById('banner-url').textContent = 'virgoio.com/makler/' + slug;
@@ -461,7 +432,6 @@ function copyBannerLink() {
   }).catch(() => {});
 }
 
-// ─── URL VORSCHAU ───
 function updatePreview() {
   const input = document.getElementById('slug');
   const clean = (input.value || '').trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
@@ -475,7 +445,6 @@ function updatePreview() {
   }
 }
 
-// ─── FARBE ───
 function setColor(el) {
   document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
   el.classList.add('active');
@@ -490,7 +459,6 @@ function setColorByValue(color) {
   selectedColor = color || '#111111';
 }
 
-// ─── BILD TAB ───
 function switchImgTab(tab) {
   document.getElementById('tab-ai-content').style.display = tab === 'ai' ? 'block' : 'none';
   document.getElementById('tab-upload-content').style.display = tab === 'upload' ? 'block' : 'none';
@@ -504,12 +472,10 @@ function styleTab(id, active) {
   el.style.borderColor = active ? 'var(--t)' : 'var(--bd)';
 }
 
-// ─── DATEI HOCHLADEN ───
 function handleFileUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
-  const allowed = ['image/jpeg', 'image/png', 'image/webp'];
-  if (!allowed.includes(file.type)) { alert('Nur JPG, PNG oder WEBP erlaubt.'); return; }
+  if (!['image/jpeg','image/png','image/webp'].includes(file.type)) { alert('Nur JPG, PNG oder WEBP erlaubt.'); return; }
   if (file.size > 5 * 1024 * 1024) { alert('Datei zu gross — max. 5MB'); return; }
   const reader = new FileReader();
   reader.onload = e => {
@@ -521,7 +487,6 @@ function handleFileUpload(event) {
   event.target.value = '';
 }
 
-// ─── KI BILD GENERIEREN ───
 async function generateHeaderImage() {
   const btn = document.getElementById('gen-img-btn');
   const versicherungen = Array.from(document.querySelectorAll('input[name="vers"]:checked')).map(cb => cb.value);
@@ -554,29 +519,17 @@ async function generateHeaderImage() {
   btn.disabled = false;
 }
 
-// ─── QR CODE ───
 function generateQR() {
   const slug = document.getElementById('slug').value.trim();
   if (!slug) { alert('Bitte zuerst deine URL-Adresse eintragen.'); return; }
   const url = encodeURIComponent('https://virgoio.com/makler/' + slug);
   const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=10&data=' + url;
-  const img = document.getElementById('qr-img');
-  const preview = document.getElementById('qr-preview');
-  const dl = document.getElementById('qr-download');
-  img.src = qrUrl;
-  dl.href = qrUrl;
-  dl.download = 'virgo-qr-' + slug + '.png';
-  preview.style.display = 'block';
+  document.getElementById('qr-img').src = qrUrl;
+  document.getElementById('qr-download').href = qrUrl;
+  document.getElementById('qr-download').download = 'virgo-qr-' + slug + '.png';
+  document.getElementById('qr-preview').style.display = 'block';
 }
 
-// ─── VIDEO MODUS ───
-function openVideoMode(e) {
-  e.preventDefault();
-  sessionStorage.setItem('virgo_automode', 'vid-hailuo');
-  window.location.href = '/';
-}
-
-// ─── VORSCHAU ───
 function showPreview() {
   const name = (document.getElementById('name').value || '').trim() || 'Dein Name';
   const firma = (document.getElementById('firma').value || '').trim() || 'Versicherungsmakler';
@@ -592,32 +545,20 @@ function showPreview() {
   document.getElementById('preview-modal').style.display = 'block';
 }
 
-// ─── PROFIL SPEICHERN ───
 async function saveProfile() {
   const name = (document.getElementById('name').value || '').trim();
   const slug = (document.getElementById('slug').value || '').trim();
   const telefon = (document.getElementById('telefon').value || '').trim();
   const email = (document.getElementById('email').value || '').trim();
   const msg = document.getElementById('msg');
-
-  if (!name || !slug || !telefon || !email) {
-    showMsg(msg, 'Bitte Name, URL, Telefon und Email ausfuellen.', 'error'); return;
-  }
-  if (!/^[a-z0-9-]+$/.test(slug)) {
-    showMsg(msg, 'URL-Adresse darf nur Buchstaben, Zahlen und Bindestriche enthalten.', 'error'); return;
-  }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    showMsg(msg, 'Bitte eine gueltige Email-Adresse eingeben.', 'error'); return;
-  }
+  if (!name || !slug || !telefon || !email) { showMsg(msg, 'Bitte Name, URL, Telefon und Email ausfuellen.', 'error'); return; }
+  if (!/^[a-z0-9-]+$/.test(slug)) { showMsg(msg, 'URL-Adresse darf nur Buchstaben, Zahlen und Bindestriche enthalten.', 'error'); return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showMsg(msg, 'Bitte eine gueltige Email-Adresse eingeben.', 'error'); return; }
   const versicherungen = Array.from(document.querySelectorAll('input[name="vers"]:checked')).map(cb => cb.value);
-  if (!versicherungen.length) {
-    showMsg(msg, 'Bitte mindestens eine Versicherungsart auswaehlen.', 'error'); return;
-  }
-
+  if (!versicherungen.length) { showMsg(msg, 'Bitte mindestens eine Versicherungsart auswaehlen.', 'error'); return; }
   const btn = document.getElementById('save-btn');
   btn.disabled = true; btn.textContent = 'Wird gespeichert...';
   msg.style.display = 'none';
-
   try {
     const r = await fetch('/api/tools', {
       method: 'POST',
@@ -630,94 +571,50 @@ async function saveProfile() {
         versicherungen,
         farbe: selectedColor,
         header_image: generatedImageUrl || null,
-        alert_email: (document.getElementById('alert-email').value || '').trim() || null,
-        whatsapp_number: (document.getElementById('whatsapp-number').value || '').trim() || null
-      })
-    });
-    const d = await r.json();
-    if (d.error) {
-      showMsg(msg, d.error, 'error');
-    } else {
-      showMsg(msg, 'Gespeichert! Deine Landing Page ist live.', 'success');
-      updatePreview();
-      showLinkBanner(slug);
-    }
-  } catch(e) {
-    showMsg(msg, 'Fehler: ' + e.message, 'error');
-  }
-  btn.disabled = false; btn.textContent = 'Profil speichern & Live schalten';
-}
-
-// ─── BENACHRICHTIGUNGEN SPEICHERN ───
-async function saveNotifications() {
-  const alertEmail = (document.getElementById('alert-email').value || '').trim();
-  const whatsappNumber = (document.getElementById('whatsapp-number').value || '').trim();
-  const msg = document.getElementById('notif-msg');
-  const btn = document.getElementById('notif-save-btn');
-
-  if (alertEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(alertEmail)) {
-    showMsg(msg, 'Bitte eine gueltige Email-Adresse eingeben.', 'error'); return;
-  }
-  if (whatsappNumber && !/^\+[0-9]{8,15}$/.test(whatsappNumber)) {
-    showMsg(msg, 'Nummer im Format +49... eingeben.', 'error'); return;
-  }
-
-  const slug = (document.getElementById('slug').value || '').trim();
-  const name = (document.getElementById('name').value || '').trim();
-  if (!slug || !name) {
-    showMsg(msg, 'Bitte zuerst das Profil speichern.', 'error'); return;
-  }
-
-  btn.disabled = true; btn.textContent = 'Wird gespeichert...';
-  msg.style.display = 'none';
-
-  try {
-    const r = await fetch('/api/tools', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
-      body: JSON.stringify({
-        tool: 'makler-notifications',
-        alert_email: alertEmail || null,
-        whatsapp_number: whatsappNumber || null
+        alert_email: (document.getElementById('alert-email').value || '').trim() || null
       })
     });
     const d = await r.json();
     if (d.error) showMsg(msg, d.error, 'error');
+    else { showMsg(msg, 'Gespeichert! Deine Landing Page ist live.', 'success'); updatePreview(); showLinkBanner(slug); }
+  } catch(e) { showMsg(msg, 'Fehler: ' + e.message, 'error'); }
+  btn.disabled = false; btn.textContent = 'Profil speichern & Live schalten';
+}
+
+async function saveNotifications() {
+  const alertEmail = (document.getElementById('alert-email').value || '').trim();
+  const msg = document.getElementById('notif-msg');
+  const btn = document.getElementById('notif-save-btn');
+  if (alertEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(alertEmail)) { showMsg(msg, 'Bitte eine gueltige Email-Adresse eingeben.', 'error'); return; }
+  const slug = (document.getElementById('slug').value || '').trim();
+  const name = (document.getElementById('name').value || '').trim();
+  if (!slug || !name) { showMsg(msg, 'Bitte zuerst das Profil speichern.', 'error'); return; }
+  btn.disabled = true; btn.textContent = 'Wird gespeichert...';
+  msg.style.display = 'none';
+  try {
+    const r = await fetch('/api/tools', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+      body: JSON.stringify({ tool: 'makler-notifications', alert_email: alertEmail || null })
+    });
+    const d = await r.json();
+    if (d.error) showMsg(msg, d.error, 'error');
     else showMsg(msg, 'Benachrichtigungen gespeichert.', 'success');
-  } catch(e) {
-    showMsg(msg, 'Fehler: ' + e.message, 'error');
-  }
+  } catch(e) { showMsg(msg, 'Fehler: ' + e.message, 'error'); }
   btn.disabled = false; btn.textContent = 'Benachrichtigungen speichern';
 }
 
-function showMsg(el, text, type) {
-  el.textContent = text;
-  el.className = 'msg ' + type;
-  el.style.display = 'block';
-}
+function showMsg(el, text, type) { el.textContent = text; el.className = 'msg ' + type; el.style.display = 'block'; }
 
-
-// ─── TERMINBUCHUNG ───
 function toggleBooking(cb) {
   const bg = document.getElementById('booking-toggle-bg');
   const dot = document.getElementById('booking-toggle-dot');
   const settings = document.getElementById('booking-settings');
-  if (cb.checked) {
-    bg.style.background = 'var(--t)';
-    dot.style.transform = 'translateX(20px)';
-    settings.style.display = 'block';
-  } else {
-    bg.style.background = 'var(--bd)';
-    dot.style.transform = 'translateX(0)';
-    settings.style.display = 'none';
-  }
+  if (cb.checked) { bg.style.background = 'var(--t)'; dot.style.transform = 'translateX(20px)'; settings.style.display = 'block'; }
+  else { bg.style.background = 'var(--bd)'; dot.style.transform = 'translateX(0)'; settings.style.display = 'none'; }
 }
 
-function setBookingEnabled(enabled) {
-  const cb = document.getElementById('booking-enabled');
-  cb.checked = enabled;
-  toggleBooking(cb);
-}
+function setBookingEnabled(enabled) { const cb = document.getElementById('booking-enabled'); cb.checked = enabled; toggleBooking(cb); }
 
 async function saveBookingSettings() {
   const enabled = document.getElementById('booking-enabled').checked;
@@ -726,35 +623,20 @@ async function saveBookingSettings() {
   const end = document.getElementById('booking-end').value;
   const msg = document.getElementById('booking-msg');
   const btn = document.getElementById('booking-save-btn');
-
-  if (enabled && !days.length) {
-    showMsg(msg, 'Bitte mindestens einen Wochentag auswaehlen.', 'error'); return;
-  }
-  if (enabled && start >= end) {
-    showMsg(msg, 'Endzeit muss nach der Startzeit liegen.', 'error'); return;
-  }
-
+  if (enabled && !days.length) { showMsg(msg, 'Bitte mindestens einen Wochentag auswaehlen.', 'error'); return; }
+  if (enabled && start >= end) { showMsg(msg, 'Endzeit muss nach der Startzeit liegen.', 'error'); return; }
   btn.disabled = true; btn.textContent = 'Wird gespeichert...';
   msg.style.display = 'none';
-
   try {
     const r = await fetch('/api/tools', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
-      body: JSON.stringify({
-        tool: 'makler-booking-settings',
-        booking_enabled: enabled,
-        booking_days: days,
-        booking_start: start,
-        booking_end: end
-      })
+      body: JSON.stringify({ tool: 'makler-booking-settings', booking_enabled: enabled, booking_days: days, booking_start: start, booking_end: end })
     });
     const d = await r.json();
     if (d.error) showMsg(msg, d.error, 'error');
-    else showMsg(msg, enabled ? 'Terminbuchung aktiviert! Interessenten koennen jetzt Termine buchen.' : 'Terminbuchung deaktiviert.', 'success');
-  } catch(e) {
-    showMsg(msg, 'Fehler: ' + e.message, 'error');
-  }
+    else showMsg(msg, enabled ? 'Terminbuchung aktiviert!' : 'Terminbuchung deaktiviert.', 'success');
+  } catch(e) { showMsg(msg, 'Fehler: ' + e.message, 'error'); }
   btn.disabled = false; btn.textContent = 'Terminbuchung speichern';
 }
 
