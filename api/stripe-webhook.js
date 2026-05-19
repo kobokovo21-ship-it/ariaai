@@ -64,12 +64,8 @@ function getPlanFromAmount(amount, currency) {
     if (amount >= 14900) return { plan: 'makler-pro',     credits: 1000 };
     return null;
   } else {
-    // USD — monatliche Credits werden ERSETZT (nicht addiert) bei Verlängerung
-    if (amount >= 24999) return { plan: 'max',      credits: 15000 };
-    if (amount >= 14999) return { plan: 'ultra',    credits: 8000  };
-    if (amount >= 9999)  return { plan: 'master',   credits: 5000  };
-    if (amount >= 4999)  return { plan: 'pro',      credits: 2000  };
-    if (amount >= 1999)  return { plan: 'standard', credits: 500   };
+    if (amount >= 4999) return { plan: 'pro',      credits: 2000 };
+    if (amount >= 2499) return { plan: 'standard', credits: 500  };
     return null;
   }
 }
