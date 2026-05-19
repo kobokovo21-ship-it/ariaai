@@ -615,7 +615,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
 const state={mode:'chat',model:'chat',modelName:'Virgo Chat',generating:false,chatStarted:false,activeChatId:null};
 const COST={img:1,vid:10,tool:5,modelia:2};
 const PREMIUM=['vid-higgsfield'];
-const PRO_PLANS=['pro','master','ultra','max'];
+const PRO_PLANS=['pro','standard','makler-pro','makler-business','makler-starter'];
 const PH={
   chat:'Frag Virgo alles - Code, Business, Strategie...',
   img:'Beschreibe dein Bild...',
@@ -938,9 +938,14 @@ function setModel(el,model,name){
     m.textContent='Higgsfield ist nur fuer Pro-Mitglieder.';
     showM('modal-upgrade');return;
   }
-  if(model.startsWith('vid')&&!currentUser){
+  if(model==='img-modelia'&&!isPro()&&!isAdmin()){
     const m=document.getElementById('up-msg');m.className='alert';
-    m.textContent='Erstelle ein kostenloses Konto fuer dein erstes Video - 10 Gratis-Credits!';
+    m.textContent='Modelia Fashion Pro ist nur fuer Pro-Mitglieder. Upgrade auf Pro fuer $49.99/Mo.';
+    showM('modal-upgrade');return;
+  }
+  if(model.startsWith('img')&&!isAnyPaidPlan()){
+    const m=document.getElementById('up-msg');m.className='alert';
+    m.textContent='Bildgenerierung ist nur fuer bezahlte Plaene. Starte mit Standard fuer $24.99/Mo.';
     showM('modal-upgrade');return;
   }
   document.querySelectorAll('.mc').forEach(c=>c.classList.remove('on'));
@@ -953,7 +958,15 @@ function setModel(el,model,name){
   else switchMode('chat',document.getElementById('mode-chat'));
   closeSb();
 }
-function isPro(){return PRO_PLANS.includes(localStorage.getItem('virgo_plan')||'free');}
+function isProPlan(){
+  const plan=localStorage.getItem('virgo_plan')||'free';
+  return['pro','makler-pro','makler-business','makler-starter'].includes(plan)||isAdmin();
+}
+function isPro(){return isProPlan();}
+function isAnyPaidPlan(){
+  const plan=localStorage.getItem('virgo_plan')||'free';
+  return['standard','pro','makler-pro','makler-business','makler-starter'].includes(plan)||isAdmin();
+}
 
 // CHAT STORAGE
 function getLocalChats(){return JSON.parse(localStorage.getItem('virgo_chats_v2')||'[]');}
