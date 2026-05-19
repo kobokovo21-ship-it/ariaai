@@ -246,6 +246,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
     <span class="sl">Business Tools</span>
     <button class="mc" onclick="setModel(this,'business-plan','Business Plan')"><div class="md"></div>Business Plan<span class="mt" style="background:#dcfce7;color:#166534">AI</span></button>
     <button class="mc" onclick="setModel(this,'business-website','Website Text')"><div class="md"></div>Website Text<span class="mt" style="background:#dcfce7;color:#166534">AI</span></button>
+    <button class="mc" onclick="openWebsiteGen();closeSb()" style="border:1px solid rgba(139,92,246,.25)"><div class="md" style="background:#8b5cf6"></div>Website Generator<span class="mt" style="background:#ede9fe;color:#6d28d9">Neu</span></button>
     <button class="mc" onclick="setModel(this,'business-ads','Ads Generator')"><div class="md"></div>Ads Generator<span class="mt" style="background:#dcfce7;color:#166534">AI</span></button>
     <!-- ── NEU: MAKLER ADS ── -->
     <button class="mc" onclick="openMaklerAds();closeSb()" style="border:1px solid rgba(37,99,235,.25)"><div class="md" style="background:#2563eb"></div>Makler Ads<span class="mt" style="background:#dbeafe;color:#1d4ed8">Google & Meta</span></button>
@@ -1724,6 +1725,121 @@ function retryLastMsg(){
   send();
 }
 
+// ════════════════════════════════════════
+// WEBSITE GENERATOR
+// ════════════════════════════════════════
+let webColor='#111111';
+let generatedWebsiteHTML='';
+
+function openWebsiteGen(){showM('modal-website-gen');}
+
+function setWebColor(el){
+  document.querySelectorAll('.web-color-swatch').forEach(s=>s.style.borderColor='transparent');
+  el.style.borderColor=el.dataset.color;
+  webColor=el.dataset.color;
+}
+
+async function generateWebsite(){
+  const name=(document.getElementById('web-name').value||'').trim();
+  const branche=(document.getElementById('web-branche').value||'').trim();
+  const angebot=(document.getElementById('web-angebot').value||'').trim();
+  const tel=(document.getElementById('web-tel').value||'').trim();
+  const email=(document.getElementById('web-email').value||'').trim();
+  const usp=(document.getElementById('web-usp').value||'').trim();
+  const msgEl=document.getElementById('web-msg');
+  const btn=document.getElementById('web-btn');
+
+  if(!name||!branche||!angebot){
+    msgEl.textContent='Bitte Firmenname, Branche und Angebot ausfuellen.';
+    msgEl.style.display='block';return;
+  }
+  msgEl.style.display='none';
+  document.getElementById('web-result').style.display='none';
+  document.getElementById('web-loader').style.display='flex';
+  btn.disabled=true;btn.textContent='Generiert...';
+
+  const setP=(pct,txt)=>{
+    document.getElementById('web-pfill').style.width=pct+'%';
+    document.getElementById('web-loader-txt').textContent=txt;
+  };
+
+  setP(20,'Texte werden geschrieben...');
+
+  const prompt=`Erstelle eine komplette, professionelle HTML-Website fuer folgendes Business:
+
+Firmenname: ${name}
+Branche: ${branche}
+Angebot: ${angebot}${tel?'\nTelefon: '+tel:''}${email?'\nEmail: '+email:''}${usp?'\nUSP: '+usp:''}
+Hauptfarbe: ${webColor}
+
+Erstelle eine moderne, vollstaendige HTML-Seite mit:
+1. Navigation (Logo + Links)
+2. Hero-Section mit starker Headline und CTA-Button
+3. Leistungen/Services Section (3-4 Punkte)
+4. Ueber uns Section
+5. Warum wir? / USP Section
+6. Kontakt Section mit Formular (Name, Email, Nachricht, Button)
+7. Footer mit Kontaktdaten
+
+REGELN:
+- Komplettes HTML mit eingebettetem CSS (kein externes CSS)
+- Moderne, professionelle Optik
+- Hauptfarbe: ${webColor} fuer Buttons, Akzente, Nav
+- Weisser Hintergrund, sauberes Layout
+- Mobile-responsive
+- Alle Texte auf Deutsch
+- Gib NUR den HTML-Code zurueck, ohne Erklaerung, ohne Markdown-Backticks`;
+
+  try{
+    setP(40,'KI schreibt deine Website...');
+    const r=await fetch('/api/business',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        type:'website',
+        messages:[{role:'user',content:prompt}],
+        systemOverride:'Du bist ein professioneller Web-Designer. Erstelle NUR vollstaendigen HTML-Code. Kein Markdown, keine Backticks, keine Erklaerungen. Nur reines HTML.'
+      })
+    });
+    const d=await r.json();
+    let html=(d.content&&d.content[0]&&d.content[0].text)||'';
+    // Backticks entfernen falls vorhanden
+    html=html.replace(/```html|```/g,'').trim();
+
+    if(!html||!html.includes('<html')){
+      throw new Error('Kein gueltiges HTML generiert');
+    }
+
+    setP(90,'Vorschau wird geladen...');
+    generatedWebsiteHTML=html;
+
+    setTimeout(()=>{
+      document.getElementById('web-loader').style.display='none';
+      document.getElementById('web-preview').srcdoc=html;
+      document.getElementById('web-result').style.display='block';
+      btn.disabled=false;btn.textContent='Website generieren';
+      document.getElementById('modal-website-gen').querySelector('.mb2').scrollTop=9999;
+    },500);
+
+  }catch(e){
+    document.getElementById('web-loader').style.display='none';
+    msgEl.textContent='Fehler: '+e.message+'. Bitte nochmal versuchen.';
+    msgEl.style.display='block';
+    btn.disabled=false;btn.textContent='Website generieren';
+  }
+}
+
+function downloadWebsite(){
+  if(!generatedWebsiteHTML)return;
+  const name=(document.getElementById('web-name').value||'website').trim().toLowerCase().replace(/\s+/g,'-');
+  const blob=new Blob([generatedWebsiteHTML],{type:'text/html'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=name+'.html';
+  document.body.appendChild(a);a.click();
+  document.body.removeChild(a);URL.revokeObjectURL(url);
+}
+
 // INIT
 updateUI();
 loadChats();
@@ -1766,6 +1882,80 @@ if(localStorage.getItem('virgo_sb_closed')==='1'){
     <div style="padding:12px 14px;border-top:1px solid var(--bd);display:flex;gap:8px;flex-shrink:0">
       <input id="help-inp" class="minp" placeholder="Stell eine Frage..." style="margin:0;flex:1;font-size:13px" onkeydown="if(event.key==='Enter')sendHelp()">
       <button onclick="sendHelp()" style="width:34px;height:34px;border-radius:8px;background:var(--t);color:#fff;border:none;cursor:pointer;font-size:16px;flex-shrink:0;display:flex;align-items:center;justify-content:center">↑</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     MODAL: WEBSITE GENERATOR
+════════════════════════════════════════ -->
+<div class="modal" id="modal-website-gen">
+  <div class="mb2" style="width:540px">
+    <button class="mclose" onclick="closeM('modal-website-gen')">x</button>
+    <h2>Website Generator</h2>
+    <p>Gib deine Infos ein — Virgo erstellt eine komplette Website mit Design, Texten und Kontaktformular.</p>
+
+    <div class="mak-step">
+      <span class="mak-step-label">Dein Business</span>
+      <div class="mak-field">
+        <div>
+          <label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Firmenname *</label>
+          <input class="minp" id="web-name" placeholder="z.B. Max Mustermann GmbH" style="margin-bottom:0">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Branche *</label>
+          <input class="minp" id="web-branche" placeholder="z.B. Versicherung, Restaurant, IT..." style="margin-bottom:0">
+        </div>
+        <div class="mak-field-full">
+          <label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Was bietest du an? *</label>
+          <textarea class="minp" id="web-angebot" placeholder="z.B. Wir bieten professionelle Steuerberatung für Selbstständige und KMUs in Düsseldorf." style="min-height:70px;resize:vertical;margin-bottom:0"></textarea>
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Telefon</label>
+          <input class="minp" id="web-tel" placeholder="+49 211 123456" style="margin-bottom:0">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Email</label>
+          <input class="minp" id="web-email" placeholder="info@firma.de" style="margin-bottom:0">
+        </div>
+        <div class="mak-field-full">
+          <label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">USP / Besonderheit (optional)</label>
+          <input class="minp" id="web-usp" placeholder="z.B. 20 Jahre Erfahrung, kostenlose Erstberatung, TÜV-zertifiziert" style="margin-bottom:0">
+        </div>
+      </div>
+
+      <div style="margin-top:14px">
+        <label style="font-size:11px;color:var(--tm);display:block;margin-bottom:6px">Website Farbe</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap" id="web-colors">
+          <div class="web-color-swatch active" style="width:28px;height:28px;border-radius:50%;background:#111111;cursor:pointer;border:3px solid #111" data-color="#111111" onclick="setWebColor(this)"></div>
+          <div class="web-color-swatch" style="width:28px;height:28px;border-radius:50%;background:#2563eb;cursor:pointer;border:3px solid transparent" data-color="#2563eb" onclick="setWebColor(this)"></div>
+          <div class="web-color-swatch" style="width:28px;height:28px;border-radius:50%;background:#16a34a;cursor:pointer;border:3px solid transparent" data-color="#16a34a" onclick="setWebColor(this)"></div>
+          <div class="web-color-swatch" style="width:28px;height:28px;border-radius:50%;background:#9333ea;cursor:pointer;border:3px solid transparent" data-color="#9333ea" onclick="setWebColor(this)"></div>
+          <div class="web-color-swatch" style="width:28px;height:28px;border-radius:50%;background:#dc2626;cursor:pointer;border:3px solid transparent" data-color="#dc2626" onclick="setWebColor(this)"></div>
+          <div class="web-color-swatch" style="width:28px;height:28px;border-radius:50%;background:#ea580c;cursor:pointer;border:3px solid transparent" data-color="#ea580c" onclick="setWebColor(this)"></div>
+          <div class="web-color-swatch" style="width:28px;height:28px;border-radius:50%;background:#0891b2;cursor:pointer;border:3px solid transparent" data-color="#0891b2" onclick="setWebColor(this)"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="web-msg" style="font-size:12px;color:var(--red);background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 12px;display:none;margin-bottom:8px"></div>
+
+    <button class="mbtn" id="web-btn" onclick="generateWebsite()">Website generieren</button>
+
+    <div class="mak-loader" id="web-loader" style="display:none">
+      <div class="mak-progress"><div class="mak-progress-fill" id="web-pfill"></div></div>
+      <span class="mak-loader-txt" id="web-loader-txt">Website wird erstellt...</span>
+    </div>
+
+    <div id="web-result" style="display:none;margin-top:16px;border-top:1px solid var(--bd);padding-top:16px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:10px">Deine Website ist fertig</div>
+      <div style="border:1px solid var(--bd);border-radius:10px;overflow:hidden;margin-bottom:12px;height:300px">
+        <iframe id="web-preview" style="width:100%;height:100%;border:none" title="Website Vorschau"></iframe>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="mak-pkg-btn sec" onclick="downloadWebsite()">Als HTML downloaden</button>
+        <button class="mak-pkg-btn" onclick="generateWebsite()">Neu generieren</button>
+      </div>
     </div>
   </div>
 </div>
