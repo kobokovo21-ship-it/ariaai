@@ -4,12 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VIRGO – Checkout</title>
+<meta name="theme-color" content="#111111">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    background: #111111;
-    color: #e5e5e5;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #fff;
+    color: #111;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     min-height: 100vh;
     display: flex;
     align-items: center;
@@ -17,46 +19,80 @@
     padding: 24px;
   }
   .checkout-card {
-    background: #1a1a1a;
-    border: 1px solid #2a2a2a;
+    background: #fff;
+    border: 1px solid #e8e8e8;
     border-radius: 16px;
     padding: 40px;
     max-width: 480px;
     width: 100%;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+  }
+  .logo {
+    font-size: 13px;
+    font-weight: 200;
+    letter-spacing: 8px;
+    color: #888;
+    margin-bottom: 24px;
   }
   h2 {
     font-size: 24px;
     margin-bottom: 8px;
-    color: #ffffff;
+    color: #111;
     font-weight: 600;
   }
   .plan-info {
     color: #888;
-    margin-bottom: 32px;
-    font-size: 14px;
+    margin-bottom: 24px;
+    font-size: 13px;
+    line-height: 1.6;
   }
   .price {
-    font-size: 36px;
-    color: #ffffff;
+    font-size: 38px;
+    color: #111;
     font-weight: 700;
-    margin-bottom: 32px;
+    margin-bottom: 28px;
   }
   .price span {
     font-size: 14px;
     color: #888;
     font-weight: 400;
   }
-  .consent-block {
-    background: #0f0f0f;
-    border: 1px solid #2a2a2a;
+  .features {
+    background: #f7f7f7;
     border-radius: 10px;
-    padding: 20px;
+    padding: 16px 18px;
     margin-bottom: 24px;
+  }
+  .features-label {
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #888;
+    margin-bottom: 10px;
+  }
+  .features ul {
+    list-style: none;
+    font-size: 12px;
+    color: #555;
+    line-height: 2;
+  }
+  .features li::before {
+    content: "✓ ";
+    color: #16a34a;
+    font-weight: 600;
+    margin-right: 6px;
+  }
+  .consent-block {
+    background: #f7f7f7;
+    border: 1px solid #e8e8e8;
+    border-radius: 10px;
+    padding: 18px;
+    margin-bottom: 20px;
   }
   .consent-item {
     display: flex;
     gap: 12px;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
     cursor: pointer;
     align-items: flex-start;
   }
@@ -65,134 +101,244 @@
     width: 20px;
     height: 20px;
     margin-top: 2px;
-    accent-color: #4a9eff;
+    accent-color: #111;
     cursor: pointer;
     flex-shrink: 0;
   }
   .consent-item label {
-    font-size: 13px;
-    line-height: 1.5;
-    color: #c5c5c5;
+    font-size: 12px;
+    line-height: 1.55;
+    color: #555;
     cursor: pointer;
   }
   .consent-item a {
-    color: #4a9eff;
+    color: #2563eb;
     text-decoration: underline;
   }
   .buy-button {
     width: 100%;
-    background: #ffffff;
-    color: #111111;
+    background: #111;
+    color: #fff;
     border: none;
     padding: 16px;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 600;
     border-radius: 10px;
     cursor: pointer;
     transition: all 0.2s;
+    font-family: inherit;
   }
   .buy-button:hover:not(:disabled) {
-    background: #f0f0f0;
+    background: #000;
     transform: translateY(-1px);
   }
   .buy-button:disabled {
-    background: #2a2a2a;
-    color: #555;
+    background: #e8e8e8;
+    color: #999;
     cursor: not-allowed;
   }
   .legal-note {
     font-size: 11px;
-    color: #666;
+    color: #999;
     margin-top: 16px;
     text-align: center;
-    line-height: 1.5;
+    line-height: 1.6;
+  }
+  .back-link {
+    display: inline-block;
+    margin-top: 24px;
+    font-size: 12px;
+    color: #888;
+    text-decoration: none;
+  }
+  .back-link:hover { color: #111; }
+  .error {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #dc2626;
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    margin-bottom: 16px;
+    line-height: 1.6;
+  }
+  .badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .badge.pro { background: #dbeafe; color: #1d4ed8; }
+  .badge.business { background: #111; color: #fff; }
+  @media (max-width: 480px) {
+    .checkout-card { padding: 28px 22px; }
+    h2 { font-size: 20px; }
+    .price { font-size: 32px; }
   }
 </style>
 </head>
 <body>
 
 <div class="checkout-card">
-  <h2>VIRGO Pro</h2>
-  <p class="plan-info">2.000 Credits / Monat · Jederzeit kündbar</p>
+  <div class="logo">V I R G O</div>
 
-  <div class="price">49,99 € <span>/Monat</span></div>
+  <div id="error-box" class="error" style="display:none"></div>
 
-  <div class="consent-block">
-    <div class="consent-item">
-      <input type="checkbox" id="consent-agb" />
-      <label for="consent-agb">
-        Ich habe die <a href="/agb.html" target="_blank">AGB</a>, 
-        <a href="/datenschutz.html" target="_blank">Datenschutzerklärung</a> und 
-        <a href="/widerrufsbelehrung.html" target="_blank">Widerrufsbelehrung</a> 
-        gelesen und akzeptiere sie.
-      </label>
+  <div id="plan-content" style="display:none">
+    <span class="badge" id="plan-badge"></span>
+    <h2 id="plan-name"></h2>
+    <p class="plan-info" id="plan-info"></p>
+    <div class="price" id="plan-price"></div>
+
+    <div class="features">
+      <div class="features-label">Im Plan enthalten</div>
+      <ul id="plan-features"></ul>
     </div>
 
-    <div class="consent-item">
-      <input type="checkbox" id="consent-widerruf" />
-      <label for="consent-widerruf">
-        Ich verlange ausdrücklich, dass VIRGO mit der Ausführung des Vertrags 
-        sofort beginnt. Mir ist bekannt, dass ich mein Widerrufsrecht verliere, 
-        sobald die digitale Leistung vollständig erbracht ist (z. B. bei 
-        Nutzung der Credits oder Generierung von Inhalten).
-      </label>
+    <div class="consent-block">
+      <div class="consent-item">
+        <input type="checkbox" id="consent-agb" />
+        <label for="consent-agb">
+          Ich habe die <a href="/agb.html" target="_blank">AGB</a>,
+          <a href="/datenschutz.html" target="_blank">Datenschutzerklärung</a> und
+          <a href="/widerrufsbelehrung.html" target="_blank">Widerrufsbelehrung</a>
+          gelesen und akzeptiere sie.
+        </label>
+      </div>
+
+      <div class="consent-item">
+        <input type="checkbox" id="consent-widerruf" />
+        <label for="consent-widerruf">
+          Ich verlange ausdrücklich, dass VIRGO mit der Ausführung des Vertrags
+          sofort beginnt. Mir ist bekannt, dass ich mein Widerrufsrecht verliere,
+          sobald die digitale Leistung vollständig erbracht ist (z.&nbsp;B. bei
+          Nutzung der Credits oder Generierung von Inhalten).
+        </label>
+      </div>
     </div>
+
+    <button class="buy-button" id="buy-btn" disabled onclick="handlePurchase()">
+      Jetzt buchen
+    </button>
+
+    <p class="legal-note">
+      Sichere Zahlung über Stripe · SSL-verschlüsselt · Jederzeit kündbar
+    </p>
   </div>
 
-  <button class="buy-button" id="buy-btn" disabled onclick="handlePurchase()">
-    Jetzt kaufen – 49,99 €
-  </button>
-
-  <p class="legal-note">
-    Sichere Zahlung über Stripe · SSL-verschlüsselt
-  </p>
+  <div style="text-align:center">
+    <a class="back-link" href="/">← Zurück zur App</a>
+  </div>
 </div>
 
 <script>
-  const checkboxAgb = document.getElementById('consent-agb');
-  const checkboxWiderruf = document.getElementById('consent-widerruf');
-  const buyButton = document.getElementById('buy-btn');
+  // Plan-Konfiguration mit echten Stripe-Links
+  const PLANS = {
+    'makler-pro': {
+      name: 'Makler Pro',
+      badge: 'pro',
+      info: 'Ideal für Einzelmakler. Alle KI-Tools, unbegrenzte Leads.',
+      price: '149 €',
+      priceUnit: '/Monat · Jederzeit kündbar',
+      features: [
+        'PKV Landing Page',
+        'Unbegrenzte Leads',
+        'Email-Alerts bei neuen Leads',
+        'Lead Dashboard',
+        'Google & Meta Ads Generator',
+        'Alle KI-Tools (Bilder, Social Posts, Email)',
+        'Rechnungen, Website Generator, TTS'
+      ],
+      stripeUrl: 'https://buy.stripe.com/eVq5kE3shc7M8zkdoobjW09'
+    },
+    'makler-business': {
+      name: 'Makler Business',
+      badge: 'business',
+      info: 'Für Maklerbüros und Agenturen. Alle Versicherungsarten, White-Label.',
+      price: '249 €',
+      priceUnit: '/Monat · Jederzeit kündbar',
+      features: [
+        'Alle Versicherungsarten (nicht nur PKV)',
+        'Unbegrenzte Landing Pages',
+        'Unbegrenzte Leads',
+        'Priority Support',
+        'Alle KI-Tools',
+        'White-Label Option',
+        'API-Zugang auf Anfrage'
+      ],
+      stripeUrl: 'https://buy.stripe.com/aFaaEYbYNc7MbLw5VWbjW0a'
+    }
+  };
 
-  // Button erst aktiv wenn BEIDE Checkboxen angeklickt
-  function updateButton() {
-    buyButton.disabled = !(checkboxAgb.checked && checkboxWiderruf.checked);
+  const urlParams = new URLSearchParams(window.location.search);
+  const planKey = urlParams.get('plan');
+  const plan = PLANS[planKey];
+
+  if (!plan) {
+    document.getElementById('error-box').style.display = 'block';
+    document.getElementById('error-box').innerHTML =
+      '<strong>Kein Plan ausgewählt.</strong><br>' +
+      'Bitte wähle einen Plan auf der <a href="/" style="color:#dc2626;text-decoration:underline">Hauptseite</a>.';
+  } else {
+    document.getElementById('plan-content').style.display = 'block';
+    document.getElementById('plan-name').textContent = plan.name;
+    document.getElementById('plan-info').textContent = plan.info;
+    document.getElementById('plan-price').innerHTML = plan.price + ' <span>' + plan.priceUnit + '</span>';
+
+    const badgeEl = document.getElementById('plan-badge');
+    badgeEl.textContent = plan.name;
+    badgeEl.classList.add(plan.badge);
+
+    document.getElementById('plan-features').innerHTML =
+      plan.features.map(f => '<li>' + f + '</li>').join('');
+
+    document.getElementById('buy-btn').textContent = 'Jetzt buchen – ' + plan.price + '/Monat';
+
+    const checkboxAgb = document.getElementById('consent-agb');
+    const checkboxWiderruf = document.getElementById('consent-widerruf');
+    const buyButton = document.getElementById('buy-btn');
+
+    function updateButton() {
+      buyButton.disabled = !(checkboxAgb.checked && checkboxWiderruf.checked);
+    }
+
+    checkboxAgb.addEventListener('change', updateButton);
+    checkboxWiderruf.addEventListener('change', updateButton);
   }
 
-  checkboxAgb.addEventListener('change', updateButton);
-  checkboxWiderruf.addEventListener('change', updateButton);
-
-  // Zustimmung speichern (wichtig für rechtlichen Nachweis)
   function handlePurchase() {
+    if (!plan) return;
+
+    const checkboxAgb = document.getElementById('consent-agb');
+    const checkboxWiderruf = document.getElementById('consent-widerruf');
+
     if (!checkboxAgb.checked || !checkboxWiderruf.checked) return;
 
-    // Consent-Daten erstellen
+    // Zustimmung im Browser speichern (Stripe-Transaktion ist der eigentliche Rechtsnachweis)
     const consentRecord = {
       timestamp: new Date().toISOString(),
+      plan: plan.name,
+      plan_key: planKey,
+      price: plan.price,
       agb_accepted: true,
       widerruf_waived: true,
-      plan: 'VIRGO Pro',
-      price: '49.99 EUR',
       user_agent: navigator.userAgent,
-      ip: 'wird-server-seitig-erfasst'
+      url: window.location.href
     };
 
-    // In localStorage für Frontend-Tracking
-    localStorage.setItem('virgo_consent', JSON.stringify(consentRecord));
+    try {
+      const existing = JSON.parse(localStorage.getItem('virgo_consent_log') || '[]');
+      existing.push(consentRecord);
+      localStorage.setItem('virgo_consent_log', JSON.stringify(existing));
+      localStorage.setItem('virgo_last_consent', JSON.stringify(consentRecord));
+    } catch(e) {}
 
-    // WICHTIG: Diese Daten musst du auch an dein Backend senden 
-    // und in deiner Datenbank speichern (z. B. Vercel KV, Supabase, MongoDB)
-    // Beispiel:
-    /*
-    fetch('/api/save-consent', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(consentRecord)
-    });
-    */
-
-    // Weiterleitung zu Stripe Payment Link
-    // Hier deine echte Stripe-URL eintragen:
-    window.location.href = 'https://buy.stripe.com/DEINE-PRO-PAYMENT-LINK';
+    // Weiterleitung zu Stripe
+    window.location.href = plan.stripeUrl;
   }
 </script>
 
