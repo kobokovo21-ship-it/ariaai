@@ -951,68 +951,60 @@ async function genChat(txt){
   const bPre={
     'plan':'Erstelle einen vollständigen Businessplan auf Deutsch für: ',
     'website':'Erstelle professionelle Website-Texte auf Deutsch für: ',
-    'ads':'Erstelle 5 verschiedene Werbeanzeigen auf Deutsch für: ',
-    'social':'Erstelle 10 kreative Social Media Posts auf Deutsch für: ',
-    'email':'Erstelle eine 5-teilige Email-Sequenz auf Deutsch für: ',
-    'pitch':'Erstelle ein vollständiges Pitch Deck mit 10 Slides auf Deutsch für: '
+    'ads':'Erstelle 3 verschiedene Werbeanzeigen auf Deutsch für: ',
+    'social':'Erstelle 3 kreative Social Media Posts auf Deutsch für: ',
+    'email':'Erstelle EINE professionelle Email auf Deutsch für: ',
+    'pitch':'Erstelle ein Pitch Deck mit 5 Slides auf Deutsch für: '
   };
   const bSys={
-    'plan':'Du bist ein Business-Experte. Erstelle NUR Businessplaene auf Deutsch.',
-    'website':'Du bist ein Copywriter. Erstelle NUR Website-Texte auf Deutsch.',
+    'plan':'Du bist ein Business-Experte für Versicherungsmakler. Erstelle NUR Businessplaene auf Deutsch.',
+    'website':'Du bist ein Copywriter für Versicherungsmakler. Erstelle NUR Website-Texte auf Deutsch.',
     'ads':`Du bist ein Performance Marketing Experte für Versicherungsmakler. Antworte NUR mit validem JSON in genau diesem Format (kein Markdown, keine Backticks, kein Text vor/nach JSON):
 {
   "type": "ads",
   "topic": "Kurzbeschreibung des Angebots",
   "ads": [
     {"number": 1, "platform": "Google", "headline": "max 30 Zeichen", "description": "max 90 Zeichen", "cta": "max 15 Zeichen"},
-    {"number": 2, "platform": "Google", "headline": "...", "description": "...", "cta": "..."},
-    {"number": 3, "platform": "Meta", "headline": "max 40 Zeichen", "description": "max 125 Zeichen", "cta": "Mehr erfahren"},
-    {"number": 4, "platform": "Meta", "headline": "...", "description": "...", "cta": "..."},
-    {"number": 5, "platform": "LinkedIn", "headline": "...", "description": "...", "cta": "..."}
+    {"number": 2, "platform": "Meta", "headline": "max 40 Zeichen", "description": "max 125 Zeichen", "cta": "Mehr erfahren"},
+    {"number": 3, "platform": "LinkedIn", "headline": "max 40 Zeichen", "description": "max 100 Zeichen", "cta": "Kontakt aufnehmen"}
   ]
-}`,
+}
+Alle Texte auf Deutsch. Konkret und auf Versicherungsmakler zugeschnitten.`,
     'social':`Du bist ein Social Media Manager für Versicherungsmakler. Antworte NUR mit validem JSON in genau diesem Format (kein Markdown, keine Backticks):
 {
   "type": "social_posts",
   "topic": "Kurzbeschreibung des Themas",
   "posts": [
     {"number": 1, "platform": "Instagram", "caption": "Post-Text mit Hook und Call-to-Action", "hashtags": "#hashtag1 #hashtag2 #hashtag3"},
-    {"number": 2, "platform": "Instagram", "caption": "...", "hashtags": "..."},
-    {"number": 3, "platform": "LinkedIn", "caption": "...", "hashtags": "..."},
-    {"number": 4, "platform": "LinkedIn", "caption": "...", "hashtags": "..."},
-    {"number": 5, "platform": "TikTok", "caption": "...", "hashtags": "..."}
+    {"number": 2, "platform": "LinkedIn", "caption": "...", "hashtags": "..."},
+    {"number": 3, "platform": "TikTok", "caption": "...", "hashtags": "..."}
   ]
 }
-Erstelle 10 Posts gemischt über Instagram, LinkedIn und TikTok. Jeder Post soll für Versicherungsmakler relevant sein.`,
-    'email':`Du bist ein Email Marketing Experte für Versicherungsmakler. Antworte NUR mit validem JSON in genau diesem Format (kein Markdown, keine Backticks):
+Erstelle 3 Posts auf verschiedenen Plattformen. Alle Texte auf Deutsch.`,
+    'email':`Du bist ein Email Marketing Experte für Versicherungsmakler. Antworte NUR mit validem JSON in genau diesem Format (kein Markdown, keine Backticks, kein Text davor/danach):
 {
-  "type": "email_sequence",
-  "topic": "Kurzbeschreibung der Sequenz",
-  "emails": [
-    {"number": 1, "phase": "Awareness", "subject": "Betreff-Zeile", "preheader": "Preview-Text max 100 Zeichen", "body": "Email-Inhalt mit \\n\\n für Absätze. Anrede mit [Vorname]. Mit Call-to-Action am Ende."},
-    {"number": 2, "phase": "Education", "subject": "...", "preheader": "...", "body": "..."},
-    {"number": 3, "phase": "Trust", "subject": "...", "preheader": "...", "body": "..."},
-    {"number": 4, "phase": "Offer", "subject": "...", "preheader": "...", "body": "..."},
-    {"number": 5, "phase": "Last Chance", "subject": "...", "preheader": "...", "body": "..."}
-  ]
-}`,
+  "type": "email",
+  "topic": "Kurzbeschreibung der Email",
+  "email": {
+    "subject": "Klare, neugierig machende Betreff-Zeile",
+    "preheader": "Preview-Text max 100 Zeichen",
+    "body": "Hallo [Vorname],\\n\\nEmail-Inhalt mit \\n\\n für Absätze. Persönlich, klar, mit konkretem Call-to-Action am Ende.\\n\\nHerzliche Grüße\\n[Maklername]"
+  }
+}
+Erstelle EINE einzige perfekte Email passend zum vom User beschriebenen Anlass (Erstkontakt, Follow-up, Newsletter, etc.). Alle Texte auf Deutsch.`,
     'pitch':`Du bist ein Pitch-Experte. Antworte NUR mit validem JSON in genau diesem Format (kein Markdown, keine Backticks):
 {
   "type": "pitch_deck",
   "topic": "Kurzbeschreibung",
   "slides": [
-    {"number": 1, "title": "Problem", "content": "Slide-Inhalt als Fließtext"},
+    {"number": 1, "title": "Problem", "content": "Slide-Inhalt als Fließtext, prägnant"},
     {"number": 2, "title": "Lösung", "content": "..."},
-    {"number": 3, "title": "Markt", "content": "..."},
-    {"number": 4, "title": "Produkt", "content": "..."},
-    {"number": 5, "title": "Geschäftsmodell", "content": "..."},
-    {"number": 6, "title": "Traction", "content": "..."},
-    {"number": 7, "title": "Team", "content": "..."},
-    {"number": 8, "title": "Wettbewerb", "content": "..."},
-    {"number": 9, "title": "Finanzen", "content": "..."},
-    {"number": 10, "title": "Ask", "content": "..."}
+    {"number": 3, "title": "Markt & Zielgruppe", "content": "..."},
+    {"number": 4, "title": "Geschäftsmodell", "content": "..."},
+    {"number": 5, "title": "Team & Ask", "content": "..."}
   ]
-}`
+}
+Alle Texte auf Deutsch. Prägnant.`
   };
   const bMessages=isBusinessMode?[{role:'user',content:(bPre[businessType]||'')+txt}]:conversationHistory;
   const bodyData=isBusinessMode?{type:businessType,messages:bMessages,systemOverride:bSys[businessType]||''}:{messages:conversationHistory};
@@ -1070,7 +1062,8 @@ Erstelle 10 Posts gemischt über Instagram, LinkedIn und TikTok. Jeder Post soll
 }
 // ── STRUKTURIERTE OUTPUTS RENDERN ──
 function renderStructuredOutput(data,topic){
-  if(data.type==='email_sequence')renderEmailSequence(data);
+  if(data.type==='email')renderSingleEmail(data);
+  else if(data.type==='email_sequence')renderEmailSequence(data);
   else if(data.type==='social_posts')renderSocialPosts(data);
   else if(data.type==='ads')renderAdsOutput(data);
   else if(data.type==='pitch_deck')renderPitchDeck(data);
@@ -1090,6 +1083,37 @@ function copyText(storeId,key,label){
   const text=data[key]||'';
   navigator.clipboard.writeText(text).then(()=>showCopyToast(label||'Kopiert'));
 }
+// ── EINZELNE EMAIL RENDERN (große, schöne Karte) ──
+function renderSingleEmail(data){
+  const sid='em'+Date.now();
+  const email=data.email||{};
+  const fullText='Betreff: '+(email.subject||'')+'\n\n'+(email.body||'');
+  window.virgoStructured[sid]={subject:email.subject||'',body:email.body||'',full:fullText,preheader:email.preheader||''};
+  let html='<div style="font-size:14px;font-weight:600;margin-bottom:6px;color:var(--t)">Deine Email</div>';
+  if(data.topic)html+='<div style="font-size:11px;color:var(--tm);margin-bottom:16px">'+escHtml(data.topic)+'</div>';
+  html+='<div style="border:1px solid var(--bd);border-radius:14px;padding:22px;background:var(--bg);box-shadow:0 2px 12px rgba(0,0,0,0.05);max-width:520px">';
+  // Betreff
+  html+='<div style="margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--bd)">';
+  html+='<div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--td);margin-bottom:6px;font-weight:600">Betreff</div>';
+  html+='<div style="font-size:15px;font-weight:600;color:var(--t);line-height:1.4">'+escHtml(email.subject||'')+'</div>';
+  if(email.preheader){
+    html+='<div style="font-size:11px;color:var(--tm);margin-top:6px;font-style:italic">'+escHtml(email.preheader)+'</div>';
+  }
+  html+='</div>';
+  // Body
+  html+='<div style="margin-bottom:18px">';
+  html+='<div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--td);margin-bottom:10px;font-weight:600">Email-Text</div>';
+  html+='<div style="font-size:13px;color:#222;line-height:1.85;white-space:pre-wrap">'+escHtml(email.body||'')+'</div>';
+  html+='</div>';
+  // Buttons
+  html+='<div style="display:flex;gap:8px;flex-wrap:wrap;padding-top:14px;border-top:1px solid var(--bd)">';
+  html+='<button onclick="copyText(\''+sid+'\',\'full\',\'Email kopiert\')" style="flex:1;min-width:140px;padding:11px 16px;background:var(--t);color:#fff;border:none;border-radius:8px;font-family:Inter,sans-serif;font-size:12px;cursor:pointer;font-weight:500">Komplett kopieren</button>';
+  html+='<button onclick="copyText(\''+sid+'\',\'subject\',\'Betreff kopiert\')" style="padding:11px 16px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:8px;font-family:Inter,sans-serif;font-size:12px;cursor:pointer">Nur Betreff</button>';
+  html+='<button onclick="copyText(\''+sid+'\',\'body\',\'Text kopiert\')" style="padding:11px 16px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:8px;font-family:Inter,sans-serif;font-size:12px;cursor:pointer">Nur Text</button>';
+  html+='</div>';
+  html+='</div>';
+  addAIMsg(html);
+}
 // ── EMAIL-SEQUENZ RENDERN ──
 function renderEmailSequence(data){
   const sid='es'+Date.now();
@@ -1101,7 +1125,6 @@ function renderEmailSequence(data){
     window.virgoStructured[id]={subject:email.subject,body:email.body,full:'Betreff: '+email.subject+'\n\n'+email.body};
     html+='<div style="border:1px solid var(--bd);border-radius:10px;padding:14px;margin-bottom:10px;background:var(--bg)">';
     html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--td);font-weight:600">Email '+email.number+'</span>';
-    if(email.phase)html+='<span style="font-size:9px;padding:2px 7px;border-radius:4px;background:#dbeafe;color:#1d4ed8;font-weight:500">'+escHtml(email.phase)+'</span>';
     html+='</div>';
     html+='<div style="font-size:13px;font-weight:600;margin-bottom:4px;color:var(--t)">'+escHtml(email.subject||'')+'</div>';
     if(email.preheader)html+='<div style="font-size:11px;color:var(--tm);margin-bottom:10px;font-style:italic">'+escHtml(email.preheader)+'</div>';
