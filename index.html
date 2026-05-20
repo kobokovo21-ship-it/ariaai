@@ -1026,7 +1026,25 @@ Erstelle 10 Posts gemischt über Instagram, LinkedIn und TikTok. Jeder Post soll
     // ── STRUKTURIERTE TOOLS: JSON parsen und mit Kopier-Buttons rendern ──
     if(isStructuredMode){
       try{
-        const cleaned=reply.replace(/```json|```/g,'').trim();
+        // Markdown-Backticks entfernen
+        let cleaned=reply.replace(/```json|```/g,'').trim();
+        // Vorangestellten Text vor erster { entfernen
+        const firstBrace=cleaned.indexOf('{');
+        if(firstBrace>0)cleaned=cleaned.substring(firstBrace);
+        else if(firstBrace<0)throw new Error('Kein JSON gefunden');
+        // Erstes vollständiges JSON-Objekt extrahieren (Brace-Matching)
+        // Schützt vor doppelten/fragmentierten Antworten der KI
+        let depth=0,endIdx=-1,inString=false,escape=false;
+        for(let i=0;i<cleaned.length;i++){
+          const ch=cleaned[i];
+          if(escape){escape=false;continue;}
+          if(ch==='\\'){escape=true;continue;}
+          if(ch==='"'){inString=!inString;continue;}
+          if(inString)continue;
+          if(ch==='{')depth++;
+          else if(ch==='}'){depth--;if(depth===0){endIdx=i;break;}}
+        }
+        if(endIdx>0)cleaned=cleaned.substring(0,endIdx+1);
         const parsed=JSON.parse(cleaned);
         renderStructuredOutput(parsed,txt);
         saveChat(document.getElementById('chat-title').textContent,conversationHistory);
