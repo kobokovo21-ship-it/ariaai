@@ -934,15 +934,86 @@ function hideTyping(){const t=document.getElementById('typing');if(t)t.remove();
 function startGen(label){state.generating=true;document.getElementById('gl').textContent=label;document.getElementById('gs').classList.add('vis');document.getElementById('send-btn').disabled=true;let p=0;genTimer=setInterval(()=>{p=Math.min(p+1,90);document.getElementById('gf').style.width=p+'%';},600);}
 function endGen(){state.generating=false;clearInterval(genTimer);document.getElementById('gf').style.width='100%';setTimeout(()=>{document.getElementById('gs').classList.remove('vis');document.getElementById('gf').style.width='0%';},800);document.getElementById('send-btn').disabled=false;}
 function cancelGen(){clearInterval(genTimer);endGen();hideTyping();}
+// ── DATEN-STORE für strukturierte Outputs (Kopier-Funktionen brauchen Zugriff) ──
+window.virgoStructured={};
 async function genChat(txt){
   showTyping();
   const isBusinessMode=state.model.startsWith('business-');
   const isSocialMode=state.model==='business-social';
+  const isEmailMode=state.model==='business-email';
+  const isAdsMode=state.model==='business-ads';
+  const isPitchMode=state.model==='business-pitch';
+  const isStructuredMode=isSocialMode||isEmailMode||isAdsMode||isPitchMode;
   let endpoint='/api/chat';
   if(isBusinessMode)endpoint='/api/business';
   const businessType=state.model.replace('business-','');
-  const bPre={'plan':'Erstelle einen vollständigen Businessplan auf Deutsch für: ','website':'Erstelle professionelle Website-Texte auf Deutsch für: ','ads':'Erstelle 5 verschiedene Ad-Texte auf Deutsch für: ','social':'Erstelle 10 kreative Social Media Posts auf Deutsch für: ','email':'Erstelle eine 5-teilige Email-Sequenz auf Deutsch für: ','pitch':'Erstelle ein vollständiges Pitch Deck auf Deutsch für: '};
-  const bSys={'plan':'Du bist ein Business-Experte. Erstelle NUR Businessplaene.','website':'Du bist ein Copywriter. Erstelle NUR Website-Texte.','ads':'Du bist ein Performance Marketing Experte. Erstelle NUR Werbeanzeigen-Texte.','social':'Du bist ein Social Media Manager. Erstelle NUR Social Media Posts für Instagram, LinkedIn und TikTok. Trenne die Posts klar mit Plattform-Label.','email':'Du bist ein Email Marketing Experte. Erstelle NUR Email-Sequenzen.','pitch':'Du bist ein Pitch-Experte. Erstelle NUR Pitch Decks.'};
+  // ── PROMPTS: JSON für strukturierte Tools, Text für plan/website ──
+  const bPre={
+    'plan':'Erstelle einen vollständigen Businessplan auf Deutsch für: ',
+    'website':'Erstelle professionelle Website-Texte auf Deutsch für: ',
+    'ads':'Erstelle 5 verschiedene Werbeanzeigen auf Deutsch für: ',
+    'social':'Erstelle 10 kreative Social Media Posts auf Deutsch für: ',
+    'email':'Erstelle eine 5-teilige Email-Sequenz auf Deutsch für: ',
+    'pitch':'Erstelle ein vollständiges Pitch Deck mit 10 Slides auf Deutsch für: '
+  };
+  const bSys={
+    'plan':'Du bist ein Business-Experte. Erstelle NUR Businessplaene auf Deutsch.',
+    'website':'Du bist ein Copywriter. Erstelle NUR Website-Texte auf Deutsch.',
+    'ads':`Du bist ein Performance Marketing Experte für Versicherungsmakler. Antworte NUR mit validem JSON in genau diesem Format (kein Markdown, keine Backticks, kein Text vor/nach JSON):
+{
+  "type": "ads",
+  "topic": "Kurzbeschreibung des Angebots",
+  "ads": [
+    {"number": 1, "platform": "Google", "headline": "max 30 Zeichen", "description": "max 90 Zeichen", "cta": "max 15 Zeichen"},
+    {"number": 2, "platform": "Google", "headline": "...", "description": "...", "cta": "..."},
+    {"number": 3, "platform": "Meta", "headline": "max 40 Zeichen", "description": "max 125 Zeichen", "cta": "Mehr erfahren"},
+    {"number": 4, "platform": "Meta", "headline": "...", "description": "...", "cta": "..."},
+    {"number": 5, "platform": "LinkedIn", "headline": "...", "description": "...", "cta": "..."}
+  ]
+}`,
+    'social':`Du bist ein Social Media Manager für Versicherungsmakler. Antworte NUR mit validem JSON in genau diesem Format (kein Markdown, keine Backticks):
+{
+  "type": "social_posts",
+  "topic": "Kurzbeschreibung des Themas",
+  "posts": [
+    {"number": 1, "platform": "Instagram", "caption": "Post-Text mit Hook und Call-to-Action", "hashtags": "#hashtag1 #hashtag2 #hashtag3"},
+    {"number": 2, "platform": "Instagram", "caption": "...", "hashtags": "..."},
+    {"number": 3, "platform": "LinkedIn", "caption": "...", "hashtags": "..."},
+    {"number": 4, "platform": "LinkedIn", "caption": "...", "hashtags": "..."},
+    {"number": 5, "platform": "TikTok", "caption": "...", "hashtags": "..."}
+  ]
+}
+Erstelle 10 Posts gemischt über Instagram, LinkedIn und TikTok. Jeder Post soll für Versicherungsmakler relevant sein.`,
+    'email':`Du bist ein Email Marketing Experte für Versicherungsmakler. Antworte NUR mit validem JSON in genau diesem Format (kein Markdown, keine Backticks):
+{
+  "type": "email_sequence",
+  "topic": "Kurzbeschreibung der Sequenz",
+  "emails": [
+    {"number": 1, "phase": "Awareness", "subject": "Betreff-Zeile", "preheader": "Preview-Text max 100 Zeichen", "body": "Email-Inhalt mit \\n\\n für Absätze. Anrede mit [Vorname]. Mit Call-to-Action am Ende."},
+    {"number": 2, "phase": "Education", "subject": "...", "preheader": "...", "body": "..."},
+    {"number": 3, "phase": "Trust", "subject": "...", "preheader": "...", "body": "..."},
+    {"number": 4, "phase": "Offer", "subject": "...", "preheader": "...", "body": "..."},
+    {"number": 5, "phase": "Last Chance", "subject": "...", "preheader": "...", "body": "..."}
+  ]
+}`,
+    'pitch':`Du bist ein Pitch-Experte. Antworte NUR mit validem JSON in genau diesem Format (kein Markdown, keine Backticks):
+{
+  "type": "pitch_deck",
+  "topic": "Kurzbeschreibung",
+  "slides": [
+    {"number": 1, "title": "Problem", "content": "Slide-Inhalt als Fließtext"},
+    {"number": 2, "title": "Lösung", "content": "..."},
+    {"number": 3, "title": "Markt", "content": "..."},
+    {"number": 4, "title": "Produkt", "content": "..."},
+    {"number": 5, "title": "Geschäftsmodell", "content": "..."},
+    {"number": 6, "title": "Traction", "content": "..."},
+    {"number": 7, "title": "Team", "content": "..."},
+    {"number": 8, "title": "Wettbewerb", "content": "..."},
+    {"number": 9, "title": "Finanzen", "content": "..."},
+    {"number": 10, "title": "Ask", "content": "..."}
+  ]
+}`
+  };
   const bMessages=isBusinessMode?[{role:'user',content:(bPre[businessType]||'')+txt}]:conversationHistory;
   const bodyData=isBusinessMode?{type:businessType,messages:bMessages,systemOverride:bSys[businessType]||''}:{messages:conversationHistory};
   fetchWithRetry(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(bodyData)})
@@ -952,17 +1023,155 @@ async function genChat(txt){
     if(d._fallback==='gemini')updateApiStatus('warn');
     conversationHistory.push({role:'assistant',content:reply});
     if(conversationHistory.length>30)conversationHistory=conversationHistory.slice(-30);
+    // ── STRUKTURIERTE TOOLS: JSON parsen und mit Kopier-Buttons rendern ──
+    if(isStructuredMode){
+      try{
+        const cleaned=reply.replace(/```json|```/g,'').trim();
+        const parsed=JSON.parse(cleaned);
+        renderStructuredOutput(parsed,txt);
+        saveChat(document.getElementById('chat-title').textContent,conversationHistory);
+        // Bild-Generator für Social Posts
+        if(isSocialMode){
+          const imgId='smimg'+Date.now();
+          const imgBox=document.createElement('div');imgBox.className='mw ai';
+          imgBox.innerHTML=`<div class="aav">V</div><div><div class="bb" style="max-width:480px"><div style="font-size:12px;font-weight:500;margin-bottom:8px">Bild für deine Posts generieren</div><div style="font-size:11px;color:var(--tm);margin-bottom:10px">1 Credit — passt zu allen Posts</div><input id="${imgId}-inp" class="minp" placeholder="Beschreibe dein Wunschbild (optional)..." style="margin-bottom:8px;font-size:12px"><button id="${imgId}-btn" onclick="genSocialImg('${imgId}','${txt.replace(/'/g,"\\'").substring(0,60)}')" style="width:100%;padding:9px;background:var(--t);color:#fff;border:none;border-radius:8px;font-family:Inter,sans-serif;font-size:12px;font-weight:500;cursor:pointer">Bild generieren (1 Credit)</button><div id="${imgId}-out" style="margin-top:10px;display:none"></div></div></div>`;
+          document.getElementById('fi').appendChild(imgBox);scrollFeed();
+        }
+        return;
+      }catch(parseErr){
+        console.warn('JSON parse failed, falling back to text:',parseErr);
+        // Fall through zu normaler Text-Anzeige
+      }
+    }
+    // ── PLAN, WEBSITE oder Parsing-Fallback: normale Text-Anzeige mit PDF ──
     const rendered=renderMD(reply);
     const extra=isBusinessMode?'<div style="margin-top:12px"><button onclick="exportPDF(\''+rendered.replace(/'/g,"\\'")+'\')" style="padding:6px 14px;border:1px solid var(--bd);border-radius:6px;background:var(--t);color:#fff;font-family:Inter,sans-serif;font-size:11px;cursor:pointer">Als PDF speichern</button></div>':'';
     addAIMsg(rendered+extra);
     saveChat(document.getElementById('chat-title').textContent,conversationHistory);
-    if(isSocialMode){
-      const imgId='smimg'+Date.now();
-      const imgBox=document.createElement('div');imgBox.className='mw ai';
-      imgBox.innerHTML=`<div class="aav">V</div><div><div class="bb" style="max-width:480px"><div style="font-size:12px;font-weight:500;margin-bottom:8px">Bild für deine Posts generieren</div><div style="font-size:11px;color:var(--tm);margin-bottom:10px">1 Credit — passt zu allen 10 Posts</div><input id="${imgId}-inp" class="minp" placeholder="Beschreibe dein Wunschbild (optional)..." style="margin-bottom:8px;font-size:12px"><button id="${imgId}-btn" onclick="genSocialImg('${imgId}','${txt.replace(/'/g,"\\'").substring(0,60)}')" style="width:100%;padding:9px;background:var(--t);color:#fff;border:none;border-radius:8px;font-family:Inter,sans-serif;font-size:12px;font-weight:500;cursor:pointer">Bild generieren (1 Credit)</button><div id="${imgId}-out" style="margin-top:10px;display:none"></div></div></div>`;
-      document.getElementById('fi').appendChild(imgBox);scrollFeed();
-    }
   }).catch(()=>{hideTyping();showFallbackMsg();});
+}
+// ── STRUKTURIERTE OUTPUTS RENDERN ──
+function renderStructuredOutput(data,topic){
+  if(data.type==='email_sequence')renderEmailSequence(data);
+  else if(data.type==='social_posts')renderSocialPosts(data);
+  else if(data.type==='ads')renderAdsOutput(data);
+  else if(data.type==='pitch_deck')renderPitchDeck(data);
+}
+// ── TOAST für Kopier-Bestätigung ──
+function showCopyToast(msg){
+  const toast=document.createElement('div');
+  toast.textContent='✓ '+(msg||'Kopiert');
+  toast.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#16a34a;color:#fff;padding:10px 20px;border-radius:8px;font-family:Inter,sans-serif;font-size:13px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.15);font-weight:500';
+  document.body.appendChild(toast);
+  setTimeout(()=>toast.style.opacity='0',1500);
+  setTimeout(()=>toast.remove(),1800);
+}
+function copyText(storeId,key,label){
+  const data=window.virgoStructured[storeId];
+  if(!data)return;
+  const text=data[key]||'';
+  navigator.clipboard.writeText(text).then(()=>showCopyToast(label||'Kopiert'));
+}
+// ── EMAIL-SEQUENZ RENDERN ──
+function renderEmailSequence(data){
+  const sid='es'+Date.now();
+  window.virgoStructured[sid]={emails:data.emails};
+  let html='<div style="font-size:14px;font-weight:600;margin-bottom:6px">📧 Email-Sequenz</div>';
+  html+='<div style="font-size:11px;color:var(--tm);margin-bottom:14px">'+escHtml(data.topic||'')+' · '+data.emails.length+' Emails</div>';
+  data.emails.forEach((email,idx)=>{
+    const id=sid+'-'+idx;
+    window.virgoStructured[id]={subject:email.subject,body:email.body,full:'Betreff: '+email.subject+'\n\n'+email.body};
+    html+='<div style="border:1px solid var(--bd);border-radius:10px;padding:14px;margin-bottom:10px;background:var(--bg)">';
+    html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--td);font-weight:600">Email '+email.number+'</span>';
+    if(email.phase)html+='<span style="font-size:9px;padding:2px 7px;border-radius:4px;background:#dbeafe;color:#1d4ed8;font-weight:500">'+escHtml(email.phase)+'</span>';
+    html+='</div>';
+    html+='<div style="font-size:13px;font-weight:600;margin-bottom:4px;color:var(--t)">'+escHtml(email.subject||'')+'</div>';
+    if(email.preheader)html+='<div style="font-size:11px;color:var(--tm);margin-bottom:10px;font-style:italic">'+escHtml(email.preheader)+'</div>';
+    html+='<div style="font-size:12px;color:#333;line-height:1.7;margin-bottom:12px;white-space:pre-wrap;background:var(--sf);padding:10px 12px;border-radius:6px">'+escHtml(email.body||'')+'</div>';
+    html+='<div style="display:flex;gap:6px;flex-wrap:wrap">';
+    html+='<button onclick="copyText(\''+id+'\',\'full\',\'Email kopiert\')" style="padding:7px 12px;background:var(--t);color:#fff;border:none;border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer;font-weight:500">Komplett kopieren</button>';
+    html+='<button onclick="copyText(\''+id+'\',\'subject\',\'Betreff kopiert\')" style="padding:7px 12px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer">Nur Betreff</button>';
+    html+='<button onclick="copyText(\''+id+'\',\'body\',\'Text kopiert\')" style="padding:7px 12px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer">Nur Text</button>';
+    html+='</div></div>';
+  });
+  addAIMsg(html);
+}
+// ── SOCIAL POSTS RENDERN ──
+function renderSocialPosts(data){
+  const sid='sp'+Date.now();
+  let html='<div style="font-size:14px;font-weight:600;margin-bottom:6px">📱 Social Media Posts</div>';
+  html+='<div style="font-size:11px;color:var(--tm);margin-bottom:14px">'+escHtml(data.topic||'')+' · '+data.posts.length+' Posts</div>';
+  data.posts.forEach((post,idx)=>{
+    const id=sid+'-'+idx;
+    const fullText=post.caption+(post.hashtags?'\n\n'+post.hashtags:'');
+    window.virgoStructured[id]={caption:post.caption||'',hashtags:post.hashtags||'',full:fullText};
+    const platformColors={'Instagram':'#E1306C','LinkedIn':'#0A66C2','TikTok':'#000000','Facebook':'#1877F2','Twitter':'#000000'};
+    const color=platformColors[post.platform]||'#666';
+    html+='<div style="border:1px solid var(--bd);border-radius:10px;padding:14px;margin-bottom:10px;background:var(--bg)">';
+    html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">';
+    html+='<span style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--td);font-weight:600">Post '+post.number+'</span>';
+    html+='<span style="font-size:9px;padding:2px 7px;border-radius:4px;background:'+color+';color:#fff;font-weight:500">'+escHtml(post.platform||'')+'</span>';
+    html+='</div>';
+    html+='<div style="font-size:12px;color:#333;line-height:1.7;margin-bottom:8px;white-space:pre-wrap">'+escHtml(post.caption||'')+'</div>';
+    if(post.hashtags)html+='<div style="font-size:11px;color:#2563eb;margin-bottom:12px">'+escHtml(post.hashtags)+'</div>';
+    html+='<div style="display:flex;gap:6px;flex-wrap:wrap">';
+    html+='<button onclick="copyText(\''+id+'\',\'full\',\'Post kopiert\')" style="padding:7px 12px;background:var(--t);color:#fff;border:none;border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer;font-weight:500">Post kopieren</button>';
+    html+='<button onclick="copyText(\''+id+'\',\'caption\',\'Text kopiert\')" style="padding:7px 12px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer">Nur Text</button>';
+    if(post.hashtags)html+='<button onclick="copyText(\''+id+'\',\'hashtags\',\'Hashtags kopiert\')" style="padding:7px 12px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer">Nur Hashtags</button>';
+    html+='</div></div>';
+  });
+  addAIMsg(html);
+}
+// ── ADS RENDERN ──
+function renderAdsOutput(data){
+  const sid='ad'+Date.now();
+  let html='<div style="font-size:14px;font-weight:600;margin-bottom:6px">🎯 Werbeanzeigen</div>';
+  html+='<div style="font-size:11px;color:var(--tm);margin-bottom:14px">'+escHtml(data.topic||'')+' · '+data.ads.length+' Anzeigen</div>';
+  data.ads.forEach((ad,idx)=>{
+    const id=sid+'-'+idx;
+    const fullText='Headline: '+ad.headline+'\nDescription: '+ad.description+'\nCTA: '+ad.cta;
+    window.virgoStructured[id]={headline:ad.headline||'',description:ad.description||'',cta:ad.cta||'',full:fullText};
+    const platformColors={'Google':'#4285F4','Meta':'#1877F2','LinkedIn':'#0A66C2','Facebook':'#1877F2','Instagram':'#E1306C'};
+    const color=platformColors[ad.platform]||'#666';
+    html+='<div style="border:1px solid var(--bd);border-radius:10px;padding:14px;margin-bottom:10px;background:var(--bg)">';
+    html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">';
+    html+='<span style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--td);font-weight:600">Ad '+ad.number+'</span>';
+    html+='<span style="font-size:9px;padding:2px 7px;border-radius:4px;background:'+color+';color:#fff;font-weight:500">'+escHtml(ad.platform||'')+'</span>';
+    html+='</div>';
+    html+='<div style="font-size:13px;font-weight:600;margin-bottom:6px;color:var(--t)">'+escHtml(ad.headline||'')+'</div>';
+    html+='<div style="font-size:12px;color:#333;line-height:1.6;margin-bottom:8px">'+escHtml(ad.description||'')+'</div>';
+    html+='<div style="font-size:11px;color:#2563eb;font-weight:500;margin-bottom:12px">CTA: '+escHtml(ad.cta||'')+'</div>';
+    html+='<div style="display:flex;gap:6px;flex-wrap:wrap">';
+    html+='<button onclick="copyText(\''+id+'\',\'full\',\'Ad kopiert\')" style="padding:7px 12px;background:var(--t);color:#fff;border:none;border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer;font-weight:500">Komplett kopieren</button>';
+    html+='<button onclick="copyText(\''+id+'\',\'headline\',\'Headline kopiert\')" style="padding:7px 12px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer">Headline</button>';
+    html+='<button onclick="copyText(\''+id+'\',\'description\',\'Description kopiert\')" style="padding:7px 12px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer">Description</button>';
+    html+='</div></div>';
+  });
+  addAIMsg(html);
+}
+// ── PITCH DECK RENDERN ──
+function renderPitchDeck(data){
+  const sid='pd'+Date.now();
+  let html='<div style="font-size:14px;font-weight:600;margin-bottom:6px">📊 Pitch Deck</div>';
+  html+='<div style="font-size:11px;color:var(--tm);margin-bottom:14px">'+escHtml(data.topic||'')+' · '+data.slides.length+' Slides</div>';
+  // Komplett-Kopieren Button oben
+  const allSlidesText=data.slides.map(s=>'SLIDE '+s.number+': '+s.title+'\n\n'+s.content).join('\n\n---\n\n');
+  window.virgoStructured[sid+'-all']={all:allSlidesText};
+  html+='<button onclick="copyText(\''+sid+'-all\',\'all\',\'Komplettes Deck kopiert\')" style="padding:8px 14px;background:var(--t);color:#fff;border:none;border-radius:8px;font-family:Inter,sans-serif;font-size:12px;font-weight:500;cursor:pointer;margin-bottom:14px">Komplettes Deck kopieren</button>';
+  data.slides.forEach((slide,idx)=>{
+    const id=sid+'-'+idx;
+    const fullText='SLIDE '+slide.number+': '+slide.title+'\n\n'+slide.content;
+    window.virgoStructured[id]={title:slide.title||'',content:slide.content||'',full:fullText};
+    html+='<div style="border:1px solid var(--bd);border-radius:10px;padding:14px;margin-bottom:10px;background:var(--bg)">';
+    html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
+    html+='<span style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--td);font-weight:600">Slide '+slide.number+'</span>';
+    html+='</div>';
+    html+='<div style="font-size:14px;font-weight:600;margin-bottom:8px;color:var(--t)">'+escHtml(slide.title||'')+'</div>';
+    html+='<div style="font-size:12px;color:#333;line-height:1.7;margin-bottom:12px;white-space:pre-wrap">'+escHtml(slide.content||'')+'</div>';
+    html+='<button onclick="copyText(\''+id+'\',\'full\',\'Slide kopiert\')" style="padding:7px 12px;background:var(--t);color:#fff;border:none;border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer;font-weight:500">Slide kopieren</button>';
+    html+='</div>';
+  });
+  addAIMsg(html);
 }
 async function genSocialImg(imgId,topic){
   if(!(await useCredits('img')))return;
@@ -1305,5 +1514,3 @@ if(localStorage.getItem('virgo_sb_closed')==='1'){document.getElementById('sb').
 <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('/sw.js').catch(()=>{});});}</script>
 </body>
 </html>
-
-
