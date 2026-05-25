@@ -1,218 +1,230 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Virgo · Anzeigen schalten</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Versicherungsberatung</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --black: #0a0a0b;
-    --ink: #1b1b1f;
-    --muted: #6b6b73;
-    --line: #e7e7ea;
-    --bg: #ffffff;
-    --soft: #f6f7f9;
-    --blue: #1d4ed8;
-    --blue-deep: #14328f;
-    --blue-soft: #eef2ff;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: 'Sora', sans-serif;
-    background: var(--bg);
-    color: var(--ink);
-    line-height: 1.5;
-    -webkit-font-smoothing: antialiased;
-  }
-  .wrap { max-width: 560px; margin: 0 auto; padding: 64px 24px 96px; }
-
-  .badge {
-    display: inline-flex; align-items: center; gap: 8px;
-    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
-    color: var(--blue); font-weight: 500; margin-bottom: 22px;
-  }
-  .badge::before {
-    content: ""; width: 7px; height: 7px; border-radius: 50%;
-    background: var(--blue); box-shadow: 0 0 0 4px var(--blue-soft);
-  }
-
-  h1 {
-    font-family: 'Playfair Display', serif;
-    font-weight: 600; font-size: 40px; line-height: 1.1;
-    letter-spacing: -.01em; color: var(--black); margin-bottom: 14px;
-  }
-  h1 em { font-style: italic; color: var(--blue-deep); }
-  .lead { color: var(--muted); font-size: 16px; font-weight: 300; max-width: 44ch; margin-bottom: 40px; }
-
-  form { display: grid; gap: 22px; }
-  .field { display: grid; gap: 8px; }
-  label { font-size: 13px; font-weight: 500; letter-spacing: .01em; }
-  .hint { font-size: 12px; color: var(--muted); font-weight: 300; }
-  input, select, textarea {
-    font-family: inherit; font-size: 15px; color: var(--ink);
-    background: var(--bg); border: 1px solid var(--line);
-    border-radius: 12px; padding: 13px 14px; width: 100%;
-    transition: border-color .15s, box-shadow .15s;
-  }
-  textarea { resize: vertical; min-height: 76px; }
-  input:focus, select:focus, textarea:focus {
-    outline: none; border-color: var(--blue);
-    box-shadow: 0 0 0 4px var(--blue-soft);
-  }
-  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-
-  .summary {
-    background: var(--soft); border: 1px solid var(--line);
-    border-radius: 14px; padding: 18px 20px; margin-top: 4px;
-  }
-  .summary .line { display: flex; justify-content: space-between; font-size: 14px; padding: 5px 0; color: var(--muted); }
-  .summary .line strong { color: var(--ink); font-weight: 500; }
-  .summary .total { border-top: 1px solid var(--line); margin-top: 8px; padding-top: 12px; font-size: 17px; }
-  .summary .total strong { font-weight: 600; color: var(--black); }
-
-  button {
-    font-family: inherit; font-size: 15px; font-weight: 500;
-    color: #fff; background: var(--blue); border: none;
-    border-radius: 12px; padding: 16px; cursor: pointer;
-    transition: background .15s, transform .05s; margin-top: 6px;
-  }
-  button:hover { background: var(--blue-deep); }
-  button:active { transform: translateY(1px); }
-  button:disabled { opacity: .55; cursor: default; }
-
-  .trust { display: flex; gap: 18px; margin-top: 20px; flex-wrap: wrap; }
-  .trust span { font-size: 12px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
-  .trust span::before { content: "✓"; color: var(--blue); font-weight: 600; }
-
-  .err { color: #b42318; font-size: 13px; margin-top: 8px; min-height: 1em; }
-  .footnote { margin-top: 40px; font-size: 12px; color: var(--muted); font-weight: 300; }
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#fff;color:#111;min-height:100vh}
+.hero{padding:80px 20px 60px;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--color,#111) 0%,transparent 60%);opacity:.05;pointer-events:none}
+.badge{display:inline-block;padding:6px 16px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:20px;border:1px solid}
+.hero h1{font-size:clamp(28px,5vw,48px);font-weight:700;line-height:1.2;margin-bottom:16px;max-width:700px;margin-left:auto;margin-right:auto}
+.hero p{font-size:16px;color:#666;line-height:1.7;max-width:500px;margin:0 auto 32px}
+.makler-card{display:inline-flex;align-items:center;gap:12px;padding:12px 20px;border-radius:50px;border:1px solid #e8e8e8;background:#f7f7f7;margin-bottom:40px}
+.makler-av{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0}
+.makler-info{text-align:left}
+.makler-name{font-size:13px;font-weight:600}
+.makler-firma{font-size:11px;color:#888}
+.vers-tags{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:48px}
+.vers-tag{padding:6px 14px;border-radius:20px;border:1px solid #e8e8e8;font-size:12px;color:#666;background:#fff}
+.form-section{max-width:560px;margin:0 auto;padding:0 20px 80px}
+.form-card{background:#fff;border:1px solid #e8e8e8;border-radius:20px;padding:40px;box-shadow:0 4px 24px rgba(0,0,0,.06)}
+.form-card h2{font-size:22px;font-weight:600;margin-bottom:8px}
+.form-card p{font-size:13px;color:#888;margin-bottom:28px;line-height:1.6}
+.form-group{margin-bottom:16px}
+label{display:block;font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+input,select,textarea{width:100%;padding:12px 16px;border:1.5px solid #e8e8e8;border-radius:10px;font-family:'Inter',sans-serif;font-size:14px;color:#111;outline:none;transition:border-color .2s;background:#fff}
+input:focus,select:focus,textarea:focus{border-color:var(--color,#111)}
+textarea{resize:vertical;min-height:80px}
+.submit-btn{width:100%;padding:16px;border:none;border-radius:12px;font-family:'Inter',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:opacity .15s;margin-top:8px}
+.submit-btn:hover{opacity:.85}
+.success-msg{display:none;text-align:center;padding:40px 20px}
+.success-msg h3{font-size:22px;font-weight:600;margin-bottom:8px}
+.success-msg p{font-size:14px;color:#666;line-height:1.7}
+.trust{display:flex;gap:24px;justify-content:center;flex-wrap:wrap;margin-bottom:40px}
+.trust-item{display:flex;align-items:center;gap:6px;font-size:12px;color:#888}
+.footer{text-align:center;padding:20px;font-size:11px;color:#bbb;border-top:1px solid #f0f0f0}
+.loading{text-align:center;padding:80px 20px;color:#888}
+@media(max-width:600px){.form-card{padding:24px 20px}.hero{padding:60px 20px 40px}}
 </style>
 </head>
 <body>
-  <main class="wrap">
-    <div class="badge">Virgo Ads</div>
-    <h1>Neue Kunden, <em>ohne Aufwand</em>.</h1>
-    <p class="lead">Beschreiben Sie kurz Ihr Angebot – Virgo schaltet und steuert Ihre Google-Anzeigen vollständig für Sie. Sie kümmern sich um nichts.</p>
 
-    <form id="adForm">
-      <div class="field">
-        <label for="campaignName">Was bewerben Sie?</label>
-        <input id="campaignName" type="text" placeholder="z. B. Berufsunfähigkeitsversicherung Düsseldorf" required />
+<div id="loading" class="loading">
+  <div style="font-size:13px;font-weight:200;letter-spacing:8px;color:#bbb;margin-bottom:16px">V I R G O</div>
+  <p>Lade Landing Page...</p>
+</div>
+
+<div id="page" style="display:none">
+  <div class="hero">
+    <div class="badge" id="hero-badge" style="color:#111;border-color:#e8e8e8">Kostenlose Beratung</div>
+    <h1 id="hero-title">Deine persönliche Versicherungsberatung</h1>
+    <p id="hero-desc">Unverbindlich. Kostenlos. Auf dich zugeschnitten.</p>
+    <div class="makler-card">
+      <div class="makler-av" id="makler-av">M</div>
+      <div class="makler-info">
+        <div class="makler-name" id="makler-name">Makler Name</div>
+        <div class="makler-firma" id="makler-firma">Versicherungsmakler</div>
       </div>
+    </div>
+    <div class="vers-tags" id="vers-tags"></div>
+    <div class="trust">
+      <div class="trust-item">✅ Kostenlos & unverbindlich</div>
+      <div class="trust-item">🔒 100% Datenschutz</div>
+      <div class="trust-item">⚡ Antwort in 24h</div>
+    </div>
+  </div>
 
-      <div class="field">
-        <label for="keywords">Wonach suchen Ihre Wunschkunden?</label>
-        <textarea id="keywords" placeholder="Ein Begriff pro Zeile, z. B.&#10;berufsunfähigkeitsversicherung&#10;bu versicherung beratung&#10;versicherungsmakler düsseldorf"></textarea>
-        <span class="hint">Ein Suchbegriff pro Zeile. Keine Idee? Lassen Sie es leer – Virgo schlägt welche vor.</span>
-      </div>
-
-      <div class="field">
-        <label for="geo">Region</label>
-        <select id="geo">
-          <option value="2276">Ganz Deutschland</option>
-          <option value="1004979">Düsseldorf</option>
-          <option value="1004959">Köln</option>
-          <option value="1003854">Berlin</option>
-          <option value="1004364">München</option>
-          <option value="1005418">Hamburg</option>
-        </select>
-      </div>
-
-      <div class="row">
-        <div class="field">
-          <label for="daily">Tagesbudget</label>
-          <input id="daily" type="number" min="5" step="1" value="20" required />
-          <span class="hint">in Euro / Tag</span>
+  <div class="form-section">
+    <div class="form-card">
+      <h2>Jetzt kostenlose Beratung anfragen</h2>
+      <p>Füll das Formular aus — ich melde mich innerhalb von 24 Stunden persönlich bei dir.</p>
+      
+      <div id="form-content">
+        <div class="form-group">
+          <label>Dein Name *</label>
+          <input id="f-name" placeholder="Max Mustermann">
         </div>
-        <div class="field">
-          <label for="days">Laufzeit</label>
-          <input id="days" type="number" min="1" step="1" value="30" required />
-          <span class="hint">in Tagen</span>
+        <div class="form-group">
+          <label>Telefonnummer *</label>
+          <input id="f-tel" type="tel" placeholder="+49 ...">
         </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input id="f-email" type="email" placeholder="max@email.de">
+        </div>
+        <div class="form-group">
+          <label>Versicherung</label>
+          <select id="f-vers"></select>
+        </div>
+        <div class="form-group">
+          <label>Nachricht (optional)</label>
+          <textarea id="f-msg" placeholder="Was möchtest du wissen? Z.B. Ich bin Selbstständig und suche eine günstige PKV..."></textarea>
+        </div>
+        <div style="font-size:11px;color:#bbb;margin-bottom:16px;line-height:1.6">Mit dem Absenden stimmst du zu, dass deine Daten für die Beratungsanfrage gespeichert werden. Keine Weitergabe an Dritte.</div>
+        <button class="submit-btn" id="submit-btn" onclick="submitLead()">Kostenlose Beratung anfragen →</button>
       </div>
 
-      <div class="field">
-        <label for="email">Ihre E-Mail</label>
-        <input id="email" type="email" placeholder="name@kanzlei.de" required />
-        <span class="hint">Für Beleg und Reporting.</span>
+      <div class="success-msg" id="success-msg">
+        <div style="font-size:48px;margin-bottom:16px">✅</div>
+        <h3>Anfrage erhalten!</h3>
+        <p>Vielen Dank. <span id="success-name">Der Makler</span> wird sich innerhalb von 24 Stunden bei dir melden.</p>
       </div>
+    </div>
+  </div>
+</div>
 
-      <div class="summary" id="summary">
-        <div class="line"><span>Werbebudget</span><strong id="sumBudget">600,00 €</strong></div>
-        <div class="line"><span>Abwicklung (5 %)</span><strong id="sumFee">30,00 €</strong></div>
-        <div class="line total"><span>Gesamt</span><strong id="sumTotal">630,00 €</strong></div>
-      </div>
+<div id="not-found" style="display:none;text-align:center;padding:80px 20px">
+  <div style="font-size:13px;font-weight:200;letter-spacing:8px;color:#bbb;margin-bottom:24px">V I R G O</div>
+  <h2 style="font-size:22px;font-weight:300;margin-bottom:12px">Seite nicht gefunden</h2>
+  <p style="color:#888;margin-bottom:24px">Diese Makler-Seite existiert nicht.</p>
+  <a href="/" style="padding:12px 24px;background:#111;color:#fff;text-decoration:none;border-radius:8px;font-size:13px">Zu Virgo AI</a>
+</div>
 
-      <button id="submitBtn" type="submit">Kampagne starten</button>
-      <div class="err" id="err"></div>
-
-      <div class="trust">
-        <span>Sichere Zahlung über Stripe</span>
-        <span>Jederzeit kündbar</span>
-        <span>Volle Kostenkontrolle</span>
-      </div>
-    </form>
-
-    <p class="footnote">Mit „Kampagne starten" zahlen Sie das Werbebudget und eine kleine Abwicklungsgebühr im Voraus. Virgo richtet Ihre Anzeigen ein und betreut sie für Sie.</p>
-  </main>
+<div class="footer">
+  <span>Powered by </span><a href="https://virgoio.com" style="color:#bbb;text-decoration:none;font-weight:500">Virgo AI</a>
+</div>
 
 <script>
-  const FEE_RATE = 0.05;
-  const fmt = (n) => n.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
+let maklerData = null;
 
-  const daily = document.getElementById("daily");
-  const days = document.getElementById("days");
+async function loadMakler() {
+  const path = window.location.pathname;
+  const slug = path.split('/makler/')[1]?.replace(/\//g,'');
+  if (!slug) { showNotFound(); return; }
 
-  function recalc() {
-    const budget = (Number(daily.value) || 0) * (Number(days.value) || 0);
-    const fee = budget * FEE_RATE;
-    document.getElementById("sumBudget").textContent = fmt(budget);
-    document.getElementById("sumFee").textContent = fmt(fee);
-    document.getElementById("sumTotal").textContent = fmt(budget + fee);
+  try {
+    const r = await fetch('/api/tools?tool=makler-get&slug=' + slug);
+    if (!r.ok) { showNotFound(); return; }
+    const data = await r.json();
+    if (!data || data.error) { showNotFound(); return; }
+    maklerData = data;
+    renderPage(data);
+  } catch(e) { showNotFound(); }
+}
+
+function renderPage(d) {
+  document.title = (d.name || 'Makler') + ' — Versicherungsberatung';
+  document.documentElement.style.setProperty('--color', d.farbe || '#111');
+
+  if (d.header_image) {
+    const imgEl = document.createElement('img');
+    imgEl.src = d.header_image;
+    imgEl.style.cssText = 'width:100%;height:220px;object-fit:cover;margin-bottom:24px;border-radius:12px';
+    const hero = document.querySelector('.hero');
+    hero.insertBefore(imgEl, hero.firstChild);
   }
-  daily.addEventListener("input", recalc);
-  days.addEventListener("input", recalc);
-  recalc();
+  document.getElementById('hero-badge').style.borderColor = d.farbe || '#111';
+  document.getElementById('hero-badge').style.color = d.farbe || '#111';
+  document.getElementById('hero-title').textContent = 'Versicherungsberatung mit ' + d.name;
+  document.getElementById('hero-desc').textContent = d.beschreibung || 'Kostenlose und unverbindliche Beratung. Ich helfe dir die beste Versicherung zu finden.';
+  document.getElementById('makler-av').textContent = d.name[0].toUpperCase();
+  document.getElementById('makler-av').style.background = d.farbe || '#111';
+  document.getElementById('makler-name').textContent = d.name;
+  document.getElementById('makler-firma').textContent = d.firma || 'Versicherungsmakler';
 
-  document.getElementById("adForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const btn = document.getElementById("submitBtn");
-    const err = document.getElementById("err");
-    err.textContent = "";
-    btn.disabled = true;
-    btn.textContent = "Weiterleitung zur Zahlung …";
-
-    const keywords = document.getElementById("keywords").value
-      .split("\n").map((s) => s.trim()).filter(Boolean);
-
-    try {
-      const res = await fetch("/api/ads-checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          campaignName: document.getElementById("campaignName").value,
-          keywords,
-          geoTargetConstantId: document.getElementById("geo").value,
-          dailyBudgetEuros: Number(daily.value),
-          runDays: Number(days.value),
-          maklerEmail: document.getElementById("email").value,
-        }),
-      });
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url; // weiter zu Stripe
-      } else {
-        throw new Error(data.error || "Unbekannter Fehler");
-      }
-    } catch (e2) {
-      err.textContent = "Fehler: " + e2.message;
-      btn.disabled = false;
-      btn.textContent = "Kampagne starten";
-    }
+  const tags = document.getElementById('vers-tags');
+  (d.versicherungen || []).forEach(v => {
+    const tag = document.createElement('span');
+    tag.className = 'vers-tag';
+    tag.textContent = v;
+    tags.appendChild(tag);
   });
+
+  const select = document.getElementById('f-vers');
+  select.innerHTML = '<option value="">Versicherung wählen...</option>';
+  (d.versicherungen || []).forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v; opt.textContent = v;
+    select.appendChild(opt);
+  });
+
+  const btn = document.getElementById('submit-btn');
+  btn.style.background = d.farbe || '#111';
+  btn.style.color = '#fff';
+
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('page').style.display = 'block';
+}
+
+async function submitLead() {
+  const name = document.getElementById('f-name').value.trim();
+  const tel = document.getElementById('f-tel').value.trim();
+  const email = document.getElementById('f-email').value.trim();
+  const vers = document.getElementById('f-vers').value;
+  const msg = document.getElementById('f-msg').value.trim();
+
+  if (!name || !tel) { alert('Bitte Name und Telefon ausfüllen.'); return; }
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true; btn.textContent = 'Wird gesendet...';
+
+  try {
+    const r = await fetch('/api/tools', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tool: 'makler-lead',
+        makler_id: maklerData?.id,
+        makler_email: maklerData?.email,
+        makler_name: maklerData?.name,
+        name, telefon: tel, email, versicherung: vers, nachricht: msg
+      })
+    });
+    const d = await r.json();
+    if (d.success) {
+      document.getElementById('form-content').style.display = 'none';
+      document.getElementById('success-msg').style.display = 'block';
+      document.getElementById('success-name').textContent = maklerData?.name || 'Der Makler';
+    } else {
+      alert(d.error || 'Fehler beim Senden.');
+      btn.disabled = false; btn.textContent = 'Kostenlose Beratung anfragen →';
+    }
+  } catch(e) {
+    alert('Verbindungsfehler.');
+    btn.disabled = false; btn.textContent = 'Kostenlose Beratung anfragen →';
+  }
+}
+
+function showNotFound() {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('not-found').style.display = 'block';
+}
+
+loadMakler();
 </script>
 </body>
 </html>
