@@ -14,7 +14,7 @@
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-const VIRGO_FEE_RATE = 0.2; // 20 % Service-Fee auf das Werbebudget
+const VIRGO_FEE_RATE = 0.05; // 5 % Abwicklungsgebühr auf das Werbebudget
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Nur POST erlaubt." });
@@ -47,7 +47,7 @@ export default async function handler(req, res) {
             unit_amount: Math.round(grandTotal * 100),
             product_data: {
               name: `Google-Ads-Kampagne: ${campaignName}`,
-              description: `Werbebudget ${budgetTotal.toFixed(2)} € + Virgo-Service ${fee.toFixed(2)} € (${runDays} Tage à ${dailyBudgetEuros} €)`,
+              description: `Werbebudget ${budgetTotal.toFixed(2)} € + Abwicklung ${fee.toFixed(2)} € (${runDays} Tage à ${dailyBudgetEuros} €)`,
             },
           },
         },
