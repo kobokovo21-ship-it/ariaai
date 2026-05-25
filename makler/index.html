@@ -142,8 +142,8 @@
 
       <div class="summary" id="summary">
         <div class="line"><span>Werbebudget</span><strong id="sumBudget">600,00 €</strong></div>
-        <div class="line"><span>Virgo-Service (20 %)</span><strong id="sumFee">120,00 €</strong></div>
-        <div class="line total"><span>Gesamt</span><strong id="sumTotal">720,00 €</strong></div>
+        <div class="line"><span>Abwicklung (5 %)</span><strong id="sumFee">30,00 €</strong></div>
+        <div class="line total"><span>Gesamt</span><strong id="sumTotal">630,00 €</strong></div>
       </div>
 
       <button id="submitBtn" type="submit">Kampagne starten</button>
@@ -156,11 +156,11 @@
       </div>
     </form>
 
-    <p class="footnote">Mit „Kampagne starten" zahlen Sie das Werbebudget und die Virgo-Servicegebühr im Voraus. Virgo richtet Ihre Anzeigen ein und betreut sie für Sie.</p>
+    <p class="footnote">Mit „Kampagne starten" zahlen Sie das Werbebudget und eine kleine Abwicklungsgebühr im Voraus. Virgo richtet Ihre Anzeigen ein und betreut sie für Sie.</p>
   </main>
 
 <script>
-  const FEE_RATE = 0.20;
+  const FEE_RATE = 0.05;
   const fmt = (n) => n.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
 
   const daily = document.getElementById("daily");
