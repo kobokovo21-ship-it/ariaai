@@ -2,149 +2,1556 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Datenschutzerklärung | VIRGO</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>V I R G O | Mehr Leads. Weniger Aufwand.</title>
+<meta name="description" content="VIRGO - Die KI-Plattform für Versicherungsmakler. Mehr Leads, weniger Aufwand. Google Ads, Landing Pages, Leads und Content automatisiert mit KI.">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#111111">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="VIRGO">
+<link rel="apple-touch-icon" href="/icon-512.png">
+<link rel="icon" type="image/png" href="/icon-512.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Inter',sans-serif;background:#fff;color:#111;line-height:1.7}
-.header{padding:48px 0 32px;border-bottom:1px solid #f0f0f0;margin-bottom:48px}
-.logo{font-size:12px;font-weight:300;letter-spacing:8px;color:#888;text-decoration:none;display:block;margin-bottom:8px}
-.header h1{font-size:28px;font-weight:300;letter-spacing:1px}
-.container{max-width:760px;margin:0 auto;padding:0 24px 80px}
-h2{font-size:17px;font-weight:600;margin:36px 0 12px;padding-top:12px;border-top:1px solid #f5f5f5}
-h2:first-of-type{border-top:none}
-p{font-size:14px;color:#333;margin-bottom:12px}
-ul{font-size:14px;color:#333;margin:0 0 12px 20px}
-ul li{margin-bottom:6px}
-a{color:#2563eb;text-decoration:none}
-a:hover{text-decoration:underline}
-.badge{display:inline-block;padding:4px 12px;background:#f3f4f6;border-radius:20px;font-size:11px;font-weight:500;color:#666;margin-bottom:32px}
-.back{display:inline-block;margin-top:48px;font-size:13px;color:#888;text-decoration:none}
-.back:hover{color:#111}
-.highlight{background:#f8faff;border-left:3px solid #2563eb;padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0}
-.highlight p{margin:0;font-size:13px;color:#1e40af}
+:root{--bg:#fff;--sf:#f7f7f7;--sf2:#f0f0f0;--bd:#e8e8e8;--t:#111;--tm:#888;--td:#bbb;--blue:#2563eb;--red:#ef4444;--green:#22c55e}
+html{height:100%;height:-webkit-fill-available}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:flex;height:100vh;height:100dvh;overflow:hidden;position:fixed;width:100%}
+.sb{width:260px;flex-shrink:0;background:var(--sf);border-right:1px solid var(--bd);display:flex;flex-direction:column;overflow:hidden}
+.sb-top{padding:16px;border-bottom:1px solid var(--bd);display:flex;flex-direction:column;gap:8px}
+.sb-logo-row{display:flex;align-items:center;justify-content:space-between}
+.logo{font-size:13px;font-weight:200;letter-spacing:8px}
+.sb-close-btn{display:none;background:transparent;border:none;cursor:pointer;color:var(--td);font-size:24px;min-width:44px;min-height:44px;align-items:center;justify-content:center;border-radius:6px}
+.sb-close-btn:hover{background:var(--sf2)}
+.new-btn{width:100%;padding:9px 14px;background:var(--t);color:#fff;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-size:12px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:7px}
+.new-btn:hover{opacity:.85}
+.new-btn.sec{background:var(--sf);color:var(--t);border:1px solid var(--bd)}
+.new-btn.sec:hover{background:var(--sf2)}
+.ms{padding:12px 16px;border-bottom:1px solid var(--bd);overflow-y:auto;max-height:280px}
+.sl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--td);margin-bottom:8px;display:block}
+.mc{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;cursor:pointer;font-size:12px;color:var(--tm);margin-bottom:2px;border:none;background:transparent;font-family:'Inter',sans-serif;width:100%;text-align:left;-webkit-tap-highlight-color:transparent;transition:all .1s}
+.mc:hover,.mc:active{background:var(--sf2);color:var(--t)}
+.mc.on{background:var(--bg);color:var(--t);font-weight:500;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.mc.modelia{border:1px solid rgba(212,175,55,.4)}
+.mc.modelia.on{border-color:rgba(212,175,55,.6)}
+.md{width:5px;height:5px;border-radius:50%;background:var(--bd);flex-shrink:0}
+.mc.on .md{background:var(--blue)}
+.mt{margin-left:auto;font-size:9px;padding:2px 6px;border-radius:4px;background:var(--sf2);color:var(--td);white-space:nowrap}
+.mt.gold{background:#fef9c3;color:#92400e}
+.hist{flex:1;overflow-y:auto;padding:8px}
+.hl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--td);padding:8px 8px 4px;display:block}
+.hi{display:flex;align-items:center;gap:4px;padding:7px 10px;border-radius:7px;font-size:12px;color:var(--tm);cursor:pointer;margin-bottom:1px;-webkit-tap-highlight-color:transparent;transition:all .1s}
+.hi:hover,.hi:active{background:var(--sf2);color:var(--t)}
+.hi.on{background:var(--sf2);color:var(--t)}
+.hi-title{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hi-del{background:transparent;border:none;cursor:pointer;color:transparent;font-size:16px;padding:2px 4px;flex-shrink:0;min-width:24px;min-height:24px;-webkit-tap-highlight-color:transparent}
+.hi:hover .hi-del,.hi:active .hi-del{color:var(--td)}
+.hi-del:hover{color:var(--red)!important}
+.hist-empty{padding:14px 10px;font-size:11px;color:var(--td);line-height:1.7}
+.ubar{padding:12px 16px;border-top:1px solid var(--bd);display:flex;align-items:center;gap:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;flex-shrink:0}
+.ubar:hover{background:var(--sf2)}
+.av{width:28px;height:28px;border-radius:50%;background:var(--t);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0}
+.un{font-size:12px;font-weight:500}
+.up{font-size:10px;color:var(--tm)}
+.sb.collapsed{width:0;min-width:0;border-right:none;overflow:hidden}
+.sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:98}
+.sb-overlay.vis{display:block}
+.main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.topbar{height:52px;padding:0 16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px;flex-shrink:0}
+.hamburger{display:none;background:transparent;border:none;cursor:pointer;color:var(--t);font-size:22px;min-width:44px;min-height:44px;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;border-radius:8px;flex-shrink:0}
+.sb-toggle{background:transparent;border:none;cursor:pointer;color:var(--tm);font-size:15px;padding:6px 8px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sb-toggle:hover{background:var(--sf2);color:var(--t)}
+.topbar-title{font-size:13px;font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.topbar-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.cbadge{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:20px;border:1px solid var(--bd);font-size:11px;font-weight:500;cursor:pointer;white-space:nowrap;-webkit-tap-highlight-color:transparent}
+.cdot{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0}
+.cdot.low{background:var(--red);animation:pr 1s infinite}
+@keyframes pr{0%,100%{opacity:1}50%{opacity:.4}}
+.tb-btn{padding:6px 12px;border-radius:7px;border:1px solid var(--bd);background:transparent;font-family:'Inter',sans-serif;font-size:11px;color:var(--tm);cursor:pointer;white-space:nowrap;-webkit-tap-highlight-color:transparent}
+.tb-btn.primary{background:var(--t);color:#fff;border-color:var(--t)}
+.feed{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:24px 0 8px}
+.fi{max-width:740px;margin:0 auto;padding:0 16px;display:flex;flex-direction:column;gap:20px}
+.landing{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:50vh;text-align:center;gap:10px;padding:20px}
+.ll{font-size:13px;font-weight:200;letter-spacing:8px;color:var(--td);margin-bottom:6px}
+.lt{font-size:22px;font-weight:300;letter-spacing:-.5px;line-height:1.3}
+.ls{font-size:13px;color:var(--tm);font-weight:300;max-width:340px;line-height:1.7}
+.starters{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:6px}
+.starter{padding:7px 12px;border-radius:8px;border:1px solid var(--bd);font-size:11px;color:var(--tm);cursor:pointer;background:transparent;font-family:'Inter',sans-serif;-webkit-tap-highlight-color:transparent}
+.starter:hover,.starter:active{border-color:var(--t);color:var(--t)}
+.mw{display:flex;flex-direction:column;gap:3px}
+.mw.user{align-items:flex-end}
+.bb{max-width:85%;padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.7;font-weight:300}
+.mw.user .bb{background:var(--t);color:#fff;border-bottom-right-radius:4px}
+.mw.ai .bb{background:var(--sf);border:1px solid var(--bd);border-bottom-left-radius:4px}
+.mt2{font-size:10px;color:var(--td);padding:0 4px}
+.aav{width:22px;height:22px;border-radius:50%;background:var(--t);color:#fff;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;flex-shrink:0;margin-top:2px}
+.tw{display:flex;align-items:flex-start;gap:8px}
+.td2{display:flex;gap:4px;align-items:center;padding:10px 14px;background:var(--sf);border:1px solid var(--bd);border-radius:14px;border-bottom-left-radius:4px}
+.dot{width:4px;height:4px;border-radius:50%;background:var(--td);animation:bl 1.3s infinite}
+.dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
+@keyframes bl{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
+.card{background:var(--bg);border:1px solid var(--bd);border-radius:14px;overflow:hidden;max-width:480px;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+.cp2{background:var(--sf2);overflow:hidden;position:relative}
+.cp2.vid{height:200px}
+.cp2.img{height:280px}
+.cp2 img{width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .3s;display:block}
+.cp2 video{width:100%;height:100%;object-fit:cover;display:block}
+.cm{padding:10px 12px 8px}
+.cmod{font-size:10px;color:var(--td);margin-bottom:3px;font-weight:500;letter-spacing:.5px;text-transform:uppercase}
+.cprompt{font-size:11px;color:var(--tm);line-height:1.5;margin-bottom:8px}
+.cas{display:flex;gap:5px;flex-wrap:wrap}
+.ca{padding:4px 10px;border-radius:6px;border:1px solid var(--bd);background:transparent;font-family:'Inter',sans-serif;font-size:10px;color:var(--tm);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:3px;-webkit-tap-highlight-color:transparent}
+.ca:hover,.ca:active{background:var(--sf);color:var(--t)}
+.ca.p{background:var(--t);color:#fff;border-color:var(--t)}
+.ep{background:var(--sf);border:1px solid var(--bd);border-radius:8px;padding:10px;margin-top:6px;display:none}
+.ep.vis{display:block}
+.el{font-size:9px;color:var(--td);margin-bottom:6px;letter-spacing:1px;text-transform:uppercase}
+.fbs{display:flex;gap:5px;flex-wrap:wrap}
+.fb{padding:5px 10px;border-radius:6px;border:1px solid var(--bd);background:var(--bg);font-family:'Inter',sans-serif;font-size:10px;color:var(--tm);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.fb:hover,.fb:active{background:var(--t);color:#fff}
+.gs{display:none;padding:8px 16px;background:var(--sf);border-top:1px solid var(--bd);align-items:center;gap:10px;font-size:11px;color:var(--tm);flex-shrink:0}
+.gs.vis{display:flex}
+.gb{flex:1;height:2px;background:var(--bd);border-radius:2px;overflow:hidden}
+.gf{height:100%;background:var(--blue);border-radius:2px;transition:width .4s}
+.gc{font-size:11px;color:var(--td);cursor:pointer;border:none;background:transparent;font-family:'Inter',sans-serif;-webkit-tap-highlight-color:transparent}
+.rz{display:none;padding:0 16px 6px;max-width:740px;margin:0 auto;width:100%}
+.rz.vis{display:block}
+.rp{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--sf);border:1px solid var(--bd);border-radius:10px;flex-wrap:wrap}
+.rr{background:transparent;border:none;cursor:pointer;color:var(--td);font-size:20px;margin-left:auto;min-width:36px;min-height:36px;-webkit-tap-highlight-color:transparent}
+.pw{padding:6px 16px 8px;border-top:1px solid var(--bd);flex-shrink:0;padding-bottom:max(8px, env(safe-area-inset-bottom))}
+.pi{max-width:740px;margin:0 auto;background:var(--sf);border:1.5px solid var(--bd);border-radius:14px;overflow:hidden}
+.pi:focus-within{border-color:#999}
+.pt{display:flex;align-items:flex-end;gap:8px;padding:10px 12px 0}
+.pinp{flex:1;border:none;background:transparent;font-family:'Inter',sans-serif;font-size:14px;font-weight:300;color:var(--t);resize:none;outline:none;min-height:24px;max-height:120px;line-height:1.6;padding:0}
+.pinp::placeholder{color:var(--td)}
+.psnd{width:32px;height:32px;border-radius:8px;background:var(--t);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;margin-bottom:1px;-webkit-tap-highlight-color:transparent}
+.psnd:disabled{opacity:.3;cursor:not-allowed}
+.pb{display:flex;align-items:center;gap:5px;padding:7px 12px;flex-wrap:nowrap;overflow-x:auto}
+.pb::-webkit-scrollbar{display:none}
+.mp{display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:6px;border:1px solid var(--bd);background:transparent;font-family:'Inter',sans-serif;font-size:11px;color:var(--tm);cursor:pointer;-webkit-tap-highlight-color:transparent;white-space:nowrap;flex-shrink:0}
+.mp.on{background:var(--sf2);color:var(--t);border-color:#ccc;font-weight:500}
+.pd{width:4px;height:4px;border-radius:50%;background:var(--bd)}
+.mp.on .pd{background:var(--blue)}
+.pts{margin-left:auto;display:flex;gap:4px;flex-shrink:0}
+.pt2{padding:5px 8px;border:1px solid var(--bd);border-radius:6px;background:transparent;font-family:'Inter',sans-serif;font-size:11px;color:var(--td);cursor:pointer;-webkit-tap-highlight-color:transparent;white-space:nowrap}
+.pt2.has{border-color:var(--blue);color:var(--blue)}
+.ph{font-size:9px;color:var(--td);text-align:center;margin-top:4px}
+.modal{display:none;position:fixed;inset:0;background:rgba(255,255,255,.88);backdrop-filter:blur(8px);z-index:200;align-items:center;justify-content:center;padding:16px}
+.modal.vis{display:flex}
+.mb2{background:var(--bg);border:1px solid var(--bd);border-radius:16px;padding:28px;width:370px;max-width:100%;box-shadow:0 8px 40px rgba(0,0,0,.12);position:relative;max-height:90vh;overflow-y:auto}
+.mb2.wide{width:600px}
+.mb2 h2{font-size:17px;font-weight:600;margin-bottom:4px;padding-right:32px}
+.mb2 p{font-size:12px;color:var(--tm);margin-bottom:18px;font-weight:300;line-height:1.6}
+.mb2 p.alert{color:var(--red);background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 12px;font-weight:400;margin-bottom:14px}
+.mb2 p.success{color:#16a34a;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 12px;font-weight:400;margin-bottom:14px}
+.mclose{position:absolute;top:14px;right:14px;background:transparent;border:none;font-size:22px;color:var(--td);cursor:pointer;min-width:36px;min-height:36px;display:flex;align-items:center;justify-content:center;border-radius:6px;-webkit-tap-highlight-color:transparent}
+.minp{width:100%;padding:10px 12px;background:var(--sf);border:1px solid var(--bd);border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;color:var(--t);outline:none;margin-bottom:8px}
+.minp:focus{border-color:#999}.minp::placeholder{color:var(--td)}
+.mbtn{width:100%;padding:11px;background:var(--t);color:#fff;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;cursor:pointer;margin-top:4px;-webkit-tap-highlight-color:transparent}
+.mbtn:hover{opacity:.85}.mbtn:disabled{opacity:.4;cursor:not-allowed}
+.mbtn.sec{background:var(--sf);color:var(--tm);border:1px solid var(--bd)}
+.mlink{text-align:center;margin-top:10px;font-size:11px;color:var(--tm)}
+.mlink a{color:var(--t);cursor:pointer;font-weight:500}
+.tab-row{display:flex;margin-bottom:18px;border:1px solid var(--bd);border-radius:8px;overflow:hidden}
+.tab{flex:1;padding:9px;background:transparent;border:none;font-family:'Inter',sans-serif;font-size:12px;color:var(--tm);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.tab.on{background:var(--t);color:#fff;font-weight:500}
+.pg{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px}
+.pc{border:1px solid var(--bd);border-radius:10px;padding:14px;cursor:pointer;position:relative;-webkit-tap-highlight-color:transparent}
+.pc:hover{border-color:#999}
+.pc.feat{border-color:var(--t);background:var(--t);color:#fff}
+.pc.feat::before{content:'TOP';position:absolute;top:6px;right:6px;font-size:7px;letter-spacing:1px;padding:1px 5px;border-radius:3px;background:rgba(255,255,255,.2);color:rgba(255,255,255,.8)}
+.pct{font-size:9px;letter-spacing:2px;text-transform:uppercase;opacity:.6;margin-bottom:4px}
+.pcp{font-size:22px;font-weight:700;margin-bottom:1px}
+.pcc{font-size:9px;opacity:.55;margin-bottom:8px}
+.pcf{font-size:10px;opacity:.75;line-height:1.8}
+.ci2{background:var(--sf);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:11px;color:var(--tm);line-height:1.8}
+.ci2 strong{color:var(--t);font-weight:500}
+.pbs{display:flex;gap:6px;margin-top:10px}
+.pbtn{flex:1;padding:9px;border-radius:7px;font-family:'Inter',sans-serif;font-size:11px;font-weight:500;cursor:pointer;border:none;background:var(--t);color:#fff;-webkit-tap-highlight-color:transparent}
+.pc.feat .pbtn{background:#fff;color:var(--t)}
+.footer-links{padding:6px 16px;border-top:1px solid var(--bd);display:flex;gap:12px;flex-shrink:0;flex-wrap:wrap}
+.footer-links a{font-size:10px;color:var(--td);text-decoration:none}
+.footer-links a:hover{color:var(--t)}
+.code-block{background:#1e1e1e;border-radius:10px;overflow:hidden;margin:8px 0;max-width:100%}
+.code-header{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#2d2d2d;font-size:10px;color:#888}
+.code-lang{color:#569cd6;font-weight:600;text-transform:uppercase;letter-spacing:1px}
+.code-copy{background:transparent;border:1px solid #444;color:#888;font-size:10px;padding:3px 8px;border-radius:4px;cursor:pointer;font-family:Inter,sans-serif}
+.code-copy:hover{border-color:#888;color:#fff}
+.code-block pre{margin:0;padding:12px;overflow-x:auto;font-family:'Courier New',monospace;font-size:12px;line-height:1.6;color:#d4d4d4}
+.code-block code{color:#d4d4d4}
+/* MAKLER ADS */
+.mak-step{background:var(--sf);border-radius:10px;padding:12px 14px;margin-bottom:8px}
+.mak-step-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--td);margin-bottom:6px;display:block}
+.mak-field{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mak-field-full{grid-column:1/-1}
+.ad-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--bd)}
+.ad-row:last-child{border-bottom:none}
+.ad-row span{font-size:12px;flex:1;padding-right:8px;line-height:1.4}
+.ad-char{font-size:10px;font-weight:500;flex-shrink:0}
+.ad-char.ok{color:var(--green)}
+.ad-char.over{color:var(--red)}
+.ad-section{margin-bottom:14px}
+.ad-section-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--td);margin-bottom:6px;display:block}
+.mak-img{width:100%;border-radius:8px;border:1px solid var(--bd);display:block;margin-top:6px}
+.mak-pkg-btn{display:block;width:100%;padding:10px;background:var(--t);color:#fff;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-size:12px;font-weight:500;cursor:pointer;text-align:center;text-decoration:none;margin-top:8px;-webkit-tap-highlight-color:transparent}
+.mak-pkg-btn:hover{opacity:.85}
+.mak-pkg-btn.sec{background:transparent;color:var(--t);border:1px solid var(--bd)}
+.mak-loader{display:flex;align-items:center;gap:10px;padding:14px;background:var(--sf);border-radius:10px;margin-top:16px}
+.mak-loader-txt{font-size:12px;color:var(--tm)}
+.mak-progress{flex:1;height:2px;background:var(--bd);border-radius:2px;overflow:hidden}
+.mak-progress-fill{height:100%;background:var(--blue);border-radius:2px;transition:width .5s;width:0%}
+.mak-ziel-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--bd);border-radius:8px;cursor:pointer;font-size:12px;color:var(--tm);transition:all .15s;user-select:none}
+.mak-ziel-item:has(input:checked){border-color:var(--t);background:var(--t);color:#fff}
+.mak-ziel-item input{width:auto;margin:0;accent-color:#fff;flex-shrink:0}
+@media(max-width:768px){
+  .sb{position:fixed;top:0;left:0;bottom:0;width:280px;z-index:99;transform:translateX(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1)}
+  .sb.open{transform:translateX(0)}
+  .sb-close-btn{display:flex!important}
+  .sb-toggle{display:none!important}
+  .hamburger{display:flex!important}
+  .mb2.wide{width:100%;padding:20px 14px}
+  .pg{grid-template-columns:1fr 1fr}
+  .topbar-right .tb-btn:not(.primary){display:none}
+  .footer-links{display:none}
+  .cp2.img{height:240px}
+  .cp2.vid{height:180px}
+  .mak-field{grid-template-columns:1fr}
+}
 </style>
 </head>
 <body>
-<div class="container">
-  <div class="header">
-    <a href="/" class="logo">V I R G O</a>
-    <h1>Datenschutzerklärung</h1>
+<div class="sb-overlay" id="sb-overlay"></div>
+<div class="sb" id="sb">
+  <div class="sb-top">
+    <div class="sb-logo-row">
+      <span class="logo">VIRGO</span>
+      <button class="sb-close-btn" id="sb-close-btn">x</button>
+    </div>
+    <button class="new-btn" onclick="newChat()">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Neuer Chat
+    </button>
+    <button class="new-btn sec" onclick="openGallery();closeSb()">Meine Galerie</button>
   </div>
-
-  <div class="badge">Zuletzt aktualisiert: Mai 2025</div>
-
-  <h2>1. Verantwortlicher</h2>
-  <p>Verantwortlich für die Verarbeitung personenbezogener Daten auf dieser Plattform ist:</p>
-  <p>
-    <strong>[Dein vollständiger Name]</strong><br>
-    [Straße und Hausnummer]<br>
-    40[...] Düsseldorf<br>
-    Deutschland<br>
-    E-Mail: <a href="mailto:holyencore@gmail.com">holyencore@gmail.com</a>
-  </p>
-  <p>Betrieb der Plattform: <strong>VIRGO</strong> (virgoio.com)</p>
-
-  <h2>2. Welche Daten wir erheben</h2>
-  <p>Beim Aufruf und der Nutzung von VIRGO sowie beim Buchen von Werbeleistungen (Makler Ads) erheben wir folgende Daten:</p>
-  <ul>
-    <li><strong>Zugangsdaten:</strong> E-Mail-Adresse, Passwort (verschlüsselt gespeichert)</li>
-    <li><strong>Kampagnendaten:</strong> Kampagnenname, Keywords, Zielregion, Tagesbudget, Laufzeit, angegebene E-Mail-Adresse</li>
-    <li><strong>Zahlungsdaten:</strong> Werden ausschließlich über Stripe verarbeitet. Wir speichern keine Kartendaten selbst.</li>
-    <li><strong>Technische Daten:</strong> IP-Adresse, Browser-Typ, Zugriffszeiten (Serverlogging)</li>
-    <li><strong>Nutzungsdaten:</strong> Interaktionen mit den KI-Funktionen der Plattform</li>
-  </ul>
-
-  <h2>3. Zweck der Verarbeitung</h2>
-  <p>Wir verarbeiten deine Daten zu folgenden Zwecken:</p>
-  <ul>
-    <li>Bereitstellung und Betrieb der VIRGO-Plattform</li>
-    <li>Durchführung und Abrechnung von Google Ads-Kampagnen im Auftrag der Nutzer</li>
-    <li>Zahlungsabwicklung (über Stripe)</li>
-    <li>Kommunikation bei Support-Anfragen</li>
-    <li>Verbesserung der Plattform-Funktionen</li>
-  </ul>
-
-  <h2>4. Rechtsgrundlagen (DSGVO)</h2>
-  <ul>
-    <li><strong>Art. 6 Abs. 1 lit. b DSGVO</strong> – Vertragserfüllung: Verarbeitung zur Erbringung der gebuchten Werbeleistungen</li>
-    <li><strong>Art. 6 Abs. 1 lit. a DSGVO</strong> – Einwilligung: bei optionalen Diensten</li>
-    <li><strong>Art. 6 Abs. 1 lit. f DSGVO</strong> – Berechtigte Interessen: Sicherheit und Betrieb der Plattform</li>
-  </ul>
-
-  <h2>5. Drittanbieter und Auftragsverarbeitung</h2>
-  <p>Wir setzen folgende Drittanbieter ein, mit denen entsprechende Auftragsverarbeitungsverträge (AVV) bestehen oder bestehen werden:</p>
-
-  <ul>
-    <li>
-      <strong>Stripe Inc.</strong> (Zahlungsabwicklung)<br>
-      185 Berry Street, Suite 550, San Francisco, CA 94107, USA.<br>
-      Datenschutz: <a href="https://stripe.com/de/privacy" target="_blank">stripe.com/de/privacy</a>
-    </li>
-    <li>
-      <strong>Google LLC</strong> (Google Ads API, Kampagnenausspielung)<br>
-      Amperestraße 12, 41836 Hückelhoven, Deutschland (EU-Niederlassung)<br>
-      Datenschutz: <a href="https://policies.google.com/privacy" target="_blank">policies.google.com/privacy</a>
-    </li>
-    <li>
-      <strong>Supabase Inc.</strong> (Datenbank und Authentifizierung)<br>
-      Daten werden auf EU-Servern gespeichert (AWS Frankfurt).<br>
-      Datenschutz: <a href="https://supabase.com/privacy" target="_blank">supabase.com/privacy</a>
-    </li>
-    <li>
-      <strong>Vercel Inc.</strong> (Hosting und Deployment)<br>
-      340 S Lemon Ave #4133, Walnut, CA 91789, USA.<br>
-      Datenschutz: <a href="https://vercel.com/legal/privacy-policy" target="_blank">vercel.com/legal/privacy-policy</a>
-    </li>
-    <li>
-      <strong>Anthropic PBC</strong> (KI-Sprachmodell für Chat- und Textfunktionen)<br>
-      548 Market St, San Francisco, CA 94104, USA.<br>
-      Datenschutz: <a href="https://www.anthropic.com/privacy" target="_blank">anthropic.com/privacy</a>
-    </li>
-  </ul>
-
-  <div class="highlight">
-    <p>Einige Drittanbieter sitzen in den USA. Die Datenübermittlung erfolgt auf Basis von Standardvertragsklauseln (SCC) gemäß Art. 46 DSGVO.</p>
+  <div class="ms">
+    <span class="sl">Makler Tools</span>
+    <button class="mc on" onclick="setModel(this,'chat','Virgo Chat')"><div class="md"></div>Virgo Chat</button>
+    <button class="mc" onclick="openMaklerAds();closeSb()" style="border:1px solid rgba(37,99,235,.25)"><div class="md" style="background:#2563eb"></div>Makler Ads<span class="mt" style="background:#dbeafe;color:#1d4ed8">Google &amp; Meta</span></button>
+    <button class="mc" onclick="window.location.href='/makler-onboarding.html'"><div class="md"></div>Meine Landing Page<span class="mt" style="background:#dcfce7;color:#166534">Makler</span></button>
+    <button class="mc" onclick="window.location.href='/leads.html'"><div class="md"></div>Leads Dashboard<span class="mt" style="background:#dcfce7;color:#166534">Makler</span></button>
   </div>
-
-  <h2>6. Speicherdauer</h2>
-  <p>Wir speichern personenbezogene Daten nur so lange, wie es für den jeweiligen Zweck erforderlich ist:</p>
-  <ul>
-    <li>Kampagnendaten: bis zu 6 Monate nach Kampagnenende</li>
-    <li>Zahlungsdaten/Rechnungen: 10 Jahre (gesetzliche Aufbewahrungspflicht)</li>
-    <li>Zugangsdaten: bis zur Kontoauflösung</li>
-    <li>Server-Logs: 30 Tage</li>
-  </ul>
-
-  <h2>7. Deine Rechte (Betroffenenrechte)</h2>
-  <p>Du hast gemäß DSGVO folgende Rechte:</p>
-  <ul>
-    <li><strong>Auskunft</strong> (Art. 15 DSGVO): Welche Daten wir über dich gespeichert haben</li>
-    <li><strong>Berichtigung</strong> (Art. 16 DSGVO): Korrektur unrichtiger Daten</li>
-    <li><strong>Löschung</strong> (Art. 17 DSGVO): Löschung deiner Daten, soweit keine Aufbewahrungspflicht besteht</li>
-    <li><strong>Einschränkung</strong> (Art. 18 DSGVO): Einschränkung der Verarbeitung</li>
-    <li><strong>Datenübertragbarkeit</strong> (Art. 20 DSGVO): Export deiner Daten</li>
-    <li><strong>Widerspruch</strong> (Art. 21 DSGVO): Widerspruch gegen die Verarbeitung</li>
-    <li><strong>Widerruf</strong> einer erteilten Einwilligung jederzeit mit Wirkung für die Zukunft</li>
-  </ul>
-  <p>Zur Ausübung deiner Rechte wende dich an: <a href="mailto:holyencore@gmail.com">holyencore@gmail.com</a></p>
-
-  <h2>8. Beschwerderecht</h2>
-  <p>Du hast das Recht, dich bei der zuständigen Datenschutzaufsichtsbehörde zu beschweren. Für NRW (Düsseldorf):</p>
-  <p>
-    <strong>Landesbeauftragte für Datenschutz und Informationsfreiheit NRW</strong><br>
-    Kavalleriestraße 2–4, 40213 Düsseldorf<br>
-    <a href="https://www.ldi.nrw.de" target="_blank">www.ldi.nrw.de</a>
-  </p>
-
-  <h2>9. Cookies und Tracking</h2>
-  <p>VIRGO verwendet ausschließlich technisch notwendige Cookies (Session-Cookies für die Authentifizierung). Es werden keine Tracking- oder Marketing-Cookies eingesetzt.</p>
-
-  <h2>10. Änderungen dieser Datenschutzerklärung</h2>
-  <p>Wir behalten uns vor, diese Datenschutzerklärung bei Bedarf zu aktualisieren. Die jeweils aktuelle Version ist unter <a href="/datenschutz.html">virgoio.com/datenschutz.html</a> abrufbar.</p>
-
-  <a href="/" class="back">← Zurück zur App</a>
+  <div class="ms" style="max-height:280px">
+    <span class="sl">Business Tools</span>
+    <button class="mc" onclick="setModel(this,'business-plan','Business Plan')"><div class="md"></div>Business Plan<span class="mt" style="background:#dcfce7;color:#166534">AI</span></button>
+    <button class="mc" onclick="setModel(this,'business-website','Website Text')"><div class="md"></div>Website Text<span class="mt" style="background:#dcfce7;color:#166534">AI</span></button>
+    <button class="mc" onclick="openWebsiteGen();closeSb()" style="border:1px solid rgba(139,92,246,.25)"><div class="md" style="background:#8b5cf6"></div>Website Generator<span class="mt" style="background:#ede9fe;color:#6d28d9">Neu</span></button>
+    <button class="mc" onclick="setModel(this,'business-social','Social Media')"><div class="md"></div>Social Media Posts<span class="mt" style="background:#dcfce7;color:#166534">AI</span></button>
+    <button class="mc" onclick="setModel(this,'business-email','Email Sequenz')"><div class="md"></div>Email Sequenz<span class="mt" style="background:#dcfce7;color:#166534">AI</span></button>
+    <button class="mc" onclick="setModel(this,'business-pitch','Pitch Deck')"><div class="md"></div>Pitch Deck<span class="mt" style="background:#dcfce7;color:#166534">AI</span></button>
+    <button class="mc" onclick="openInvoiceModal()"><div class="md"></div>Rechnung erstellen<span class="mt">PDF</span></button>
+    <button class="mc" onclick="openTTSModal()"><div class="md"></div>Text zu Sprache<span class="mt">Audio</span></button>
+  </div>
+  <div class="ms" style="max-height:140px">
+    <span class="sl">Bildmodelle</span>
+    <button class="mc modelia" onclick="setModel(this,'img-modelia','Virgo Fashion')"><div class="md"></div>Virgo Fashion<span class="mt gold">2cr</span></button>
+    <button class="mc" onclick="setModel(this,'img-nano','Virgo Vision')"><div class="md"></div>Virgo Vision<span class="mt">Bild 1cr</span></button>
+    <button class="mc" onclick="setModel(this,'img-seed','Virgo Create')"><div class="md"></div>Virgo Create<span class="mt">Bild 1cr</span></button>
+  </div>
+  <div class="hist" id="hist">
+    <div class="hist-empty" id="hist-empty">Deine Chats erscheinen hier.</div>
+  </div>
+  <div class="ubar" id="ubar" onclick="showM('modal-login')">
+    <div class="av" id="uav">?</div>
+    <div style="flex:1;min-width:0">
+      <div class="un" id="uname">Anmelden</div>
+      <div class="up" id="uplan">Kostenlos starten</div>
+    </div>
+  </div>
 </div>
+<div class="main">
+  <div class="topbar">
+    <button class="hamburger" id="mobile-menu-btn">&#9776;</button>
+    <button class="sb-toggle" id="sb-toggle-btn" onclick="toggleSbDesktop()">&#9664;</button>
+    <div class="topbar-title" id="chat-title">Neuer Chat</div>
+    <div class="topbar-right">
+      <div class="cbadge" onclick="showM('modal-upgrade')"><div class="cdot" id="cdot"></div><span id="cr-display">5 Credits</span></div>
+      <button class="tb-btn" onclick="openHelp()" style="border-color:var(--bd)" title="Hilfe">?</button>
+      <button class="tb-btn primary" onclick="showM('modal-upgrade')">Upgrade</button>
+      <button class="tb-btn" id="auth-btn" onclick="showM('modal-login')">Anmelden</button>
+    </div>
+  </div>
+  <div class="feed" id="feed">
+    <div class="fi" id="fi">
+      <div class="landing" id="landing">
+        <div class="ll">V I R G O</div>
+        <div class="lt">Was möchtest du heute erschaffen?</div>
+        <div class="ls">Leads, Landing Pages, Ads und Content — auf Knopfdruck.</div>
+        <div class="starters">
+          <button class="starter" onclick="openMaklerAds()">Google Ads erstellen</button>
+          <button class="starter" onclick="window.location.href='/makler-onboarding.html'">Landing Page bauen</button>
+          <button class="starter" onclick="qs('Erstelle 10 Social Media Posts für Versicherungsmakler über Altersvorsorge')">Social Post schreiben</button>
+          <button class="starter" onclick="qs('Erstelle eine Email-Sequenz für Erstkontakt zu PKV-Interessenten')">Email an Kunden</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="gs" id="gs">
+    <span id="gl">Wird erstellt...</span>
+    <div class="gb"><div class="gf" id="gf" style="width:0%"></div></div>
+    <button class="gc" onclick="cancelGen()">x</button>
+  </div>
+  <div class="rz" id="rz">
+    <div class="rp">
+      <div id="ref-imgs" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+      <div style="flex:1;min-width:80px">
+        <div style="font-size:11px;color:var(--tm)">Referenzbilder (max. 4)</div>
+        <button onclick="uploadRef()" style="font-size:10px;color:var(--blue);background:transparent;border:none;cursor:pointer;font-family:Inter,sans-serif;padding:2px 0">+ Weiteres</button>
+      </div>
+      <button class="rr" onclick="clearRef()">x</button>
+    </div>
+  </div>
+  <div class="pw">
+    <div class="pi">
+      <div class="pt">
+        <textarea class="pinp" id="prompt" rows="1" placeholder="Frag Virgo alles..." onkeydown="onKey(event)" oninput="autoResize(this)"></textarea>
+        <button class="psnd" id="send-btn" onclick="send()">&#8593;</button>
+      </div>
+      <div class="pb">
+        <button class="mp on" id="mode-chat" onclick="switchMode('chat',this)"><div class="pd"></div>Chat</button>
+        <button class="mp" id="mode-img" onclick="switchMode('img',this)"><div class="pd"></div>Bild</button>
+        <div class="pts">
+          <button class="pt2" id="img-btn" onclick="uploadRef()">&#128206;</button>
+          <button class="pt2" id="mic-btn" onclick="toggleVoice()">&#127908;</button>
+        </div>
+      </div>
+    </div>
+    <div class="ph">1 Bild = 1 Credit &middot; Virgo Fashion = 2 Credits &middot; virgoio.com</div>
+  </div>
+  <div class="footer-links">
+    <a href="/impressum.html">Impressum</a>
+    <a href="/datenschutz.html">Datenschutz</a>
+    <a href="/agb.html">AGB</a>
+    <a href="/widerrufsbelehrung.html">Widerrufsbelehrung</a>
+  </div>
+</div>
+<!-- ════════════════════════════════════════
+     MODAL: LOGIN
+════════════════════════════════════════ -->
+<div class="modal" id="modal-login">
+  <div class="mb2">
+    <button class="mclose" onclick="closeM('modal-login')">x</button>
+    <h2>Willkommen bei Virgo</h2>
+    <p id="auth-msg">Melde dich an oder erstelle ein kostenloses Konto.</p>
+    <div class="tab-row">
+      <button class="tab on" onclick="switchTab('login',this)">Anmelden</button>
+      <button class="tab" onclick="switchTab('register',this)">Registrieren</button>
+    </div>
+    <input class="minp" type="email" id="auth-email" placeholder="E-Mail" autocomplete="email">
+    <input class="minp" type="password" id="auth-password" placeholder="Passwort (min. 6 Zeichen)" autocomplete="current-password">
+    <button class="mbtn" id="auth-submit" onclick="doAuth()">Anmelden</button>
+    <div class="mlink" id="auth-switch">Noch kein Konto? <a onclick="switchTab('register',document.querySelectorAll('.tab')[1])">Registrieren</a></div>
+  </div>
+</div>
+<!-- ════════════════════════════════════════
+     MODAL: MAKLER ADS GENERATOR
+════════════════════════════════════════ -->
+<div class="modal" id="modal-makler-ads">
+  <div class="mb2" style="width:540px">
+    <button class="mclose" onclick="closeM('modal-makler-ads')">x</button>
+    <h2>Makler Ads Generator</h2>
+    <p>Gib deine Daten ein – Virgo erstellt automatisch Ads + Bild-Creative.</p>
+    <div style="display:flex;border:1px solid var(--bd);border-radius:8px;overflow:hidden;margin-bottom:16px">
+      <button id="mak-tab-google" onclick="setMaklerPlatform('google')" style="flex:1;padding:9px;border:none;font-family:Inter,sans-serif;font-size:12px;cursor:pointer;background:var(--t);color:#fff;font-weight:500">Google Ads</button>
+      <button id="mak-tab-meta" onclick="setMaklerPlatform('meta')" style="flex:1;padding:9px;border:none;font-family:Inter,sans-serif;font-size:12px;cursor:pointer;background:transparent;color:var(--tm)">Meta Ads</button>
+      <button id="mak-tab-both" onclick="setMaklerPlatform('both')" style="flex:1;padding:9px;border:none;font-family:Inter,sans-serif;font-size:12px;cursor:pointer;background:transparent;color:var(--tm)">Beide</button>
+    </div>
+    <div class="mak-step">
+      <span class="mak-step-label">Deine Infos</span>
+      <div class="mak-field">
+        <div>
+          <label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Name / Firma *</label>
+          <input class="minp" id="mak-name" placeholder="Max Mustermann" style="margin-bottom:0">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Branche</label>
+          <select class="minp" id="mak-branche" style="margin-bottom:0">
+            <option value="Versicherung">Versicherung</option>
+            <option value="Immobilien">Immobilien</option>
+            <option value="Finanzen">Finanzen</option>
+            <option value="Kredit">Kredit</option>
+            <option value="Altersvorsorge">Altersvorsorge</option>
+          </select>
+        </div>
+        <div class="mak-field-full">
+          <label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Deine Landing Page URL — hier reinkopieren oder eintippen *</label>
+          <input class="minp" id="mak-slug" placeholder="z.B. max-mustermann (dein Virgo Makler Link)" style="margin-bottom:2px;border:2px solid var(--t)">
+          <div style="font-size:10px;color:var(--td);margin-top:2px">Deine fertige URL: virgoio.com/makler/<b id="mak-slug-preview">dein-name</b> — diese URL trägst du bei Google &amp; Meta Ads ein.</div>
+        </div>
+        <div class="mak-field-full">
+          <label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Angebot *</label>
+          <input class="minp" id="mak-angebot" placeholder="z.B. Private Krankenversicherung für Selbständige" style="margin-bottom:0">
+        </div>
+        <div class="mak-field-full">
+          <label style="font-size:11px;color:var(--tm);display:block;margin-bottom:6px">Werbeziel / Was soll der Kunde tun? * (Mehrfachauswahl möglich)</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px" id="mak-ziel-grid">
+            <label class="mak-ziel-item"><input type="checkbox" name="mak-ziel" value="Erstgespräch buchen"> Erstgespräch buchen</label>
+            <label class="mak-ziel-item"><input type="checkbox" name="mak-ziel" value="Vergleich anfordern"> Vergleich anfordern</label>
+            <label class="mak-ziel-item"><input type="checkbox" name="mak-ziel" value="Lead-Formular ausfüllen"> Lead-Formular ausfüllen</label>
+            <label class="mak-ziel-item"><input type="checkbox" name="mak-ziel" value="Rückruf anfordern"> Rückruf anfordern</label>
+            <label class="mak-ziel-item"><input type="checkbox" name="mak-ziel" value="Kostenloses Angebot erhalten"> Kostenloses Angebot</label>
+            <label class="mak-ziel-item"><input type="checkbox" name="mak-ziel" value="Beitragsrechner nutzen"> Beitragsrechner</label>
+            <label class="mak-ziel-item"><input type="checkbox" name="mak-ziel" value="PDF herunterladen"> PDF / E-Book</label>
+            <label class="mak-ziel-item"><input type="checkbox" name="mak-ziel" value="Termin online buchen"> Termin online buchen</label>
+          </div>
+        </div>
+        <div class="mak-field-full">
+          <label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Zielgruppe</label>
+          <input class="minp" id="mak-zielgruppe" placeholder="z.B. Selbständige 30–50 Jahre in Deutschland" style="margin-bottom:0">
+        </div>
+        <div class="mak-field-full">
+          <label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">USP / Besonderheit (optional)</label>
+          <input class="minp" id="mak-usp" placeholder="z.B. Kostenlos, unverbindlich, 15 Jahre Erfahrung" style="margin-bottom:0">
+        </div>
+      </div>
+    </div>
+    <div id="mak-msg" style="font-size:12px;color:var(--red);background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 12px;display:none;margin-bottom:8px"></div>
+    <button class="mbtn" id="mak-btn" onclick="generateMaklerAd()">Ads generieren</button>
+    <div class="mak-loader" id="mak-loader" style="display:none">
+      <div class="mak-progress"><div class="mak-progress-fill" id="mak-pfill"></div></div>
+      <span class="mak-loader-txt" id="mak-loader-txt">Ad-Text wird erstellt...</span>
+    </div>
+    <div id="mak-result" style="display:none;margin-top:20px;border-top:1px solid var(--bd);padding-top:16px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:14px" id="mak-result-title">Ads Paket</div>
+      <div id="mak-google-result">
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#2563eb;font-weight:600;margin-bottom:10px;padding:5px 10px;background:#dbeafe;border-radius:6px;display:inline-block">Google Ads</div>
+        <div class="ad-section"><span class="ad-section-label">Headlines (max. 30 Zeichen)</span><div id="mak-headlines"></div></div>
+        <div class="ad-section"><span class="ad-section-label">Descriptions (max. 90 Zeichen)</span><div id="mak-descriptions"></div></div>
+        <div class="ad-section"><span class="ad-section-label">Call to Action</span><div id="mak-cta" style="font-size:13px;font-weight:500;padding:6px 0"></div></div>
+      </div>
+      <div id="mak-meta-result" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--bd)">
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#9333ea;font-weight:600;margin-bottom:10px;padding:5px 10px;background:#f3e8ff;border-radius:6px;display:inline-block">Meta Ads (Facebook &amp; Instagram)</div>
+        <div class="ad-section"><span class="ad-section-label">Primary Text (max. 125 Zeichen)</span><div id="mak-meta-primary"></div></div>
+        <div class="ad-section"><span class="ad-section-label">Headline (max. 40 Zeichen)</span><div id="mak-meta-headline"></div></div>
+        <div class="ad-section"><span class="ad-section-label">Description (max. 30 Zeichen)</span><div id="mak-meta-desc"></div></div>
+        <div class="ad-section"><span class="ad-section-label">CTA Button</span><div id="mak-meta-cta" style="font-size:13px;font-weight:500;padding:6px 0"></div></div>
+      </div>
+      <div class="ad-section" id="mak-img-section" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--bd)">
+        <span class="ad-section-label">Ad Creative (1200 x 628)</span>
+        <img id="mak-img" class="mak-img" src="" alt="Ad Creative">
+        <a id="mak-img-dl" href="#" download="ad-creative.jpg" class="mak-pkg-btn" style="margin-top:8px">Bild herunterladen</a>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button class="mak-pkg-btn sec" onclick="copyMaklerAdText()">Ad-Text kopieren</button>
+        <button class="mak-pkg-btn" onclick="generateMaklerAd()">Neu generieren</button>
+      </div>
+      <div style="margin-top:10px;font-size:10px;color:var(--td);line-height:1.6" id="mak-tip">Tipp: Kopiere den Text direkt in Google Ads. Bild als Creative im Display-Netzwerk verwenden.</div>
+    </div>
+  </div>
+</div>
+<!-- ════════════════════════════════════════
+     MODAL: INVOICE
+════════════════════════════════════════ -->
+<div class="modal" id="modal-invoice">
+  <div class="mb2" style="width:540px">
+    <button class="mclose" onclick="closeM('modal-invoice')">x</button>
+    <h2>Rechnung erstellen</h2>
+    <p style="font-size:11px;color:var(--tm);margin-bottom:16px;font-weight:400">Pflichtfelder mit * ausfüllen</p>
+    <div style="font-size:11px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Ihre Daten (Absender)</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+      <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Ihr Name / Firma *</label><input class="minp" id="inv-absender-name" placeholder="Max Mustermann GmbH"></div>
+      <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Steuernummer</label><input class="minp" id="inv-steuer" placeholder="123/456/78901"></div>
+      <div style="grid-column:1/-1"><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Ihre Adresse</label><input class="minp" id="inv-absender-adresse" placeholder="Musterstraße 1, 40210 Düsseldorf"></div>
+      <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Ihre Email</label><input class="minp" id="inv-absender-email" placeholder="max@firma.de"></div>
+      <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Ihre Website</label><input class="minp" id="inv-absender-web" placeholder="www.firma.de"></div>
+    </div>
+    <div style="font-size:11px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Kundendaten</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+      <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Kundenname *</label><input class="minp" id="inv-kunde" placeholder="Max Mustermann"></div>
+      <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Kunden-Email</label><input class="minp" id="inv-kunde-email" placeholder="kunde@email.de"></div>
+      <div style="grid-column:1/-1"><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Kundenadresse</label><input class="minp" id="inv-kunde-adresse" placeholder="Kundenstraße 1, 10115 Berlin"></div>
+    </div>
+    <div style="font-size:11px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Rechnungsdetails</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Rechnungsnummer</label><input class="minp" id="inv-nr" placeholder="INV-001"></div>
+      <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Datum</label><input class="minp" id="inv-datum" type="date"></div>
+      <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Betrag (netto Euro) *</label><input class="minp" id="inv-betrag" type="number" placeholder="100"></div>
+      <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">MwSt. %</label><input class="minp" id="inv-mwst" type="number" placeholder="19" value="19"></div>
+    </div>
+    <label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Leistungsbeschreibung *</label>
+    <textarea class="minp" id="inv-leistung" placeholder="KI-Beratung, 2 Stunden..." style="margin-bottom:8px;min-height:60px;resize:vertical"></textarea>
+    <div id="inv-msg" style="font-size:12px;color:var(--red);margin:8px 0;display:none"></div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="mbtn sec" onclick="closeM('modal-invoice')">Abbrechen</button>
+      <button class="mbtn" onclick="createInvoice()">Rechnung erstellen</button>
+    </div>
+  </div>
+</div>
+<!-- ════════════════════════════════════════
+     MODAL: TTS
+════════════════════════════════════════ -->
+<div class="modal" id="modal-tts">
+  <div class="mb2" style="width:480px">
+    <button class="mclose" onclick="closeM('modal-tts')">x</button>
+    <h2>Text zu Sprache</h2>
+    <p>Natürliche KI-Stimmen für deine Audio-Inhalte.</p>
+    <label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Text eingeben</label>
+    <textarea class="minp" id="tts-text" placeholder="Gib deinen Text ein..." style="min-height:100px;resize:vertical;margin-bottom:12px"></textarea>
+    <label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Stimme</label>
+    <select class="minp" id="tts-voice" style="margin-bottom:12px">
+      <option value="pNInz6obpgDQGcFmaJgB">Adam - männlich, amerikanisch</option>
+      <option value="EXAVITQu4vr4xnSDxMaL">Bella - weiblich, amerikanisch</option>
+      <option value="VR6AewLTigWG4xSOukaG">Arnold - männlich, amerikanisch</option>
+      <option value="MF3mGyEYCl7XYWbV9V6O">Elli - weiblich, deutsch</option>
+    </select>
+    <div id="tts-audio" style="display:none;margin-bottom:12px">
+      <audio id="tts-player" controls style="width:100%;border-radius:8px"></audio>
+      <a id="tts-download" href="#" download="virgo-audio.mp3" style="display:block;margin-top:8px;padding:9px;background:var(--t);color:#fff;border-radius:8px;text-align:center;font-size:12px;font-weight:500;text-decoration:none">MP3 herunterladen</a>
+    </div>
+    <div id="tts-msg" style="font-size:12px;color:var(--red);margin:8px 0;display:none"></div>
+    <div style="display:flex;gap:8px">
+      <button class="mbtn sec" onclick="closeM('modal-tts')">Schließen</button>
+      <button class="mbtn" id="tts-btn" onclick="generateTTS()">Generieren</button>
+    </div>
+  </div>
+</div>
+<!-- ════════════════════════════════════════
+     MODAL: UPGRADE (NUR MAKLER PLÄNE)
+════════════════════════════════════════ -->
+<div class="modal" id="modal-upgrade">
+  <div class="mb2 wide">
+    <button class="mclose" onclick="closeM('modal-upgrade')">x</button>
+    <h2>Virgo Pläne für Versicherungsmakler</h2>
+    <p id="up-msg">Mehr Leads. Weniger Aufwand. Kein Vertrag, jederzeit kündbar.</p>
+    <div class="ci2"><strong>Was du bekommst:</strong> Google &amp; Meta Ads Generator · Landing Pages · Leads Dashboard · KI-Bilder · Social Posts · Rechnungen · Text-zu-Sprache · Email-Sequenzen</div>
+    <div class="pg">
+      <div class="pc">
+        <div class="pct">Makler Pro</div>
+        <div class="pcp">149 €</div>
+        <div class="pcc">/Monat · Jederzeit kündbar</div>
+        <div class="pcf">PKV Landing Page<br>Unbegrenzte Leads<br>Email-Alerts<br>Lead Dashboard<br>Google &amp; Meta Ads<br>Alle KI-Tools</div>
+        <div class="pbs"><button class="pbtn" onclick="window.location.href='/checkout.html?plan=makler-pro'">Jetzt buchen</button></div>
+      </div>
+      <div class="pc feat">
+        <div class="pct">Makler Business</div>
+        <div class="pcp">249 €</div>
+        <div class="pcc">/Monat · Jederzeit kündbar</div>
+        <div class="pcf">Alle Versicherungsarten<br>Unbegrenzte Landing Pages<br>Unbegrenzte Leads<br>Priority Support<br>Alle KI-Tools<br>White-Label Option</div>
+        <div class="pbs"><button class="pbtn" onclick="window.location.href='/checkout.html?plan=makler-business'">Jetzt buchen</button></div>
+      </div>
+    </div>
+    <div style="font-size:10px;color:var(--td);text-align:center;margin-top:14px;line-height:1.6">
+      Mit Klick auf "Jetzt buchen" wirst du zur sicheren Bestellseite weitergeleitet.<br>
+      Zahlung über Stripe · SSL-verschlüsselt
+    </div>
+    <button class="mbtn sec" onclick="closeM('modal-upgrade')" style="margin-top:16px">Später</button>
+  </div>
+</div>
+<script>
+// STATE
+const state={mode:'chat',model:'chat',modelName:'Virgo Chat',generating:false,chatStarted:false,activeChatId:null};
+const COST={img:1,vid:10,tool:5,modelia:2};
+const PREMIUM=[];
+const PH={
+  chat:'Frag Virgo alles - Leads, Ads, Strategie...',
+  img:'Beschreibe dein Bild...',
+  code:'Beschreibe deinen Code - Sprache, Funktion, Problem...',
+  agent:'Gib dem Agent ein Ziel - er erledigt es automatisch...',
+  'business-plan':'Z.B.: Ich bin Versicherungsmakler in Düsseldorf, spezialisiert auf PKV...',
+  'business-website':'Z.B.: Ich bin Versicherungsmakler, biete PKV-Beratung an...',
+  'business-ads':'Z.B.: PKV für Selbständige - günstig, schnell...',
+  'business-social':'Z.B.: Ich bin Versicherungsmakler, möchte über Altersvorsorge posten...',
+  'business-email':'Z.B.: Email-Sequenz für PKV-Interessenten nach Erstkontakt...',
+  'business-pitch':'Z.B.: KI Tool für Versicherungsmakler, 500 User, suche 50.000 Euro Seed...'
+};
+let authToken=localStorage.getItem('virgo_token')||null;
+let currentUser=JSON.parse(localStorage.getItem('virgo_user')||'null');
+let credits=parseInt(localStorage.getItem('virgo_credits')||'3');
+let curTab='login',genTimer=null,refImages=[],conversationHistory=[];
+// MAKLER ADS
+let maklerAdData=null;
+let maklerPlatform='google';
+function openMaklerAds(){
+  showM('modal-makler-ads');
+  setTimeout(()=>{
+    const slugInp=document.getElementById('mak-slug');
+    if(slugInp){
+      slugInp.addEventListener('input',()=>{
+        const preview=document.getElementById('mak-slug-preview');
+        if(preview)preview.textContent=slugInp.value.trim()||'dein-name';
+      });
+    }
+  },100);
+}
+function setMaklerPlatform(p){
+  maklerPlatform=p;
+  const tabs={google:'mak-tab-google',meta:'mak-tab-meta',both:'mak-tab-both'};
+  Object.entries(tabs).forEach(([key,id])=>{
+    const el=document.getElementById(id);
+    const active=key===p;
+    el.style.background=active?'var(--t)':'transparent';
+    el.style.color=active?'#fff':'var(--tm)';
+    el.style.fontWeight=active?'500':'400';
+  });
+  const btn=document.getElementById('mak-btn');
+  btn.textContent=p==='google'?'Google Ads generieren':p==='meta'?'Meta Ads generieren':'Beide generieren';
+}
+function setMaklerProgress(pct,txt){
+  document.getElementById('mak-pfill').style.width=pct+'%';
+  document.getElementById('mak-loader-txt').textContent=txt;
+}
+async function generateMaklerAd(){
+  const name=document.getElementById('mak-name').value.trim();
+  const branche=document.getElementById('mak-branche').value;
+  const angebot=document.getElementById('mak-angebot').value.trim();
+  const zielgruppe=document.getElementById('mak-zielgruppe').value.trim();
+  const usp=document.getElementById('mak-usp').value.trim();
+  const slug=document.getElementById('mak-slug').value.trim();
+  const zielArr=Array.from(document.querySelectorAll('input[name="mak-ziel"]:checked')).map(c=>c.value);
+  const ziel=zielArr.join(', ');
+  const msgEl=document.getElementById('mak-msg');
+  const btn=document.getElementById('mak-btn');
+  if(!name||!angebot){msgEl.textContent='Bitte Name und Angebot ausfüllen.';msgEl.style.display='block';return;}
+  if(!slug){msgEl.textContent='Bitte deine Landing Page URL eintragen.';msgEl.style.display='block';return;}
+  if(!zielArr.length){msgEl.textContent='Bitte mindestens ein Werbeziel auswählen.';msgEl.style.display='block';return;}
+  msgEl.style.display='none';
+  document.getElementById('mak-result').style.display='none';
+  document.getElementById('mak-loader').style.display='flex';
+  btn.disabled=true;
+  const needGoogle=maklerPlatform==='google'||maklerPlatform==='both';
+  const needMeta=maklerPlatform==='meta'||maklerPlatform==='both';
+  const jsonTemplate=`{
+  ${needGoogle?`"google": {"headlines": ["max 30 Zeichen", "max 30 Zeichen", "max 30 Zeichen"],"descriptions": ["max 90 Zeichen", "max 90 Zeichen"],"cta": "max 15 Zeichen"}${needMeta?',':''}`:''} 
+  ${needMeta?`"meta": {"primary_text": "max 125 Zeichen","headline": "max 40 Zeichen","description": "max 30 Zeichen","cta": "Jetzt bewerben"}`:''}
+}`;
+  const adPrompt=`Erstelle professionelle Werbeanzeigen für einen ${branche}-Makler auf Deutsch.
+Makler: ${name}
+Angebot: ${angebot}
+Werbeziel: ${ziel}${zielgruppe?'\nZielgruppe: '+zielgruppe:''}${usp?'\nBesonderheit: '+usp:''}
+WICHTIG: Alle Texte müssen auf das Werbeziel ausgerichtet sein: "${ziel}". Der CTA muss direkt dazu auffordern.
+Erstelle exakt dieses JSON (kein anderer Text, kein Markdown):
+${jsonTemplate}
+Regeln:
+- Google Headlines: max. 30 Zeichen
+- Google Descriptions: max. 90 Zeichen
+- Google CTA: max. 15 Zeichen
+- Meta Primary Text: max. 125 Zeichen, ansprechend und emotional
+- Meta Headline: max. 40 Zeichen
+- Meta Description: max. 30 Zeichen
+- Meta CTA: einer von: Jetzt bewerben, Mehr erfahren, Kontakt aufnehmen, Jetzt buchen, Termin vereinbaren
+Konkret, vertrauenswürdig, direkt. Nur JSON.`;
+  setMaklerProgress(10,'Ad-Texte werden erstellt...');
+  try{
+    const r=await fetch('/api/business',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'ads',messages:[{role:'user',content:adPrompt}],systemOverride:'Du bist ein Google Ads und Meta Ads Experte. Antworte NUR mit validem JSON. Kein Markdown, keine Erklärungen.'})});
+    const d=await r.json();
+    const rawText=(d.content&&d.content[0]&&d.content[0].text)||'{}';
+    let adData;
+    try{const clean=rawText.replace(/```json|```/g,'').trim();adData=JSON.parse(clean);}
+    catch(e){adData={google:{headlines:['Jetzt PKV vergleichen','Kostenlos beraten lassen',name.substring(0,28)],descriptions:['Finden Sie die beste Versicherung – persönlich und kostenlos.','Vergleich aller Top-Anbieter. Ihr Experte für '+branche+'.'],cta:'Jetzt Termin'},meta:{primary_text:'Suchen Sie die beste '+angebot+'? '+name+' vergleicht alle Top-Anbieter für Sie – kostenlos und unverbindlich.',headline:'Jetzt kostenlos beraten',description:'Ihr '+branche+'-Experte',cta:'Mehr erfahren'}};}
+    maklerAdData=adData;
+    setMaklerProgress(60,'Bild-Creative wird generiert...');
+    const imgPrompt=`professional ${branche.toLowerCase()} broker advertisement creative, clean modern corporate design, trust and expertise, German business, minimal white and blue color scheme, photorealistic, 4K quality, no text, no logos`;
+    let imgUrl=null;
+    try{
+      const ir=await fetch('/api/generate-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:imgPrompt,model:'nano',negative_prompt:'cartoon,deformed,text,watermark,ugly'})});
+      const id=await ir.json();
+      if(id.imageUrl)imgUrl=id.imageUrl;
+    }catch(e){}
+    setMaklerProgress(100,'Fertig!');
+    setTimeout(()=>{
+      document.getElementById('mak-loader').style.display='none';
+      renderMaklerResult(adData,imgUrl,name,slug);
+      btn.disabled=false;setMaklerPlatform(maklerPlatform);
+    },500);
+  }catch(e){
+    document.getElementById('mak-loader').style.display='none';
+    msgEl.textContent='Fehler: '+e.message+'. Bitte nochmal versuchen.';
+    msgEl.style.display='block';
+    btn.disabled=false;setMaklerPlatform(maklerPlatform);
+  }
+}
+function renderMaklerResult(adData,imgUrl,name,slug){
+  const needGoogle=maklerPlatform==='google'||maklerPlatform==='both';
+  const needMeta=maklerPlatform==='meta'||maklerPlatform==='both';
+  const g=adData.google||{};
+  const m=adData.meta||{};
+  const googleSection=document.getElementById('mak-google-result');
+  if(needGoogle&&g.headlines){
+    googleSection.style.display='block';
+    document.getElementById('mak-headlines').innerHTML=(g.headlines||[]).map(h=>{const ok=h.length<=30;return '<div class="ad-row"><span>'+escHtml(h)+'</span><span class="ad-char '+(ok?'ok':'over')+'">'+h.length+'/30</span></div>';}).join('');
+    document.getElementById('mak-descriptions').innerHTML=(g.descriptions||[]).map(d=>{const ok=d.length<=90;return '<div class="ad-row"><span>'+escHtml(d)+'</span><span class="ad-char '+(ok?'ok':'over')+'">'+d.length+'/90</span></div>';}).join('');
+    document.getElementById('mak-cta').textContent=g.cta||'Jetzt Termin';
+  }else{googleSection.style.display='none';}
+  const metaSection=document.getElementById('mak-meta-result');
+  if(needMeta&&m.primary_text){
+    metaSection.style.display='block';
+    const pt=m.primary_text||'';const hl=m.headline||'';const ds=m.description||'';
+    document.getElementById('mak-meta-primary').innerHTML='<div class="ad-row"><span>'+escHtml(pt)+'</span><span class="ad-char '+(pt.length<=125?'ok':'over')+'">'+pt.length+'/125</span></div>';
+    document.getElementById('mak-meta-headline').innerHTML='<div class="ad-row"><span>'+escHtml(hl)+'</span><span class="ad-char '+(hl.length<=40?'ok':'over')+'">'+hl.length+'/40</span></div>';
+    document.getElementById('mak-meta-desc').innerHTML='<div class="ad-row"><span>'+escHtml(ds)+'</span><span class="ad-char '+(ds.length<=30?'ok':'over')+'">'+ds.length+'/30</span></div>';
+    document.getElementById('mak-meta-cta').textContent=m.cta||'Mehr erfahren';
+  }else{metaSection.style.display='none';}
+  const imgSection=document.getElementById('mak-img-section');
+  if(imgUrl){document.getElementById('mak-img').src=imgUrl;document.getElementById('mak-img-dl').href=imgUrl;imgSection.style.display='block';}
+  else{imgSection.style.display='none';}
+  const tipEl=document.getElementById('mak-tip');
+  if(maklerPlatform==='both')tipEl.textContent='Tipp: Google Ads Text direkt in Google Ads einfügen. Meta Text für Facebook/Instagram Ads Manager verwenden. Bild für beide Plattformen nutzbar.';
+  else if(maklerPlatform==='meta')tipEl.textContent='Tipp: Text und Bild direkt in den Meta Ads Manager (Facebook/Instagram) hochladen.';
+  else tipEl.textContent='Tipp: Text direkt in Google Ads einfügen. Bild als Creative im Display-Netzwerk verwenden.';
+  const platform=maklerPlatform==='both'?'Google & Meta':maklerPlatform==='meta'?'Meta Ads':'Google Ads';
+  document.getElementById('mak-result-title').textContent=platform+' Paket – '+name;
+  const fullUrl='https://virgoio.com/makler/'+slug;
+  const urlBoxId='mak-url-box';
+  let urlBox=document.getElementById(urlBoxId);
+  if(!urlBox){urlBox=document.createElement('div');urlBox.id=urlBoxId;urlBox.style.cssText='background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px;margin-bottom:14px';document.getElementById('mak-result').insertBefore(urlBox,document.getElementById('mak-result').firstChild);}
+  urlBox.innerHTML='<div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#166534;margin-bottom:6px;font-weight:600">Deine Ziel-URL für Google &amp; Meta Ads</div><div style="display:flex;align-items:center;gap:8px"><span style="font-size:12px;font-family:monospace;color:#166534;flex:1;word-break:break-all">'+fullUrl+'</span><button onclick="navigator.clipboard.writeText(\''+fullUrl+'\').then(()=>{this.textContent=\'Kopiert!\';setTimeout(()=>this.textContent=\'Kopieren\',2000)})" style="padding:5px 12px;background:#166534;color:#fff;border:none;border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer;white-space:nowrap">Kopieren</button></div><div style="font-size:10px;color:#16a34a;margin-top:6px">Diese URL bei Google Ads und Meta Ads als Ziel-URL eintragen.</div>';
+  document.getElementById('mak-result').style.display='block';
+  document.getElementById('modal-makler-ads').querySelector('.mb2').scrollTop=9999;
+}
+function copyMaklerAdText(){
+  if(!maklerAdData)return;
+  const lines=[];
+  const g=maklerAdData.google;const m=maklerAdData.meta;
+  const needGoogle=maklerPlatform==='google'||maklerPlatform==='both';
+  const needMeta=maklerPlatform==='meta'||maklerPlatform==='both';
+  if(needGoogle&&g){lines.push('=== GOOGLE ADS ===');lines.push(...(g.headlines||[]).map((h,i)=>'H'+(i+1)+': '+h));lines.push('');lines.push(...(g.descriptions||[]).map((d,i)=>'D'+(i+1)+': '+d));lines.push('CTA: '+(g.cta||''));}
+  if(needMeta&&m){if(lines.length)lines.push('');lines.push('=== META ADS (Facebook/Instagram) ===');lines.push('Primary Text: '+(m.primary_text||''));lines.push('Headline: '+(m.headline||''));lines.push('Description: '+(m.description||''));lines.push('CTA Button: '+(m.cta||''));}
+  navigator.clipboard.writeText(lines.join('\n')).then(()=>{const btn=document.querySelector('#mak-result .mak-pkg-btn.sec');if(btn){btn.textContent='Kopiert!';setTimeout(()=>btn.textContent='Ad-Text kopieren',2000);}});
+}
+// SIDEBAR
+function openSb(){document.getElementById('sb').classList.add('open');const ov=document.getElementById('sb-overlay');ov.style.display='block';requestAnimationFrame(()=>ov.classList.add('vis'));}
+function closeSb(){document.getElementById('sb').classList.remove('open');const ov=document.getElementById('sb-overlay');ov.classList.remove('vis');setTimeout(()=>{if(!ov.classList.contains('vis'))ov.style.display='none';},350);}
+function toggleSbDesktop(){const sb=document.getElementById('sb');const btn=document.getElementById('sb-toggle-btn');sb.classList.toggle('collapsed');btn.textContent=sb.classList.contains('collapsed')?'►':'◄';localStorage.setItem('virgo_sb_closed',sb.classList.contains('collapsed')?'1':'0');}
+const ham=document.getElementById('mobile-menu-btn');
+ham.addEventListener('click',openSb);ham.addEventListener('touchend',e=>{e.preventDefault();openSb();},{passive:false});
+const sbcl=document.getElementById('sb-close-btn');
+sbcl.addEventListener('click',closeSb);sbcl.addEventListener('touchend',e=>{e.preventDefault();closeSb();},{passive:false});
+const ov=document.getElementById('sb-overlay');
+ov.addEventListener('click',closeSb);ov.addEventListener('touchend',e=>{e.preventDefault();closeSb();},{passive:false});
+// MODE
+function switchMode(mode,el){state.mode=mode;document.querySelectorAll('.mp').forEach(p=>p.classList.remove('on'));if(el)el.classList.add('on');document.getElementById('prompt').placeholder=PH[mode]||PH.chat;}
+function resetToChatMode(){state.mode='chat';state.model='chat';state.modelName='Virgo Chat';document.querySelectorAll('.mp').forEach(p=>p.classList.remove('on'));document.getElementById('mode-chat').classList.add('on');document.querySelectorAll('.mc').forEach(c=>c.classList.remove('on'));document.querySelector('.mc').classList.add('on');document.getElementById('prompt').placeholder=PH.chat;clearRef();}
+function setModel(el,model,name){
+  if(model==='img-modelia'&&!isPaidPlan()&&!isAdmin()){
+    const m=document.getElementById('up-msg');m.className='alert';
+    m.textContent='Virgo Fashion ist nur für zahlende Pläne. Starte mit Makler Pro für 149 €/Monat.';
+    showM('modal-upgrade');return;
+  }
+  if(model.startsWith('img')&&!isPaidPlan()&&!isAdmin()){
+    const m=document.getElementById('up-msg');m.className='alert';
+    m.textContent='Bildgenerierung ist nur für zahlende Pläne. Starte mit Makler Pro für 149 €/Monat.';
+    showM('modal-upgrade');return;
+  }
+  document.querySelectorAll('.mc').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');state.model=model;state.modelName=name;
+  if(model.startsWith('img'))switchMode('img',document.getElementById('mode-img'));
+  else if(model.startsWith('business-'))switchMode(model,document.getElementById('mode-chat'));
+  else switchMode('chat',document.getElementById('mode-chat'));
+  closeSb();
+}
+function isPaidPlan(){
+  const plan=localStorage.getItem('virgo_plan')||'free';
+  return['makler-pro','makler-business','makler-starter','pro','standard'].includes(plan)||isAdmin();
+}
+function isPro(){return isPaidPlan();}
+// CHAT STORAGE
+function getLocalChats(){return JSON.parse(localStorage.getItem('virgo_chats_v2')||'[]');}
+function setLocalChats(chats){localStorage.setItem('virgo_chats_v2',JSON.stringify(chats));}
+function isSupabaseId(id){return id&&!String(id).startsWith('chat_');}
+function cleanMessages(messages){return messages.map(msg=>{if(Array.isArray(msg.content)){const txt=msg.content.find(b=>b.type==='text');return{role:msg.role,content:txt?txt.text:''};}return msg;});}
+async function loadChats(){
+  renderChatHistory(getLocalChats());
+  if(authToken){
+    try{
+      const r=await fetch('/api/chats',{headers:{'Authorization':'Bearer '+authToken}});
+      if(r.ok){const data=await r.json();if(Array.isArray(data)&&data.length){const local=getLocalChats().filter(c=>!isSupabaseId(c.id));const merged=[...data,...local];renderChatHistory(merged);}}
+    }catch(e){}
+  }
+}
+function renderChatHistory(chats){
+  const hist=document.getElementById('hist');const empty=document.getElementById('hist-empty');
+  hist.querySelectorAll('.hi,.hl,.clear-btn').forEach(el=>el.remove());
+  if(!chats.length){if(empty)empty.style.display='block';return;}
+  if(empty)empty.style.display='none';
+  const lbl=document.createElement('span');lbl.className='hl';lbl.textContent='Chats';hist.appendChild(lbl);
+  chats.forEach(chat=>{
+    const d=document.createElement('div');
+    d.className='hi'+(chat.id===state.activeChatId?' on':'');
+    d.innerHTML='<span class="hi-title">'+escHtml(chat.title||'Chat')+'</span><button class="hi-del" onclick="event.stopPropagation();deleteChat(\''+chat.id+'\')">x</button>';
+    d.querySelector('.hi-title').addEventListener('click',()=>openChat(chat));
+    hist.appendChild(d);
+  });
+  if(!authToken){const cb=document.createElement('button');cb.className='clear-btn';cb.textContent='Alle löschen';cb.onclick=()=>{setLocalChats([]);loadChats();};hist.appendChild(cb);}
+}
+async function deleteChat(id){
+  setLocalChats(getLocalChats().filter(c=>c.id!==id));
+  if(authToken&&isSupabaseId(id)){try{await fetch('/api/chats',{method:'DELETE',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({id})});}catch(e){}}
+  if(state.activeChatId===id)newChat();else loadChats();
+}
+function openChat(chat){
+  state.chatStarted=true;state.activeChatId=chat.id;
+  const _l=document.getElementById('landing');if(_l)_l.style.display='none';
+  document.getElementById('chat-title').textContent=chat.title||'Chat';
+  document.getElementById('fi').innerHTML='';conversationHistory=[];
+  (chat.messages||[]).forEach(msg=>{
+    const content=typeof msg.content==='string'?msg.content:(Array.isArray(msg.content)?(msg.content.find(b=>b.type==='text')||{}).text||'':msg.content||'');
+    if(msg.role==='user')addUserMsg(content);else if(msg.role==='assistant')addAIMsg(renderMD(content));
+  });
+  conversationHistory=cleanMessages(chat.messages||[]);
+  loadChats();closeSb();
+}
+async function saveChat(title,messages){
+  const clean=cleanMessages(messages);
+  if(!state.activeChatId){state.activeChatId='chat_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);}
+  const chats=getLocalChats();
+  const idx=chats.findIndex(c=>c.id===state.activeChatId);
+  if(idx>=0){chats[idx].messages=clean;chats[idx].title=title;chats[idx].updated=Date.now();}
+  else{chats.unshift({id:state.activeChatId,title,messages:clean,updated:Date.now()});}
+  if(chats.length>100)chats.splice(100);
+  setLocalChats(chats);loadChats();
+  if(authToken){
+    try{
+      if(isSupabaseId(state.activeChatId)){
+        await fetch('/api/chats',{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({id:state.activeChatId,title,messages:clean})});
+      }else{
+        const r=await fetch('/api/chats',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({title,messages:clean})});
+        const data=await r.json();
+        if(data.id){const localChats=getLocalChats();const li=localChats.findIndex(c=>c.id===state.activeChatId);if(li>=0)localChats[li].id=data.id;state.activeChatId=data.id;setLocalChats(localChats);loadChats();}
+      }
+    }catch(e){}
+  }
+}
+// AUTH
+const ADMIN_EMAIL='holyencore@gmail.com';
+function isAdmin(){return currentUser&&currentUser.email===ADMIN_EMAIL;}
+function updateUI(){
+  const li=!!currentUser;
+  const plan=localStorage.getItem('virgo_plan')||'free';
+  document.getElementById('uav').textContent=li?(currentUser.email?.[0]?.toUpperCase()||'U'):'?';
+  document.getElementById('uname').textContent=li?currentUser.email:'Anmelden';
+  document.getElementById('uplan').textContent=li?(plan.charAt(0).toUpperCase()+plan.slice(1)+' - '+credits+' Credits'):'Kostenlos starten';
+  document.getElementById('auth-btn').textContent=li?'Abmelden':'Anmelden';
+  document.getElementById('auth-btn').onclick=li?logout:()=>showM('modal-login');
+  if(isAdmin()){document.getElementById('cr-display').textContent='Credits';document.getElementById('cdot').className='cdot';}
+  else{document.getElementById('cr-display').textContent=credits+' Credits';document.getElementById('cdot').className='cdot'+(credits<10?' low':'');}
+}
+async function loadCredits(){
+  if(!authToken)return;
+  try{const r=await fetch('/api/credits',{headers:{'Authorization':'Bearer '+authToken}});const d=await r.json();if(d.credits!==undefined){credits=d.credits;localStorage.setItem('virgo_credits',credits);localStorage.setItem('virgo_plan',d.plan||'free');updateUI();}}
+  catch(e){}
+}
+function switchTab(tab,el){curTab=tab;document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));if(el)el.classList.add('on');document.getElementById('auth-submit').textContent=tab==='login'?'Anmelden':'Konto erstellen';setAuthMsg('','');}
+function setAuthMsg(msg,type){const el=document.getElementById('auth-msg');el.className=type||'';el.textContent=msg||(curTab==='login'?'Melde dich bei deinem Virgo Konto an.':'Erstelle dein kostenloses Virgo Konto.');}
+async function doAuth(){
+  const email=document.getElementById('auth-email').value.trim();
+  const password=document.getElementById('auth-password').value;
+  const btn=document.getElementById('auth-submit');
+  if(!email||!password){setAuthMsg('Bitte alle Felder ausfüllen.','alert');return;}
+  if(password.length<6){setAuthMsg('Passwort mind. 6 Zeichen.','alert');return;}
+  btn.disabled=true;btn.textContent='...';
+  try{
+    const r=await fetch('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:curTab,email,password})});
+    const d=await r.json();
+    if(d.error){setAuthMsg(d.error,'alert');btn.disabled=false;btn.textContent=curTab==='login'?'Anmelden':'Konto erstellen';return;}
+    authToken=d.session&&d.session.access_token;currentUser=d.user;
+    credits=d.credits||(curTab==='register'?10:3);
+    localStorage.setItem('virgo_token',authToken);localStorage.setItem('virgo_user',JSON.stringify(currentUser));
+    localStorage.setItem('virgo_credits',credits);localStorage.setItem('virgo_plan',d.plan||'free');
+    updateUI();closeM('modal-login');loadChats();
+    if(curTab==='register')addAIMsg('Willkommen bei Virgo! Du hast 10 Start-Credits.');
+  }catch(e){setAuthMsg('Verbindungsfehler. Bitte nochmal versuchen.','alert');}
+  btn.disabled=false;btn.textContent=curTab==='login'?'Anmelden':'Konto erstellen';
+}
+function logout(){authToken=null;currentUser=null;credits=3;localStorage.removeItem('virgo_token');localStorage.removeItem('virgo_user');localStorage.removeItem('virgo_credits');localStorage.removeItem('virgo_plan');updateUI();resetToChatMode();loadChats();}
+// CREDITS
+async function useCredits(type){
+  if(isAdmin())return true;
+  const cost=COST[type]||1;
+  if(credits<cost){
+    const m=document.getElementById('up-msg');m.className='alert';
+    m.textContent=!currentUser?'Erstelle ein kostenloses Konto für 10 Gratis-Credits!':'Nicht genug Credits. Upgrade auf Makler Pro!';
+    showM('modal-upgrade');return false;
+  }
+  if(authToken){try{const r=await fetch('/api/credits',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({amount:cost})});const d=await r.json();if(d.error){showM('modal-upgrade');return false;}credits=d.credits;localStorage.setItem('virgo_credits',credits);}catch(e){credits-=cost;localStorage.setItem('virgo_credits',credits);}}
+  else{credits-=cost;localStorage.setItem('virgo_credits',credits);}
+  document.getElementById('cr-display').textContent=isAdmin()?'Credits':credits+' Credits';
+  document.getElementById('cdot').className='cdot'+((!isAdmin()&&credits<10)?' low':'');
+  return true;
+}
+// UPLOAD
+function compressImg(file,maxW=1024){return new Promise(res=>{const img=new Image();const url=URL.createObjectURL(file);img.onload=()=>{const scale=Math.min(1,maxW/Math.max(img.width,img.height));const c=document.createElement('canvas');c.width=img.width*scale;c.height=img.height*scale;c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);c.toBlob(blob=>{const r=new FileReader();r.onload=e=>res({b64:e.target.result.split(',')[1],mime:'image/jpeg',url:e.target.result,name:file.name});r.readAsDataURL(blob);},'image/jpeg',.85);};img.src=url;});}
+function uploadRef(){if(refImages.length>=4)return;const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.multiple=true;inp.onchange=async e=>{const files=Array.from(e.target.files).slice(0,4-refImages.length);for(const f of files){const c=await compressImg(f);refImages.push(c);}renderRefZone();};inp.click();}
+function renderRefZone(){const zone=document.getElementById('rz');const container=document.getElementById('ref-imgs');if(!refImages.length){zone.classList.remove('vis');document.getElementById('img-btn').classList.remove('has');document.getElementById('img-btn').textContent='📎';return;}zone.classList.add('vis');document.getElementById('img-btn').classList.add('has');document.getElementById('img-btn').textContent='📎'+refImages.length;container.innerHTML=refImages.map((img,i)=>'<div style="position:relative;display:inline-block"><img src="'+img.url+'" style="width:40px;height:40px;border-radius:6px;object-fit:cover;border:1px solid var(--bd)"><button onclick="removeRef('+i+')" style="position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:var(--t);color:#fff;border:none;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center">x</button></div>').join('');}
+function removeRef(i){refImages.splice(i,1);renderRefZone();}
+function clearRef(){refImages=[];renderRefZone();}
+// MARKDOWN
+function renderMD(t){
+  if(!t)return'';
+  const codeBlocks=[];
+  t=t.replace(/```([\w]*)?\n?([\s\S]*?)```/g,(match,lang,code)=>{const id='cb'+codeBlocks.length;codeBlocks.push({id,lang:lang||'code',code:code.trim()});return'%%%CODEBLOCK_'+id+'%%%';});
+  t=t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  t=t.replace(/^### (.+)$/gm,'<b style="display:block;margin:8px 0 3px;font-size:13px">$1</b>');
+  t=t.replace(/^## (.+)$/gm,'<b style="display:block;margin:10px 0 4px;font-size:14px">$1</b>');
+  t=t.replace(/^# (.+)$/gm,'<b style="display:block;margin:10px 0 5px;font-size:15px">$1</b>');
+  t=t.replace(/\*\*([^*\n]+)\*\*/g,'<b>$1</b>');
+  t=t.replace(/\*([^*\n]+)\*/g,'<i>$1</i>');
+  t=t.replace(/^---$/gm,'<hr style="border:none;border-top:1px solid var(--bd);margin:8px 0">');
+  t=t.replace(/^[-] (.+)$/gm,'<div style="margin:2px 0 2px 12px">- $1</div>');
+  t=t.replace(/`([^`]+)`/g,'<code style="background:var(--sf2);padding:1px 4px;border-radius:3px;font-size:11px;font-family:monospace">$1</code>');
+  t=t.replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
+  codeBlocks.forEach(({id,lang,code})=>{const escaped=code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');const html='<div class="code-block"><div class="code-header"><span class="code-lang">'+lang+'</span><button class="code-copy" onclick="copyCode(this,\''+id+'\')">Kopieren</button></div><pre id="'+id+'"><code>'+escaped+'</code></pre></div>';t=t.replace('%%%CODEBLOCK_'+id+'%%%',html);});
+  return t;
+}
+function copyCode(btn,id){const el=document.getElementById(id);if(!el)return;navigator.clipboard.writeText(el.innerText).then(()=>{btn.textContent='Kopiert';setTimeout(()=>btn.textContent='Kopieren',2000);});}
+function exportPDF(content,title){const html='<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;max-width:800px;margin:40px auto;padding:0 20px;color:#111;line-height:1.7}h1{font-size:13px;font-weight:200;letter-spacing:8px;margin-bottom:32px;color:#888}</style></head><body><h1>V I R G O AI</h1><div>'+content+'</div><p style="font-size:11px;color:#bbb;margin-top:40px">Erstellt mit Virgo AI - virgoio.com</p></body></html>';const blob=new Blob([html],{type:'text/html'});const url=URL.createObjectURL(blob);const w=window.open(url,'_blank');if(w)setTimeout(()=>w.print(),500);}
+// CHAT
+function onKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}
+function autoResize(el){el.style.height='24px';el.style.height=Math.min(el.scrollHeight,120)+'px';}
+function qs(txt){document.getElementById('prompt').value=txt;send();}
+function now(){return new Date().toLocaleTimeString('de',{hour:'2-digit',minute:'2-digit'});}
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+async function send(){
+  const inp=document.getElementById('prompt');
+  const txt=inp.value.trim();if(!txt||state.generating)return;
+  const mode=state.model.startsWith('img')?'img':'chat';
+  const ct=state.model==='img-modelia'?'modelia':mode;
+  if(mode!=='chat'&&!(await useCredits(ct)))return;
+  let chatTitle=document.getElementById('chat-title').textContent;
+  if(!state.chatStarted){state.chatStarted=true;const _l2=document.getElementById('landing');if(_l2)_l2.style.display='none';chatTitle=txt.substring(0,40)+(txt.length>40?'...':'');document.getElementById('chat-title').textContent=chatTitle;}
+  const hasImgs=refImages.length>0&&mode==='chat';
+  if(hasImgs){const content=[...refImages.map(img=>({type:'image',source:{type:'base64',media_type:img.mime,data:img.b64}})),{type:'text',text:txt}];conversationHistory.push({role:'user',content});clearRef();}
+  else{conversationHistory.push({role:'user',content:txt});}
+  saveChat(chatTitle,conversationHistory);
+  addUserMsg(txt,hasImgs);
+  lastUserMsg=txt;
+  inp.value='';inp.style.height='24px';
+  if(mode==='img')genImage(txt);else genChat(txt);
+}
+function addUserMsg(txt,hasImage){const d=document.createElement('div');d.className='mw user';const hint=hasImage?'<div style="font-size:10px;color:rgba(255,255,255,.6);margin-top:4px">Bild analysiert - wird nicht gespeichert, bitte selbst sichern.</div>':'';d.innerHTML='<div><div class="bb">'+escHtml(txt)+hint+'</div><div class="mt2">'+now()+'</div></div>';document.getElementById('fi').appendChild(d);scrollFeed();}
+function addAIMsg(html){const d=document.createElement('div');d.className='mw ai';d.innerHTML='<div class="aav">V</div><div><div class="bb">'+html+'</div><div class="mt2">'+now()+'</div></div>';document.getElementById('fi').appendChild(d);scrollFeed();}
+function showTyping(){const d=document.createElement('div');d.id='typing';d.className='tw';d.innerHTML='<div class="aav">V</div><div class="td2"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';document.getElementById('fi').appendChild(d);scrollFeed();}
+function hideTyping(){const t=document.getElementById('typing');if(t)t.remove();}
+function startGen(label){state.generating=true;document.getElementById('gl').textContent=label;document.getElementById('gs').classList.add('vis');document.getElementById('send-btn').disabled=true;let p=0;genTimer=setInterval(()=>{p=Math.min(p+1,90);document.getElementById('gf').style.width=p+'%';},600);}
+function endGen(){state.generating=false;clearInterval(genTimer);document.getElementById('gf').style.width='100%';setTimeout(()=>{document.getElementById('gs').classList.remove('vis');document.getElementById('gf').style.width='0%';},800);document.getElementById('send-btn').disabled=false;}
+function cancelGen(){clearInterval(genTimer);endGen();hideTyping();}
+// ── DATEN-STORE für strukturierte Outputs (Kopier-Funktionen brauchen Zugriff) ──
+window.virgoStructured={};
+async function genChat(txt){
+  showTyping();
+  const isBusinessMode=state.model.startsWith('business-');
+  const isSocialMode=state.model==='business-social';
+  const isEmailMode=state.model==='business-email';
+  const isAdsMode=state.model==='business-ads';
+  const isPitchMode=state.model==='business-pitch';
+  const isStructuredMode=isSocialMode||isEmailMode||isAdsMode||isPitchMode;
+  let endpoint='/api/chat';
+  if(isBusinessMode)endpoint='/api/business';
+  const businessType=state.model.replace('business-','');
+  // ── PROMPTS: JSON für strukturierte Tools, Text für plan/website ──
+  const bPre={
+    'plan':'Erstelle einen vollständigen Businessplan auf Deutsch für: ',
+    'website':'Erstelle professionelle Website-Texte auf Deutsch für: ',
+    'ads':'Erstelle 3 verschiedene Werbeanzeigen auf Deutsch für: ',
+    'social':'Erstelle 3 kreative Social Media Posts auf Deutsch für: ',
+    'email':'Erstelle EINE professionelle Email auf Deutsch für: ',
+    'pitch':'Erstelle ein Pitch Deck mit 5 Slides auf Deutsch für: '
+  };
+  const bSys={
+    'plan':'Du bist ein Business-Experte für Versicherungsmakler. Erstelle NUR Businessplaene auf Deutsch.',
+    'website':'Du bist ein Copywriter für Versicherungsmakler. Erstelle NUR Website-Texte auf Deutsch.',
+    'ads':`Du bist ein Performance Marketing Experte für Versicherungsmakler. Antworte NUR mit validem JSON in genau diesem Format (kein Markdown, keine Backticks, kein Text vor/nach JSON):
+{
+  "type": "ads",
+  "topic": "Kurzbeschreibung des Angebots",
+  "ads": [
+    {"number": 1, "platform": "Google", "headline": "max 30 Zeichen", "description": "max 90 Zeichen", "cta": "max 15 Zeichen"},
+    {"number": 2, "platform": "Meta", "headline": "max 40 Zeichen", "description": "max 125 Zeichen", "cta": "Mehr erfahren"},
+    {"number": 3, "platform": "LinkedIn", "headline": "max 40 Zeichen", "description": "max 100 Zeichen", "cta": "Kontakt aufnehmen"}
+  ]
+}
+Alle Texte auf Deutsch. Konkret und auf Versicherungsmakler zugeschnitten.`,
+    'social':`Du bist ein Social Media Manager für Versicherungsmakler. Antworte NUR mit validem JSON in genau diesem Format (kein Markdown, keine Backticks):
+{
+  "type": "social_posts",
+  "topic": "Kurzbeschreibung des Themas",
+  "posts": [
+    {"number": 1, "platform": "Instagram", "caption": "Post-Text mit Hook und Call-to-Action", "hashtags": "#hashtag1 #hashtag2 #hashtag3"},
+    {"number": 2, "platform": "LinkedIn", "caption": "...", "hashtags": "..."},
+    {"number": 3, "platform": "TikTok", "caption": "...", "hashtags": "..."}
+  ]
+}
+Erstelle 3 Posts auf verschiedenen Plattformen. Alle Texte auf Deutsch.`,
+    'email':`Du bist ein Email Marketing Experte für Versicherungsmakler. Antworte NUR mit validem JSON in genau diesem Format (kein Markdown, keine Backticks, kein Text davor/danach):
+{
+  "type": "email",
+  "topic": "Kurzbeschreibung der Email",
+  "email": {
+    "subject": "Klare, neugierig machende Betreff-Zeile",
+    "preheader": "Preview-Text max 100 Zeichen",
+    "body": "Hallo [Vorname],\\n\\nEmail-Inhalt mit \\n\\n für Absätze. Persönlich, klar, mit konkretem Call-to-Action am Ende.\\n\\nHerzliche Grüße\\n[Maklername]"
+  }
+}
+Erstelle EINE einzige perfekte Email passend zum vom User beschriebenen Anlass (Erstkontakt, Follow-up, Newsletter, etc.). Alle Texte auf Deutsch.`,
+    'pitch':`Du bist ein Pitch-Experte. Antworte NUR mit validem JSON in genau diesem Format (kein Markdown, keine Backticks):
+{
+  "type": "pitch_deck",
+  "topic": "Kurzbeschreibung",
+  "slides": [
+    {"number": 1, "title": "Problem", "content": "Slide-Inhalt als Fließtext, prägnant"},
+    {"number": 2, "title": "Lösung", "content": "..."},
+    {"number": 3, "title": "Markt & Zielgruppe", "content": "..."},
+    {"number": 4, "title": "Geschäftsmodell", "content": "..."},
+    {"number": 5, "title": "Team & Ask", "content": "..."}
+  ]
+}
+Alle Texte auf Deutsch. Prägnant.`
+  };
+  const bMessages=isBusinessMode?[{role:'user',content:(bPre[businessType]||'')+txt}]:conversationHistory;
+  const bodyData=isBusinessMode?{type:businessType,messages:bMessages,systemOverride:bSys[businessType]||''}:{messages:conversationHistory};
+  fetchWithRetry(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(bodyData)})
+  .then(r=>r.json()).then(async d=>{
+    hideTyping();
+    const reply=(d.content&&d.content[0]&&d.content[0].text)||'Fehler beim Laden.';
+    if(d._fallback==='gemini')updateApiStatus('warn');
+    conversationHistory.push({role:'assistant',content:reply});
+    if(conversationHistory.length>30)conversationHistory=conversationHistory.slice(-30);
+    // ── STRUKTURIERTE TOOLS: JSON parsen und mit Kopier-Buttons rendern ──
+    if(isStructuredMode){
+      try{
+        // Markdown-Backticks entfernen
+        let cleaned=reply.replace(/```json|```/g,'').trim();
+        // Vorangestellten Text vor erster { entfernen
+        const firstBrace=cleaned.indexOf('{');
+        if(firstBrace>0)cleaned=cleaned.substring(firstBrace);
+        else if(firstBrace<0)throw new Error('Kein JSON gefunden');
+        // Erstes vollständiges JSON-Objekt extrahieren (Brace-Matching)
+        // Schützt vor doppelten/fragmentierten Antworten der KI
+        let depth=0,endIdx=-1,inString=false,escape=false;
+        for(let i=0;i<cleaned.length;i++){
+          const ch=cleaned[i];
+          if(escape){escape=false;continue;}
+          if(ch==='\\'){escape=true;continue;}
+          if(ch==='"'){inString=!inString;continue;}
+          if(inString)continue;
+          if(ch==='{')depth++;
+          else if(ch==='}'){depth--;if(depth===0){endIdx=i;break;}}
+        }
+        if(endIdx>0)cleaned=cleaned.substring(0,endIdx+1);
+        const parsed=JSON.parse(cleaned);
+        renderStructuredOutput(parsed,txt);
+        saveChat(document.getElementById('chat-title').textContent,conversationHistory);
+        // Bild-Generator für Social Posts
+        if(isSocialMode){
+          const imgId='smimg'+Date.now();
+          const imgBox=document.createElement('div');imgBox.className='mw ai';
+          imgBox.innerHTML=`<div class="aav">V</div><div><div class="bb" style="max-width:480px"><div style="font-size:12px;font-weight:500;margin-bottom:8px">Bild für deine Posts generieren</div><div style="font-size:11px;color:var(--tm);margin-bottom:10px">1 Credit — passt zu allen Posts</div><input id="${imgId}-inp" class="minp" placeholder="Beschreibe dein Wunschbild (optional)..." style="margin-bottom:8px;font-size:12px"><button id="${imgId}-btn" onclick="genSocialImg('${imgId}','${txt.replace(/'/g,"\\'").substring(0,60)}')" style="width:100%;padding:9px;background:var(--t);color:#fff;border:none;border-radius:8px;font-family:Inter,sans-serif;font-size:12px;font-weight:500;cursor:pointer">Bild generieren (1 Credit)</button><div id="${imgId}-out" style="margin-top:10px;display:none"></div></div></div>`;
+          document.getElementById('fi').appendChild(imgBox);scrollFeed();
+        }
+        return;
+      }catch(parseErr){
+        console.warn('JSON parse failed, falling back to text:',parseErr);
+        // Fall through zu normaler Text-Anzeige
+      }
+    }
+    // ── PLAN, WEBSITE oder Parsing-Fallback: normale Text-Anzeige mit PDF ──
+    const rendered=renderMD(reply);
+    const extra=isBusinessMode?'<div style="margin-top:12px"><button onclick="exportPDF(\''+rendered.replace(/'/g,"\\'")+'\')" style="padding:6px 14px;border:1px solid var(--bd);border-radius:6px;background:var(--t);color:#fff;font-family:Inter,sans-serif;font-size:11px;cursor:pointer">Als PDF speichern</button></div>':'';
+    addAIMsg(rendered+extra);
+    saveChat(document.getElementById('chat-title').textContent,conversationHistory);
+  }).catch(()=>{hideTyping();showFallbackMsg();});
+}
+// ── STRUKTURIERTE OUTPUTS RENDERN ──
+function renderStructuredOutput(data,topic){
+  if(data.type==='email')renderSingleEmail(data);
+  else if(data.type==='email_sequence')renderEmailSequence(data);
+  else if(data.type==='social_posts')renderSocialPosts(data);
+  else if(data.type==='ads')renderAdsOutput(data);
+  else if(data.type==='pitch_deck')renderPitchDeck(data);
+}
+// ── TOAST für Kopier-Bestätigung ──
+function showCopyToast(msg){
+  const toast=document.createElement('div');
+  toast.textContent='✓ '+(msg||'Kopiert');
+  toast.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#16a34a;color:#fff;padding:10px 20px;border-radius:8px;font-family:Inter,sans-serif;font-size:13px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.15);font-weight:500';
+  document.body.appendChild(toast);
+  setTimeout(()=>toast.style.opacity='0',1500);
+  setTimeout(()=>toast.remove(),1800);
+}
+function copyText(storeId,key,label){
+  const data=window.virgoStructured[storeId];
+  if(!data)return;
+  const text=data[key]||'';
+  navigator.clipboard.writeText(text).then(()=>showCopyToast(label||'Kopiert'));
+}
+// ── EINZELNE EMAIL RENDERN (große, schöne Karte) ──
+function renderSingleEmail(data){
+  const sid='em'+Date.now();
+  const email=data.email||{};
+  const fullText='Betreff: '+(email.subject||'')+'\n\n'+(email.body||'');
+  window.virgoStructured[sid]={subject:email.subject||'',body:email.body||'',full:fullText,preheader:email.preheader||''};
+  let html='<div style="font-size:14px;font-weight:600;margin-bottom:6px;color:var(--t)">Deine Email</div>';
+  if(data.topic)html+='<div style="font-size:11px;color:var(--tm);margin-bottom:16px">'+escHtml(data.topic)+'</div>';
+  html+='<div style="border:1px solid var(--bd);border-radius:14px;padding:22px;background:var(--bg);box-shadow:0 2px 12px rgba(0,0,0,0.05);max-width:520px">';
+  // Betreff
+  html+='<div style="margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--bd)">';
+  html+='<div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--td);margin-bottom:6px;font-weight:600">Betreff</div>';
+  html+='<div style="font-size:15px;font-weight:600;color:var(--t);line-height:1.4">'+escHtml(email.subject||'')+'</div>';
+  if(email.preheader){
+    html+='<div style="font-size:11px;color:var(--tm);margin-top:6px;font-style:italic">'+escHtml(email.preheader)+'</div>';
+  }
+  html+='</div>';
+  // Body
+  html+='<div style="margin-bottom:18px">';
+  html+='<div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--td);margin-bottom:10px;font-weight:600">Email-Text</div>';
+  html+='<div style="font-size:13px;color:#222;line-height:1.85;white-space:pre-wrap">'+escHtml(email.body||'')+'</div>';
+  html+='</div>';
+  // Buttons
+  html+='<div style="display:flex;gap:8px;flex-wrap:wrap;padding-top:14px;border-top:1px solid var(--bd)">';
+  html+='<button onclick="copyText(\''+sid+'\',\'full\',\'Email kopiert\')" style="flex:1;min-width:140px;padding:11px 16px;background:var(--t);color:#fff;border:none;border-radius:8px;font-family:Inter,sans-serif;font-size:12px;cursor:pointer;font-weight:500">Komplett kopieren</button>';
+  html+='<button onclick="copyText(\''+sid+'\',\'subject\',\'Betreff kopiert\')" style="padding:11px 16px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:8px;font-family:Inter,sans-serif;font-size:12px;cursor:pointer">Nur Betreff</button>';
+  html+='<button onclick="copyText(\''+sid+'\',\'body\',\'Text kopiert\')" style="padding:11px 16px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:8px;font-family:Inter,sans-serif;font-size:12px;cursor:pointer">Nur Text</button>';
+  html+='</div>';
+  html+='</div>';
+  addAIMsg(html);
+}
+// ── EMAIL-SEQUENZ RENDERN ──
+function renderEmailSequence(data){
+  const sid='es'+Date.now();
+  window.virgoStructured[sid]={emails:data.emails};
+  let html='<div style="font-size:14px;font-weight:600;margin-bottom:6px">📧 Email-Sequenz</div>';
+  html+='<div style="font-size:11px;color:var(--tm);margin-bottom:14px">'+escHtml(data.topic||'')+' · '+data.emails.length+' Emails</div>';
+  data.emails.forEach((email,idx)=>{
+    const id=sid+'-'+idx;
+    window.virgoStructured[id]={subject:email.subject,body:email.body,full:'Betreff: '+email.subject+'\n\n'+email.body};
+    html+='<div style="border:1px solid var(--bd);border-radius:10px;padding:14px;margin-bottom:10px;background:var(--bg)">';
+    html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--td);font-weight:600">Email '+email.number+'</span>';
+    html+='</div>';
+    html+='<div style="font-size:13px;font-weight:600;margin-bottom:4px;color:var(--t)">'+escHtml(email.subject||'')+'</div>';
+    if(email.preheader)html+='<div style="font-size:11px;color:var(--tm);margin-bottom:10px;font-style:italic">'+escHtml(email.preheader)+'</div>';
+    html+='<div style="font-size:12px;color:#333;line-height:1.7;margin-bottom:12px;white-space:pre-wrap;background:var(--sf);padding:10px 12px;border-radius:6px">'+escHtml(email.body||'')+'</div>';
+    html+='<div style="display:flex;gap:6px;flex-wrap:wrap">';
+    html+='<button onclick="copyText(\''+id+'\',\'full\',\'Email kopiert\')" style="padding:7px 12px;background:var(--t);color:#fff;border:none;border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer;font-weight:500">Komplett kopieren</button>';
+    html+='<button onclick="copyText(\''+id+'\',\'subject\',\'Betreff kopiert\')" style="padding:7px 12px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer">Nur Betreff</button>';
+    html+='<button onclick="copyText(\''+id+'\',\'body\',\'Text kopiert\')" style="padding:7px 12px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer">Nur Text</button>';
+    html+='</div></div>';
+  });
+  addAIMsg(html);
+}
+// ── SOCIAL POSTS RENDERN ──
+function renderSocialPosts(data){
+  const sid='sp'+Date.now();
+  let html='<div style="font-size:14px;font-weight:600;margin-bottom:6px">📱 Social Media Posts</div>';
+  html+='<div style="font-size:11px;color:var(--tm);margin-bottom:14px">'+escHtml(data.topic||'')+' · '+data.posts.length+' Posts</div>';
+  data.posts.forEach((post,idx)=>{
+    const id=sid+'-'+idx;
+    const fullText=post.caption+(post.hashtags?'\n\n'+post.hashtags:'');
+    window.virgoStructured[id]={caption:post.caption||'',hashtags:post.hashtags||'',full:fullText};
+    const platformColors={'Instagram':'#E1306C','LinkedIn':'#0A66C2','TikTok':'#000000','Facebook':'#1877F2','Twitter':'#000000'};
+    const color=platformColors[post.platform]||'#666';
+    html+='<div style="border:1px solid var(--bd);border-radius:10px;padding:14px;margin-bottom:10px;background:var(--bg)">';
+    html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">';
+    html+='<span style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--td);font-weight:600">Post '+post.number+'</span>';
+    html+='<span style="font-size:9px;padding:2px 7px;border-radius:4px;background:'+color+';color:#fff;font-weight:500">'+escHtml(post.platform||'')+'</span>';
+    html+='</div>';
+    html+='<div style="font-size:12px;color:#333;line-height:1.7;margin-bottom:8px;white-space:pre-wrap">'+escHtml(post.caption||'')+'</div>';
+    if(post.hashtags)html+='<div style="font-size:11px;color:#2563eb;margin-bottom:12px">'+escHtml(post.hashtags)+'</div>';
+    html+='<div style="display:flex;gap:6px;flex-wrap:wrap">';
+    html+='<button onclick="copyText(\''+id+'\',\'full\',\'Post kopiert\')" style="padding:7px 12px;background:var(--t);color:#fff;border:none;border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer;font-weight:500">Post kopieren</button>';
+    html+='<button onclick="copyText(\''+id+'\',\'caption\',\'Text kopiert\')" style="padding:7px 12px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer">Nur Text</button>';
+    if(post.hashtags)html+='<button onclick="copyText(\''+id+'\',\'hashtags\',\'Hashtags kopiert\')" style="padding:7px 12px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer">Nur Hashtags</button>';
+    html+='</div></div>';
+  });
+  addAIMsg(html);
+}
+// ── ADS RENDERN ──
+function renderAdsOutput(data){
+  const sid='ad'+Date.now();
+  let html='<div style="font-size:14px;font-weight:600;margin-bottom:6px">🎯 Werbeanzeigen</div>';
+  html+='<div style="font-size:11px;color:var(--tm);margin-bottom:14px">'+escHtml(data.topic||'')+' · '+data.ads.length+' Anzeigen</div>';
+  data.ads.forEach((ad,idx)=>{
+    const id=sid+'-'+idx;
+    const fullText='Headline: '+ad.headline+'\nDescription: '+ad.description+'\nCTA: '+ad.cta;
+    window.virgoStructured[id]={headline:ad.headline||'',description:ad.description||'',cta:ad.cta||'',full:fullText};
+    const platformColors={'Google':'#4285F4','Meta':'#1877F2','LinkedIn':'#0A66C2','Facebook':'#1877F2','Instagram':'#E1306C'};
+    const color=platformColors[ad.platform]||'#666';
+    html+='<div style="border:1px solid var(--bd);border-radius:10px;padding:14px;margin-bottom:10px;background:var(--bg)">';
+    html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">';
+    html+='<span style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--td);font-weight:600">Ad '+ad.number+'</span>';
+    html+='<span style="font-size:9px;padding:2px 7px;border-radius:4px;background:'+color+';color:#fff;font-weight:500">'+escHtml(ad.platform||'')+'</span>';
+    html+='</div>';
+    html+='<div style="font-size:13px;font-weight:600;margin-bottom:6px;color:var(--t)">'+escHtml(ad.headline||'')+'</div>';
+    html+='<div style="font-size:12px;color:#333;line-height:1.6;margin-bottom:8px">'+escHtml(ad.description||'')+'</div>';
+    html+='<div style="font-size:11px;color:#2563eb;font-weight:500;margin-bottom:12px">CTA: '+escHtml(ad.cta||'')+'</div>';
+    html+='<div style="display:flex;gap:6px;flex-wrap:wrap">';
+    html+='<button onclick="copyText(\''+id+'\',\'full\',\'Ad kopiert\')" style="padding:7px 12px;background:var(--t);color:#fff;border:none;border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer;font-weight:500">Komplett kopieren</button>';
+    html+='<button onclick="copyText(\''+id+'\',\'headline\',\'Headline kopiert\')" style="padding:7px 12px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer">Headline</button>';
+    html+='<button onclick="copyText(\''+id+'\',\'description\',\'Description kopiert\')" style="padding:7px 12px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer">Description</button>';
+    html+='</div></div>';
+  });
+  addAIMsg(html);
+}
+// ── PITCH DECK RENDERN ──
+function renderPitchDeck(data){
+  const sid='pd'+Date.now();
+  let html='<div style="font-size:14px;font-weight:600;margin-bottom:6px">📊 Pitch Deck</div>';
+  html+='<div style="font-size:11px;color:var(--tm);margin-bottom:14px">'+escHtml(data.topic||'')+' · '+data.slides.length+' Slides</div>';
+  // Komplett-Kopieren Button oben
+  const allSlidesText=data.slides.map(s=>'SLIDE '+s.number+': '+s.title+'\n\n'+s.content).join('\n\n---\n\n');
+  window.virgoStructured[sid+'-all']={all:allSlidesText};
+  html+='<button onclick="copyText(\''+sid+'-all\',\'all\',\'Komplettes Deck kopiert\')" style="padding:8px 14px;background:var(--t);color:#fff;border:none;border-radius:8px;font-family:Inter,sans-serif;font-size:12px;font-weight:500;cursor:pointer;margin-bottom:14px">Komplettes Deck kopieren</button>';
+  data.slides.forEach((slide,idx)=>{
+    const id=sid+'-'+idx;
+    const fullText='SLIDE '+slide.number+': '+slide.title+'\n\n'+slide.content;
+    window.virgoStructured[id]={title:slide.title||'',content:slide.content||'',full:fullText};
+    html+='<div style="border:1px solid var(--bd);border-radius:10px;padding:14px;margin-bottom:10px;background:var(--bg)">';
+    html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
+    html+='<span style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--td);font-weight:600">Slide '+slide.number+'</span>';
+    html+='</div>';
+    html+='<div style="font-size:14px;font-weight:600;margin-bottom:8px;color:var(--t)">'+escHtml(slide.title||'')+'</div>';
+    html+='<div style="font-size:12px;color:#333;line-height:1.7;margin-bottom:12px;white-space:pre-wrap">'+escHtml(slide.content||'')+'</div>';
+    html+='<button onclick="copyText(\''+id+'\',\'full\',\'Slide kopiert\')" style="padding:7px 12px;background:var(--t);color:#fff;border:none;border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer;font-weight:500">Slide kopieren</button>';
+    html+='</div>';
+  });
+  addAIMsg(html);
+}
+async function genSocialImg(imgId,topic){
+  if(!(await useCredits('img')))return;
+  const btn=document.getElementById(imgId+'-btn');const inp=document.getElementById(imgId+'-inp');const out=document.getElementById(imgId+'-out');
+  const customDesc=(inp.value||'').trim();
+  btn.disabled=true;btn.textContent='Wird erstellt...';
+  const imgPrompt=customDesc?customDesc+', social media aesthetic, professional photography, Instagram-worthy, no text, no logos, no watermark':'social media content creation, modern aesthetic, vibrant lifestyle, professional photography, Instagram-worthy, '+topic+', no text, no logos';
+  try{
+    const ir=await fetch('/api/generate-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:imgPrompt,model:'nano',negative_prompt:'text,watermark,ugly,deformed,nsfw,cartoon'})});
+    const d=await ir.json();
+    if(d.imageUrl){out.style.display='block';out.innerHTML='<img src="'+d.imageUrl+'" style="width:100%;border-radius:8px;border:1px solid var(--bd);display:block;margin-bottom:8px;cursor:pointer" onclick="window.open(\''+d.imageUrl+'\',\'_blank\')"><a href="'+d.imageUrl+'" download style="display:block;padding:8px;background:var(--t);color:#fff;border-radius:6px;text-align:center;font-size:11px;font-weight:500;text-decoration:none">Download</a>';saveGeneration('image',d.imageUrl,imgPrompt,'Social Media');btn.textContent='Neu generieren';btn.disabled=false;}
+    else{btn.textContent='Fehler – nochmal versuchen';btn.disabled=false;}
+  }catch(e){btn.textContent='Fehler – nochmal versuchen';btn.disabled=false;}
+}
+function genImage(prompt){
+  const mm={'img-nano':'nano','img-seed':'seedream','img-modelia':'nano'};
+  let fp=prompt;
+  if(state.model==='img-modelia')fp=prompt+', shot on 35mm lens f/1.8, vogue editorial style, high-end fashion photography, hyper-realistic skin texture, professional studio lighting, 8k, cinematic color grading';
+  startGen('Bild wird erstellt mit '+state.modelName+'...');showTyping();
+  const body={prompt:fp,model:mm[state.model]||'nano',negative_prompt:'ai-look,plastic skin,cartoon,deformed'};
+  if(refImages.length){body.image_base64=refImages[0].b64;body.image_mime=refImages[0].mime;}
+  fetchWithRetry('/api/generate-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+  .then(r=>r.json()).then(d=>{
+    hideTyping();endGen();
+    if(d.imageUrl){addImageCard(prompt,d.imageUrl);saveGeneration('image',d.imageUrl,prompt,state.modelName);}
+    else addAIMsg('Fehler: '+(d.error||'Bild konnte nicht generiert werden.'));
+    clearRef();
+  }).catch(()=>{hideTyping();endGen();showFallbackMsg();clearRef();});
+}
+function addImageCard(prompt,imgUrl){
+  const id='ic'+Date.now();const cr=state.model==='img-modelia'?'2':'1';
+  const d=document.createElement('div');d.className='mw ai';
+  d.innerHTML='<div class="aav">V</div><div><div class="card" id="'+id+'"><div class="cp2 img"><img src="'+imgUrl+'" onclick="window.open(\''+imgUrl+'\',\'_blank\')" style="cursor:pointer" onload="this.style.opacity=1"></div><div class="cm"><div class="cmod">'+state.modelName+' - '+cr+'cr</div><div class="cprompt">'+escHtml(prompt.substring(0,70))+(prompt.length>70?'...':'')+'</div><div class="cas"><a href="'+imgUrl+'" download class="ca p">Download</a><button class="ca" onclick="doUpscale(\''+imgUrl+'\',\'image\')">Upscale</button><button class="ca" onclick="doVariant(\''+prompt.replace(/'/g,"\\'").replace(/"/g,'&quot;')+'\')">Variante</button></div><div style="font-size:10px;color:var(--td);margin-top:6px">In Galerie gespeichert - jetzt downloaden!</div></div></div><div class="mt2">'+now()+'</div></div>';
+  document.getElementById('fi').appendChild(d);scrollFeed();
+}
+async function doUpscale(url,type){if(!(await useCredits('tool')))return;addAIMsg('Upscale gestartet...');try{const r=await fetch('/api/upscale',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,type})});const d=await r.json();if(d.url)addAIMsg('Fertig! <a href="'+d.url+'" download target="_blank" style="color:var(--blue);text-decoration:underline">4K Download</a>');else addAIMsg('Upscale Fehler: '+(d.error||'Fehlgeschlagen'));}catch(e){addAIMsg('Upscale Fehler.');}}
+function doVariant(p){document.getElementById('prompt').value=p+' - Variante';document.getElementById('prompt').focus();}
+function newChat(){
+  state.chatStarted=false;state.activeChatId=null;
+  document.getElementById('chat-title').textContent='Neuer Chat';
+  document.getElementById('prompt').value='';
+  conversationHistory=[];clearRef();resetToChatMode();
+  document.getElementById('fi').innerHTML='<div class="landing" id="landing"><div class="ll">V I R G O</div><div class="lt">Was möchtest du heute erschaffen?</div><div class="ls">Leads, Landing Pages, Ads und Content — auf Knopfdruck.</div><div class="starters"><button class="starter" onclick="openMaklerAds()">Google Ads erstellen</button><button class="starter" onclick="window.location.href=\'/makler-onboarding.html\'">Landing Page bauen</button><button class="starter" onclick="qs(\'Erstelle 10 Social Media Posts für Versicherungsmakler über Altersvorsorge\')">Social Post schreiben</button><button class="starter" onclick="qs(\'Erstelle eine Email-Sequenz für Erstkontakt zu PKV-Interessenten\')">Email an Kunden</button></div></div>';
+  closeSb();
+}
+// VOICE
+let recOn=false,mediaRecorder=null,audioChunks=[];
+function toggleVoice(){
+  if(!location.protocol.startsWith('https')&&location.hostname!=='localhost'){alert('Mikrofon nur über HTTPS verfügbar.');return;}
+  const btn=document.getElementById('mic-btn');
+  if(recOn){stopRecording();return;}
+  if('webkitSpeechRecognition' in window||'SpeechRecognition' in window){
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    const rec=new SR();rec.lang='de-DE';rec.continuous=false;rec.interimResults=false;
+    rec.onstart=()=>{recOn=true;btn.textContent='REC';btn.style.color='#ef4444';};
+    rec.onresult=e=>{document.getElementById('prompt').value=e.results[0][0].transcript;recOn=false;btn.textContent='Mic';btn.style.color='';};
+    rec.onerror=()=>{recOn=false;btn.textContent='Mic';btn.style.color='';};
+    rec.onend=()=>{recOn=false;btn.textContent='Mic';btn.style.color='';};
+    try{rec.start();window._rec=rec;return;}catch(e){}
+  }
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){alert('Mikrofon nicht unterstützt.');return;}
+  navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{recOn=true;btn.textContent='REC';btn.style.color='#ef4444';audioChunks=[];const mimeType=MediaRecorder.isTypeSupported('audio/webm')?'audio/webm':'audio/mp4';mediaRecorder=new MediaRecorder(stream,{mimeType});mediaRecorder.ondataavailable=e=>{if(e.data.size>0)audioChunks.push(e.data);};mediaRecorder.onstop=async()=>{stream.getTracks().forEach(t=>t.stop());recOn=false;btn.textContent='Mic';btn.style.color='';addAIMsg('Audio aufgenommen.');};mediaRecorder.start();}).catch(err=>{recOn=false;btn.textContent='Mic';btn.style.color='';alert('Mikrofon Fehler: '+err.message);});
+}
+function stopRecording(){if(window._rec)window._rec.stop();if(mediaRecorder&&mediaRecorder.state!=='inactive')mediaRecorder.stop();recOn=false;document.getElementById('mic-btn').textContent='Mic';document.getElementById('mic-btn').style.color='';}
+document.getElementById('mic-btn').addEventListener('touchstart',function(e){e.preventDefault();toggleVoice();},{passive:false});
+// MODALS
+function showM(id){document.getElementById(id).classList.add('vis');}
+function closeM(id){document.getElementById(id).classList.remove('vis');if(id==='modal-upgrade'){const m=document.getElementById('up-msg');m.className='';m.textContent='Mehr Leads. Weniger Aufwand. Kein Vertrag, jederzeit kündbar.';}if(id==='modal-login')setAuthMsg('','');}
+document.querySelectorAll('.modal').forEach(m=>{m.addEventListener('click',function(e){if(e.target===this)closeM(this.id);});});
+function scrollFeed(){document.getElementById('feed').scrollTop=99999;}
+// INVOICE
+function openInvoiceModal(){document.getElementById('inv-datum').value=new Date().toISOString().split('T')[0];showM('modal-invoice');closeSb();}
+async function createInvoice(){
+  const kunde=document.getElementById('inv-kunde').value.trim();
+  const leistung=document.getElementById('inv-leistung').value.trim();
+  const betrag=document.getElementById('inv-betrag').value;
+  const msg=document.getElementById('inv-msg');
+  if(!kunde||!leistung||!betrag){msg.textContent='Bitte Kundenname, Leistung und Betrag ausfüllen.';msg.style.display='block';return;}
+  msg.style.display='none';
+  try{
+    const r=await fetch('/api/invoice',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({invoice_nr:document.getElementById('inv-nr').value||'INV-'+Date.now(),kunde,kunde_adresse:document.getElementById('inv-kunde-adresse').value,leistung,betrag,mwst:parseInt(document.getElementById('inv-mwst').value)||19,datum:document.getElementById('inv-datum').value,absender_name:document.getElementById('inv-absender-name').value||'Virgo AI',absender_adresse:document.getElementById('inv-absender-adresse').value,absender_email:document.getElementById('inv-absender-email').value,absender_steuer:document.getElementById('inv-steuer').value})});
+    const d=await r.json();
+    if(d.error){msg.textContent=d.error;msg.style.display='block';return;}
+    const invId='inv_'+Date.now();window[invId]=d.html;
+    const msgEl=document.createElement('div');msgEl.className='mw ai';
+    const inner=document.createElement('div');inner.innerHTML='<div class="aav">V</div>';
+    const bubble=document.createElement('div');bubble.className='bb';bubble.style.maxWidth='480px';
+    bubble.innerHTML='<div style="font-size:12px;font-weight:600;margin-bottom:6px">Rechnung '+escHtml(d.invoice_nr)+'</div><div style="font-size:11px;color:var(--tm);margin-bottom:4px">'+escHtml(d.leistung)+'</div><div style="font-size:18px;font-weight:700;margin-bottom:12px">'+escHtml(d.brutto)+' Euro</div>';
+    const btns=document.createElement('div');btns.style.cssText='display:flex;gap:8px;flex-wrap:wrap';
+    const b1=document.createElement('button');b1.textContent='Drucken / Als PDF';b1.style.cssText='padding:7px 14px;background:var(--t);color:#fff;border:none;border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer';b1.onclick=function(){const w=window.open('','_blank');w.document.write(window[invId]);w.document.close();setTimeout(()=>w.print(),500);};
+    const b2=document.createElement('button');b2.textContent='Datei speichern';b2.style.cssText='padding:7px 14px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer';b2.onclick=function(){const blob=new Blob([window[invId]],{type:'text/html'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='Rechnung-'+d.invoice_nr+'.html';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);};
+    btns.appendChild(b1);btns.appendChild(b2);bubble.appendChild(btns);
+    const ts=document.createElement('div');ts.className='mt2';ts.textContent=now();
+    inner.appendChild(bubble);inner.appendChild(ts);msgEl.appendChild(inner);
+    document.getElementById('fi').appendChild(msgEl);scrollFeed();closeM('modal-invoice');
+    ['inv-nr','inv-kunde','inv-kunde-adresse','inv-kunde-email','inv-leistung','inv-betrag','inv-absender-name','inv-absender-adresse','inv-absender-email','inv-steuer'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  }catch(e){msg.textContent='Fehler: '+e.message;msg.style.display='block';}
+}
+function openTTSModal(){showM('modal-tts');closeSb();}
+async function generateTTS(){
+  const text=document.getElementById('tts-text').value.trim();
+  const voice=document.getElementById('tts-voice').value;
+  const msg=document.getElementById('tts-msg');const btn=document.getElementById('tts-btn');
+  if(!text){msg.textContent='Bitte Text eingeben.';msg.style.display='block';return;}
+  msg.style.display='none';btn.disabled=true;btn.textContent='Wird erstellt...';
+  try{
+    const r=await fetch('/api/tools',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tool:'tts',text,voice_id:voice})});
+    const d=await r.json();
+    if(d.error){msg.textContent=d.error;msg.style.display='block';btn.disabled=false;btn.textContent='Generieren';return;}
+    const player=document.getElementById('tts-player');
+    const audioSrc='data:audio/mpeg;base64,'+d.audio;
+    player.src=audioSrc;
+    document.getElementById('tts-download').href=audioSrc;
+    document.getElementById('tts-audio').style.display='block';
+    player.play();
+  }catch(e){msg.textContent='Fehler: '+e.message;msg.style.display='block';}
+  btn.disabled=false;btn.textContent='Generieren';
+}
+// GALLERY
+async function saveGeneration(type,url,prompt,model){if(!authToken)return;try{await fetch('/api/chats',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({gallery:true,type,url,prompt,model})});}catch(e){}}
+async function openGallery(){
+  if(!authToken){showM('modal-login');return;}
+  if(!state.chatStarted){state.chatStarted=true;const _lg=document.getElementById('landing');if(_lg)_lg.style.display='none';document.getElementById('chat-title').textContent='Meine Galerie';}
+  addAIMsg('<span style="font-size:12px;color:var(--td)">Galerie wird geladen...</span>');
+  try{
+    const r=await fetch('/api/chats?gallery=true',{headers:{'Authorization':'Bearer '+authToken}});
+    const items=await r.json();
+    const msgs=document.getElementById('fi').querySelectorAll('.mw.ai');
+    if(msgs.length)msgs[msgs.length-1].remove();
+    if(!items.length){addAIMsg('Noch keine Generierungen gespeichert. Erstelle dein erstes Bild!');return;}
+    let gridHtml='<div style="font-size:13px;font-weight:600;margin-bottom:12px">Deine Galerie ('+items.length+')</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:480px">';
+    items.forEach(item=>{const isImg=item.type==='image';gridHtml+='<div style="position:relative;border-radius:8px;overflow:hidden;border:1px solid var(--bd);aspect-ratio:1;background:var(--sf2)">';if(isImg)gridHtml+='<img src="'+item.url+'" style="width:100%;height:100%;object-fit:cover;cursor:pointer" onclick="window.open(\''+item.url+'\',\'_blank\')">';else gridHtml+='<video src="'+item.url+'" style="width:100%;height:100%;object-fit:cover;cursor:pointer" muted playsinline onclick="window.open(\''+item.url+'\',\'_blank\')"></video>';gridHtml+='<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.55);padding:4px 6px"><div style="font-size:9px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escHtml((item.prompt||'').substring(0,30))+'</div></div><a href="'+item.url+'" download target="_blank" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,.6);color:#fff;border-radius:4px;padding:2px 6px;font-size:10px;text-decoration:none">DL</a></div>';});
+    gridHtml+='</div>';addAIMsg(gridHtml);
+  }catch(e){addAIMsg('Galerie konnte nicht geladen werden.');}
+}
+// VIRGO HILFE CHAT
+let helpHistory=[];
+const VIRGO_HELP_SYSTEM=`Du bist Virgo Support – ein freundlicher deutscher KI-Assistent der Versicherungsmakler bei der Nutzung der Virgo App hilft.
+VIRGO ist die KI-Plattform für Versicherungsmakler. Tagline: "Mehr Leads. Weniger Aufwand."
+VIRGO FEATURES:
+- Makler Ads Generator: Name/Branche/Angebot eingeben → Virgo generiert Google Ads (3 Headlines, 2 Descriptions) + Meta Ads (Primary Text, Headline, Description) + Bild-Creative. Tabs: Google Ads / Meta Ads / Beide.
+- Makler Landing Page (/makler-onboarding.html): Profil einrichten, URL festlegen, Versicherungen auswählen, Farbe wählen, KI-Headerbild generieren, Terminbuchung aktivieren, Email-Alert
+- Leads Dashboard (/leads.html): Alle eingegangenen Leads sehen
+- Virgo Chat: KI-Chat für Strategiefragen, Email-Texte, Beratung
+- Business Tools: Business Plan, Website Text, Website Generator, Social Media Posts (inkl. automatischem Bild), Email Sequenz, Pitch Deck
+- Bildgenerierung: Virgo Fashion (2cr), Virgo Vision (1cr), Virgo Create (1cr)
+- Rechnung erstellen: PDF-Rechnungen direkt in Virgo
+- Text zu Sprache: KI-Stimmen für Audio-Inhalte
+- QR Code: Auf der Makler-Seite unter Marketing Tools generieren
+- Galerie: Alle generierten Bilder speichern und downloaden
+- Credits: Bild=1cr, Virgo Fashion=2cr, Upscale=5cr
+PLÄNE:
+- Makler Pro: 149 €/Monat (PKV Landing Page, unbegrenzte Leads, Google & Meta Ads, alle KI-Tools)
+- Makler Business: 249 €/Monat (alle Versicherungsarten, unbegrenzte Landing Pages, Priority Support, White-Label)
+Antworte immer auf Deutsch. Kurz, konkret, Schritt für Schritt wenn nötig. Kein Fachjargon. Freundlich und direkt.`;
+function openHelp(){showM('modal-help');document.getElementById('help-inp').focus();}
+function askHelp(question){document.getElementById('help-inp').value=question;sendHelp();}
+async function sendHelp(){
+  const inp=document.getElementById('help-inp');
+  const txt=inp.value.trim();if(!txt)return;
+  inp.value='';
+  const feed=document.getElementById('help-feed');
+  const starters=feed.querySelector('div[style*="flex-wrap"]');if(starters)starters.style.display='none';
+  const uBubble=document.createElement('div');
+  uBubble.style.cssText='align-self:flex-end;background:var(--t);color:#fff;border-radius:12px;border-bottom-right-radius:3px;padding:10px 14px;font-size:13px;line-height:1.7;font-weight:300;max-width:85%';
+  uBubble.textContent=txt;feed.appendChild(uBubble);
+  const typing=document.createElement('div');
+  typing.style.cssText='background:var(--sf);border:1px solid var(--bd);border-radius:12px;border-bottom-left-radius:3px;padding:10px 14px;max-width:85%';
+  typing.innerHTML='<div style="display:flex;gap:4px"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+  feed.appendChild(typing);feed.scrollTop=99999;
+  helpHistory.push({role:'user',content:txt});
+  try{
+    const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:helpHistory,systemOverride:VIRGO_HELP_SYSTEM})});
+    const d=await r.json();
+    const reply=(d.content&&d.content[0]&&d.content[0].text)||'Entschuldigung, bitte nochmal versuchen.';
+    helpHistory.push({role:'assistant',content:reply});
+    if(helpHistory.length>20)helpHistory=helpHistory.slice(-20);
+    typing.remove();
+    const aBubble=document.createElement('div');
+    aBubble.style.cssText='background:var(--sf);border:1px solid var(--bd);border-radius:12px;border-bottom-left-radius:3px;padding:10px 14px;font-size:13px;line-height:1.7;font-weight:300;max-width:85%';
+    aBubble.innerHTML=renderMD(reply);feed.appendChild(aBubble);
+  }catch(e){
+    typing.remove();
+    const err=document.createElement('div');
+    err.style.cssText='background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:10px 14px;font-size:12px;color:var(--red);max-width:85%';
+    err.textContent='Verbindungsfehler. Bitte nochmal versuchen.';feed.appendChild(err);
+  }
+  feed.scrollTop=99999;
+}
+// FALLBACK
+let apiFailCount=0;
+async function fetchWithRetry(url,options,retries=3,delay=2000){
+  for(let i=0;i<retries;i++){
+    try{
+      const r=await fetch(url,options);
+      if(r.ok||r.status===400||r.status===401||r.status===403){apiFailCount=0;updateApiStatus('ok');return r;}
+      if(i<retries-1){updateApiStatus('warn');await new Promise(res=>setTimeout(res,delay*(i+1)));continue;}
+      throw new Error('HTTP '+r.status);
+    }catch(e){if(i<retries-1){updateApiStatus('warn');await new Promise(res=>setTimeout(res,delay*(i+1)));}else{apiFailCount++;updateApiStatus('error');throw e;}}
+  }
+}
+function updateApiStatus(status){const dot=document.getElementById('cdot');if(!dot)return;if(status==='ok')dot.style.background='var(--green)';else if(status==='warn')dot.style.background='#f59e0b';else dot.style.background='var(--red)';}
+function showFallbackMsg(){
+  const d=document.createElement('div');d.className='mw ai';
+  d.innerHTML=`<div class="aav">V</div><div><div class="bb" style="max-width:420px;background:#fef9c3;border-color:#fde68a"><div style="font-size:13px;font-weight:500;margin-bottom:6px">Virgo ist gleich wieder da</div><div style="font-size:12px;color:var(--tm);line-height:1.6;margin-bottom:10px">Die KI ist gerade kurz überlastet — das passiert manchmal bei hoher Nachfrage. Deine Eingabe ist noch da.</div><button onclick="retryLastMsg()" style="padding:8px 16px;background:var(--t);color:#fff;border:none;border-radius:7px;font-family:Inter,sans-serif;font-size:12px;font-weight:500;cursor:pointer">Nochmal versuchen</button><span style="font-size:10px;color:var(--td);margin-left:10px">oder warte 30 Sekunden</span></div></div>`;
+  document.getElementById('fi').appendChild(d);scrollFeed();
+}
+let lastUserMsg='';
+function retryLastMsg(){if(!lastUserMsg)return;const msgs=document.getElementById('fi').querySelectorAll('.mw.ai');if(msgs.length)msgs[msgs.length-1].remove();document.getElementById('prompt').value=lastUserMsg;send();}
+// WEBSITE GENERATOR
+let webColor='#111111';
+let generatedWebsiteHTML='';
+function openWebsiteGen(){showM('modal-website-gen');}
+function setWebColor(el){document.querySelectorAll('.web-color-swatch').forEach(s=>s.style.borderColor='transparent');el.style.borderColor=el.dataset.color;webColor=el.dataset.color;}
+async function generateWebsite(){
+  const name=(document.getElementById('web-name').value||'').trim();
+  const branche=(document.getElementById('web-branche').value||'').trim();
+  const angebot=(document.getElementById('web-angebot').value||'').trim();
+  const tel=(document.getElementById('web-tel').value||'').trim();
+  const email=(document.getElementById('web-email').value||'').trim();
+  const usp=(document.getElementById('web-usp').value||'').trim();
+  const msgEl=document.getElementById('web-msg');
+  const btn=document.getElementById('web-btn');
+  if(!name||!branche||!angebot){msgEl.textContent='Bitte Firmenname, Branche und Angebot ausfüllen.';msgEl.style.display='block';return;}
+  msgEl.style.display='none';
+  document.getElementById('web-result').style.display='none';
+  document.getElementById('web-loader').style.display='flex';
+  btn.disabled=true;btn.textContent='Wird erstellt...';
+  const setP=(pct,txt)=>{document.getElementById('web-pfill').style.width=pct+'%';document.getElementById('web-loader-txt').textContent=txt;};
+  setP(20,'Texte werden geschrieben...');
+  const prompt=`Erstelle eine komplette, professionelle HTML-Website für folgendes Business:
+Firmenname: ${name}
+Branche: ${branche}
+Angebot: ${angebot}${tel?'\nTelefon: '+tel:''}${email?'\nEmail: '+email:''}${usp?'\nUSP: '+usp:''}
+Hauptfarbe: ${webColor}
+Erstelle eine moderne, vollständige HTML-Seite mit:
+1. Navigation (Logo + Links)
+2. Hero-Section mit starker Headline und CTA-Button
+3. Leistungen/Services Section (3-4 Punkte)
+4. Über uns Section
+5. Warum wir? / USP Section
+6. Kontakt Section mit Formular (Name, Email, Nachricht, Button)
+7. Footer mit Kontaktdaten
+REGELN:
+- Komplettes HTML mit eingebettetem CSS (kein externes CSS)
+- Moderne, professionelle Optik
+- Hauptfarbe: ${webColor} für Buttons, Akzente, Nav
+- Weißer Hintergrund, sauberes Layout
+- Mobile-responsive
+- Alle Texte auf Deutsch
+- Gib NUR den HTML-Code zurück, ohne Erklärung, ohne Markdown-Backticks`;
+  try{
+    setP(40,'KI schreibt deine Website...');
+    const r=await fetch('/api/business',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'website',messages:[{role:'user',content:prompt}],systemOverride:'Du bist ein professioneller Web-Designer. Erstelle NUR vollständigen HTML-Code. Kein Markdown, keine Backticks, keine Erklärungen. Nur reines HTML.'})});
+    const d=await r.json();
+    let html=(d.content&&d.content[0]&&d.content[0].text)||'';
+    html=html.replace(/```html|```/g,'').trim();
+    if(!html||!html.includes('<html')){throw new Error('Kein gültiges HTML generiert');}
+    setP(90,'Vorschau wird geladen...');
+    generatedWebsiteHTML=html;
+    setTimeout(()=>{document.getElementById('web-loader').style.display='none';document.getElementById('web-preview').srcdoc=html;document.getElementById('web-result').style.display='block';btn.disabled=false;btn.textContent='Website generieren';document.getElementById('modal-website-gen').querySelector('.mb2').scrollTop=9999;},500);
+  }catch(e){document.getElementById('web-loader').style.display='none';msgEl.textContent='Fehler: '+e.message+'. Bitte nochmal versuchen.';msgEl.style.display='block';btn.disabled=false;btn.textContent='Website generieren';}
+}
+function downloadWebsite(){if(!generatedWebsiteHTML)return;const name=(document.getElementById('web-name').value||'website').trim().toLowerCase().replace(/\s+/g,'-');const blob=new Blob([generatedWebsiteHTML],{type:'text/html'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name+'.html';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);}
+// INIT
+updateUI();
+loadChats();
+if(authToken)loadCredits();
+if(localStorage.getItem('virgo_sb_closed')==='1'){document.getElementById('sb').classList.add('collapsed');document.getElementById('sb-toggle-btn').textContent='►';}
+</script>
+<!-- MODAL: VIRGO HILFE CHAT -->
+<div class="modal" id="modal-help">
+  <div class="mb2" style="width:460px;padding:0;display:flex;flex-direction:column;height:560px;max-height:90vh">
+    <div style="padding:18px 20px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px;flex-shrink:0">
+      <div style="width:28px;height:28px;border-radius:50%;background:var(--t);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">V</div>
+      <div style="flex:1"><div style="font-size:13px;font-weight:600">Virgo Support</div><div style="font-size:10px;color:var(--green)">● Online</div></div>
+      <button class="mclose" style="position:static;margin:0" onclick="closeM('modal-help')">x</button>
+    </div>
+    <div id="help-feed" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px">
+      <div style="background:var(--sf);border:1px solid var(--bd);border-radius:12px;border-bottom-left-radius:3px;padding:10px 14px;font-size:13px;line-height:1.7;font-weight:300;max-width:85%">
+        Hallo! Ich bin Virgo. Wie kann ich dir helfen?<br><br>
+        <span style="font-size:11px;color:var(--tm)">Frag mich z.B. wie du deine Landing Page einrichtest, Ads generierst oder Leads bekommst.</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        <button onclick="askHelp('Wie richte ich meine Landing Page ein?')" style="padding:6px 11px;border-radius:8px;border:1px solid var(--bd);background:transparent;font-family:Inter,sans-serif;font-size:11px;color:var(--tm);cursor:pointer">Landing Page einrichten</button>
+        <button onclick="askHelp('Wie generiere ich Google Ads?')" style="padding:6px 11px;border-radius:8px;border:1px solid var(--bd);background:transparent;font-family:Inter,sans-serif;font-size:11px;color:var(--tm);cursor:pointer">Google Ads erstellen</button>
+        <button onclick="askHelp('Wie bekomme ich meinen QR Code?')" style="padding:6px 11px;border-radius:8px;border:1px solid var(--bd);background:transparent;font-family:Inter,sans-serif;font-size:11px;color:var(--tm);cursor:pointer">QR Code</button>
+        <button onclick="askHelp('Wie funktioniert die Terminbuchung?')" style="padding:6px 11px;border-radius:8px;border:1px solid var(--bd);background:transparent;font-family:Inter,sans-serif;font-size:11px;color:var(--tm);cursor:pointer">Terminbuchung</button>
+        <button onclick="askHelp('Wie sehe ich meine Leads?')" style="padding:6px 11px;border-radius:8px;border:1px solid var(--bd);background:transparent;font-family:Inter,sans-serif;font-size:11px;color:var(--tm);cursor:pointer">Leads ansehen</button>
+      </div>
+    </div>
+    <div style="padding:12px 14px;border-top:1px solid var(--bd);display:flex;gap:8px;flex-shrink:0">
+      <input id="help-inp" class="minp" placeholder="Stell eine Frage..." style="margin:0;flex:1;font-size:13px" onkeydown="if(event.key==='Enter')sendHelp()">
+      <button onclick="sendHelp()" style="width:34px;height:34px;border-radius:8px;background:var(--t);color:#fff;border:none;cursor:pointer;font-size:16px;flex-shrink:0;display:flex;align-items:center;justify-content:center">↑</button>
+    </div>
+  </div>
+</div>
+<!-- MODAL: WEBSITE GENERATOR -->
+<div class="modal" id="modal-website-gen">
+  <div class="mb2" style="width:540px">
+    <button class="mclose" onclick="closeM('modal-website-gen')">x</button>
+    <h2>Website Generator</h2>
+    <p>Gib deine Infos ein — Virgo erstellt eine komplette Website mit Design, Texten und Kontaktformular.</p>
+    <div class="mak-step">
+      <span class="mak-step-label">Dein Business</span>
+      <div class="mak-field">
+        <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Firmenname *</label><input class="minp" id="web-name" placeholder="z.B. Max Mustermann GmbH" style="margin-bottom:0"></div>
+        <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Branche *</label><input class="minp" id="web-branche" placeholder="z.B. Versicherung, Restaurant, IT..." style="margin-bottom:0"></div>
+        <div class="mak-field-full"><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Was bietest du an? *</label><textarea class="minp" id="web-angebot" placeholder="z.B. Wir bieten professionelle Steuerberatung für Selbständige und KMUs in Düsseldorf." style="min-height:70px;resize:vertical;margin-bottom:0"></textarea></div>
+        <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Telefon</label><input class="minp" id="web-tel" placeholder="+49 211 123456" style="margin-bottom:0"></div>
+        <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Email</label><input class="minp" id="web-email" placeholder="info@firma.de" style="margin-bottom:0"></div>
+        <div class="mak-field-full"><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">USP / Besonderheit (optional)</label><input class="minp" id="web-usp" placeholder="z.B. 20 Jahre Erfahrung, kostenlose Erstberatung, TÜV-zertifiziert" style="margin-bottom:0"></div>
+      </div>
+      <div style="margin-top:14px">
+        <label style="font-size:11px;color:var(--tm);display:block;margin-bottom:6px">Website Farbe</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap" id="web-colors">
+          <div class="web-color-swatch active" style="width:28px;height:28px;border-radius:50%;background:#111111;cursor:pointer;border:3px solid #111" data-color="#111111" onclick="setWebColor(this)"></div>
+          <div class="web-color-swatch" style="width:28px;height:28px;border-radius:50%;background:#2563eb;cursor:pointer;border:3px solid transparent" data-color="#2563eb" onclick="setWebColor(this)"></div>
+          <div class="web-color-swatch" style="width:28px;height:28px;border-radius:50%;background:#16a34a;cursor:pointer;border:3px solid transparent" data-color="#16a34a" onclick="setWebColor(this)"></div>
+          <div class="web-color-swatch" style="width:28px;height:28px;border-radius:50%;background:#9333ea;cursor:pointer;border:3px solid transparent" data-color="#9333ea" onclick="setWebColor(this)"></div>
+          <div class="web-color-swatch" style="width:28px;height:28px;border-radius:50%;background:#dc2626;cursor:pointer;border:3px solid transparent" data-color="#dc2626" onclick="setWebColor(this)"></div>
+          <div class="web-color-swatch" style="width:28px;height:28px;border-radius:50%;background:#ea580c;cursor:pointer;border:3px solid transparent" data-color="#ea580c" onclick="setWebColor(this)"></div>
+          <div class="web-color-swatch" style="width:28px;height:28px;border-radius:50%;background:#0891b2;cursor:pointer;border:3px solid transparent" data-color="#0891b2" onclick="setWebColor(this)"></div>
+        </div>
+      </div>
+    </div>
+    <div id="web-msg" style="font-size:12px;color:var(--red);background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 12px;display:none;margin-bottom:8px"></div>
+    <button class="mbtn" id="web-btn" onclick="generateWebsite()">Website generieren</button>
+    <div class="mak-loader" id="web-loader" style="display:none">
+      <div class="mak-progress"><div class="mak-progress-fill" id="web-pfill"></div></div>
+      <span class="mak-loader-txt" id="web-loader-txt">Website wird erstellt...</span>
+    </div>
+    <div id="web-result" style="display:none;margin-top:16px;border-top:1px solid var(--bd);padding-top:16px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:10px">Deine Website ist fertig</div>
+      <div style="border:1px solid var(--bd);border-radius:10px;overflow:hidden;margin-bottom:12px;height:300px"><iframe id="web-preview" style="width:100%;height:100%;border:none" title="Website Vorschau"></iframe></div>
+      <div style="display:flex;gap:8px"><button class="mak-pkg-btn sec" onclick="downloadWebsite()">Als HTML downloaden</button><button class="mak-pkg-btn" onclick="generateWebsite()">Neu generieren</button></div>
+    </div>
+  </div>
+</div>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('/sw.js').catch(()=>{});});}</script>
 </body>
 </html>
