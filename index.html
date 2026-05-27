@@ -1041,7 +1041,11 @@ Erstelle EINE einzige perfekte Email passend zum vom User beschriebenen Anlass (
 Alle Texte auf Deutsch. Prägnant.`
   };
   const bMessages=isBusinessMode?[{role:'user',content:(bPre[businessType]||'')+txt}]:conversationHistory;
-  const bodyData=isBusinessMode?{type:businessType,messages:bMessages,systemOverride:bSys[businessType]||''}:{messages:conversationHistory};
+  const _ws=localStorage.getItem('virgo_workspace')||'makler';
+  const _chatSys=_ws==='business'
+    ?'Du bist Virgo, ein vielseitiger KI-Assistent für Unternehmer, Selbständige, Bewerber und kleine Firmen. Du hilfst bei Business-Themen aller Art: Bewerbungen, Geschäftsideen, Texte, Marketing, Organisation, Strategie und allgemeine Fragen. Du bist NICHT auf Versicherungen beschränkt. Antworte auf Deutsch, professionell, konkret und hilfreich.'
+    :'Du bist Virgo, ein KI-Assistent spezialisiert auf Versicherungsmakler. Du hilfst bei Lead-Generierung, Vertrieb, Marketing und Versicherungsthemen (PKV, BU, Altersvorsorge etc.). Antworte auf Deutsch, konkret und praxisnah.';
+  const bodyData=isBusinessMode?{type:businessType,messages:bMessages,systemOverride:bSys[businessType]||''}:{messages:conversationHistory,systemOverride:_chatSys};
   fetchWithRetry(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(bodyData)})
   .then(r=>r.json()).then(async d=>{
     hideTyping();
