@@ -269,16 +269,18 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
     <div class="ms">
       <span class="sl">Business Tools</span>
       <button class="mc" onclick="setModel(this,'chat','Virgo Chat')"><div class="md"></div>Virgo Chat</button>
-      <button class="mc" onclick="setModel(this,'business-bewerbung','Bewerbung')" style="border:1px solid rgba(37,99,235,.25)"><div class="md" style="background:#2563eb"></div>Bewerbung schreiben<span class="mt" style="background:#dbeafe;color:#1d4ed8">Neu</span></button>
       <button class="mc" onclick="setModel(this,'business-plan','Business Plan')"><div class="md"></div>Business Plan<span class="mt" style="background:#dcfce7;color:#166534">AI</span></button>
       <button class="mc" onclick="setModel(this,'business-pitch','Pitch Deck')"><div class="md"></div>Pitch Deck<span class="mt" style="background:#dcfce7;color:#166534">AI</span></button>
+      <button class="mc" onclick="setModel(this,'business-angebot','Angebot')" style="border:1px solid rgba(37,99,235,.25)"><div class="md" style="background:#2563eb"></div>Angebot erstellen<span class="mt" style="background:#dbeafe;color:#1d4ed8">Neu</span></button>
       <button class="mc" onclick="openInvoiceModal()"><div class="md"></div>Rechnung erstellen<span class="mt">PDF</span></button>
     </div>
     <div class="ms">
       <span class="sl">Marketing &amp; Inhalte</span>
       <button class="mc" onclick="openWebsiteGen();closeSb()" style="border:1px solid rgba(139,92,246,.25)"><div class="md" style="background:#8b5cf6"></div>Website Generator<span class="mt" style="background:#ede9fe;color:#6d28d9">Neu</span></button>
       <button class="mc" onclick="setModel(this,'business-website','Website Text')"><div class="md"></div>Website Text<span class="mt" style="background:#dcfce7;color:#166534">AI</span></button>
+      <button class="mc" onclick="startProdukt()" style="border:1px solid rgba(37,99,235,.25)"><div class="md" style="background:#2563eb"></div>Produktbeschreibungen<span class="mt" style="background:#dbeafe;color:#1d4ed8">Neu</span></button>
       <button class="mc" onclick="setModel(this,'business-social','Social Media')"><div class="md"></div>Social Media Posts<span class="mt" style="background:#dcfce7;color:#166534">AI</span></button>
+      <button class="mc" onclick="setModel(this,'business-tiktok','TikTok Skripte')" style="border:1px solid rgba(37,99,235,.25)"><div class="md" style="background:#2563eb"></div>TikTok &amp; Reels Skripte<span class="mt" style="background:#dbeafe;color:#1d4ed8">Neu</span></button>
       <button class="mc" onclick="setModel(this,'business-email','Email Sequenz')"><div class="md"></div>Email Sequenz<span class="mt" style="background:#dcfce7;color:#166534">AI</span></button>
       <button class="mc" onclick="openTTSModal()"><div class="md"></div>Text zu Sprache<span class="mt">Audio</span></button>
     </div>
@@ -588,13 +590,17 @@ const PH={
   img:'Beschreibe dein Bild...',
   code:'Beschreibe deinen Code - Sprache, Funktion, Problem...',
   agent:'Gib dem Agent ein Ziel - er erledigt es automatisch...',
-  'business-plan':'Z.B.: Ich bin Versicherungsmakler in Düsseldorf, spezialisiert auf PKV...',
-  'business-website':'Z.B.: Ich bin Versicherungsmakler, biete PKV-Beratung an...',
+  'business-plan':'Z.B.: Meine Geschäftsidee, Zielgruppe, Angebot und Ziele...',
+  'business-website':'Z.B.: Mein Unternehmen, was ich anbiete, für wen...',
   'business-ads':'Z.B.: PKV für Selbständige - günstig, schnell...',
-  'business-social':'Z.B.: Ich bin Versicherungsmakler, möchte über Altersvorsorge posten...',
-  'business-email':'Z.B.: Email-Sequenz für PKV-Interessenten nach Erstkontakt...',
-  'business-pitch':'Z.B.: KI Tool für Versicherungsmakler, 500 User, suche 50.000 Euro Seed...',
-  'business-bewerbung':'Z.B.: Bewerbung als Bürokauffrau bei Firma Müller GmbH, 5 Jahre Erfahrung, kommunikativ, suche neue Herausforderung...'
+  'business-social':'Z.B.: Mein Thema, meine Zielgruppe, worüber ich posten will...',
+  'business-email':'Z.B.: Email-Sequenz für Neukunden nach Erstkontakt...',
+  'business-pitch':'Z.B.: Meine Geschäftsidee, Markt, Umsatz, gesuchtes Investment...',
+  'business-bewerbung':'Z.B.: Bewerbung als Bürokauffrau bei Firma Müller GmbH, 5 Jahre Erfahrung, kommunikativ, suche neue Herausforderung...',
+  'business-angebot':'Z.B.: Webdesign für Café - Logo 400€, Website 1200€, gültig 30 Tage...',
+  'business-mahnung':'Z.B.: Rechnung Nr. 2024-088, 450€, fällig war 15.05., 1. Mahnung...',
+  'business-kuendigung':'Z.B.: Fitnessstudio McFit, Kundennummer 12345, zum nächstmöglichen Termin...',
+  'business-tiktok':'Z.B.: Hoodie-Brand, Zielgruppe Gen Z, will mehr Reichweite auf TikTok...'
 };
 let authToken=localStorage.getItem('virgo_token')||null;
 let currentUser=JSON.parse(localStorage.getItem('virgo_user')||'null');
@@ -763,7 +769,16 @@ ov.addEventListener('click',closeSb);ov.addEventListener('touchend',e=>{e.preven
 // MODE
 function switchMode(mode,el){state.mode=mode;document.querySelectorAll('.mp').forEach(p=>p.classList.remove('on'));if(el)el.classList.add('on');document.getElementById('prompt').placeholder=PH[mode]||PH.chat;}
 function resetToChatMode(){state.mode='chat';state.model='chat';state.modelName='Virgo Chat';document.querySelectorAll('.mp').forEach(p=>p.classList.remove('on'));document.getElementById('mode-chat').classList.add('on');document.querySelectorAll('.mc').forEach(c=>c.classList.remove('on'));document.querySelector('.mc').classList.add('on');document.getElementById('prompt').placeholder=PH.chat;clearRef();}
+const PRODUKT_SYS='Du bist ein erstklassiger E-Commerce Copywriter. Der Nutzer zeigt dir ein Produktfoto und/oder beschreibt ein Produkt. Schreibe einen verkaufsstarken Produkttext für einen Online-Shop auf Deutsch. Wenn ein Bild vorhanden ist, beschreibe genau was du siehst (Farbe, Material, Schnitt, Stil, Details). Struktur: 1) Catchy Produkttitel, 2) emotionaler Einleitungssatz der Lust macht, 3) 4-5 Bullet Points mit Vorteilen und Features, 4) kurzer überzeugender Fließtext, 5) passende SEO-Keywords/Tags. Modern, verkaufsstark, auf die Zielgruppe zugeschnitten. Alles auf Deutsch.';
+function startProdukt(){
+  document.querySelectorAll('.mc').forEach(c=>c.classList.remove('on'));
+  state.model='chat';state.modelName='Produktbeschreibung';state.produktMode=true;
+  switchMode('chat',document.getElementById('mode-chat'));
+  addAIMsg('\ud83d\udcf8 Lade ein Produktfoto über die Büroklammer unten hoch und schreib kurz was es ist (z.B. "Hoodie, washed grey, oversized") - ich schreibe dir den perfekten Shop-Text dazu.');
+  closeSb();
+}
 function setModel(el,model,name){
+  state.produktMode=false;
   if(model==='img-modelia'&&!isPaidPlan()&&!isAdmin()){
     const m=document.getElementById('up-msg');m.className='alert';
     m.textContent='Virgo Fashion ist nur für zahlende Pläne. Starte mit Makler Pro für 149 €/Monat.';
@@ -775,7 +790,7 @@ function setModel(el,model,name){
     showM('modal-upgrade');return;
   }
   document.querySelectorAll('.mc').forEach(c=>c.classList.remove('on'));
-  el.classList.add('on');state.model=model;state.modelName=name;
+  if(el)el.classList.add('on');state.model=model;state.modelName=name;
   if(model.startsWith('img'))switchMode('img',document.getElementById('mode-img'));
   else if(model.startsWith('business-'))switchMode(model,document.getElementById('mode-chat'));
   else switchMode('chat',document.getElementById('mode-chat'));
@@ -987,10 +1002,18 @@ async function genChat(txt){
     'social':'Erstelle 3 kreative Social Media Posts auf Deutsch für: ',
     'email':'Erstelle EINE professionelle Email auf Deutsch für: ',
     'pitch':'Erstelle ein Pitch Deck mit 5 Slides auf Deutsch für: ',
-    'bewerbung':'Erstelle ein professionelles, überzeugendes Bewerbungsanschreiben auf Deutsch für folgende Stelle/Situation: '
+    'bewerbung':'Erstelle ein professionelles, überzeugendes Bewerbungsanschreiben auf Deutsch für folgende Stelle/Situation: ',
+    'angebot':'Erstelle ein professionelles Angebot / Kostenvoranschlag auf Deutsch für: ',
+    'mahnung':'Erstelle ein professionelles Mahnschreiben auf Deutsch für: ',
+    'kuendigung':'Erstelle ein professionelles, rechtssicheres Kündigungsschreiben auf Deutsch für: ',
+    'tiktok':'Erstelle 3 virale TikTok & Reels Video-Skripte auf Deutsch für: '
   };
   const bSys={
     'bewerbung':'Du bist ein Experte für Bewerbungen und Karriere in Deutschland. Erstelle ein professionelles, individuelles Bewerbungsanschreiben auf Deutsch. Struktur: Betreff, Anrede, packender Einstieg, Motivation für die Stelle, relevante Qualifikationen und Erfahrungen, konkreter Mehrwert für das Unternehmen, selbstbewusster Abschluss mit Gesprächswunsch, Grußformel. Konkret, überzeugend, fehlerfrei, modern. Keine Floskeln.',
+    'angebot':'Du bist ein Experte für Angebote und Kostenvoranschläge in Deutschland. Erstelle ein professionelles, übersichtliches Angebot auf Deutsch. Enthalte: Angebotsnummer, Datum, Absender und Empfänger, klare Auflistung der Leistungen/Posten mit Menge und Einzelpreis, Zwischensumme, 19% MwSt, Gesamtsumme, Gültigkeitsdauer, Zahlungsbedingungen. Übersichtlich strukturiert. Fehlende Angaben als Platzhalter in eckigen Klammern.',
+    'mahnung':'Du bist ein Experte für Mahnwesen in Deutschland. Erstelle ein professionelles, höfliches aber bestimmtes Mahnschreiben auf Deutsch. Enthalte: Absender und Empfänger, Datum, Betreff mit Rechnungsnummer, Hinweis auf die offene Forderung mit Betrag und ursprünglichem Fälligkeitsdatum, neue Zahlungsfrist, bei höheren Stufen Hinweis auf Verzugszinsen und Mahngebühren, Grußformel. Ton an die Mahnstufe anpassen (1./2./3. Mahnung). Fehlende Angaben als Platzhalter.',
+    'kuendigung':'Du bist ein Experte für formelle Schreiben in Deutschland. Erstelle ein rechtssicheres, höfliches Kündigungsschreiben auf Deutsch. Enthalte: Absender, Empfänger, Ort und Datum, Betreff mit Vertrags- oder Kundennummer, klare Kündigungserklärung zum nächstmöglichen Termin oder gewünschten Datum, Bitte um schriftliche Bestätigung, Grußformel. Fehlende Angaben als Platzhalter in eckigen Klammern.',
+    'tiktok':'Du bist ein viraler Short-Form-Video Experte (TikTok, Instagram Reels, YouTube Shorts). Erstelle 3 verschiedene Video-Skripte auf Deutsch. Pro Skript: 1) HOOK (die ersten 3 Sekunden die zum Weiterschauen zwingen), 2) Ablauf Szene für Szene (was wird gezeigt und gesagt), 3) Call-to-Action am Ende, 4) Vorschläge für Text-Overlays und passenden Sound-/Trend-Stil. Jung, modern, scrollstoppend. Alles auf Deutsch.',
     'plan':'Du bist ein Business-Experte für Versicherungsmakler. Erstelle NUR Businessplaene auf Deutsch.',
     'website':'Du bist ein Copywriter für Versicherungsmakler. Erstelle NUR Website-Texte auf Deutsch.',
     'ads':`Du bist ein Performance Marketing Experte für Versicherungsmakler. Antworte NUR mit validem JSON in genau diesem Format (kein Markdown, keine Backticks, kein Text vor/nach JSON):
@@ -1042,10 +1065,11 @@ Alle Texte auf Deutsch. Prägnant.`
   };
   const bMessages=isBusinessMode?[{role:'user',content:(bPre[businessType]||'')+txt}]:conversationHistory;
   const _ws=localStorage.getItem('virgo_workspace')||'makler';
-  const _chatSys=_ws==='business'
+  const _imgInfo=' WICHTIG ZU BILDERN: Virgo KANN Bilder erstellen. Sage NIEMALS dass du keine Bilder kannst oder nur Text-basiert bist. Der Nutzer kann unten auf den "Bild"-Schalter wechseln oder in der Seitenleiste "Virgo Vision" bzw. "Virgo Create" nutzen. Über das Büroklammer-Symbol kann er sogar ein eigenes Foto als Vorlage hochladen, das dann als Basis fürs neue Bild dient. Wenn jemand einen Flyer, ein Poster, ein Logo oder eine Grafik will: schreibe den kompletten Text/Inhalt dafür UND erkläre freundlich, dass er für das Bild unten auf "Bild" wechseln und optional sein Foto über die Büroklammer hochladen kann. Kleiner ehrlicher Hinweis an den Nutzer: Text direkt im KI-Bild kann unscharf werden - für gestochen scharfe Schrift das Bild erzeugen und den Text separat (z.B. in Canva) hinzufügen.';
+  const _chatSys=(_ws==='business'
     ?'Du bist Virgo, ein vielseitiger KI-Assistent für Unternehmer, Selbständige, Bewerber und kleine Firmen. Du hilfst bei Business-Themen aller Art: Bewerbungen, Geschäftsideen, Texte, Marketing, Organisation, Strategie und allgemeine Fragen. Du bist NICHT auf Versicherungen beschränkt. Antworte auf Deutsch, professionell, konkret und hilfreich.'
-    :'Du bist Virgo, ein KI-Assistent spezialisiert auf Versicherungsmakler. Du hilfst bei Lead-Generierung, Vertrieb, Marketing und Versicherungsthemen (PKV, BU, Altersvorsorge etc.). Antworte auf Deutsch, konkret und praxisnah.';
-  const bodyData=isBusinessMode?{type:businessType,messages:bMessages,systemOverride:bSys[businessType]||''}:{messages:conversationHistory,systemOverride:_chatSys};
+    :'Du bist Virgo, ein KI-Assistent spezialisiert auf Versicherungsmakler. Du hilfst bei Lead-Generierung, Vertrieb, Marketing und Versicherungsthemen (PKV, BU, Altersvorsorge etc.). Antworte auf Deutsch, konkret und praxisnah.')+_imgInfo;
+  const bodyData=isBusinessMode?{type:businessType,messages:bMessages,systemOverride:bSys[businessType]||''}:{messages:conversationHistory,systemOverride:(state.produktMode?PRODUKT_SYS:_chatSys)};
   fetchWithRetry(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(bodyData)})
   .then(r=>r.json()).then(async d=>{
     hideTyping();
@@ -1289,11 +1313,11 @@ function addImageCard(prompt,imgUrl){
 async function doUpscale(url,type){if(!(await useCredits('tool')))return;addAIMsg('Upscale gestartet...');try{const r=await fetch('/api/upscale',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,type})});const d=await r.json();if(d.url)addAIMsg('Fertig! <a href="'+d.url+'" download target="_blank" style="color:var(--blue);text-decoration:underline">4K Download</a>');else addAIMsg('Upscale Fehler: '+(d.error||'Fehlgeschlagen'));}catch(e){addAIMsg('Upscale Fehler.');}}
 function doVariant(p){document.getElementById('prompt').value=p+' - Variante';document.getElementById('prompt').focus();}
 function newChat(){
-  state.chatStarted=false;state.activeChatId=null;
+  state.chatStarted=false;state.activeChatId=null;state.produktMode=false;
   document.getElementById('chat-title').textContent='Neuer Chat';
   document.getElementById('prompt').value='';
   conversationHistory=[];clearRef();resetToChatMode();
-  document.getElementById('fi').innerHTML='<div class="landing" id="landing"><div class="ll">V I R G O</div><div class="lt">Was möchtest du heute erschaffen?</div><div class="ls">Leads, Landing Pages, Ads und Content — auf Knopfdruck.</div><div class="starters"><button class="starter" onclick="openMaklerAds()">Google Ads erstellen</button><button class="starter" onclick="window.location.href=\'/makler-onboarding.html\'">Landing Page bauen</button><button class="starter" onclick="qs(\'Erstelle 10 Social Media Posts für Versicherungsmakler über Altersvorsorge\')">Social Post schreiben</button><button class="starter" onclick="qs(\'Erstelle eine Email-Sequenz für Erstkontakt zu PKV-Interessenten\')">Email an Kunden</button></div></div>';
+  document.getElementById('fi').innerHTML=landingHTML();
   closeSb();
 }
 // VOICE
@@ -1406,6 +1430,25 @@ PLÄNE:
 - Makler Pro: 149 €/Monat (PKV Landing Page, unbegrenzte Leads, Google & Meta Ads, alle KI-Tools)
 - Makler Business: 249 €/Monat (alle Versicherungsarten, unbegrenzte Landing Pages, Priority Support, White-Label)
 Antworte immer auf Deutsch. Kurz, konkret, Schritt für Schritt wenn nötig. Kein Fachjargon. Freundlich und direkt.`;
+const VIRGO_HELP_BUSINESS=`Du bist Virgo Support – ein freundlicher deutscher KI-Assistent der Unternehmern, Selbständigen und Bewerbern bei der Nutzung der Virgo App hilft.
+VIRGO Business ist die KI-Plattform für Unternehmen, Selbständige und Bewerber.
+VIRGO BUSINESS FEATURES:
+- Bewerbung schreiben: Professionelle Bewerbungsanschreiben per KI erstellen
+- Business Plan: Kompletten Businessplan generieren
+- Pitch Deck: Investoren-Pitch mit 5 Slides
+- Rechnung erstellen: PDF-Rechnungen direkt in Virgo
+- Website Generator: Komplette Website erstellen
+- Website Text: Texte für die eigene Website
+- Social Media Posts: Posts inkl. automatischem Bild
+- Email Sequenz: Email-Kampagnen schreiben
+- Text zu Sprache: KI-Stimmen für Audio-Inhalte
+- Bildgenerierung: Virgo Vision (1cr), Virgo Create (1cr)
+- Galerie: Alle generierten Bilder speichern und downloaden
+PLÄNE:
+- Business Free: Begrenzter Chat zum Ausprobieren
+- Business Pro: 19,99 €/Monat (alle Tools, unbegrenzt)
+- Business: 33,99 €/Monat (alle Tools, mehr Bilder, Priority)
+Antworte immer auf Deutsch. Kurz, konkret, Schritt für Schritt wenn nötig. Freundlich und direkt. Du bist NICHT auf Versicherungen beschränkt.`;
 function openHelp(){showM('modal-help');document.getElementById('help-inp').focus();}
 function askHelp(question){document.getElementById('help-inp').value=question;sendHelp();}
 async function sendHelp(){
@@ -1423,7 +1466,7 @@ async function sendHelp(){
   feed.appendChild(typing);feed.scrollTop=99999;
   helpHistory.push({role:'user',content:txt});
   try{
-    const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:helpHistory,systemOverride:VIRGO_HELP_SYSTEM})});
+    const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:helpHistory,systemOverride:(localStorage.getItem('virgo_workspace')||'makler')==='business'?VIRGO_HELP_BUSINESS:VIRGO_HELP_SYSTEM})});
     const d=await r.json();
     const reply=(d.content&&d.content[0]&&d.content[0].text)||'Entschuldigung, bitte nochmal versuchen.';
     helpHistory.push({role:'assistant',content:reply});
@@ -1520,11 +1563,22 @@ updateUI();
 loadChats();
 if(authToken)loadCredits();
 if(localStorage.getItem('virgo_sb_closed')==='1'){document.getElementById('sb').classList.add('collapsed');document.getElementById('sb-toggle-btn').textContent='►';}
+function landingHTML(){
+  const ws=localStorage.getItem('virgo_workspace')||'makler';
+  if(ws==='business'){
+    return '<div class="landing" id="landing"><div class="ll">V I R G O</div><div class="lt">Was m\u00f6chtest du heute erschaffen?</div><div class="ls">Businessplan, Angebot, Mahnung und Rechnungen \u2014 auf Knopfdruck.</div><div class="starters"><button class="starter" onclick="setModel(null,\'business-angebot\',\'Angebot\')">Angebot erstellen</button><button class="starter" onclick="setModel(null,\'business-plan\',\'Business Plan\')">Businessplan erstellen</button><button class="starter" onclick="setModel(null,\'business-pitch\',\'Pitch Deck\')">Pitch Deck erstellen</button><button class="starter" onclick="openInvoiceModal()">Rechnung schreiben</button></div></div>';
+  }
+  return '<div class="landing" id="landing"><div class="ll">V I R G O</div><div class="lt">Was m\u00f6chtest du heute erschaffen?</div><div class="ls">Leads, Landing Pages, Ads und Content \u2014 auf Knopfdruck.</div><div class="starters"><button class="starter" onclick="openMaklerAds()">Google Ads erstellen</button><button class="starter" onclick="window.location.href=\'/makler-onboarding.html\'">Landing Page bauen</button><button class="starter" onclick="qs(\'Erstelle 10 Social Media Posts f\u00fcr Versicherungsmakler \u00fcber Altersvorsorge\')">Social Post schreiben</button><button class="starter" onclick="qs(\'Erstelle eine Email-Sequenz f\u00fcr Erstkontakt zu PKV-Interessenten\')">Email an Kunden</button></div></div>';
+}
+function renderLanding(){
+  if(document.getElementById('landing')){document.getElementById('fi').innerHTML=landingHTML();}
+}
 function setWorkspace(ws){
   document.getElementById('ws-makler').style.display=ws==='makler'?'block':'none';
   document.getElementById('ws-business').style.display=ws==='business'?'block':'none';
   document.querySelectorAll('.mode-tab').forEach(t=>t.classList.toggle('active',t.dataset.ws===ws));
   localStorage.setItem('virgo_workspace',ws);
+  renderLanding();
 }
 setWorkspace(localStorage.getItem('virgo_workspace')||'makler');
 </script>
