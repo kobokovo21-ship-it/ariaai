@@ -308,9 +308,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
     <button class="sb-toggle" id="sb-toggle-btn" onclick="toggleSbDesktop()">&#9664;</button>
     <div class="topbar-title" id="chat-title">Neuer Chat</div>
     <div class="topbar-right">
-      <div class="cbadge" onclick="showM('modal-upgrade')"><div class="cdot" id="cdot"></div><span id="cr-display">5 Credits</span></div>
+      <div class="cbadge" onclick="openUpgrade()"><div class="cdot" id="cdot"></div><span id="cr-display">5 Credits</span></div>
       <button class="tb-btn" onclick="openHelp()" style="border-color:var(--bd)" title="Hilfe">?</button>
-      <button class="tb-btn primary" onclick="showM('modal-upgrade')">Upgrade</button>
+      <button class="tb-btn primary" onclick="openUpgrade()">Upgrade</button>
       <button class="tb-btn" id="auth-btn" onclick="showM('modal-login')">Anmelden</button>
     </div>
   </div>
@@ -555,10 +555,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
 <div class="modal" id="modal-upgrade">
   <div class="mb2 wide">
     <button class="mclose" onclick="closeM('modal-upgrade')">x</button>
-    <h2>Virgo Pläne für Versicherungsmakler</h2>
+    <h2 id="up-title">Virgo Pläne für Versicherungsmakler</h2>
     <p id="up-msg">Mehr Leads. Weniger Aufwand. Kein Vertrag, jederzeit kündbar.</p>
-    <div class="ci2"><strong>Was du bekommst:</strong> Google &amp; Meta Ads Generator · Landing Pages · Leads Dashboard · KI-Bilder · Social Posts · Rechnungen · Text-zu-Sprache · Email-Sequenzen</div>
-    <div class="pg">
+    <div class="ci2" id="up-summary"><strong>Was du bekommst:</strong> Google &amp; Meta Ads Generator · Landing Pages · Leads Dashboard · KI-Bilder · Social Posts · Rechnungen · Text-zu-Sprache · Email-Sequenzen</div>
+    <div class="pg" id="up-makler">
       <div class="pc">
         <div class="pct">Makler Pro</div>
         <div class="pcp">149 €</div>
@@ -572,6 +572,22 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
         <div class="pcc">/Monat · Jederzeit kündbar</div>
         <div class="pcf">Alle Versicherungsarten<br>Unbegrenzte Landing Pages<br>Unbegrenzte Leads<br>Priority Support<br>Alle KI-Tools<br>White-Label Option</div>
         <div class="pbs"><button class="pbtn" onclick="window.location.href='/checkout.html?plan=makler-business'">Jetzt buchen</button></div>
+      </div>
+    </div>
+    <div class="pg" id="up-business" style="display:none">
+      <div class="pc">
+        <div class="pct">Virgo Pro</div>
+        <div class="pcp">19,99 €</div>
+        <div class="pcc">/Monat · Jederzeit kündbar</div>
+        <div class="pcf">Unbegrenzter Chat mit Motivations-Coach<br>Alle Tools (Businessplan, Pitch Deck, Angebot, Rechnung, Website, Produktbeschreibungen, Social Media, TikTok-Skripte, Email)<br>Virgo Agent<br>30 Bilder/Monat</div>
+        <div class="pbs"><button class="pbtn" onclick="window.location.href='https://buy.stripe.com/fZu28sfaZb3I6rc0BCbjW0d'">Jetzt buchen</button></div>
+      </div>
+      <div class="pc feat">
+        <div class="pct">Virgo Premium</div>
+        <div class="pcp">49,99 €</div>
+        <div class="pcc">/Monat · Jederzeit kündbar</div>
+        <div class="pcf">Alles aus Pro<br>100 Bilder/Monat<br>Priority - schnellere Verarbeitung<br>Täglicher Launch-Begleiter<br>Mehr Agent-Power</div>
+        <div class="pbs"><button class="pbtn" onclick="window.location.href='https://buy.stripe.com/3cI9AUgf3go25n8bggbjW0e'">Jetzt buchen</button></div>
       </div>
     </div>
     <div style="font-size:10px;color:var(--td);text-align:center;margin-top:14px;line-height:1.6">
@@ -768,8 +784,13 @@ sbcl.addEventListener('click',closeSb);sbcl.addEventListener('touchend',e=>{e.pr
 const ov=document.getElementById('sb-overlay');
 ov.addEventListener('click',closeSb);ov.addEventListener('touchend',e=>{e.preventDefault();closeSb();},{passive:false});
 // MODE
-function switchMode(mode,el){state.mode=mode;document.querySelectorAll('.mp').forEach(p=>p.classList.remove('on'));if(el)el.classList.add('on');document.getElementById('prompt').placeholder=PH[mode]||PH.chat;}
-function resetToChatMode(){state.mode='chat';state.model='chat';state.modelName='Virgo Chat';document.querySelectorAll('.mp').forEach(p=>p.classList.remove('on'));document.getElementById('mode-chat').classList.add('on');document.querySelectorAll('.mc').forEach(c=>c.classList.remove('on'));document.querySelector('.mc').classList.add('on');document.getElementById('prompt').placeholder=PH.chat;clearRef();}
+function chatPlaceholder(){
+  return (localStorage.getItem('virgo_workspace')||'makler')==='business'
+    ? 'Erzähl mir deine Idee oder frag was du brauchst...'
+    : 'Frag Virgo alles - Leads, Ads, Strategie...';
+}
+function switchMode(mode,el){state.mode=mode;document.querySelectorAll('.mp').forEach(p=>p.classList.remove('on'));if(el)el.classList.add('on');document.getElementById('prompt').placeholder=(mode==='chat'?chatPlaceholder():(PH[mode]||chatPlaceholder()));}
+function resetToChatMode(){state.mode='chat';state.model='chat';state.modelName='Virgo Chat';document.querySelectorAll('.mp').forEach(p=>p.classList.remove('on'));document.getElementById('mode-chat').classList.add('on');document.querySelectorAll('.mc').forEach(c=>c.classList.remove('on'));document.querySelector('.mc').classList.add('on');document.getElementById('prompt').placeholder=chatPlaceholder();clearRef();}
 function startAgent(){
   document.querySelectorAll('.mc').forEach(c=>c.classList.remove('on'));
   state.model='chat';state.modelName='Virgo Agent';state.agentMode=true;state.produktMode=false;
@@ -815,12 +836,12 @@ function setModel(el,model,name){
   if(model==='img-modelia'&&!isPaidPlan()&&!isAdmin()){
     const m=document.getElementById('up-msg');m.className='alert';
     m.textContent='Virgo Fashion ist nur für zahlende Pläne. Starte mit Makler Pro für 149 €/Monat.';
-    showM('modal-upgrade');return;
+    openUpgrade();return;
   }
   if(model.startsWith('img')&&!isPaidPlan()&&!isAdmin()){
     const m=document.getElementById('up-msg');m.className='alert';
     m.textContent='Bildgenerierung ist nur für zahlende Pläne. Starte mit Makler Pro für 149 €/Monat.';
-    showM('modal-upgrade');return;
+    openUpgrade();return;
   }
   document.querySelectorAll('.mc').forEach(c=>c.classList.remove('on'));
   if(el)el.classList.add('on');state.model=model;state.modelName=name;
@@ -950,9 +971,9 @@ async function useCredits(type){
   if(credits<cost){
     const m=document.getElementById('up-msg');m.className='alert';
     m.textContent=!currentUser?'Erstelle ein kostenloses Konto für 10 Gratis-Credits!':'Nicht genug Credits. Upgrade auf Makler Pro!';
-    showM('modal-upgrade');return false;
+    openUpgrade();return false;
   }
-  if(authToken){try{const r=await fetch('/api/credits',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({amount:cost})});const d=await r.json();if(d.error){showM('modal-upgrade');return false;}credits=d.credits;localStorage.setItem('virgo_credits',credits);}catch(e){credits-=cost;localStorage.setItem('virgo_credits',credits);}}
+  if(authToken){try{const r=await fetch('/api/credits',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({amount:cost})});const d=await r.json();if(d.error){openUpgrade();return false;}credits=d.credits;localStorage.setItem('virgo_credits',credits);}catch(e){credits-=cost;localStorage.setItem('virgo_credits',credits);}}
   else{credits-=cost;localStorage.setItem('virgo_credits',credits);}
   document.getElementById('cr-display').textContent=isAdmin()?'Credits':credits+' Credits';
   document.getElementById('cdot').className='cdot'+((!isAdmin()&&credits<10)?' low':'');
@@ -1375,7 +1396,25 @@ function stopRecording(){if(window._rec)window._rec.stop();if(mediaRecorder&&med
 document.getElementById('mic-btn').addEventListener('touchstart',function(e){e.preventDefault();toggleVoice();},{passive:false});
 // MODALS
 function showM(id){document.getElementById(id).classList.add('vis');}
-function closeM(id){document.getElementById(id).classList.remove('vis');if(id==='modal-upgrade'){const m=document.getElementById('up-msg');m.className='';m.textContent='Mehr Leads. Weniger Aufwand. Kein Vertrag, jederzeit kündbar.';}if(id==='modal-login')setAuthMsg('','');}
+function openUpgrade(){
+  const ws=localStorage.getItem('virgo_workspace')||'makler';
+  document.getElementById('up-makler').style.display=ws==='makler'?'':'none';
+  document.getElementById('up-business').style.display=ws==='business'?'':'none';
+  const title=document.getElementById('up-title');
+  const msg=document.getElementById('up-msg');
+  const summary=document.getElementById('up-summary');
+  if(ws==='business'){
+    title.textContent='Virgo Pläne für deine Idee';
+    msg.textContent='Bring deine Idee zum Leben - mit Virgo als motivierender Begleiter. Kein Vertrag, jederzeit kündbar.';
+    summary.innerHTML='<strong>Was du bekommst:</strong> Unbegrenzter Chat · Businessplan · Pitch Deck · Angebot · Rechnung · Website · Produktbeschreibungen · Social Media · TikTok-Skripte · Email · KI-Bilder · Virgo Agent';
+  }else{
+    title.textContent='Virgo Pläne für Versicherungsmakler';
+    msg.textContent='Mehr Leads. Weniger Aufwand. Kein Vertrag, jederzeit kündbar.';
+    summary.innerHTML='<strong>Was du bekommst:</strong> Google &amp; Meta Ads Generator · Landing Pages · Leads Dashboard · KI-Bilder · Social Posts · Rechnungen · Text-zu-Sprache · Email-Sequenzen';
+  }
+  showM('modal-upgrade');
+}
+function closeM(id){document.getElementById(id).classList.remove('vis');if(id==='modal-login')setAuthMsg('','');}
 document.querySelectorAll('.modal').forEach(m=>{m.addEventListener('click',function(e){if(e.target===this)closeM(this.id);});});
 function scrollFeed(){document.getElementById('feed').scrollTop=99999;}
 // INVOICE
@@ -1612,6 +1651,7 @@ function setWorkspace(ws){
   document.querySelectorAll('.mode-tab').forEach(t=>t.classList.toggle('active',t.dataset.ws===ws));
   localStorage.setItem('virgo_workspace',ws);
   renderLanding();
+  if(state.model==='chat')document.getElementById('prompt').placeholder=chatPlaceholder();
 }
 setWorkspace(localStorage.getItem('virgo_workspace')||'makler');
 </script>
