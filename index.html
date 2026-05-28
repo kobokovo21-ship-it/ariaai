@@ -789,7 +789,7 @@ function chatPlaceholder(){
     ? 'Erzähl mir deine Idee oder frag was du brauchst...'
     : 'Frag Virgo alles - Leads, Ads, Strategie...';
 }
-function switchMode(mode,el){state.mode=mode;document.querySelectorAll('.mp').forEach(p=>p.classList.remove('on'));if(el)el.classList.add('on');document.getElementById('prompt').placeholder=(mode==='chat'?chatPlaceholder():(PH[mode]||chatPlaceholder()));}
+function switchMode(mode,el){if(mode==='img'&&isFreePlan()){openUpgrade();return;}state.mode=mode;document.querySelectorAll('.mp').forEach(p=>p.classList.remove('on'));if(el)el.classList.add('on');document.getElementById('prompt').placeholder=(mode==='chat'?chatPlaceholder():(PH[mode]||chatPlaceholder()));}
 function resetToChatMode(){state.mode='chat';state.model='chat';state.modelName='Virgo Chat';document.querySelectorAll('.mp').forEach(p=>p.classList.remove('on'));document.getElementById('mode-chat').classList.add('on');document.querySelectorAll('.mc').forEach(c=>c.classList.remove('on'));document.querySelector('.mc').classList.add('on');document.getElementById('prompt').placeholder=chatPlaceholder();clearRef();}
 function startAgent(){
   document.querySelectorAll('.mc').forEach(c=>c.classList.remove('on'));
@@ -935,6 +935,7 @@ function updateUI(){
   document.getElementById('auth-btn').onclick=li?logout:()=>showM('modal-login');
   if(isAdmin()){document.getElementById('cr-display').textContent='Credits';document.getElementById('cdot').className='cdot';}
   else{document.getElementById('cr-display').textContent=credits+' Credits';document.getElementById('cdot').className='cdot'+(credits<10?' low':'');}
+  applyFreeRestrictions();
 }
 async function loadCredits(){
   if(!authToken)return;
@@ -1016,6 +1017,11 @@ async function send(){
   const txt=inp.value.trim();if(!txt||state.generating)return;
   const mode=state.model.startsWith('img')?'img':'chat';
   const ct=state.model==='img-modelia'?'modelia':mode;
+  if(isFreePlan()){
+    if(mode!=='chat'){openUpgrade();return;}
+    if(freeChatsUsed()>=5){openUpgrade();return;}
+    localStorage.setItem('virgo_free_chats',freeChatsUsed()+1);applyFreeRestrictions();
+  }
   if(mode!=='chat'&&!(await useCredits(ct)))return;
   let chatTitle=document.getElementById('chat-title').textContent;
   if(!state.chatStarted){state.chatStarted=true;const _l2=document.getElementById('landing');if(_l2)_l2.style.display='none';chatTitle=txt.substring(0,40)+(txt.length>40?'...':'');document.getElementById('chat-title').textContent=chatTitle;}
@@ -1120,9 +1126,10 @@ Alle Texte auf Deutsch. Prägnant.`
   const bMessages=isBusinessMode?[{role:'user',content:(bPre[businessType]||'')+txt}]:conversationHistory;
   const _ws=localStorage.getItem('virgo_workspace')||'makler';
   const _imgInfo=' WICHTIG ZU BILDERN: Virgo KANN Bilder erstellen. Sage NIEMALS dass du keine Bilder kannst oder nur Text-basiert bist. Der Nutzer kann unten auf den "Bild"-Schalter wechseln oder in der Seitenleiste "Virgo Vision" bzw. "Virgo Create" nutzen. Über das Büroklammer-Symbol kann er sogar ein eigenes Foto als Vorlage hochladen, das dann als Basis fürs neue Bild dient. Wenn jemand einen Flyer, ein Poster, ein Logo oder eine Grafik will: schreibe den kompletten Text/Inhalt dafür UND erkläre freundlich, dass er für das Bild unten auf "Bild" wechseln und optional sein Foto über die Büroklammer hochladen kann. Kleiner ehrlicher Hinweis an den Nutzer: Text direkt im KI-Bild kann unscharf werden - für gestochen scharfe Schrift das Bild erzeugen und den Text separat (z.B. in Canva) hinzufügen.';
-  const _chatSys=(_ws==='business'
+  const _chatSys=(isFreePlan()?('Du bist Virgo - eine KI-App für Macher mit Ideen. Du sprichst freundlich und motivierend. WICHTIG: Antworte IMMER in der Sprache des Users (Deutsch, Englisch, Albanisch, etc).\n\nDu sprichst gerade mit einem FREE-User. Das heisst:\n- Beantworte die Frage hilfreich aber kurz (3-5 Sätze)\n- Erwähne wenn passend was Virgo mit einem Plan kann\n- Sei ein motivierender Verkäufer der ehrlich erklärt warum ein Plan sich lohnt\n- Am Ende JEDER Antwort: ermutige zum Upgrade mit einem klaren nächsten Schritt\n\nWas Virgo mit einem Plan kann:\n\nVIRGO PRO (19,99 Euro/Monat) - für Menschen die eine Idee umsetzen wollen:\n- Unbegrenzter Chat mit Motivations-Coach\n- Businessplan ausarbeiten\n- Pitch Deck für Investoren\n- Angebote und Rechnungen erstellen\n- Komplette Websites generieren\n- Produktbeschreibungen (auch mit Foto)\n- Social Media Posts und TikTok-Skripte\n- Email-Sequenzen für Marketing\n- Virgo Agent: erstellt automatisch ein komplettes Marketing-Paket\n- 30 KI-Bilder pro Monat\n\nVIRGO PREMIUM (49,99 Euro/Monat) - alles aus Pro plus:\n- 100 KI-Bilder pro Monat\n- Priority - schnellere Verarbeitung\n- Täglicher Launch-Begleiter\n- Mehr Agent-Power\n\nVIRGO MAKLER (149 Euro/Monat) - speziell für Versicherungsmakler:\n- Eigene Makler-Landing-Page\n- Lead-Dashboard\n- Google und Meta Ads Generator\n- Alle Business-Tools inklusive\n\nDein Stil: warm, ermutigend, ehrlich. Du glaubst an die Person. Schliesse Antworten mit einem motivierenden Satz und einem klaren Hinweis wie ein Plan dabei helfen würde, plus dem Tipp oben rechts auf Upgrade zu klicken.')
+    :(_ws==='business'
     ?'Du bist Virgo - mehr als ein KI-Assistent. Du bist der motivierende Begleiter für Menschen die eine Idee haben und sie umsetzen wollen. Deine Mission: Menschen motivieren dranzubleiben, ihnen den richtigen Weg zeigen und ihnen bei Recherche, Planung und Umsetzung helfen. Dein Stil ist warm und ermutigend - du glaubst an die Person, feierst jeden Fortschritt, machst Mut wenn jemand zweifelt, und zeigst IMMER den konkreten nächsten Schritt damit sich niemand überfordert fühlt. Du lässt niemanden mit einer vagen Idee allein, sondern zerlegst sie in machbare Schritte. Du hilfst bei allem: Geschäftsideen, Texte, Marketing, Bewerbungen, Recherche, Organisation - du bist auf kein Thema beschränkt. Antworte auf Deutsch, konkret und mit Herz. Beende deine Antworten oft mit einem motivierenden Schubs oder dem konkreten nächsten Schritt, damit die Person dranbleibt und ihre Idee wirklich durchzieht.'
-    :'Du bist Virgo, ein KI-Assistent spezialisiert auf Versicherungsmakler. Du hilfst bei Lead-Generierung, Vertrieb, Marketing und Versicherungsthemen (PKV, BU, Altersvorsorge etc.). Antworte auf Deutsch, konkret und praxisnah.')+_imgInfo;
+    :'Du bist Virgo, ein KI-Assistent spezialisiert auf Versicherungsmakler. Du hilfst bei Lead-Generierung, Vertrieb, Marketing und Versicherungsthemen (PKV, BU, Altersvorsorge etc.). Antworte auf Deutsch, konkret und praxisnah.'))+_imgInfo;
   const bodyData=isBusinessMode?{type:businessType,messages:bMessages,systemOverride:bSys[businessType]||''}:{messages:conversationHistory,systemOverride:(state.produktMode?PRODUKT_SYS:_chatSys)};
   fetchWithRetry(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(bodyData)})
   .then(r=>r.json()).then(async d=>{
@@ -1645,7 +1652,38 @@ function landingHTML(){
 function renderLanding(){
   if(document.getElementById('landing')){document.getElementById('fi').innerHTML=landingHTML();}
 }
-function setWorkspace(ws){
+function isFreePlan(){
+  if(typeof isAdmin==='function'&&isAdmin())return false;
+  const p=localStorage.getItem('virgo_plan')||'free';
+  return !p||p==='free';
+}
+function freeChatsUsed(){return parseInt(localStorage.getItem('virgo_free_chats')||'0',10);}
+function freeChatsLeft(){return Math.max(0,5-freeChatsUsed());}
+function applyFreeRestrictions(){
+  const free=isFreePlan();
+  document.querySelectorAll('#ws-makler .ms, #ws-business .ms').forEach(s=>{s.style.display=free?'none':'';});
+  // Remove old hint if it exists in wrong workspace
+  const oldHint=document.getElementById('free-sb-hint');
+  if(oldHint)oldHint.remove();
+  let hint=null;
+  if(free){
+    const ws=localStorage.getItem('virgo_workspace')||'makler';
+    const wsEl=document.getElementById(ws==='business'?'ws-business':'ws-makler');
+    if(wsEl){
+      hint=document.createElement('div');
+      hint.id='free-sb-hint';
+      hint.style.cssText='margin:18px 12px;padding:18px 16px;border:1px solid var(--b);border-radius:14px;text-align:center;background:linear-gradient(135deg,rgba(124,58,237,.06),rgba(37,99,235,.06))';
+      const isB=ws==='business';
+      const title=isB?'Business Tools mit Plan':'Makler Tools mit Plan';
+      const desc=isB?'Businessplan, Pitch Deck, Website, Angebote, Rechnungen, Social Media, KI-Bilder und Virgo Agent':'Landing Page, Leads Dashboard, Google & Meta Ads, Website Generator und KI-Bilder';
+      hint.innerHTML='<div style="font-size:24px;margin-bottom:8px">🔒</div><div style="font-size:13px;font-weight:600;margin-bottom:4px">'+title+'</div><div style="font-size:11px;color:var(--td);line-height:1.5;margin-bottom:12px">'+desc+'</div><button onclick="openUpgrade()" style="width:100%;padding:10px;border-radius:10px;background:linear-gradient(90deg,#7c3aed,#2563eb);color:#fff;border:0;cursor:pointer;font-size:13px;font-weight:600">Plan wählen</button><div class="free-counter" style="font-size:10px;color:var(--td);margin-top:10px">Free: '+freeChatsLeft()+' von 5 Chats übrig</div>';
+      wsEl.appendChild(hint);
+    }
+  }else{
+    localStorage.removeItem('virgo_free_chats');
+  }
+}
+function _applyWorkspace(ws){
   document.getElementById('ws-makler').style.display=ws==='makler'?'block':'none';
   document.getElementById('ws-business').style.display=ws==='business'?'block':'none';
   document.querySelectorAll('.mode-tab').forEach(t=>t.classList.toggle('active',t.dataset.ws===ws));
@@ -1653,7 +1691,12 @@ function setWorkspace(ws){
   renderLanding();
   if(state.model==='chat')document.getElementById('prompt').placeholder=chatPlaceholder();
 }
-setWorkspace(localStorage.getItem('virgo_workspace')||'makler');
+function setWorkspace(ws){
+  _applyWorkspace(ws);
+  applyFreeRestrictions();
+}
+_applyWorkspace(localStorage.getItem('virgo_workspace')||'makler');
+applyFreeRestrictions();
 </script>
 <!-- MODAL: VIRGO HILFE CHAT -->
 <div class="modal" id="modal-help">
@@ -1727,3 +1770,4 @@ setWorkspace(localStorage.getItem('virgo_workspace')||'makler');
 <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('/sw.js').catch(()=>{});});}</script>
 </body>
 </html>
+
