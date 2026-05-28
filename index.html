@@ -269,6 +269,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
     <div class="ms">
       <span class="sl">Business Tools</span>
       <button class="mc" onclick="setModel(this,'chat','Virgo Chat')"><div class="md"></div>Virgo Chat</button>
+      <button class="mc" onclick="startAgent()" style="border:1px solid rgba(124,58,237,.45);background:linear-gradient(90deg,rgba(124,58,237,.10),rgba(37,99,235,.10))"><div class="md" style="background:linear-gradient(135deg,#7c3aed,#2563eb)"></div>Virgo Agent<span class="mt" style="background:#ede9fe;color:#6d28d9">AUTO</span></button>
       <button class="mc" onclick="setModel(this,'business-plan','Business Plan')"><div class="md"></div>Business Plan<span class="mt" style="background:#dcfce7;color:#166534">AI</span></button>
       <button class="mc" onclick="setModel(this,'business-pitch','Pitch Deck')"><div class="md"></div>Pitch Deck<span class="mt" style="background:#dcfce7;color:#166534">AI</span></button>
       <button class="mc" onclick="setModel(this,'business-angebot','Angebot')" style="border:1px solid rgba(37,99,235,.25)"><div class="md" style="background:#2563eb"></div>Angebot erstellen<span class="mt" style="background:#dbeafe;color:#1d4ed8">Neu</span></button>
@@ -769,6 +770,38 @@ ov.addEventListener('click',closeSb);ov.addEventListener('touchend',e=>{e.preven
 // MODE
 function switchMode(mode,el){state.mode=mode;document.querySelectorAll('.mp').forEach(p=>p.classList.remove('on'));if(el)el.classList.add('on');document.getElementById('prompt').placeholder=PH[mode]||PH.chat;}
 function resetToChatMode(){state.mode='chat';state.model='chat';state.modelName='Virgo Chat';document.querySelectorAll('.mp').forEach(p=>p.classList.remove('on'));document.getElementById('mode-chat').classList.add('on');document.querySelectorAll('.mc').forEach(c=>c.classList.remove('on'));document.querySelector('.mc').classList.add('on');document.getElementById('prompt').placeholder=PH.chat;clearRef();}
+function startAgent(){
+  document.querySelectorAll('.mc').forEach(c=>c.classList.remove('on'));
+  state.model='chat';state.modelName='Virgo Agent';state.agentMode=true;state.produktMode=false;
+  switchMode('chat',document.getElementById('mode-chat'));
+  const _l=document.getElementById('landing');if(_l)_l.style.display='none';
+  if(!state.chatStarted){state.chatStarted=true;document.getElementById('chat-title').textContent='Virgo Agent';}
+  addAIMsg('\ud83e\udd16 <b>Virgo Agent</b><br><br>Beschreibe dein Business oder Produkt <b>einmal</b> - ich erstelle dir automatisch ein komplettes Marketing-Paket:<br><br>\ud83d\udcf1 3 Social Media Posts<br>\ud83d\udce7 1 Marketing-Email<br>\ud83d\udecd\ufe0f Produkt- / Website-Text<br>\ud83c\udfac 3 TikTok-Hooks<br><br>Schreib unten z.B.: <i>"Oversized Hoodie, washed grey, fuer junge Streetwear-Fans"</i> und schick es ab.');
+  closeSb();
+}
+async function runAgent(txt){
+  state.agentMode=false;state.generating=true;
+  const steps=[
+    {icon:'\ud83d\udcf1',title:'Social Media Posts',sys:'Du bist ein Social-Media-Experte. Erstelle 3 fertige Social Media Posts auf Deutsch: 1x Instagram, 1x LinkedIn, 1x TikTok. Pro Post: Hook, Text und passende Hashtags. Klar getrennt, direkt nutzbar, keine Erklaerungen drumherum.'},
+    {icon:'\ud83d\udce7',title:'Marketing-Email',sys:'Du bist ein Email-Marketing-Experte. Erstelle eine fertige Marketing-Email auf Deutsch mit Betreffzeile und Textkoerper, persoenlich, mit klarem Call-to-Action. Direkt nutzbar.'},
+    {icon:'\ud83d\udecd\ufe0f',title:'Produkt- / Website-Text',sys:'Du bist ein E-Commerce-Copywriter. Erstelle einen verkaufsstarken Text auf Deutsch mit: Titel, kurzem Hook, 4-5 Bullet Points mit Features und Vorteilen und einem ueberzeugenden Beschreibungstext. Direkt nutzbar.'},
+    {icon:'\ud83c\udfac',title:'TikTok & Reels Hooks',sys:'Du bist ein viraler Short-Video-Experte. Erstelle 3 TikTok/Reels Hook-Ideen auf Deutsch. Pro Idee: der Hook (erste 3 Sekunden) und eine kurze Skript-Idee. Knackig und scrollstoppend.'}
+  ];
+  addAIMsg('\ud83e\udd16 <b>Virgo Agent gestartet</b><br>Ich erstelle dein komplettes Marketing-Paket in 4 Schritten. Einen Moment...');
+  for(let i=0;i<steps.length;i++){
+    const s=steps[i];showTyping();
+    try{
+      const r=await fetchWithRetry('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:[{role:'user',content:'Business/Produkt: '+txt}],systemOverride:s.sys})});
+      const d=await r.json();hideTyping();
+      const reply=(d.content&&d.content[0]&&d.content[0].text)||'Konnte nicht erstellt werden.';
+      const header='<div style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;margin-bottom:10px">'+s.icon+' Schritt '+(i+1)+'/4 - '+s.title+'</div><br>';
+      addAIMsg(header+renderMD(reply));
+    }catch(e){hideTyping();addAIMsg('\u26a0\ufe0f Schritt '+(i+1)+' ('+s.title+') hat nicht geklappt. Du kannst es im jeweiligen Tool einzeln nochmal versuchen.');}
+  }
+  addAIMsg('\u2705 <b>Fertig!</b> Dein komplettes Marketing-Paket ist erstellt - alle 4 Teile stehen oben. Kopier dir was du brauchst.');
+  state.generating=false;
+  saveChat(document.getElementById('chat-title').textContent,conversationHistory);
+}
 const PRODUKT_SYS='Du bist ein erstklassiger E-Commerce Copywriter und SEO-Spezialist. Schreibe verkaufsstarke, SEO-optimierte Produktbeschreibungen basierend auf den Produktdetails oder dem Foto des Nutzers. Wenn ein Bild vorhanden ist, beschreibe genau was du siehst (Farbe, Material, Schnitt, Stil). Strukturiere JEDE Antwort genau so:\n\n🛍️ Produkt-Titel (Vorschlag)\n[2 catchy, markengerechte Titel-Ideen]\n\n✨ Der Hook (Kurzbeschreibung)\n[Knackiger Absatz aus 2-3 Saetzen der Aufmerksamkeit packt und den Kern des Produkts zeigt]\n\n📋 Key Features & Details\n- Premium Qualitaet: [...]\n- Schnitt & Passform: [...]\n- Design Highlight: [...]\n\n✍️ Storytelling / Ausfuehrliche Beschreibung\n[Emotionaler Text aus 3-4 Saetzen wie sich der Kunde mit dem Produkt fuehlt, mit natuerlichen SEO-Keywords]\n\n🔍 SEO-Tags & Meta-Keywords\n[5-8 relevante Such-Tags fuers Shop-Backend, kommagetrennt]\n\nAlles auf Deutsch, verkaufsstark und modern.';
 function startProdukt(){
   document.querySelectorAll('.mc').forEach(c=>c.classList.remove('on'));
@@ -778,7 +811,7 @@ function startProdukt(){
   closeSb();
 }
 function setModel(el,model,name){
-  state.produktMode=false;
+  state.produktMode=false;state.agentMode=false;
   if(model==='img-modelia'&&!isPaidPlan()&&!isAdmin()){
     const m=document.getElementById('up-msg');m.className='alert';
     m.textContent='Virgo Fashion ist nur für zahlende Pläne. Starte mit Makler Pro für 149 €/Monat.';
@@ -972,7 +1005,7 @@ async function send(){
   addUserMsg(txt,hasImgs);
   lastUserMsg=txt;
   inp.value='';inp.style.height='24px';
-  if(mode==='img')genImage(txt);else genChat(txt);
+  if(state.agentMode)runAgent(txt);else if(mode==='img')genImage(txt);else genChat(txt);
 }
 function addUserMsg(txt,hasImage){const d=document.createElement('div');d.className='mw user';const hint=hasImage?'<div style="font-size:10px;color:rgba(255,255,255,.6);margin-top:4px">Bild analysiert - wird nicht gespeichert, bitte selbst sichern.</div>':'';d.innerHTML='<div><div class="bb">'+escHtml(txt)+hint+'</div><div class="mt2">'+now()+'</div></div>';document.getElementById('fi').appendChild(d);scrollFeed();}
 function addAIMsg(html){const d=document.createElement('div');d.className='mw ai';d.innerHTML='<div class="aav">V</div><div><div class="bb">'+html+'</div><div class="mt2">'+now()+'</div></div>';document.getElementById('fi').appendChild(d);scrollFeed();}
@@ -1313,7 +1346,7 @@ function addImageCard(prompt,imgUrl){
 async function doUpscale(url,type){if(!(await useCredits('tool')))return;addAIMsg('Upscale gestartet...');try{const r=await fetch('/api/upscale',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,type})});const d=await r.json();if(d.url)addAIMsg('Fertig! <a href="'+d.url+'" download target="_blank" style="color:var(--blue);text-decoration:underline">4K Download</a>');else addAIMsg('Upscale Fehler: '+(d.error||'Fehlgeschlagen'));}catch(e){addAIMsg('Upscale Fehler.');}}
 function doVariant(p){document.getElementById('prompt').value=p+' - Variante';document.getElementById('prompt').focus();}
 function newChat(){
-  state.chatStarted=false;state.activeChatId=null;state.produktMode=false;
+  state.chatStarted=false;state.activeChatId=null;state.produktMode=false;state.agentMode=false;
   document.getElementById('chat-title').textContent='Neuer Chat';
   document.getElementById('prompt').value='';
   conversationHistory=[];clearRef();resetToChatMode();
@@ -1566,7 +1599,7 @@ if(localStorage.getItem('virgo_sb_closed')==='1'){document.getElementById('sb').
 function landingHTML(){
   const ws=localStorage.getItem('virgo_workspace')||'makler';
   if(ws==='business'){
-    return '<div class="landing" id="landing"><div class="ll">V I R G O</div><div class="lt">Was m\u00f6chtest du heute erschaffen?</div><div class="ls">Businessplan, Angebot, Mahnung und Rechnungen \u2014 auf Knopfdruck.</div><div class="starters"><button class="starter" onclick="setModel(null,\'business-angebot\',\'Angebot\')">Angebot erstellen</button><button class="starter" onclick="setModel(null,\'business-plan\',\'Business Plan\')">Businessplan erstellen</button><button class="starter" onclick="setModel(null,\'business-pitch\',\'Pitch Deck\')">Pitch Deck erstellen</button><button class="starter" onclick="openInvoiceModal()">Rechnung schreiben</button></div></div>';
+    return '<div class="landing" id="landing"><div class="ll">V I R G O</div><div class="lt">Was m\u00f6chtest du heute erschaffen?</div><div class="ls">Businessplan, Angebot, Pitch Deck und Rechnungen \u2014 auf Knopfdruck.</div><div class="starters"><button class="starter" onclick="setModel(null,\'business-angebot\',\'Angebot\')">Angebot erstellen</button><button class="starter" onclick="setModel(null,\'business-plan\',\'Business Plan\')">Businessplan erstellen</button><button class="starter" onclick="setModel(null,\'business-pitch\',\'Pitch Deck\')">Pitch Deck erstellen</button><button class="starter" onclick="openInvoiceModal()">Rechnung schreiben</button></div></div>';
   }
   return '<div class="landing" id="landing"><div class="ll">V I R G O</div><div class="lt">Was m\u00f6chtest du heute erschaffen?</div><div class="ls">Leads, Landing Pages, Ads und Content \u2014 auf Knopfdruck.</div><div class="starters"><button class="starter" onclick="openMaklerAds()">Google Ads erstellen</button><button class="starter" onclick="window.location.href=\'/makler-onboarding.html\'">Landing Page bauen</button><button class="starter" onclick="qs(\'Erstelle 10 Social Media Posts f\u00fcr Versicherungsmakler \u00fcber Altersvorsorge\')">Social Post schreiben</button><button class="starter" onclick="qs(\'Erstelle eine Email-Sequenz f\u00fcr Erstkontakt zu PKV-Interessenten\')">Email an Kunden</button></div></div>';
 }
