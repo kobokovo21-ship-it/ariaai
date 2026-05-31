@@ -154,11 +154,24 @@ footer{background:var(--acc);color:#fff;padding:28px 20px;text-align:center}
   </nav>
 
   <!-- HERO -->
-  <div class="hero">
+  <div id="hero-banner" style="position:relative;width:100%;height:420px;background:#111;overflow:hidden;display:none">
+    <img id="hero-banner-img" style="width:100%;height:100%;object-fit:cover;display:block;opacity:0.75" src="" alt="">
+    <div style="position:absolute;bottom:0;left:0;right:0;padding:32px 28px;background:linear-gradient(to top,rgba(0,0,0,.75) 0%,transparent 100%)">
+      <div style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.7);margin-bottom:8px">✅ Kostenlose & unverbindliche Beratung</div>
+      <h1 id="hero-headline" style="font-family:'DM Serif Display',serif;font-size:clamp(24px,4vw,40px);color:#fff;font-weight:400;line-height:1.2;margin-bottom:8px">Ihre persönliche Versicherungsberatung</h1>
+      <p id="hero-sub" style="font-size:15px;color:rgba(255,255,255,.8);font-weight:300;max-width:500px;margin-bottom:20px;line-height:1.6">Ich helfe Ihnen die beste Versicherung zu finden.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn-primary" onclick="scrollToForms('termin')" style="background:#fff;color:#111">📅 Termin vereinbaren</button>
+        <button class="btn-sec" onclick="scrollToForms('rueckruf')" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3)">📞 Rückruf anfordern</button>
+      </div>
+    </div>
+  </div>
+  <!-- HERO FALLBACK (kein Bild) -->
+  <div class="hero" id="hero-fallback">
     <div class="hero-badge">✅ Kostenlose & unverbindliche Beratung</div>
     <div id="hero-avatar" class="hero-avatar">M</div>
-    <h1 id="hero-headline">Ihre persönliche Versicherungsberatung</h1>
-    <p id="hero-sub">Ich helfe Ihnen die beste Versicherung für Ihre Situation zu finden — kostenlos, unverbindlich und persönlich.</p>
+    <h1 id="hero-headline-fallback">Ihre persönliche Versicherungsberatung</h1>
+    <p id="hero-sub-fallback">Ich helfe Ihnen die beste Versicherung für Ihre Situation zu finden — kostenlos, unverbindlich und persönlich.</p>
     <div class="hero-btns">
       <button class="btn-primary" onclick="scrollToForms('termin')">📅 Termin vereinbaren</button>
       <button class="btn-sec" onclick="scrollToForms('rueckruf')">📞 Rückruf anfordern</button>
@@ -389,21 +402,26 @@ function showError(){
 function renderPage(p){
   document.title = (p.name||'Ihr Makler') + ' | Versicherungsberatung';
 
-  // Hero Banner Bild (fullwidth) falls vorhanden
+  // Hero Banner oder Fallback
+  const headline = p.headline || ('Ihr persönlicher Berater: ' + (p.name||''));
   if(p.header_image){
-    const hero = document.querySelector('.hero');
-    if(hero){
-      const banner = document.createElement('div');
-      banner.style.cssText = 'width:100vw;position:relative;left:50%;transform:translateX(-50%);margin-bottom:24px;height:280px;overflow:hidden;border-radius:0';
-      banner.innerHTML = '<img src="'+p.header_image+'" style="width:100%;height:100%;object-fit:cover;display:block" alt="'+escHtml(p.name)+'">';
-      hero.insertBefore(banner, hero.firstChild);
-    }
+    // Banner mit Bild und Text drauf
+    document.getElementById('hero-banner').style.display = 'block';
+    document.getElementById('hero-fallback').style.display = 'none';
+    document.getElementById('hero-banner-img').src = p.header_image;
+    document.getElementById('hero-headline').textContent = headline;
+    if(p.beschreibung) document.getElementById('hero-sub').textContent = p.beschreibung;
+    if(p.farbe) document.getElementById('hero-banner').style.borderBottom = '4px solid '+p.farbe;
+  } else {
+    // Fallback ohne Bild
+    document.getElementById('hero-banner').style.display = 'none';
+    document.getElementById('hero-fallback').style.display = '';
+    const av = document.getElementById('hero-avatar');
+    av.textContent = (p.name||'M').charAt(0).toUpperCase();
+    if(p.farbe) av.style.background = p.farbe;
+    document.getElementById('hero-headline-fallback').textContent = headline;
+    if(p.beschreibung) document.getElementById('hero-sub-fallback').textContent = p.beschreibung;
   }
-
-  // Avatar (Initialen-Kreis)
-  const av = document.getElementById('hero-avatar');
-  av.textContent = (p.name||'M').charAt(0).toUpperCase();
-  if(p.farbe) av.style.background = p.farbe;
 
   // Headline
   document.getElementById('hero-headline').textContent = p.headline || ('Ihr persönlicher Berater: ' + (p.name||''));
@@ -651,9 +669,20 @@ function handleHeroImg(e){
   if(file.size>5*1024*1024){alert('Max. 5MB');return;}
   const reader=new FileReader();
   reader.onload=ev=>{
-    const av=document.getElementById('hero-avatar');
-    if(av){const img=document.createElement('img');img.id='hero-avatar';img.className='hero-img';img.src=ev.target.result;img.style.cssText='width:64px;height:64px;border-radius:50%;object-fit:cover;margin:0 auto 16px;border:2px solid var(--bd)';av.parentNode.replaceChild(img,av);}
     window._newHeroImg=ev.target.result;
+    // Banner anzeigen mit neuem Bild
+    const banner=document.getElementById('hero-banner');
+    const fallback=document.getElementById('hero-fallback');
+    const bannerImg=document.getElementById('hero-banner-img');
+    if(banner&&bannerImg){
+      banner.style.display='block';
+      if(fallback)fallback.style.display='none';
+      bannerImg.src=ev.target.result;
+      // Headline aus Fallback übernehmen
+      const hl=document.getElementById('hero-headline-fallback');
+      const heroHl=document.getElementById('hero-headline');
+      if(hl&&heroHl)heroHl.textContent=hl.textContent;
+    }
   };
   reader.readAsDataURL(file);e.target.value='';
 }
