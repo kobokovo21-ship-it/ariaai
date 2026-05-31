@@ -428,6 +428,17 @@ function renderPage(p){
 
   // Profil für spätere Bearbeitung merken
   window._loadedProfile = p;
+  // Custom Sections laden falls gespeichert
+  try{
+    const saved=localStorage.getItem('virgo_custom_'+slug);
+    if(saved){
+      const cs=JSON.parse(saved);
+      Object.entries(cs).forEach(([id,text])=>{
+        const el=document.getElementById(id);
+        if(el&&text) el.innerText=text;
+      });
+    }
+  }catch(e){}
   // Seite anzeigen
   document.getElementById('page-loading').style.display='none';
   document.getElementById('page-content').style.display='block';
@@ -558,16 +569,42 @@ function toggleEditMode(){
   const btn=document.getElementById('edit-toggle-btn');
   const saveBtn=document.getElementById('edit-save-btn');
   const imgBtn=document.getElementById('edit-img-btn');
-  const ids=['hero-headline','hero-sub','beschreibung-text'];
   if(editMode){
     btn.textContent='Abbrechen';btn.style.background='#ef4444';btn.style.color='#fff';
     saveBtn.style.display='block';imgBtn.style.display='block';
-    ids.forEach(id=>{const el=document.getElementById(id);if(!el)return;el.contentEditable='true';el.style.outline='2px dashed #2563eb';el.style.borderRadius='4px';el.style.padding='4px';el.style.cursor='text';});
+    // ALLE Text-Elemente editierbar machen
+    document.querySelectorAll('h1,h2,h3,p,span.ziel-check+*,.ziel-item,.trust-item,.section-label,.section-sub').forEach(el=>{
+      if(el.closest('nav')||el.closest('footer')||el.closest('.forms-section')||el.closest('#edit-bar')) return;
+      el.contentEditable='true';
+      el.style.outline='2px dashed #2563eb';
+      el.style.borderRadius='4px';
+      el.style.minHeight='20px';
+      el.style.cursor='text';
+    });
+    // Ziel-Items direkt editierbar
+    document.querySelectorAll('.ziel-item').forEach(el=>{
+      el.contentEditable='true';
+      el.style.outline='2px dashed #2563eb';
+      el.style.cursor='text';
+    });
     showVersEdit();
+    // Hinweis
+    const hint=document.createElement('div');
+    hint.id='edit-hint';
+    hint.style.cssText='position:fixed;top:70px;right:20px;background:#2563eb;color:#fff;padding:10px 16px;border-radius:10px;font-size:12px;z-index:999;max-width:220px;line-height:1.5;font-family:DM Sans,sans-serif';
+    hint.textContent='✏️ Alle blau umrandeten Texte kannst du direkt anklicken und bearbeiten.';
+    document.body.appendChild(hint);
+    setTimeout(()=>{const h=document.getElementById('edit-hint');if(h)h.remove();},4000);
   }else{
     btn.textContent='Bearbeiten';btn.style.background='#fff';btn.style.color='#111';
     saveBtn.style.display='none';imgBtn.style.display='none';
-    ids.forEach(id=>{const el=document.getElementById(id);if(!el)return;el.contentEditable='false';el.style.outline='';el.style.borderRadius='';el.style.padding='';el.style.cursor='';});
+    document.querySelectorAll('[contenteditable="true"]').forEach(el=>{
+      el.contentEditable='false';
+      el.style.outline='';
+      el.style.borderRadius='';
+      el.style.cursor='';
+      el.style.minHeight='';
+    });
     hideVersEdit();
   }
 }
@@ -605,9 +642,13 @@ async function saveEdits(){
   const headline=document.getElementById('hero-headline')?.innerText?.trim()||'';
   const beschreibung=document.getElementById('hero-sub')?.innerText?.trim()||'';
   const versicherungen=Array.from(document.querySelectorAll('#vers-tags .vers-tag')).map(t=>t.textContent.replace('✓ ','').trim()).filter(Boolean);
-  const body={tool:'makler-save',slug,headline,beschreibung,versicherungen};
+  // Alle editierten Texte als custom_sections speichern
+  const customSections={};
+  document.querySelectorAll('[contenteditable]').forEach((el,i)=>{
+    if(el.id) customSections[el.id]=el.innerText.trim();
+  });
+  const body={tool:'makler-save',slug,headline,beschreibung,versicherungen,custom_sections:JSON.stringify(customSections)};
   if(window._newHeroImg) body.header_image=window._newHeroImg;
-  // Fehlende Pflichtfelder aus geladenen Daten ergänzen
   if(window._loadedProfile){
     body.name=window._loadedProfile.name||'';
     body.telefon=window._loadedProfile.telefon||'';
@@ -619,6 +660,8 @@ async function saveEdits(){
     const r=await fetch('/api/tools',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+ownerToken},body:JSON.stringify(body)});
     const d=await r.json();
     if(d.error){alert('Fehler: '+d.error);saveBtn.textContent='💾 Speichern';saveBtn.disabled=false;return;}
+    // Lokal speichern für nächsten Besuch
+    try{localStorage.setItem('virgo_custom_'+slug,JSON.stringify(customSections));}catch(e){}
     saveBtn.textContent='✓ Gespeichert!';
     setTimeout(()=>{saveBtn.textContent='💾 Speichern';saveBtn.disabled=false;toggleEditMode();window._newHeroImg=null;},1500);
   }catch(e){alert('Fehler: '+e.message);saveBtn.textContent='💾 Speichern';saveBtn.disabled=false;}
