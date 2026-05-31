@@ -39,13 +39,14 @@ export default async function handler(req, res) {
     } catch(e) { return false; }
   }
   // ─── HELPER: Email via Resend ───
+  // ÄNDERUNG 3: Absender auf noreply@virgoio.com geändert
   async function sendEmail(to, subject, html) {
     if (!RESEND || !to) return false;
     try {
       const r = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + RESEND },
-        body: JSON.stringify({ from: 'Virgo AI <onboarding@resend.dev>', to, subject, html })
+        body: JSON.stringify({ from: 'Virgo AI <noreply@virgoio.com>', to, subject, html })
       });
       return r.ok;
     } catch(e) { return false; }
@@ -124,7 +125,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true });
     } catch(e) { return res.status(500).json({ error: e.message }); }
   }
-  // ─── MAKLER — PROFIL PER SLUG ─── (Landing Page laedt diesen Endpunkt)
+  // ─── MAKLER — PROFIL PER SLUG ───
   if (tool === 'makler-get' || (req.method === 'GET' && req.query.slug)) {
     try {
       const slug = req.query.slug;
@@ -137,14 +138,9 @@ export default async function handler(req, res) {
       const data = await r.json();
       if (!Array.isArray(data) || !data.length) return res.status(404).json({ error: 'Makler nicht gefunden' });
       const makler = data[0];
-      // ── AKTIV-PRÜFUNG ──
-      // 1) Wenn der Makler manuell deaktiviert wurde (active === false) → sperren
       if (makler.active === false) {
         return res.status(200).json({ active: false, name: makler.name });
       }
-      // 2) Plan-Prüfung NUR sperren wenn wir den Plan SICHER kennen und er gekündigt ist.
-      //    Schlägt die Abfrage fehl oder kommt leer zurück (z.B. RLS auf users-Tabelle),
-      //    bleibt die Seite aktiv — verhindert fälschliches Sperren.
       if (makler.user_id) {
         try {
           const planR = await fetch(`${BASE}/rest/v1/users?id=eq.${makler.user_id}&select=plan&limit=1`, {
@@ -159,14 +155,9 @@ export default async function handler(req, res) {
                 return res.status(200).json({ active: false, name: makler.name });
               }
             }
-            // Plan-Abfrage leer → nicht sperren (makler.active gilt)
           }
-          // planR nicht ok → nicht sperren
-        } catch(planErr) {
-          // Plan-Abfrage fehlgeschlagen → nicht sperren
-        }
+        } catch(planErr) {}
       }
-      // Sensible Felder nicht zurückgeben
       const { alert_email, whatsapp_number, user_id, ...safeMakler } = makler;
       return res.status(200).json({ ...safeMakler, active: true });
     } catch(e) { return res.status(500).json({ error: e.message }); }
@@ -203,7 +194,8 @@ export default async function handler(req, res) {
         } catch(e) {}
       }
       if (!user) return res.status(401).json({ error: 'Token abgelaufen — bitte neu anmelden' });
-      const { name, firma, telefon, email, beschreibung, versicherungen, farbe, slug, header_image, alert_email, whatsapp_number } = body;
+      // ÄNDERUNG 1: headline hinzugefügt
+      const { name, firma, telefon, email, beschreibung, headline, versicherungen, farbe, slug, header_image, alert_email, whatsapp_number } = body;
       if (!name || !slug) return res.status(400).json({ error: 'Name und Slug sind Pflichtfelder' });
       if (!/^[a-z0-9-]{1,80}$/.test(slug)) return res.status(400).json({ error: 'Ungültiger Slug' });
       if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(user.id)) {
@@ -216,12 +208,14 @@ export default async function handler(req, res) {
       if (Array.isArray(slugData) && slugData.length > 0) {
         return res.status(400).json({ error: 'Diese URL-Adresse ist bereits vergeben. Bitte eine andere waehlen.' });
       }
+      // ÄNDERUNG 2: headline in profileData
       const profileData = {
         name: name.trim(),
         firma: firma ? firma.trim() : null,
         telefon: telefon ? telefon.trim() : null,
         email: email ? email.trim() : null,
         beschreibung: beschreibung ? beschreibung.trim() : null,
+        headline: headline ? headline.trim() : null,
         versicherungen: Array.isArray(versicherungen) ? versicherungen : [],
         farbe: /^#[0-9a-fA-F]{6}$/.test(farbe) ? farbe : '#111111',
         slug: slug,
@@ -302,7 +296,6 @@ export default async function handler(req, res) {
       const maklerDataArr = await maklerR.json();
       const makler = Array.isArray(maklerDataArr) && maklerDataArr.length ? maklerDataArr[0] : null;
       if (!makler) return res.status(404).json({ error: 'Makler nicht gefunden' });
-      // Plan-Prüfung: nur sperren wenn sicher gekündigt (sonst Lead trotzdem annehmen)
       if (makler.active === false) {
         return res.status(403).json({ error: 'Makler-Profil nicht aktiv' });
       }
@@ -331,7 +324,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true });
     } catch(e) { return res.status(500).json({ error: e.message }); }
   }
-  // ─── MAKLER — TERMIN BUCHEN (von Landing Page) ───
+  // ─── MAKLER — TERMIN BUCHEN ───
   if (tool === 'makler-booking') {
     try {
       const { makler_slug, name, telefon, email, versicherung, nachricht, date, time } = body;
@@ -421,6 +414,21 @@ export default async function handler(req, res) {
         })
       });
       if (!r.ok) return res.status(500).json({ error: 'Datenbankfehler beim Speichern' });
+      return res.status(200).json({ success: true });
+    } catch(e) { return res.status(500).json({ error: e.message }); }
+  }
+  // ─── MAKLER — PROFIL LÖSCHEN ─── (ÄNDERUNG 4: neu)
+  if (tool === 'makler-delete') {
+    try {
+      const token = (req.headers.authorization || '').replace('Bearer ', '').trim();
+      const user = await validateToken(token);
+      if (!user) return res.status(401).json({ error: 'Nicht eingeloggt' });
+      const r = await fetch(`${BASE}/rest/v1/makler?user_id=eq.${user.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'apikey': SVC, 'Authorization': `Bearer ${SVC}` },
+        body: JSON.stringify({ active: false })
+      });
+      if (!r.ok) return res.status(500).json({ error: 'Datenbankfehler' });
       return res.status(200).json({ success: true });
     } catch(e) { return res.status(500).json({ error: e.message }); }
   }
