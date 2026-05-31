@@ -428,15 +428,26 @@ function renderPage(p){
 
   // Profil für spätere Bearbeitung merken
   window._loadedProfile = p;
-  // Custom Sections laden falls gespeichert
+  // Custom Sections aus Supabase laden (primär) oder localStorage (Fallback)
   try{
-    const saved=localStorage.getItem('virgo_custom_'+slug);
-    if(saved){
-      const cs=JSON.parse(saved);
+    if(p.custom_sections){
+      const cs = typeof p.custom_sections === 'string' ? JSON.parse(p.custom_sections) : p.custom_sections;
       Object.entries(cs).forEach(([id,text])=>{
         const el=document.getElementById(id);
         if(el&&text) el.innerText=text;
       });
+      // Auch in localStorage speichern für Offline-Fallback
+      localStorage.setItem('virgo_custom_'+slug, JSON.stringify(cs));
+    } else {
+      // Fallback: localStorage
+      const saved=localStorage.getItem('virgo_custom_'+slug);
+      if(saved){
+        const cs=JSON.parse(saved);
+        Object.entries(cs).forEach(([id,text])=>{
+          const el=document.getElementById(id);
+          if(el&&text) el.innerText=text;
+        });
+      }
     }
   }catch(e){}
   // Seite anzeigen
