@@ -195,7 +195,7 @@ export default async function handler(req, res) {
       }
       if (!user) return res.status(401).json({ error: 'Token abgelaufen — bitte neu anmelden' });
       // ÄNDERUNG 1: headline hinzugefügt
-      const { name, firma, telefon, email, beschreibung, headline, versicherungen, farbe, slug, header_image, alert_email, whatsapp_number } = body;
+      const { name, firma, telefon, email, beschreibung, headline, custom_sections, versicherungen, farbe, slug, header_image, alert_email, whatsapp_number } = body;
       if (!name || !slug) return res.status(400).json({ error: 'Name und Slug sind Pflichtfelder' });
       if (!/^[a-z0-9-]{1,80}$/.test(slug)) return res.status(400).json({ error: 'Ungültiger Slug' });
       if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(user.id)) {
@@ -216,6 +216,7 @@ export default async function handler(req, res) {
         email: email ? email.trim() : null,
         beschreibung: beschreibung ? beschreibung.trim() : null,
         headline: headline ? headline.trim() : null,
+        custom_sections: custom_sections || null,
         versicherungen: Array.isArray(versicherungen) ? versicherungen : [],
         farbe: /^#[0-9a-fA-F]{6}$/.test(farbe) ? farbe : '#111111',
         slug: slug,
