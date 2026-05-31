@@ -192,12 +192,12 @@ footer{background:var(--acc);color:#fff;padding:28px 20px;text-align:center}
       <div class="section-label">Für wen bin ich der richtige Ansprechpartner?</div>
       <h2>Meine Kunden</h2>
       <div class="ziel-grid">
-        <div class="ziel-item"><span class="ziel-check">✓</span>Angestellte ab 69.300 € Jahreseinkommen</div>
-        <div class="ziel-item"><span class="ziel-check">✓</span>Selbstständige & Freiberufler</div>
-        <div class="ziel-item"><span class="ziel-check">✓</span>Beamte & Beamtenanwärter</div>
-        <div class="ziel-item"><span class="ziel-check">✓</span>Studenten & Hochschulabsolventen</div>
-        <div class="ziel-item"><span class="ziel-check">✓</span>Familien & Alleinerziehende</div>
-        <div class="ziel-item"><span class="ziel-check">✓</span>Alle die wechseln möchten</div>
+        <div class="ziel-item" id="ziel-0"><span class="ziel-check">✓</span><span id="ziel-text-0">Angestellte ab 69.300 € Jahreseinkommen</span></div>
+        <div class="ziel-item" id="ziel-1"><span class="ziel-check">✓</span><span id="ziel-text-1">Selbstständige & Freiberufler</span></div>
+        <div class="ziel-item" id="ziel-2"><span class="ziel-check">✓</span><span id="ziel-text-2">Beamte & Beamtenanwärter</span></div>
+        <div class="ziel-item" id="ziel-3"><span class="ziel-check">✓</span><span id="ziel-text-3">Studenten & Hochschulabsolventen</span></div>
+        <div class="ziel-item" id="ziel-4"><span class="ziel-check">✓</span><span id="ziel-text-4">Familien & Alleinerziehende</span></div>
+        <div class="ziel-item" id="ziel-5"><span class="ziel-check">✓</span><span id="ziel-text-5">Alle die wechseln möchten</span></div>
       </div>
     </div>
   </div>
@@ -592,12 +592,16 @@ function toggleEditMode(){
       el.style.minHeight='20px';
       el.style.cursor='text';
     });
-    // Ziel-Items direkt editierbar
-    document.querySelectorAll('.ziel-item').forEach(el=>{
-      el.contentEditable='true';
-      el.style.outline='2px dashed #2563eb';
-      el.style.cursor='text';
-    });
+    // Ziel-Text-Spans direkt editierbar
+    for(let i=0;i<6;i++){
+      const span=document.getElementById('ziel-text-'+i);
+      if(span){
+        span.contentEditable='true';
+        span.style.outline='2px dashed #2563eb';
+        span.style.borderRadius='4px';
+        span.style.cursor='text';
+      }
+    }
     showVersEdit();
     // Hinweis
     const hint=document.createElement('div');
@@ -655,8 +659,19 @@ async function saveEdits(){
   const versicherungen=Array.from(document.querySelectorAll('#vers-tags .vers-tag')).map(t=>t.textContent.replace('✓ ','').trim()).filter(Boolean);
   // Alle editierten Texte als custom_sections speichern
   const customSections={};
-  document.querySelectorAll('[contenteditable]').forEach((el,i)=>{
+  // Alle Elemente mit ID erfassen
+  document.querySelectorAll('[contenteditable]').forEach((el)=>{
     if(el.id) customSections[el.id]=el.innerText.trim();
+  });
+  // Ziel-Items separat erfassen (haben contenteditable aber komplexe Struktur)
+  for(let i=0;i<6;i++){
+    const span=document.getElementById('ziel-text-'+i);
+    if(span) customSections['ziel-text-'+i]=span.innerText.trim();
+  }
+  // Weitere wichtige Texte
+  ['angebot-headline','beschreibung-text'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) customSections[id]=el.innerText.trim();
   });
   const body={tool:'makler-save',slug,headline,beschreibung,versicherungen,custom_sections:JSON.stringify(customSections)};
   if(window._newHeroImg) body.header_image=window._newHeroImg;
@@ -685,3 +700,4 @@ checkOwner();
 </script>
 </body>
 </html>
+
