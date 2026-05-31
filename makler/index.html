@@ -389,14 +389,21 @@ function showError(){
 function renderPage(p){
   document.title = (p.name||'Ihr Makler') + ' | Versicherungsberatung';
 
-  // Avatar
-  const av = document.getElementById('hero-avatar');
-  if(p.bild_url){
-    av.outerHTML = '<img class="hero-img" src="'+p.bild_url+'" alt="'+p.name+'" id="hero-avatar">';
-  } else {
-    av.textContent = (p.name||'M').charAt(0).toUpperCase();
-    if(p.farbe) av.style.background = p.farbe;
+  // Hero Banner Bild (fullwidth) falls vorhanden
+  if(p.header_image){
+    const hero = document.querySelector('.hero');
+    if(hero){
+      const banner = document.createElement('div');
+      banner.style.cssText = 'width:100vw;position:relative;left:50%;transform:translateX(-50%);margin-bottom:24px;height:280px;overflow:hidden;border-radius:0';
+      banner.innerHTML = '<img src="'+p.header_image+'" style="width:100%;height:100%;object-fit:cover;display:block" alt="'+escHtml(p.name)+'">';
+      hero.insertBefore(banner, hero.firstChild);
+    }
   }
+
+  // Avatar (Initialen-Kreis)
+  const av = document.getElementById('hero-avatar');
+  av.textContent = (p.name||'M').charAt(0).toUpperCase();
+  if(p.farbe) av.style.background = p.farbe;
 
   // Headline
   document.getElementById('hero-headline').textContent = p.headline || ('Ihr persönlicher Berater: ' + (p.name||''));
@@ -700,4 +707,3 @@ checkOwner();
 </script>
 </body>
 </html>
-
