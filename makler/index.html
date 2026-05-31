@@ -426,6 +426,8 @@ function renderPage(p){
     document.documentElement.style.setProperty('--acc', p.farbe);
   }
 
+  // Profil für spätere Bearbeitung merken
+  window._loadedProfile = p;
   // Seite anzeigen
   document.getElementById('page-loading').style.display='none';
   document.getElementById('page-content').style.display='block';
@@ -521,10 +523,111 @@ function clearForm(type){
   });
 }
 
+
 function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ── INLINE EDITING für eingeloggte Makler ──
+let isOwner = false;
+let editMode = false;
+let ownerToken = null;
+
+async function checkOwner(){
+  try{
+    ownerToken = localStorage.getItem('virgo_token');
+    if(!ownerToken) return;
+    const r = await fetch('/api/tools?tool=makler-mine',{headers:{'Authorization':'Bearer '+ownerToken}});
+    const d = await r.json();
+    if(d && d.slug && d.slug === slug){ isOwner=true; showEditBar(); }
+  }catch(e){}
+}
+
+function showEditBar(){
+  const bar = document.createElement('div');
+  bar.id = 'edit-bar';
+  bar.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:999;display:flex;gap:8px;align-items:center;background:#111;color:#fff;padding:10px 16px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.3);font-family:DM Sans,sans-serif;font-size:13px';
+  bar.innerHTML = '<span style="opacity:.6;font-size:11px">✏️ Deine Seite</span>'
+    +'<button onclick="toggleEditMode()" id="edit-toggle-btn" style="padding:7px 16px;border-radius:8px;background:#fff;color:#111;border:none;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer">Bearbeiten</button>'
+    +'<button onclick="saveEdits()" id="edit-save-btn" style="display:none;padding:7px 16px;border-radius:8px;background:#16a34a;color:#fff;border:none;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer">💾 Speichern</button>'
+    +'<button onclick="document.getElementById(\'hero-file-input\').click()" id="edit-img-btn" style="display:none;padding:7px 16px;border-radius:8px;background:#2563eb;color:#fff;border:none;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer">📷 Foto</button>'
+    +'<input type="file" id="hero-file-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="handleHeroImg(event)">';
+  document.body.appendChild(bar);
+}
+
+function toggleEditMode(){
+  editMode = !editMode;
+  const btn=document.getElementById('edit-toggle-btn');
+  const saveBtn=document.getElementById('edit-save-btn');
+  const imgBtn=document.getElementById('edit-img-btn');
+  const ids=['hero-headline','hero-sub','beschreibung-text'];
+  if(editMode){
+    btn.textContent='Abbrechen';btn.style.background='#ef4444';btn.style.color='#fff';
+    saveBtn.style.display='block';imgBtn.style.display='block';
+    ids.forEach(id=>{const el=document.getElementById(id);if(!el)return;el.contentEditable='true';el.style.outline='2px dashed #2563eb';el.style.borderRadius='4px';el.style.padding='4px';el.style.cursor='text';});
+    showVersEdit();
+  }else{
+    btn.textContent='Bearbeiten';btn.style.background='#fff';btn.style.color='#111';
+    saveBtn.style.display='none';imgBtn.style.display='none';
+    ids.forEach(id=>{const el=document.getElementById(id);if(!el)return;el.contentEditable='false';el.style.outline='';el.style.borderRadius='';el.style.padding='';el.style.cursor='';});
+    hideVersEdit();
+  }
+}
+
+function showVersEdit(){
+  const tagsEl=document.getElementById('vers-tags');if(!tagsEl)return;
+  const addBtn=document.createElement('button');
+  addBtn.id='vers-add-btn';addBtn.textContent='+ Hinzufügen';
+  addBtn.style.cssText='padding:4px 12px;border-radius:20px;border:1px dashed #2563eb;font-size:12px;color:#2563eb;background:transparent;cursor:pointer;font-family:inherit';
+  addBtn.onclick=()=>{const val=prompt('Versicherung hinzufügen:');if(val&&val.trim()){const span=document.createElement('span');span.className='vers-tag';span.style.cursor='pointer';span.title='Klicken zum Entfernen';span.textContent='✓ '+val.trim();span.onclick=()=>{if(editMode)span.remove();};tagsEl.insertBefore(span,addBtn);}};
+  tagsEl.appendChild(addBtn);
+  tagsEl.querySelectorAll('.vers-tag').forEach(tag=>{tag.style.cursor='pointer';tag.title='Klicken zum Entfernen';tag.onclick=()=>{if(editMode)tag.remove();};});
+}
+
+function hideVersEdit(){
+  const addBtn=document.getElementById('vers-add-btn');if(addBtn)addBtn.remove();
+  document.querySelectorAll('.vers-tag').forEach(tag=>{tag.style.cursor='';tag.title='';tag.onclick=null;});
+}
+
+function handleHeroImg(e){
+  const file=e.target.files[0];if(!file)return;
+  if(file.size>5*1024*1024){alert('Max. 5MB');return;}
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const av=document.getElementById('hero-avatar');
+    if(av){const img=document.createElement('img');img.id='hero-avatar';img.className='hero-img';img.src=ev.target.result;img.style.cssText='width:64px;height:64px;border-radius:50%;object-fit:cover;margin:0 auto 16px;border:2px solid var(--bd)';av.parentNode.replaceChild(img,av);}
+    window._newHeroImg=ev.target.result;
+  };
+  reader.readAsDataURL(file);e.target.value='';
+}
+
+async function saveEdits(){
+  const saveBtn=document.getElementById('edit-save-btn');
+  saveBtn.textContent='Speichert...';saveBtn.disabled=true;
+  const headline=document.getElementById('hero-headline')?.innerText?.trim()||'';
+  const beschreibung=document.getElementById('hero-sub')?.innerText?.trim()||'';
+  const versicherungen=Array.from(document.querySelectorAll('#vers-tags .vers-tag')).map(t=>t.textContent.replace('✓ ','').trim()).filter(Boolean);
+  const body={tool:'makler-save',slug,headline,beschreibung,versicherungen};
+  if(window._newHeroImg) body.header_image=window._newHeroImg;
+  // Fehlende Pflichtfelder aus geladenen Daten ergänzen
+  if(window._loadedProfile){
+    body.name=window._loadedProfile.name||'';
+    body.telefon=window._loadedProfile.telefon||'';
+    body.email=window._loadedProfile.email||'';
+    body.farbe=window._loadedProfile.farbe||'#111111';
+    if(!body.header_image&&window._loadedProfile.header_image) body.header_image=window._loadedProfile.header_image;
+  }
+  try{
+    const r=await fetch('/api/tools',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+ownerToken},body:JSON.stringify(body)});
+    const d=await r.json();
+    if(d.error){alert('Fehler: '+d.error);saveBtn.textContent='💾 Speichern';saveBtn.disabled=false;return;}
+    saveBtn.textContent='✓ Gespeichert!';
+    setTimeout(()=>{saveBtn.textContent='💾 Speichern';saveBtn.disabled=false;toggleEditMode();window._newHeroImg=null;},1500);
+  }catch(e){alert('Fehler: '+e.message);saveBtn.textContent='💾 Speichern';saveBtn.disabled=false;}
+}
 
 // ── INIT ──
 loadProfile();
+checkOwner();
+
 </script>
 </body>
 </html>
