@@ -399,7 +399,7 @@ function renderPage(p){
   }
 
   // Headline
-  document.getElementById('hero-headline').textContent = 'Ihr persönlicher Berater: ' + (p.name||'');
+  document.getElementById('hero-headline').textContent = p.headline || ('Ihr persönlicher Berater: ' + (p.name||''));
   if(p.beschreibung) document.getElementById('hero-sub').textContent = p.beschreibung;
 
   // Angebot Headline
