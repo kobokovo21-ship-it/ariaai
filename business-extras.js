@@ -1,12 +1,17 @@
 // ═══════════════════════════════════════════════════════
-// VIRGO BUSINESS EXTRAS — business-extras.js
+// VIRGO BUSINESS EXTRAS — business-extras.js  (v3 bulletproof)
+// PDF-Upload im Business Chat — fängt Button, Enter UND Senden ab
 // ═══════════════════════════════════════════════════════
 (function(){
   let refPDF = null;
 
-  function isPlanMode(){
-    if(typeof state === 'undefined') return false;
-    return ['business-plan','business-pitch','business-angebot'].includes(state.model);
+  // PDF-Upload immer erlauben wenn im Business-Workspace
+  function pdfAllowed(){
+    const ws = localStorage.getItem('virgo_workspace') || 'makler';
+    if(ws === 'business') return true;
+    if(typeof state !== 'undefined' && state.model &&
+       ['business-plan','business-pitch','business-angebot'].includes(state.model)) return true;
+    return false;
   }
 
   function openFilePicker(){
@@ -17,7 +22,7 @@
       const file = ev.target.files[0];
       if(!file) return;
       if(file.type === 'application/pdf'){
-        if(file.size > 10*1024*1024){ alert('PDF max. 10MB'); return; }
+        if(file.size > 15*1024*1024){ alert('PDF max. 15MB'); return; }
         const reader = new FileReader();
         reader.onload = function(e){
           refPDF = { b64: e.target.result.split(',')[1], name: file.name, mime: 'application/pdf' };
@@ -25,7 +30,6 @@
         };
         reader.readAsDataURL(file);
       } else {
-        // Bild wie gehabt
         if(typeof compressImg === 'function'){
           if(window.refImages && window.refImages.length >= 4){ alert('Max. 4 Bilder'); return; }
           compressImg(file).then(c => {
@@ -39,8 +43,8 @@
   }
 
   function showPDFBadge(name){
-    let zone = document.getElementById('rz');
-    let container = document.getElementById('ref-imgs');
+    const zone = document.getElementById('rz');
+    const container = document.getElementById('ref-imgs');
     if(!zone || !container) return;
     let badge = document.getElementById('pdf-badge');
     if(!badge){
@@ -49,7 +53,7 @@
       badge.style.cssText = 'display:flex;align-items:center;gap:6px;padding:6px 10px;background:#dbeafe;border:1px solid #93c5fd;border-radius:8px;font-size:12px;color:#1d4ed8';
       container.appendChild(badge);
     }
-    badge.innerHTML = '📄 ' + name.substring(0,30) + ' <button onclick="window._clearPDF()" style="background:none;border:none;cursor:pointer;font-size:14px;color:#1d4ed8;padding:0 2px">×</button>';
+    badge.innerHTML = '📄 ' + name.substring(0,28) + ' <span onclick="window._clearPDF()" style="cursor:pointer;font-size:15px;padding:0 2px">×</span>';
     zone.classList.add('vis');
     const btn = document.getElementById('img-btn');
     if(btn){ btn.classList.add('has'); btn.textContent = '📎PDF'; }
@@ -66,30 +70,8 @@
     if(zone && !hasImgs) zone.classList.remove('vis');
   };
 
-  // Button übernehmen — zuverlässig mit addEventListener
-  function patchBtn(){
-    const btn = document.getElementById('img-btn');
-    if(!btn){ setTimeout(patchBtn, 300); return; }
-
-    // Alten onclick entfernen und neuen setzen
-    btn.removeAttribute('onclick');
-    btn.addEventListener('click', function(e){
-      e.preventDefault();
-      e.stopPropagation();
-      if(isPlanMode()){
-        openFilePicker();
-      } else {
-        if(typeof uploadRef === 'function') uploadRef();
-      }
-    }, true);
-    console.log('✅ Virgo: PDF Upload aktiv');
-  }
-
-  // send() patchen für PDF
-  const _origSend = window.send;
-  window.send = async function(){
-    if(!refPDF) return _origSend ? _origSend() : undefined;
-
+  // ── PDF an die KI schicken ──
+  async function sendWithPDF(){
     const inp = document.getElementById('prompt');
     const txt = inp ? inp.value.trim() : '';
     if(!txt) return;
@@ -117,12 +99,12 @@
     };
     if(typeof conversationHistory !== 'undefined') conversationHistory.push(userMsg);
 
+    const model = typeof state !== 'undefined' ? state.model : 'chat';
     const sysMap = {
-      'business-plan': 'Du bist ein Business-Experte. Analysiere das Dokument und hilf beim Businessplan auf Deutsch.',
-      'business-pitch': 'Du bist ein Pitch-Experte. Analysiere das Dokument auf Deutsch.',
-      'business-angebot': 'Du bist ein Angebots-Experte. Analysiere das Dokument auf Deutsch.'
+      'business-plan': 'Du bist ein Business-Experte. Analysiere das hochgeladene Dokument gründlich und hilf beim Businessplan auf Deutsch.',
+      'business-pitch': 'Du bist ein Pitch-Experte. Analysiere das hochgeladene Dokument auf Deutsch.',
+      'business-angebot': 'Du bist ein Angebots-Experte. Analysiere das hochgeladene Dokument auf Deutsch.'
     };
-    const model = typeof state !== 'undefined' ? state.model : 'business-plan';
 
     if(typeof showTyping === 'function') showTyping();
     try{
@@ -131,25 +113,59 @@
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({
           messages: typeof conversationHistory !== 'undefined' ? conversationHistory : [userMsg],
-          systemOverride: sysMap[model] || 'Analysiere das Dokument und hilf dem Nutzer auf Deutsch.'
+          systemOverride: sysMap[model] || 'Analysiere das hochgeladene Dokument gründlich und hilf dem Nutzer auf Deutsch.'
         })
       });
       const d = await r.json();
       if(typeof hideTyping === 'function') hideTyping();
-      const reply = (d.content&&d.content[0]&&d.content[0].text)||'Fehler.';
+      const reply = (d.content&&d.content[0]&&d.content[0].text)||'Konnte das Dokument nicht analysieren. Bitte nochmal versuchen.';
       if(typeof conversationHistory !== 'undefined') conversationHistory.push({role:'assistant',content:reply});
       if(typeof addAIMsg === 'function' && typeof renderMD === 'function') addAIMsg(renderMD(reply));
       if(typeof saveChat === 'function') saveChat(document.getElementById('chat-title').textContent, conversationHistory);
     }catch(e){
       if(typeof hideTyping === 'function') hideTyping();
-      if(typeof showFallbackMsg === 'function') showFallbackMsg();
+      if(typeof addAIMsg === 'function') addAIMsg('Fehler beim Analysieren des Dokuments. Bitte nochmal versuchen.');
     }
-  };
+  }
 
-  // Start
+  // ── Alle Eingabewege abfangen ──
+  function patchAll(){
+    const imgBtn = document.getElementById('img-btn');
+    const sendBtn = document.getElementById('send-btn');
+    const prompt = document.getElementById('prompt');
+
+    if(!imgBtn || !sendBtn || !prompt){ setTimeout(patchAll, 300); return; }
+
+    // 1. 📎 Button
+    imgBtn.removeAttribute('onclick');
+    imgBtn.addEventListener('click', function(e){
+      e.preventDefault(); e.stopPropagation();
+      if(pdfAllowed()) openFilePicker();
+      else if(typeof uploadRef === 'function') uploadRef();
+    }, true);
+
+    // 2. Senden-Button (capture phase, fängt VOR original send)
+    sendBtn.addEventListener('click', function(e){
+      if(refPDF){
+        e.preventDefault(); e.stopPropagation();
+        sendWithPDF();
+      }
+    }, true);
+
+    // 3. Enter-Taste (capture phase)
+    prompt.addEventListener('keydown', function(e){
+      if(e.key === 'Enter' && !e.shiftKey && refPDF){
+        e.preventDefault(); e.stopPropagation();
+        sendWithPDF();
+      }
+    }, true);
+
+    console.log('✅ Virgo PDF-Upload aktiv (v3)');
+  }
+
   if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', patchBtn);
+    document.addEventListener('DOMContentLoaded', patchAll);
   } else {
-    patchBtn();
+    patchAll();
   }
 })();
