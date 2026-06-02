@@ -55,6 +55,16 @@
     }
     badge.innerHTML = '📄 ' + name.substring(0,28) + ' <span onclick="window._clearPDF()" style="cursor:pointer;font-size:15px;padding:0 2px">×</span>';
     zone.classList.add('vis');
+    // "Referenzbilder (max. 4)" + "Weiteres" Text ausblenden solange PDF da ist
+    const rp = zone.querySelector('.rp');
+    if(rp){
+      Array.from(rp.children).forEach(child => {
+        if(child.id !== 'ref-imgs' && !child.classList.contains('rr')){
+          child.dataset._hidden = '1';
+          child.style.display = 'none';
+        }
+      });
+    }
     const btn = document.getElementById('img-btn');
     if(btn){ btn.classList.add('has'); btn.textContent = '📎PDF'; }
   }
@@ -67,7 +77,14 @@
     const hasImgs = window.refImages && window.refImages.length > 0;
     if(btn && !hasImgs){ btn.classList.remove('has'); btn.textContent = '📎'; }
     const zone = document.getElementById('rz');
-    if(zone && !hasImgs) zone.classList.remove('vis');
+    if(zone){
+      // ausgeblendete Texte wieder einblenden
+      const rp = zone.querySelector('.rp');
+      if(rp) Array.from(rp.children).forEach(child => {
+        if(child.dataset._hidden){ child.style.display = ''; delete child.dataset._hidden; }
+      });
+      if(!hasImgs) zone.classList.remove('vis');
+    }
   };
 
   // ── PDF an die KI schicken ──
