@@ -165,10 +165,9 @@ VERBOTE:
           'Authorization': 'Bearer ' + process.env.OPENAI_API_KEY
         },
         body: JSON.stringify({
-          model: 'gpt-4.1',
-          max_tokens: maxTokens,
-          messages: openaiMessages,
-          temperature: 0.7
+          model: 'gpt-5.4',
+          max_completion_tokens: maxTokens,
+          messages: openaiMessages
         })
       });
       if (!openaiRes.ok) throw new Error('OpenAI HTTP ' + openaiRes.status);
