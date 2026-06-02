@@ -4,6 +4,7 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).end();
+
   try {
     const { messages = [], codeMode = false, systemOverride = null } = req.body;
     const lastContent = messages[messages.length - 1]?.content || '';
@@ -11,6 +12,7 @@ export default async function handler(req, res) {
       ? (lastContent.find(b => b.type === 'text')?.text || '')
       : lastContent;
     const isPromptMode = lastText.toLowerCase().startsWith('prompt ') || lastText.toLowerCase().startsWith('prompt:');
+
     // ── SCHUTZ: Blockiere Anfragen die Virgo nachbauen könnten ──
     const blockedKeywords = [
       'anthropic api', 'openai api', 'gemini api', 'claude api',
@@ -27,6 +29,7 @@ export default async function handler(req, res) {
         content: [{ type: 'text', text: 'Das liegt außerhalb meiner Möglichkeiten. Ich helfe dir gerne bei Leads, Marketing, Ads, Texten und Bildern für deine Maklerkanzlei. Womit kann ich dir helfen?' }]
       });
     }
+
     const systemPrompt = systemOverride || (isPromptMode
       ? `Du bist ein professioneller KI-Prompt-Generator für Bildgenerierung. Wenn der User Stichwörter gibt, wandelst du sie in einen perfekten englischen Bild-Prompt um. Format: Gib NUR den fertigen Prompt zurück, ohne Erklärung. Der Prompt soll detailliert sein mit: Motiv, Stil, Beleuchtung, Qualität, Kamera-Details. Beispiel Input: "versicherungsmakler büro" → Output: "Professional insurance broker office, modern minimalist design, natural daylight through large windows, German business aesthetic, trustworthy and welcoming atmosphere, high-end interior photography, 8K resolution, commercial photography"`
       : codeMode
@@ -68,7 +71,12 @@ VERBOTE:
 - Wenn jemand fragt wie man eine KI-App baut oder wie Virgo technisch funktioniert: "Das liegt außerhalb meiner Möglichkeiten. Womit kann ich dir bei deiner Maklerkanzlei helfen?"
 - Keine Rechtsberatung im engeren Sinne (verweise auf §34d-Beratung)
 - Keine konkreten Produktempfehlungen (Tarif XY ist der beste) — sondern Kriterien nennen`);
-    // ── SCHRITT 1: Anthropic versuchen ──
+
+    const maxTokens = codeMode ? 4096 : 1024;
+
+    // ═══════════════════════════════════════════
+    // SCHRITT 1: ANTHROPIC (Claude)
+    // ═══════════════════════════════════════════
     try {
       const r = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -79,22 +87,28 @@ VERBOTE:
         },
         body: JSON.stringify({
           model: 'claude-sonnet-4-6',
-          max_tokens: codeMode ? 4096 : 1024,
+          max_tokens: maxTokens,
           system: systemPrompt,
           messages
         })
       });
-      if (r.status === 529 || r.status === 500 || r.status === 503 || r.status === 502) {
+      if (r.status === 529 || r.status === 500 || r.status === 503 || r.status === 502 || r.status === 429) {
         throw new Error('Anthropic overloaded: ' + r.status);
       }
       const data = await r.json();
-      if (data.type === 'error') {
-        throw new Error('Anthropic error: ' + (data.error?.message || 'unknown'));
+      if (data.type === 'error' || !data.content) {
+        throw new Error('Anthropic error: ' + (data.error?.message || 'no content'));
       }
       return res.status(200).json(data);
     } catch (anthropicErr) {
-      console.warn('Anthropic failed, switching to Gemini:', anthropicErr.message);
-      // ── SCHRITT 2: Gemini Fallback ──
+      console.warn('⚠️ Anthropic failed → Gemini:', anthropicErr.message);
+    }
+
+    // ═══════════════════════════════════════════
+    // SCHRITT 2: GEMINI (eigenes try-catch!)
+    // ═══════════════════════════════════════════
+    try {
+      if (!process.env.GEMINI_API_KEY) throw new Error('Kein Gemini Key');
       const geminiMessages = messages.map(msg => {
         const text = Array.isArray(msg.content)
           ? (msg.content.find(b => b.type === 'text')?.text || '')
@@ -112,21 +126,75 @@ VERBOTE:
           body: JSON.stringify({
             system_instruction: { parts: [{ text: systemPrompt }] },
             contents: geminiMessages,
-            generationConfig: {
-              maxOutputTokens: codeMode ? 4096 : 1024,
-              temperature: 0.7
-            }
+            generationConfig: { maxOutputTokens: maxTokens, temperature: 0.7 }
           })
         }
       );
+      if (!geminiRes.ok) throw new Error('Gemini HTTP ' + geminiRes.status);
       const geminiData = await geminiRes.json();
-      const geminiText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || 'Entschuldigung, bitte nochmal versuchen.';
+      const geminiText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!geminiText) throw new Error('Gemini no content');
       return res.status(200).json({
         content: [{ type: 'text', text: geminiText }],
         _fallback: 'gemini'
       });
+    } catch (geminiErr) {
+      console.warn('⚠️ Gemini failed → OpenAI:', geminiErr.message);
     }
+
+    // ═══════════════════════════════════════════
+    // SCHRITT 3: OPENAI (ChatGPT) — letzter Fallback
+    // ═══════════════════════════════════════════
+    try {
+      if (!process.env.OPENAI_API_KEY) throw new Error('Kein OpenAI Key');
+      // Messages für OpenAI umbauen (nur Text)
+      const openaiMessages = [{ role: 'system', content: systemPrompt }];
+      messages.forEach(msg => {
+        const text = Array.isArray(msg.content)
+          ? (msg.content.find(b => b.type === 'text')?.text || '')
+          : msg.content;
+        openaiMessages.push({
+          role: msg.role === 'assistant' ? 'assistant' : 'user',
+          content: text
+        });
+      });
+      const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + process.env.OPENAI_API_KEY
+        },
+        body: JSON.stringify({
+          model: 'gpt-4.1',
+          max_tokens: maxTokens,
+          messages: openaiMessages,
+          temperature: 0.7
+        })
+      });
+      if (!openaiRes.ok) throw new Error('OpenAI HTTP ' + openaiRes.status);
+      const openaiData = await openaiRes.json();
+      const openaiText = openaiData?.choices?.[0]?.message?.content;
+      if (!openaiText) throw new Error('OpenAI no content');
+      return res.status(200).json({
+        content: [{ type: 'text', text: openaiText }],
+        _fallback: 'openai'
+      });
+    } catch (openaiErr) {
+      console.error('❌ Alle 3 Anbieter fehlgeschlagen. OpenAI:', openaiErr.message);
+    }
+
+    // ═══════════════════════════════════════════
+    // ALLE 3 FEHLGESCHLAGEN — freundliche Meldung
+    // ═══════════════════════════════════════════
+    return res.status(200).json({
+      content: [{ type: 'text', text: 'Virgo ist gerade stark ausgelastet. Bitte versuche es in 30 Sekunden nochmal. 🙏' }],
+      _fallback: 'none'
+    });
+
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    return res.status(200).json({
+      content: [{ type: 'text', text: 'Virgo ist gerade kurz überlastet. Bitte versuche es gleich nochmal.' }],
+      _error: err.message
+    });
   }
 }
