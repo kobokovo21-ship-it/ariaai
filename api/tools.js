@@ -1,3 +1,5 @@
+import { generateVideoForUser } from '../lib/higgsfield.js';
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -433,5 +435,38 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true });
     } catch(e) { return res.status(500).json({ error: e.message }); }
   }
+  // ─── VIDEO GENERIEREN (Higgsfield) ─── NEU
+  // Funktioniert für Business- UND Makler-App. Aufruf:
+  //   POST /api/tools  Body: { tool:'generate-video', prompt, imageUrl?, workspace }
+  //   Header: Authorization: Bearer <session-token>
+  if (tool === 'generate-video') {
+    try {
+      const token = (req.headers.authorization || '').replace('Bearer ', '').trim();
+      const user = await validateToken(token);
+      if (!user) return res.status(401).json({ error: 'Nicht eingeloggt' });
+
+      // Plan des Users laden (gleiche Logik wie bei makler-get)
+      let plan = null;
+      try {
+        const planR = await fetch(`${BASE}/rest/v1/users?id=eq.${user.id}&select=plan&limit=1`, {
+          headers: { 'apikey': SVC, 'Authorization': `Bearer ${SVC}` }
+        });
+        if (planR.ok) {
+          const planData = await planR.json();
+          if (Array.isArray(planData) && planData.length > 0) plan = planData[0].plan;
+        }
+      } catch(e) {}
+
+      const result = await generateVideoForUser({
+        userId: user.id,
+        plan,
+        workspace: body.workspace,
+        prompt: body.prompt,
+        imageUrl: body.imageUrl,
+      });
+      return res.status(result.status).json(result.body);
+    } catch(e) { return res.status(500).json({ error: e.message }); }
+  }
   return res.status(400).json({ error: 'Unbekanntes Tool: ' + (tool || 'keines angegeben') });
 }
+  
