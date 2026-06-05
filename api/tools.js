@@ -1,4 +1,5 @@
 import { generateVideoForUser } from '../lib/higgsfield.js';
+export const config = { maxDuration: 60 };
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -469,4 +470,3 @@ export default async function handler(req, res) {
   }
   return res.status(400).json({ error: 'Unbekanntes Tool: ' + (tool || 'keines angegeben') });
 }
-  
