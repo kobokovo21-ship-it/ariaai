@@ -262,6 +262,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
       <span class="sl">Bildmodelle</span>
       <button class="mc" onclick="setModel(this,'img-nano','Virgo Vision')"><div class="md"></div>Virgo Vision<span class="mt">Bild 1cr</span></button>
       <button class="mc" onclick="setModel(this,'img-seed','Virgo Create')"><div class="md"></div>Virgo Create<span class="mt">Bild 1cr</span></button>
+      <button class="mc" onclick="setModel(this,'video','Virgo Video')"><div class="md"></div>Virgo Video<span class="mt">Video 10cr</span></button>
     </div>
   </div>
   <!-- BUSINESS WORKSPACE -->
@@ -289,6 +290,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
       <span class="sl">Bildmodelle</span>
       <button class="mc" onclick="setModel(this,'img-nano','Virgo Vision')"><div class="md"></div>Virgo Vision<span class="mt">Bild 1cr</span></button>
       <button class="mc" onclick="setModel(this,'img-seed','Virgo Create')"><div class="md"></div>Virgo Create<span class="mt">Bild 1cr</span></button>
+      <button class="mc" onclick="setModel(this,'video','Virgo Video')"><div class="md"></div>Virgo Video<span class="mt">Video 10cr</span></button>
     </div>
   </div>
   <div class="hist" id="hist">
@@ -843,6 +845,11 @@ function setModel(el,model,name){
     m.textContent='Bildgenerierung ist nur für zahlende Pläne. Starte mit Makler Pro für 149 €/Monat.';
     openUpgrade();return;
   }
+  if(model==='video'&&!isPaidPlan()&&!isAdmin()){
+    const m=document.getElementById('up-msg');m.className='alert';
+    m.textContent='Video-Generierung ist nur für zahlende Pläne.';
+    openUpgrade();return;
+  }
   document.querySelectorAll('.mc').forEach(c=>c.classList.remove('on'));
   if(el)el.classList.add('on');state.model=model;state.modelName=name;
   if(model.startsWith('img'))switchMode('img',document.getElementById('mode-img'));
@@ -1015,8 +1022,8 @@ function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').
 async function send(){
   const inp=document.getElementById('prompt');
   const txt=inp.value.trim();if(!txt||state.generating)return;
-  const mode=state.model.startsWith('img')?'img':'chat';
-  const ct=state.model==='img-modelia'?'modelia':mode;
+  const mode=state.model==='video'?'video':(state.model.startsWith('img')?'img':'chat');
+  const ct=state.model==='img-modelia'?'modelia':(state.model==='video'?'vid':mode);
   if(isFreePlan()){
     if(mode!=='chat'){openUpgrade();return;}
     if(freeChatsUsed()>=5){openUpgrade();return;}
@@ -1032,7 +1039,7 @@ async function send(){
   addUserMsg(txt,hasImgs);
   lastUserMsg=txt;
   inp.value='';inp.style.height='24px';
-  if(state.agentMode)runAgent(txt);else if(mode==='img')genImage(txt);else genChat(txt);
+  if(state.agentMode)runAgent(txt);else if(mode==='img')genImage(txt);else if(mode==='video')genVideo(txt);else genChat(txt);
 }
 function addUserMsg(txt,hasImage){const d=document.createElement('div');d.className='mw user';const hint=hasImage?'<div style="font-size:10px;color:rgba(255,255,255,.6);margin-top:4px">Bild analysiert - wird nicht gespeichert, bitte selbst sichern.</div>':'';d.innerHTML='<div><div class="bb">'+escHtml(txt)+hint+'</div><div class="mt2">'+now()+'</div></div>';document.getElementById('fi').appendChild(d);scrollFeed();}
 function addAIMsg(html){const d=document.createElement('div');d.className='mw ai';d.innerHTML='<div class="aav">V</div><div><div class="bb">'+html+'</div><div class="mt2">'+now()+'</div></div>';document.getElementById('fi').appendChild(d);scrollFeed();}
@@ -1369,6 +1376,23 @@ function addImageCard(prompt,imgUrl){
   const id='ic'+Date.now();const cr=state.model==='img-modelia'?'2':'1';
   const d=document.createElement('div');d.className='mw ai';
   d.innerHTML='<div class="aav">V</div><div><div class="card" id="'+id+'"><div class="cp2 img"><img src="'+imgUrl+'" onclick="window.open(\''+imgUrl+'\',\'_blank\')" style="cursor:pointer" onload="this.style.opacity=1"></div><div class="cm"><div class="cmod">'+state.modelName+' - '+cr+'cr</div><div class="cprompt">'+escHtml(prompt.substring(0,70))+(prompt.length>70?'...':'')+'</div><div class="cas"><a href="'+imgUrl+'" download class="ca p">Download</a><button class="ca" onclick="doUpscale(\''+imgUrl+'\',\'image\')">Upscale</button><button class="ca" onclick="doVariant(\''+prompt.replace(/'/g,"\\'").replace(/"/g,'&quot;')+'\')">Variante</button></div><div style="font-size:10px;color:var(--td);margin-top:6px">In Galerie gespeichert - jetzt downloaden!</div></div></div><div class="mt2">'+now()+'</div></div>';
+  document.getElementById('fi').appendChild(d);scrollFeed();
+}
+function genVideo(prompt){
+  if(!authToken){showM('modal-login');return;}
+  const ws=localStorage.getItem('virgo_workspace')||'makler';
+  startGen('Video wird erstellt - das kann bis zu einer Minute dauern...');showTyping();
+  fetchWithRetry('/api/tools',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({tool:'generate-video',workspace:ws,prompt})})
+  .then(r=>r.json()).then(d=>{
+    hideTyping();endGen();
+    if(d.videoUrl){addVideoCard(prompt,d.videoUrl);saveGeneration('video',d.videoUrl,prompt,'Virgo Video');}
+    else if(d.error==='locked'||d.error==='limit_reached'){openUpgrade();}
+    else addAIMsg('Video Fehler: '+(d.error||'Konnte nicht generiert werden.'));
+  }).catch(()=>{hideTyping();endGen();showFallbackMsg();});
+}
+function addVideoCard(prompt,videoUrl){
+  const d=document.createElement('div');d.className='mw ai';
+  d.innerHTML='<div class="aav">V</div><div><div class="card"><div class="cp2 vid"><video src="'+videoUrl+'" controls playsinline style="width:100%;height:100%;object-fit:cover"></video></div><div class="cm"><div class="cmod">Virgo Video</div><div class="cprompt">'+escHtml(prompt.substring(0,70))+(prompt.length>70?'...':'')+'</div><div class="cas"><a href="'+videoUrl+'" download class="ca p">Download</a></div><div style="font-size:10px;color:var(--td);margin-top:6px">In Galerie gespeichert - jetzt downloaden!</div></div></div><div class="mt2">'+now()+'</div></div>';
   document.getElementById('fi').appendChild(d);scrollFeed();
 }
 async function doUpscale(url,type){if(!(await useCredits('tool')))return;addAIMsg('Upscale gestartet...');try{const r=await fetch('/api/upscale',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,type})});const d=await r.json();if(d.url)addAIMsg('Fertig! <a href="'+d.url+'" download target="_blank" style="color:var(--blue);text-decoration:underline">4K Download</a>');else addAIMsg('Upscale Fehler: '+(d.error||'Fehlgeschlagen'));}catch(e){addAIMsg('Upscale Fehler.');}}
@@ -1772,4 +1796,3 @@ applyFreeRestrictions();
 <script src="/business-extras.js"></script>
 </body>
 </html>
-
