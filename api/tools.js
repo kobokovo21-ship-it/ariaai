@@ -42,7 +42,6 @@ export default async function handler(req, res) {
     } catch(e) { return false; }
   }
   // ─── HELPER: Email via Resend ───
-  // ÄNDERUNG 3: Absender auf noreply@virgoio.com geändert
   async function sendEmail(to, subject, html) {
     if (!RESEND || !to) return false;
     try {
@@ -197,7 +196,6 @@ export default async function handler(req, res) {
         } catch(e) {}
       }
       if (!user) return res.status(401).json({ error: 'Token abgelaufen — bitte neu anmelden' });
-      // ÄNDERUNG 1: headline hinzugefügt
       const { name, firma, telefon, email, beschreibung, headline, custom_sections, versicherungen, farbe, slug, header_image, alert_email, whatsapp_number } = body;
       if (!name || !slug) return res.status(400).json({ error: 'Name und Slug sind Pflichtfelder' });
       if (!/^[a-z0-9-]{1,80}$/.test(slug)) return res.status(400).json({ error: 'Ungültiger Slug' });
@@ -211,7 +209,6 @@ export default async function handler(req, res) {
       if (Array.isArray(slugData) && slugData.length > 0) {
         return res.status(400).json({ error: 'Diese URL-Adresse ist bereits vergeben. Bitte eine andere waehlen.' });
       }
-      // ÄNDERUNG 2: headline in profileData
       const profileData = {
         name: name.trim(),
         firma: firma ? firma.trim() : null,
@@ -421,7 +418,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true });
     } catch(e) { return res.status(500).json({ error: e.message }); }
   }
-  // ─── MAKLER — PROFIL LÖSCHEN ─── (ÄNDERUNG 4: neu)
+  // ─── MAKLER — PROFIL LÖSCHEN ───
   if (tool === 'makler-delete') {
     try {
       const token = (req.headers.authorization || '').replace('Bearer ', '').trim();
@@ -436,17 +433,16 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true });
     } catch(e) { return res.status(500).json({ error: e.message }); }
   }
-  // ─── VIDEO GENERIEREN (Higgsfield) ─── NEU
-  // Funktioniert für Business- UND Makler-App. Aufruf:
-  //   POST /api/tools  Body: { tool:'generate-video', prompt, imageUrl?, workspace }
-  //   Header: Authorization: Bearer <session-token>
+  // ─── VIDEO GENERIEREN (Higgsfield) ───
+  // POST /api/tools  Body: { tool:'generate-video', prompt, imageUrl?, workspace }
+  // Header: Authorization: Bearer <session-token>
   if (tool === 'generate-video') {
     try {
       const token = (req.headers.authorization || '').replace('Bearer ', '').trim();
       const user = await validateToken(token);
       if (!user) return res.status(401).json({ error: 'Nicht eingeloggt' });
 
-      // Plan des Users laden (gleiche Logik wie bei makler-get)
+      // Plan des Users laden
       let plan = null;
       try {
         const planR = await fetch(`${BASE}/rest/v1/users?id=eq.${user.id}&select=plan&limit=1`, {
@@ -458,9 +454,11 @@ export default async function handler(req, res) {
         }
       } catch(e) {}
 
+      const ADMIN = process.env.ADMIN_EMAIL || 'holyencore@gmail.com';
       const result = await generateVideoForUser({
         userId: user.id,
         plan,
+        isAdmin: user.email === ADMIN,
         workspace: body.workspace,
         prompt: body.prompt,
         imageUrl: body.imageUrl,
