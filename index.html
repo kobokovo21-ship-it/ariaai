@@ -228,49 +228,17 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
     <div class="ms">
       <span class="sl">Makler Tools</span>
       <button class="mc on" onclick="setModel(this,'chat','Virgo Chat')"><div class="md"></div>Virgo Chat</button>
-      <button class="mc" onclick="openMaklerAds();closeSb()" style="border:1px solid rgba(37,99,235,.25)"><div class="md" style="background:#2563eb"></div>Makler Ads<span class="mt" style="background:#dbeafe;color:#1d4ed8">Google &amp; Meta</span></button>
-      <button class="mc" onclick="window.location.href='/makler-ads.html'"><div class="md" style="background:#16a34a"></div>Ads schalten &amp; bezahlen<span class="mt" style="background:#dcfce7;color:#166534">Live</span></button>
       <button class="mc" onclick="window.location.href='/makler-onboarding.html'"><div class="md"></div>Meine Landing Page<span class="mt" style="background:#dcfce7;color:#166534">Makler</span></button>
+      <button class="mc" onclick="window.location.href='/makler-ads.html'"><div class="md" style="background:#16a34a"></div>Ads schalten &amp; bezahlen<span class="mt" style="background:#dcfce7;color:#166534">Live</span></button>
       <button class="mc" onclick="window.location.href='/leads.html'"><div class="md"></div>Leads Dashboard<span class="mt" style="background:#dcfce7;color:#166534">Makler</span></button>
-    </div>
-    <div class="ms">
-      <span class="sl">Marketing &amp; Inhalte</span>
-      <button class="mc" onclick="openWebsiteGen();closeSb()" style="border:1px solid rgba(139,92,246,.25)"><div class="md" style="background:#8b5cf6"></div>Website Generator<span class="mt" style="background:#ede9fe;color:#6d28d9">Chat</span></button>
-      <button class="mc" onclick="setModel(this,'business-social','Social Media')"><div class="md"></div>Social Media Posts<span class="mt" style="background:#dcfce7;color:#166534">AI</span></button>
-      <button class="mc" onclick="setModel(this,'business-email','Email Sequenz')"><div class="md"></div>Email Sequenz<span class="mt" style="background:#dcfce7;color:#166534">AI</span></button>
-    </div>
-    <div class="ms">
-      <span class="sl">Bildmodelle</span>
-      <button class="mc" onclick="setModel(this,'img-nano','Virgo Vision')"><div class="md"></div>Virgo Vision<span class="mt">Bild 1cr</span></button>
-      <button class="mc" onclick="setModel(this,'img-seed','Virgo Create')"><div class="md"></div>Virgo Create<span class="mt">Bild 1cr</span></button>
-      <button class="mc" onclick="setModel(this,'video','Virgo Video')"><div class="md"></div>Virgo Video<span class="mt">Video 10cr</span></button>
+      <button class="mc" onclick="openInvoiceModal()"><div class="md"></div>Rechnung erstellen<span class="mt">PDF</span></button>
     </div>
   </div>
   <div class="workspace" id="ws-business" style="display:none">
     <div class="ms">
       <span class="sl">Business Tools</span>
-      <button class="mc" onclick="setModel(this,'chat','Virgo Chat')"><div class="md"></div>Virgo Chat</button>
-      <button class="mc" onclick="startAgent()" style="border:1px solid rgba(124,58,237,.45);background:linear-gradient(90deg,rgba(124,58,237,.10),rgba(37,99,235,.10))"><div class="md" style="background:linear-gradient(135deg,#7c3aed,#2563eb)"></div>Virgo Agent<span class="mt" style="background:#ede9fe;color:#6d28d9">AUTO</span></button>
-      <button class="mc" onclick="setModel(this,'business-plan','Business Plan')"><div class="md"></div>Business Plan<span class="mt" style="background:#dcfce7;color:#166534">AI</span></button>
-      <button class="mc" onclick="setModel(this,'business-pitch','Pitch Deck')"><div class="md"></div>Pitch Deck<span class="mt" style="background:#dcfce7;color:#166534">AI</span></button>
-      <button class="mc" onclick="setModel(this,'business-angebot','Angebot')" style="border:1px solid rgba(37,99,235,.25)"><div class="md" style="background:#2563eb"></div>Angebot erstellen<span class="mt" style="background:#dbeafe;color:#1d4ed8">Neu</span></button>
+      <button class="mc on" onclick="setModel(this,'chat','Virgo Chat')"><div class="md"></div>Virgo Chat</button>
       <button class="mc" onclick="openInvoiceModal()"><div class="md"></div>Rechnung erstellen<span class="mt">PDF</span></button>
-    </div>
-    <div class="ms">
-      <span class="sl">Marketing &amp; Inhalte</span>
-      <button class="mc" onclick="openWebsiteGen();closeSb()" style="border:1px solid rgba(139,92,246,.25)"><div class="md" style="background:#8b5cf6"></div>Website Generator<span class="mt" style="background:#ede9fe;color:#6d28d9">Chat</span></button>
-      <button class="mc" onclick="setModel(this,'business-website','Website Text')"><div class="md"></div>Website Text<span class="mt" style="background:#dcfce7;color:#166534">AI</span></button>
-      <button class="mc" onclick="startProdukt()" style="border:1px solid rgba(37,99,235,.25)"><div class="md" style="background:#2563eb"></div>Produktbeschreibungen<span class="mt" style="background:#dbeafe;color:#1d4ed8">Neu</span></button>
-      <button class="mc" onclick="setModel(this,'business-social','Social Media')"><div class="md"></div>Social Media Posts<span class="mt" style="background:#dcfce7;color:#166534">AI</span></button>
-      <button class="mc" onclick="setModel(this,'business-tiktok','TikTok Skripte')" style="border:1px solid rgba(37,99,235,.25)"><div class="md" style="background:#2563eb"></div>TikTok &amp; Reels Skripte<span class="mt" style="background:#dbeafe;color:#1d4ed8">Neu</span></button>
-      <button class="mc" onclick="setModel(this,'business-email','Email Sequenz')"><div class="md"></div>Email Sequenz<span class="mt" style="background:#dcfce7;color:#166534">AI</span></button>
-      <button class="mc" onclick="openTTSModal()"><div class="md"></div>Text zu Sprache<span class="mt">Audio</span></button>
-    </div>
-    <div class="ms">
-      <span class="sl">Bildmodelle</span>
-      <button class="mc" onclick="setModel(this,'img-nano','Virgo Vision')"><div class="md"></div>Virgo Vision<span class="mt">Bild 1cr</span></button>
-      <button class="mc" onclick="setModel(this,'img-seed','Virgo Create')"><div class="md"></div>Virgo Create<span class="mt">Bild 1cr</span></button>
-      <button class="mc" onclick="setModel(this,'video','Virgo Video')"><div class="md"></div>Virgo Video<span class="mt">Video 10cr</span></button>
     </div>
   </div>
   <div class="hist" id="hist"><div class="hist-empty" id="hist-empty">Deine Chats erscheinen hier.</div></div>
@@ -871,7 +839,7 @@ async function genChat(txt){
   const bSys={bewerbung:'Erstelle ein professionelles Bewerbungsanschreiben auf Deutsch.',angebot:'Erstelle ein professionelles Angebot auf Deutsch mit Positionen und Preisen.',mahnung:'Erstelle ein professionelles Mahnschreiben auf Deutsch.',kuendigung:'Erstelle ein rechtssicheres Kuendigungsschreiben auf Deutsch.',tiktok:'Du bist ein TikTok Experte. Erstelle 3 Skripte auf Deutsch: Hook, Ablauf, CTA.',plan:'Du bist ein Business-Experte. Erstelle vollstaendige Businessplaene auf Deutsch.',website:'Du bist ein Copywriter. Erstelle Website-Texte auf Deutsch.',ads:'{"type":"ads","topic":"...","ads":[{"number":1,"platform":"Google","headline":"max 30 Zeichen","description":"max 90 Zeichen","cta":"max 15 Zeichen"},{"number":2,"platform":"Meta","headline":"max 40 Zeichen","description":"max 125 Zeichen","cta":"Mehr erfahren"},{"number":3,"platform":"LinkedIn","headline":"max 40 Zeichen","description":"max 100 Zeichen","cta":"Kontakt"}]} — Nur JSON.',social:'{"type":"social_posts","topic":"...","posts":[{"number":1,"platform":"Instagram","caption":"...","hashtags":"#..."},{"number":2,"platform":"LinkedIn","caption":"...","hashtags":"#..."},{"number":3,"platform":"TikTok","caption":"...","hashtags":"#..."}]} — Nur JSON.',email:'{"type":"email","topic":"...","email":{"subject":"...","preheader":"...","body":"..."}} — Nur JSON.',pitch:'{"type":"pitch_deck","topic":"...","slides":[{"number":1,"title":"Problem","content":"..."},{"number":2,"title":"Loesung","content":"..."},{"number":3,"title":"Markt","content":"..."},{"number":4,"title":"Geschaeftsmodell","content":"..."},{"number":5,"title":"Team & Ask","content":"..."}]} — Nur JSON.'};
   const bMessages=isBusinessMode?[{role:'user',content:(bPre[businessType]||'')+txt}]:conversationHistory;
   const _ws=localStorage.getItem('virgo_workspace')||'makler';
-  const _chatSys=isFreePlan()?'Du bist Virgo. Antworte in der Sprache des Users. Beantworte Fragen kurz, ermutige zum Upgrade.':(_ws==='business'?'Du bist Virgo - der motivierende Begleiter fuer Unternehmer. Antworte auf Deutsch, warmherzig, konkret.':'Du bist Virgo, spezialisiert auf Versicherungsmakler. Antworte auf Deutsch, konkret.');
+  const _chatSys=isFreePlan()?'Du bist Virgo. Antworte in der Sprache des Users. Beantworte Fragen kurz, ermutige zum Upgrade.':(_ws==='business'?'Du bist Virgo — der KI-Assistent für alle die etwas aufbauen wollen. Du antwortest wie ein guter Freund der sich auskennt: direkt, warm, ohne Blabla. Keine Aufzählungen wo ein Satz reicht. Keine Überschriften wo fließender Text besser ist. Wenn jemand einen Businessplan braucht, machst du ihn. Wenn jemand ein Angebot will, schreibst du es. Wenn jemand eine Website braucht, baust du sie. Alles im Chat, einfach und direkt. Fang nie mit "Natürlich!" oder "Gerne!" an. Sei menschlich und konkret.':'Du bist Virgo — der persönliche KI-Assistent für Versicherungsmakler. Du antwortest wie ein erfahrener Kollege: direkt, freundlich, auf den Punkt. Keine langen Listen, keine steifen Überschriften — einfach klare, natürliche Antworten auf Deutsch. Wenn jemand Google Ads braucht, hilfst du direkt im Chat. Wenn jemand Social Media Posts will, machst du sie. Wenn jemand einen Businessplan braucht, schreibst du ihn. Der User muss nichts suchen — er schreibt einfach was er braucht und du machst es. Fang nie mit "Natürlich!" oder "Gerne!" an. Sei direkt und menschlich.');
   const bodyData=isBusinessMode?{type:businessType,messages:bMessages,systemOverride:bSys[businessType]||''}:{messages:conversationHistory,systemOverride:(state.produktMode?PRODUKT_SYS:_chatSys)};
   fetchWithRetry(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(bodyData)}).then(r=>r.json()).then(async d=>{
     hideTyping();const reply=(d.content&&d.content[0]&&d.content[0].text)||'Fehler.';
@@ -957,7 +925,7 @@ function retryLastMsg(){if(!lastUserMsg)return;const msgs=document.getElementByI
 // ═══════════════════════════════════════
 updateUI();loadChats();if(authToken)loadCredits();
 if(localStorage.getItem('virgo_sb_closed')==='1'){document.getElementById('sb').classList.add('collapsed');document.getElementById('sb-toggle-btn').textContent='►';}
-function landingHTML(){const ws=localStorage.getItem('virgo_workspace')||'makler';if(ws==='business'){return'<div class="landing" id="landing"><div class="ll">V I R G O</div><div class="lt">Was m\u00f6chtest du heute erschaffen?</div><div class="ls">Businessplan, Angebot, Pitch Deck und Rechnungen \u2014 auf Knopfdruck.</div><div class="starters"><button class="starter" onclick="setModel(null,\'business-angebot\',\'Angebot\')">Angebot erstellen</button><button class="starter" onclick="setModel(null,\'business-plan\',\'Business Plan\')">Businessplan erstellen</button><button class="starter" onclick="setModel(null,\'business-pitch\',\'Pitch Deck\')">Pitch Deck erstellen</button><button class="starter" onclick="openInvoiceModal()">Rechnung schreiben</button></div></div>';}return'<div class="landing" id="landing"><div class="ll">V I R G O</div><div class="lt">Was m\u00f6chtest du heute erschaffen?</div><div class="ls">Leads, Landing Pages, Ads und Content \u2014 auf Knopfdruck.</div><div class="starters"><button class="starter" onclick="openMaklerAds()">Google Ads erstellen</button><button class="starter" onclick="window.location.href=\'/makler-onboarding.html\'">Landing Page bauen</button><button class="starter" onclick="qs(\'Social Media Posts erstellen\')">Social Post schreiben</button><button class="starter" onclick="qs(\'Email-Sequenz erstellen\')">Email an Kunden</button></div></div>';}
+function landingHTML(){const ws=localStorage.getItem('virgo_workspace')||'makler';if(ws==='business'){return'<div class="landing" id="landing"><div class="ll">V I R G O</div><div class="lt">Was kann ich heute fuer dich tun?</div><div class="ls">Schreib einfach was du brauchst \u2014 ich mache den Rest.</div><div class="starters"><button class="starter" onclick="qs(\'Erstell mir einen Businessplan\')">Businessplan</button><button class="starter" onclick="qs(\'Schreib mir ein professionelles Angebot\')">Angebot schreiben</button><button class="starter" onclick="qs(\'Erstell mir ein Pitch Deck fuer Investoren\')">Pitch Deck</button><button class="starter" onclick="qs(\'Erstell mir eine Website\')">Website bauen</button></div></div>';}return'<div class="landing" id="landing"><div class="ll">V I R G O</div><div class="lt">Was m\u00f6chtest du heute erschaffen?</div><div class="ls">Leads, Landing Pages, Ads und Content \u2014 auf Knopfdruck.</div><div class="starters"><button class="starter" onclick="openMaklerAds()">Google Ads erstellen</button><button class="starter" onclick="window.location.href=\'/makler-onboarding.html\'">Landing Page bauen</button><button class="starter" onclick="qs(\'Social Media Posts erstellen\')">Social Post schreiben</button><button class="starter" onclick="qs(\'Email-Sequenz erstellen\')">Email an Kunden</button></div></div>';}
 function renderLanding(){if(document.getElementById('landing')){document.getElementById('fi').innerHTML=landingHTML();}}
 function isFreePlan(){if(isAdmin())return false;const p=localStorage.getItem('virgo_plan')||'free';return !p||p==='free';}
 function freeChatsUsed(){return parseInt(localStorage.getItem('virgo_free_chats')||'0',10);}
