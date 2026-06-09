@@ -3,736 +3,552 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ihr Versicherungsmakler | Virgo</title>
-<meta name="description" content="Kostenlose und unverbindliche Versicherungsberatung">
+<title>Meine Landing Page | Virgo</title>
 <link rel="icon" type="image/png" href="/icon-512.png">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--acc:#111;--acc2:#1a56db;--bg:#fff;--sf:#f8f8f6;--bd:#e8e8e4;--t:#111;--tm:#666;--td:#999;--green:#16a34a;--red:#dc2626}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);line-height:1.6}
-a{color:inherit;text-decoration:none}
-img{max-width:100%;display:block}
+:root{--bg:#fff;--sf:#f7f7f7;--sf2:#f0f0f0;--bd:#e8e8e8;--t:#111;--tm:#888;--td:#bbb;--blue:#2563eb;--red:#ef4444;--green:#22c55e}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);min-height:100vh}
+.topbar{height:52px;padding:0 20px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:12px;background:var(--bg);position:sticky;top:0;z-index:50}
+.logo{font-size:13px;font-weight:200;letter-spacing:8px}
+.back-btn{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--tm);cursor:pointer;border:none;background:transparent;font-family:inherit;padding:6px 10px;border-radius:6px}
+.back-btn:hover{background:var(--sf2);color:var(--t)}
+.container{max-width:680px;margin:0 auto;padding:32px 20px 80px}
+h1{font-size:22px;font-weight:500;margin-bottom:6px}
+.subtitle{font-size:13px;color:var(--tm);margin-bottom:32px;font-weight:300}
+.section{background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:20px;margin-bottom:16px}
+.section-title{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--td);margin-bottom:14px;font-weight:500}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:11px;color:var(--tm);margin-bottom:5px;font-weight:500}
+.field input,.field select,.field textarea{width:100%;padding:10px 12px;background:var(--bg);border:1px solid var(--bd);border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;color:var(--t);outline:none;transition:border-color .15s}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:#999}
+.field textarea{resize:vertical;min-height:80px;line-height:1.6}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.vers-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.vers-chip{display:flex;align-items:center;gap:6px;padding:7px 12px;border-radius:8px;border:1px solid var(--bd);background:var(--bg);font-size:12px;cursor:pointer;user-select:none;transition:all .12s}
+.vers-chip.on{background:var(--t);color:#fff;border-color:var(--t)}
+.color-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+.color-dot{width:30px;height:30px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:all .12s}
+.color-dot.on{border-color:#fff;box-shadow:0 0 0 2px var(--t)}
+.preview-box{border:1px solid var(--bd);border-radius:10px;overflow:hidden;margin-top:12px}
+.preview-bar{height:4px;background:var(--t);transition:background .2s}
+.preview-content{padding:14px;background:var(--sf)}
+.preview-name{font-size:14px;font-weight:600;margin-bottom:2px}
+.preview-desc{font-size:11px;color:var(--tm)}
+.save-btn{width:100%;padding:14px;background:var(--t);color:#fff;border:none;border-radius:10px;font-family:'Inter',sans-serif;font-size:14px;font-weight:500;cursor:pointer;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .15s}
+.save-btn:hover{opacity:.85}
+.save-btn:disabled{opacity:.4;cursor:not-allowed}
+.img-upload{border:2px dashed var(--bd);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:all .15s}
+.img-upload:hover{border-color:#999;background:var(--sf)}
+.img-upload input{display:none}
+.img-preview{width:100%;height:160px;object-fit:cover;border-radius:8px;margin-top:10px;display:none}
+.msg{padding:12px 14px;border-radius:8px;font-size:12px;margin-top:12px;display:none;line-height:1.5}
+.msg.success{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534}
+.msg.error{background:#fef2f2;border:1px solid #fecaca;color:#991b1b}
 
-/* NAV */
-nav{background:#fff;border-bottom:1px solid var(--bd);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
-.nav-logo{font-size:11px;letter-spacing:6px;font-weight:400}
-.nav-cta{background:var(--acc);color:#fff;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:none;font-family:inherit}
-.nav-cta:hover{opacity:.85}
-
-/* HERO */
-.hero{padding:60px 20px 50px;max-width:700px;margin:0 auto;text-align:center}
-.hero-badge{display:inline-flex;align-items:center;gap:6px;background:var(--sf);border:1px solid var(--bd);border-radius:20px;padding:5px 14px;font-size:12px;color:var(--tm);margin-bottom:20px}
-.hero-img{width:64px;height:64px;border-radius:50%;object-fit:cover;margin:0 auto 16px;border:2px solid var(--bd)}
-.hero-avatar{width:64px;height:64px;border-radius:50%;background:var(--acc);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:600;margin:0 auto 16px;font-family:'DM Serif Display',serif}
-.hero h1{font-family:'DM Serif Display',serif;font-size:clamp(26px,5vw,40px);font-weight:400;line-height:1.25;letter-spacing:-.5px;margin-bottom:14px}
-.hero p{font-size:16px;color:var(--tm);font-weight:300;max-width:520px;margin:0 auto 28px;line-height:1.7}
-.hero-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
-.btn-primary{background:var(--acc);color:#fff;padding:13px 24px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;border:none;font-family:inherit;display:inline-flex;align-items:center;gap:7px}
-.btn-primary:hover{opacity:.85}
-.btn-sec{background:var(--sf);color:var(--t);padding:13px 24px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;border:1px solid var(--bd);font-family:inherit;display:inline-flex;align-items:center;gap:7px}
-.btn-sec:hover{background:var(--bd)}
-
-/* TRUST */
-.trust{background:var(--sf);border-top:1px solid var(--bd);border-bottom:1px solid var(--bd);padding:14px 20px}
-.trust-inner{max-width:800px;margin:0 auto;display:flex;gap:24px;justify-content:center;flex-wrap:wrap}
-.trust-item{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--tm);font-weight:400}
-.trust-item span{color:var(--t);font-weight:500}
-
-/* SECTION */
-.section{padding:56px 20px;max-width:800px;margin:0 auto}
-.section-label{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--td);margin-bottom:10px}
-.section h2{font-family:'DM Serif Display',serif;font-size:clamp(22px,4vw,32px);font-weight:400;line-height:1.3;margin-bottom:8px}
-.section-sub{font-size:15px;color:var(--tm);font-weight:300;margin-bottom:32px;max-width:560px;line-height:1.7}
-
-/* PROBLEM */
-.problem-list{display:grid;gap:10px}
-.problem-item{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--sf);border:1px solid var(--bd);border-radius:10px;font-size:14px}
-.problem-item.bad{border-left:3px solid var(--red)}
-.problem-item.good{border-left:3px solid var(--green)}
-.problem-icon{font-size:16px;flex-shrink:0}
-
-/* LEISTUNGEN */
-.leistungen-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:24px}
-.leistung-card{background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:20px}
-.leistung-icon{font-size:22px;margin-bottom:10px}
-.leistung-title{font-size:13px;font-weight:600;margin-bottom:8px;color:var(--t)}
-.leistung-list{list-style:none;display:flex;flex-direction:column;gap:5px}
-.leistung-list li{font-size:12px;color:var(--tm);display:flex;align-items:flex-start;gap:6px}
-.leistung-list li::before{content:"✓";color:var(--green);font-weight:600;flex-shrink:0;margin-top:1px}
-
-/* ZIELGRUPPEN */
-.ziel-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:24px}
-.ziel-item{background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:14px 16px;font-size:13px;display:flex;align-items:center;gap:8px}
-.ziel-check{color:var(--green);font-size:16px;flex-shrink:0}
-
-/* STATS */
-.stats-row{display:flex;gap:20px;flex-wrap:wrap;margin-top:24px}
-.stat-box{flex:1;min-width:160px;background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:20px;text-align:center}
-.stat-num{font-family:'DM Serif Display',serif;font-size:32px;font-weight:400;color:var(--acc);margin-bottom:4px}
-.stat-label{font-size:11px;color:var(--tm);line-height:1.4}
-
-/* VERSICHERUNGEN */
-.vers-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
-.vers-tag{background:var(--sf);border:1px solid var(--bd);border-radius:20px;padding:6px 14px;font-size:12px;font-weight:500}
-
-/* CTA FORMS */
-.forms-section{background:var(--sf);border-top:1px solid var(--bd);padding:60px 20px}
-.forms-inner{max-width:800px;margin:0 auto}
-.forms-tabs{display:flex;gap:6px;margin-bottom:28px;flex-wrap:wrap}
-.form-tab{padding:9px 18px;border-radius:8px;border:1px solid var(--bd);background:var(--bg);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .15s}
-.form-tab.active{background:var(--acc);color:#fff;border-color:var(--acc)}
-.form-panel{display:none}
-.form-panel.active{display:block}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.form-full{grid-column:1/-1}
-.form-group{display:flex;flex-direction:column;gap:4px}
-.form-group label{font-size:12px;color:var(--tm);font-weight:500}
-.form-group input,.form-group select,.form-group textarea{padding:10px 12px;border:1px solid var(--bd);border-radius:8px;font-family:inherit;font-size:13px;background:var(--bg);color:var(--t);outline:none;transition:border-color .15s}
-.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--acc)}
-.form-group textarea{resize:vertical;min-height:80px}
-.form-submit{width:100%;padding:13px;background:var(--acc);color:#fff;border:none;border-radius:10px;font-family:inherit;font-size:14px;font-weight:500;cursor:pointer;margin-top:12px;display:flex;align-items:center;justify-content:center;gap:8px}
-.form-submit:hover{opacity:.85}
-.form-submit:disabled{opacity:.4;cursor:not-allowed}
-.form-msg{padding:10px 14px;border-radius:8px;font-size:12px;margin-top:10px;display:none}
-.form-msg.success{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534}
-.form-msg.error{background:#fef2f2;border:1px solid #fecaca;color:#991b1b}
-.privacy-note{font-size:11px;color:var(--td);margin-top:8px;line-height:1.5}
-
-/* FOOTER */
-footer{background:var(--acc);color:#fff;padding:28px 20px;text-align:center}
-.footer-inner{max-width:700px;margin:0 auto}
-.footer-name{font-family:'DM Serif Display',serif;font-size:18px;margin-bottom:6px}
-.footer-contact{font-size:13px;color:rgba(255,255,255,.65);margin-bottom:14px}
-.footer-links{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
-.footer-links a{font-size:11px;color:rgba(255,255,255,.5);text-decoration:none}
-.footer-links a:hover{color:#fff}
-
-/* LOADING */
-#page-loading{position:fixed;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;z-index:100;flex-direction:column;gap:12px}
-.loading-dot{width:8px;height:8px;border-radius:50%;background:#ddd;animation:pulse 1s infinite}
-.loading-dot:nth-child(2){animation-delay:.15s}
-.loading-dot:nth-child(3){animation-delay:.3s}
-@keyframes pulse{0%,100%{opacity:.3;transform:scale(.8)}50%{opacity:1;transform:scale(1)}}
-.loading-dots{display:flex;gap:6px}
-
-/* ERROR */
-#page-error{display:none;text-align:center;padding:80px 20px}
-#page-error h2{font-family:'DM Serif Display',serif;font-size:28px;margin-bottom:10px}
-#page-error p{color:var(--tm);font-size:15px}
-
-@media(max-width:600px){
-  .form-grid{grid-template-columns:1fr}
-  .form-full{grid-column:1}
-  .hero-btns{flex-direction:column;align-items:center}
-  .stats-row .stat-box{min-width:140px}
-}
+/* ADS RESULT SECTION */
+.ads-section{background:linear-gradient(135deg,#f0fdf4,#dbeafe);border:1px solid #bbf7d0;border-radius:14px;padding:24px;margin-top:24px;display:none}
+.ads-section.vis{display:block}
+.ads-title{font-size:16px;font-weight:600;margin-bottom:4px;color:#111}
+.ads-subtitle{font-size:12px;color:#374151;margin-bottom:20px}
+.ads-block{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-bottom:12px}
+.ads-block-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#6b7280;margin-bottom:10px;font-weight:600}
+.ads-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f3f4f6;font-size:12px}
+.ads-row:last-child{border-bottom:none}
+.ads-row span{flex:1;padding-right:8px;line-height:1.4;color:#111}
+.ads-char{font-size:10px;font-weight:500}
+.ads-char.ok{color:#16a34a}
+.ads-char.over{color:#ef4444}
+.ads-copy-btn{padding:8px 14px;background:#111;color:#fff;border:none;border-radius:7px;font-family:'Inter',sans-serif;font-size:11px;cursor:pointer;margin-top:10px;font-weight:500}
+.ads-copy-btn:hover{opacity:.85}
+.ads-copy-btn.sec{background:transparent;color:#111;border:1px solid #e5e7eb}
+.ads-live-btn{display:block;width:100%;padding:13px;margin-top:16px;background:#16a34a;color:#fff;text-align:center;text-decoration:none;border-radius:10px;font-weight:600;font-size:13px;font-family:'Inter',sans-serif;border:none;cursor:pointer}
+.ads-live-btn:hover{opacity:.9}
+.ads-url-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 12px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.ads-url-text{font-size:11px;font-family:monospace;color:#166534;flex:1;word-break:break-all}
+.ads-url-copy{padding:4px 10px;background:#166534;color:#fff;border:none;border-radius:5px;font-family:'Inter',sans-serif;font-size:10px;cursor:pointer;white-space:nowrap}
+.loader{display:none;align-items:center;gap:10px;padding:14px;background:var(--sf);border-radius:10px;margin-top:12px}
+.loader.vis{display:flex}
+.loader-bar{flex:1;height:2px;background:var(--bd);border-radius:2px;overflow:hidden}
+.loader-fill{height:100%;background:var(--blue);border-radius:2px;transition:width .5s;width:0%}
+.loader-txt{font-size:12px;color:var(--tm)}
+@media(max-width:600px){.field-row{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 
-<div id="page-loading">
-  <div class="loading-dots">
-    <div class="loading-dot"></div>
-    <div class="loading-dot"></div>
-    <div class="loading-dot"></div>
-  </div>
+<div class="topbar">
+  <button class="back-btn" onclick="window.location.href='/'">&#8592; Zurück</button>
+  <span class="logo">VIRGO</span>
 </div>
 
-<div id="page-error">
-  <h2>Seite nicht gefunden</h2>
-  <p>Diese Makler-Seite existiert nicht oder wurde gelöscht.</p>
-  <a href="/" style="display:inline-block;margin-top:20px;padding:10px 24px;background:#111;color:#fff;border-radius:8px;font-size:14px">Zur Startseite</a>
-</div>
+<div class="container">
+  <h1>Meine Landing Page</h1>
+  <p class="subtitle">Richte deine persönliche Makler-Seite ein — Virgo generiert danach automatisch deine Google Ads.</p>
 
-<div id="page-content" style="display:none">
-
-  <!-- NAV -->
-  <nav>
-    <span class="nav-logo">VIRGO</span>
-    <button class="nav-cta" onclick="scrollToForms()">Kostenlos beraten lassen</button>
-  </nav>
-
-  <!-- HERO -->
-  <div id="hero-banner" style="position:relative;width:100%;height:560px;background:#111;overflow:hidden;display:none">
-    <img id="hero-banner-img" style="width:100%;height:100%;object-fit:cover;object-position:center top;display:block;opacity:0.8" src="" alt="">
-    <div style="position:absolute;bottom:0;left:0;right:0;padding:32px 28px;background:linear-gradient(to top,rgba(0,0,0,.75) 0%,transparent 100%)">
-      <div style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.7);margin-bottom:8px">✅ Kostenlose & unverbindliche Beratung</div>
-      <h1 id="hero-headline" style="font-family:'DM Serif Display',serif;font-size:clamp(24px,4vw,40px);color:#fff;font-weight:400;line-height:1.2;margin-bottom:8px">Ihre persönliche Versicherungsberatung</h1>
-      <p id="hero-sub" style="font-size:15px;color:rgba(255,255,255,.8);font-weight:300;max-width:500px;margin-bottom:20px;line-height:1.6">Ich helfe Ihnen die beste Versicherung zu finden.</p>
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <button class="btn-primary" onclick="scrollToForms('termin')" style="background:#fff;color:#111">📅 Termin vereinbaren</button>
-        <button class="btn-sec" onclick="scrollToForms('rueckruf')" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3)">📞 Rückruf anfordern</button>
+  <!-- PERSÖNLICHE INFOS -->
+  <div class="section">
+    <div class="section-title">Deine Infos</div>
+    <div class="field-row">
+      <div class="field">
+        <label>Dein Name *</label>
+        <input type="text" id="m-name" placeholder="z.B. Jozef Palushaj">
+      </div>
+      <div class="field">
+        <label>Dein Slug (URL) *</label>
+        <input type="text" id="m-slug" placeholder="z.B. jozef-palushaj" oninput="updateSlugPreview()">
       </div>
     </div>
-  </div>
-  <!-- HERO FALLBACK (kein Bild) -->
-  <div class="hero" id="hero-fallback">
-    <div class="hero-badge">✅ Kostenlose & unverbindliche Beratung</div>
-    <div id="hero-avatar" class="hero-avatar">M</div>
-    <h1 id="hero-headline-fallback">Ihre persönliche Versicherungsberatung</h1>
-    <p id="hero-sub-fallback">Ich helfe Ihnen die beste Versicherung für Ihre Situation zu finden — kostenlos, unverbindlich und persönlich.</p>
-    <div class="hero-btns">
-      <button class="btn-primary" onclick="scrollToForms('termin')">📅 Termin vereinbaren</button>
-      <button class="btn-sec" onclick="scrollToForms('rueckruf')">📞 Rückruf anfordern</button>
+    <div style="font-size:10px;color:var(--td);margin-top:-8px;margin-bottom:12px">Deine URL: virgoio.com/makler/<b id="slug-preview">dein-name</b></div>
+    <div class="field-row">
+      <div class="field">
+        <label>Telefon</label>
+        <input type="tel" id="m-tel" placeholder="+49 170 1234567">
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="m-email" placeholder="du@email.de">
+      </div>
     </div>
-  </div>
-
-  <!-- TRUST BAR -->
-  <div class="trust">
-    <div class="trust-inner">
-      <div class="trust-item" id="trust-0">⭐ <span>4,8/5</span> Kundenbewertung</div>
-      <div class="trust-item" id="trust-1">🔒 <span>100%</span> kostenlose Beratung</div>
-      <div class="trust-item" id="trust-2">📞 Rückruf <span>innerhalb 24h</span></div>
-      <div class="trust-item" id="trust-3">🏆 <span>Zertifizierter</span> Makler</div>
+    <div class="field">
+      <label>Deine Headline (was du anbietest)</label>
+      <input type="text" id="m-headline" placeholder="z.B. Ihr unabhängiger Versicherungsberater in Düsseldorf">
+    </div>
+    <div class="field">
+      <label>Kurzbeschreibung</label>
+      <textarea id="m-beschreibung" placeholder="z.B. Ich vergleiche für Sie alle Top-Anbieter und finde die beste Versicherung für Ihre Situation — kostenlos und unverbindlich."></textarea>
     </div>
   </div>
 
   <!-- VERSICHERUNGEN -->
-  <div class="section" id="leistungen-section">
-    <div class="section-label" id="angebot-label">Mein Angebot</div>
-    <h2 id="angebot-headline">Was ich für Sie tue</h2>
-    <p class="section-sub" id="beschreibung-text">Ich vergleiche für Sie alle Top-Anbieter und finde die beste Versicherung für Ihre persönliche Situation.</p>
-    <div class="vers-tags" id="vers-tags"></div>
+  <div class="section">
+    <div class="section-title">Welche Versicherungen bietest du an?</div>
+    <div class="vers-grid" id="vers-grid">
+      <div class="vers-chip on" data-v="Private Krankenversicherung (PKV)">PKV</div>
+      <div class="vers-chip" data-v="KFZ-Versicherung">KFZ</div>
+      <div class="vers-chip" data-v="Hausrat & Haftpflicht">Hausrat & Haftpflicht</div>
+      <div class="vers-chip" data-v="Berufsunfähigkeit">Berufsunfähigkeit</div>
+      <div class="vers-chip" data-v="Altersvorsorge">Altersvorsorge</div>
+      <div class="vers-chip" data-v="Lebensversicherung">Leben</div>
+      <div class="vers-chip" data-v="Unfallversicherung">Unfall</div>
+      <div class="vers-chip" data-v="Rechtsschutz">Rechtsschutz</div>
+      <div class="vers-chip" data-v="Reiseversicherung">Reise</div>
+      <div class="vers-chip" data-v="Tierversicherung">Tier</div>
+      <div class="vers-chip" data-v="Alle Versicherungen">Alle Versicherungen</div>
+    </div>
   </div>
 
-  <!-- DYNAMISCHER CONTENT -->
-  <div id="extra-content"></div>
+  <!-- HEADER BILD -->
+  <div class="section">
+    <div class="section-title">Header Bild (optional)</div>
+    <div class="img-upload" onclick="document.getElementById('img-input').click()">
+      <div style="font-size:24px;margin-bottom:6px">📷</div>
+      <div style="font-size:13px;font-weight:500;margin-bottom:2px">Foto hochladen</div>
+      <div style="font-size:11px;color:var(--td)">JPG, PNG · max. 5MB</div>
+      <input type="file" id="img-input" accept="image/jpeg,image/png,image/webp" onchange="handleImg(event)">
+    </div>
+    <img id="img-preview" class="img-preview" src="" alt="Vorschau">
+    <div style="font-size:11px;color:var(--td);margin-top:8px">Kein Foto? Virgo generiert automatisch ein professionelles KI-Bild für dich.</div>
+  </div>
 
-  <!-- ZIELGRUPPEN -->
-  <div class="section" style="background:var(--sf);max-width:100%;padding:56px 20px">
-    <div style="max-width:800px;margin:0 auto">
-      <div class="section-label" id="ziel-label">Für wen bin ich der richtige Ansprechpartner?</div>
-      <h2 id="meine-kunden-headline">Meine Kunden</h2>
-      <div class="ziel-grid">
-        <div class="ziel-item" id="ziel-0"><span class="ziel-check">✓</span><span id="ziel-text-0">Angestellte ab 69.300 € Jahreseinkommen</span></div>
-        <div class="ziel-item" id="ziel-1"><span class="ziel-check">✓</span><span id="ziel-text-1">Selbstständige & Freiberufler</span></div>
-        <div class="ziel-item" id="ziel-2"><span class="ziel-check">✓</span><span id="ziel-text-2">Beamte & Beamtenanwärter</span></div>
-        <div class="ziel-item" id="ziel-3"><span class="ziel-check">✓</span><span id="ziel-text-3">Studenten & Hochschulabsolventen</span></div>
-        <div class="ziel-item" id="ziel-4"><span class="ziel-check">✓</span><span id="ziel-text-4">Familien & Alleinerziehende</span></div>
-        <div class="ziel-item" id="ziel-5"><span class="ziel-check">✓</span><span id="ziel-text-5">Alle die wechseln möchten</span></div>
+  <!-- FARBE -->
+  <div class="section">
+    <div class="section-title">Deine Farbe</div>
+    <div class="color-row" id="color-row">
+      <div class="color-dot on" data-c="#111111" style="background:#111111"></div>
+      <div class="color-dot" data-c="#2563eb" style="background:#2563eb"></div>
+      <div class="color-dot" data-c="#16a34a" style="background:#16a34a"></div>
+      <div class="color-dot" data-c="#9333ea" style="background:#9333ea"></div>
+      <div class="color-dot" data-c="#dc2626" style="background:#dc2626"></div>
+      <div class="color-dot" data-c="#ea580c" style="background:#ea580c"></div>
+      <div class="color-dot" data-c="#0891b2" style="background:#0891b2"></div>
+    </div>
+    <div class="preview-box" style="margin-top:14px">
+      <div class="preview-bar" id="preview-bar"></div>
+      <div class="preview-content">
+        <div class="preview-name" id="preview-name">Dein Name</div>
+        <div class="preview-desc">virgoio.com/makler/<span id="preview-slug">dein-name</span></div>
       </div>
     </div>
   </div>
 
-  <!-- KONTAKT FORMS -->
-  <div class="forms-section" id="contact-section">
-    <div class="forms-inner">
-      <div class="section-label">Jetzt Kontakt aufnehmen</div>
-      <h2 style="font-family:'DM Serif Display',serif;font-size:clamp(22px,4vw,30px);font-weight:400;margin-bottom:6px">Wie kann ich Ihnen helfen?</h2>
-      <p style="font-size:14px;color:var(--tm);margin-bottom:24px">Wählen Sie die für Sie passende Option — alles kostenlos und unverbindlich.</p>
+  <!-- SAVE BUTTON -->
+  <div id="save-msg" class="msg"></div>
+  <div class="loader" id="save-loader">
+    <div class="loader-bar"><div class="loader-fill" id="save-fill"></div></div>
+    <span class="loader-txt" id="save-loader-txt">Landing Page wird gespeichert...</span>
+  </div>
+  <button class="save-btn" id="save-btn" onclick="savePage()">
+    💾 Landing Page speichern &amp; Ads generieren
+  </button>
 
-      <div class="forms-tabs">
-        <button class="form-tab active" onclick="switchTab('termin',this)">📅 Termin buchen</button>
-        <button class="form-tab" onclick="switchTab('rueckruf',this)">📞 Rückruf anfordern</button>
-        <button class="form-tab" onclick="switchTab('anfrage',this)">✉️ Kostenlose Anfrage</button>
-      </div>
+  <!-- ADS RESULT (erscheint nach dem Speichern) -->
+  <div class="ads-section" id="ads-section">
+    <div class="ads-title">🎯 Deine Google Ads sind fertig!</div>
+    <div class="ads-subtitle">Kopiere die Texte und trage sie direkt bei Google Ads ein.</div>
 
-      <!-- TERMIN -->
-      <div class="form-panel active" id="panel-termin">
-        <div class="form-grid">
-          <div class="form-group">
-            <label>Vorname *</label>
-            <input type="text" id="t-vorname" placeholder="Max">
-          </div>
-          <div class="form-group">
-            <label>Nachname *</label>
-            <input type="text" id="t-nachname" placeholder="Mustermann">
-          </div>
-          <div class="form-group">
-            <label>Telefon *</label>
-            <input type="tel" id="t-telefon" placeholder="+49 170 1234567">
-          </div>
-          <div class="form-group">
-            <label>E-Mail</label>
-            <input type="email" id="t-email" placeholder="max@email.de">
-          </div>
-          <div class="form-group form-full">
-            <label>Gewünschter Termin</label>
-            <input type="datetime-local" id="t-datum">
-          </div>
-          <div class="form-group form-full">
-            <label>Anliegen</label>
-            <select id="t-anliegen">
-              <option value="">Bitte wählen...</option>
-              <option>Erstberatung PKV</option>
-              <option>PKV-Wechsel prüfen</option>
-              <option>Tarif-Optimierung</option>
-              <option>KFZ-Versicherung</option>
-              <option>Altersvorsorge</option>
-              <option>Sonstiges</option>
-            </select>
-          </div>
-          <div class="form-group form-full">
-            <label>Nachricht (optional)</label>
-            <textarea id="t-nachricht" placeholder="Was soll ich wissen? Besondere Wünsche, Vorerkrankungen etc."></textarea>
-          </div>
-        </div>
-        <button class="form-submit" id="btn-termin" onclick="submitForm('termin')">📅 Termin verbindlich anfragen →</button>
-        <div class="form-msg" id="msg-termin"></div>
-        <p class="privacy-note">Ihre Daten werden vertraulich behandelt und nicht an Dritte weitergegeben. Mit der Anfrage stimmen Sie der Kontaktaufnahme zu.</p>
+    <div class="ads-url-box">
+      <div>
+        <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#166534;margin-bottom:4px;font-weight:600">Deine Ziel-URL für Google Ads</div>
+        <div class="ads-url-text" id="ads-url">https://virgoio.com/makler/</div>
       </div>
+      <button class="ads-url-copy" onclick="copyUrl()">Kopieren</button>
+    </div>
 
-      <!-- RÜCKRUF -->
-      <div class="form-panel" id="panel-rueckruf">
-        <div class="form-grid">
-          <div class="form-group">
-            <label>Ihr Name *</label>
-            <input type="text" id="r-name" placeholder="Max Mustermann">
-          </div>
-          <div class="form-group">
-            <label>Telefon *</label>
-            <input type="tel" id="r-telefon" placeholder="+49 170 1234567">
-          </div>
-          <div class="form-group form-full">
-            <label>Beste Erreichbarkeit</label>
-            <select id="r-zeit">
-              <option value="">Egal, wann es passt</option>
-              <option>Morgens 8–12 Uhr</option>
-              <option>Mittags 12–14 Uhr</option>
-              <option>Nachmittags 14–18 Uhr</option>
-              <option>Abends ab 18 Uhr</option>
-            </select>
-          </div>
-          <div class="form-group form-full">
-            <label>Worum geht es? (optional)</label>
-            <textarea id="r-nachricht" placeholder="Kurze Beschreibung Ihres Anliegens..."></textarea>
-          </div>
-        </div>
-        <button class="form-submit" id="btn-rueckruf" onclick="submitForm('rueckruf')">📞 Rückruf anfordern →</button>
-        <div class="form-msg" id="msg-rueckruf"></div>
-        <p class="privacy-note">Ich rufe Sie innerhalb von 24 Stunden zurück. Ihre Daten werden vertraulich behandelt.</p>
-      </div>
+    <div class="ads-block">
+      <div class="ads-block-label">Headlines (max. 30 Zeichen)</div>
+      <div id="ads-headlines"></div>
+    </div>
 
-      <!-- ANFRAGE -->
-      <div class="form-panel" id="panel-anfrage">
-        <div class="form-grid">
-          <div class="form-group">
-            <label>Vorname *</label>
-            <input type="text" id="a-vorname" placeholder="Max">
-          </div>
-          <div class="form-group">
-            <label>Nachname *</label>
-            <input type="text" id="a-nachname" placeholder="Mustermann">
-          </div>
-          <div class="form-group">
-            <label>E-Mail *</label>
-            <input type="email" id="a-email" placeholder="max@email.de">
-          </div>
-          <div class="form-group">
-            <label>Telefon</label>
-            <input type="tel" id="a-telefon" placeholder="+49 170 1234567">
-          </div>
-          <div class="form-group form-full">
-            <label>Ich interessiere mich für</label>
-            <select id="a-interesse">
-              <option value="">Bitte wählen...</option>
-              <option>Private Krankenversicherung (PKV)</option>
-              <option>KFZ-Versicherung</option>
-              <option>Hausrat & Haftpflicht</option>
-              <option>Berufsunfähigkeit</option>
-              <option>Altersvorsorge / Rente</option>
-              <option>Lebensversicherung</option>
-              <option>Mehrere Versicherungen</option>
-            </select>
-          </div>
-          <div class="form-group form-full">
-            <label>Ihre Nachricht *</label>
-            <textarea id="a-nachricht" placeholder="Beschreiben Sie kurz Ihre Situation und was Sie suchen..."></textarea>
-          </div>
-        </div>
-        <button class="form-submit" id="btn-anfrage" onclick="submitForm('anfrage')">✉️ Kostenlos anfragen →</button>
-        <div class="form-msg" id="msg-anfrage"></div>
-        <p class="privacy-note">100% kostenlos und unverbindlich. Ich melde mich innerhalb von 24 Stunden bei Ihnen.</p>
-      </div>
+    <div class="ads-block">
+      <div class="ads-block-label">Descriptions (max. 90 Zeichen)</div>
+      <div id="ads-descriptions"></div>
+    </div>
+
+    <div class="ads-block">
+      <div class="ads-block-label">Call to Action</div>
+      <div id="ads-cta" style="font-size:13px;font-weight:500;padding:6px 0;color:#111"></div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="ads-copy-btn" onclick="copyAllAds()">Alles kopieren</button>
+      <button class="ads-copy-btn sec" onclick="regenerateAds()">Neu generieren</button>
+    </div>
+
+    <a href="/makler-ads.html" class="ads-live-btn">💸 Ads jetzt live schalten →</a>
+
+    <div style="font-size:11px;color:#374151;margin-top:12px;line-height:1.6">
+      <b>So gehts weiter:</b> Klick auf "Ads jetzt live schalten", trag dein Budget ein (z.B. 10€/Tag) und deine Anzeigen gehen innerhalb von 24h live.
     </div>
   </div>
-
-  <!-- FOOTER -->
-  <footer>
-    <div class="footer-inner">
-      <div class="footer-name" id="footer-name">Ihr Versicherungsmakler</div>
-      <div class="footer-contact" id="footer-contact"></div>
-      <div class="footer-links">
-        <a href="/impressum.html">Impressum</a>
-        <a href="/datenschutz.html">Datenschutz</a>
-        <a href="/">Powered by Virgo</a>
-      </div>
-    </div>
-  </footer>
 
 </div>
 
 <script>
-// ── SLUG aus URL lesen ──
-function getSlug(){
-  const path = window.location.pathname;
-  const parts = path.split('/').filter(Boolean);
-  // /makler/[slug] oder /[slug]
-  const idx = parts.indexOf('makler');
-  if(idx >= 0 && parts[idx+1]) return parts[idx+1];
-  if(parts.length === 1 && parts[0] !== 'makler') return parts[0];
-  return null;
+const authToken = localStorage.getItem('virgo_token');
+let selectedColor = '#111111';
+let uploadedImgB64 = null;
+let savedSlug = '';
+let savedAdsData = null;
+
+// Farbe auswählen
+document.querySelectorAll('.color-dot').forEach(dot => {
+  dot.addEventListener('click', () => {
+    document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('on'));
+    dot.classList.add('on');
+    selectedColor = dot.dataset.c;
+    document.getElementById('preview-bar').style.background = selectedColor;
+  });
+});
+document.getElementById('preview-bar').style.background = selectedColor;
+
+// Versicherungen auswählen
+document.querySelectorAll('.vers-chip').forEach(chip => {
+  chip.addEventListener('click', () => chip.classList.toggle('on'));
+});
+
+// Slug Preview
+function updateSlugPreview() {
+  const val = document.getElementById('m-slug').value.trim() || 'dein-name';
+  document.getElementById('slug-preview').textContent = val;
+  document.getElementById('preview-slug').textContent = val;
 }
 
-const slug = getSlug();
+// Name Preview
+document.getElementById('m-name').addEventListener('input', () => {
+  document.getElementById('preview-name').textContent = document.getElementById('m-name').value || 'Dein Name';
+});
 
-// ── Profil laden ──
-async function loadProfile(){
-  if(!slug){
-    showError();return;
+// Bild Upload
+function handleImg(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { alert('Max. 5MB'); return; }
+  const reader = new FileReader();
+  reader.onload = ev => {
+    uploadedImgB64 = ev.target.result;
+    const prev = document.getElementById('img-preview');
+    prev.src = ev.target.result;
+    prev.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+  e.target.value = '';
+}
+
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function setLoader(pct, txt) {
+  document.getElementById('save-fill').style.width = pct + '%';
+  document.getElementById('save-loader-txt').textContent = txt;
+}
+
+// SEITE SPEICHERN + ADS GENERIEREN
+async function savePage() {
+  const name = document.getElementById('m-name').value.trim();
+  const slug = document.getElementById('m-slug').value.trim();
+  const msgEl = document.getElementById('save-msg');
+  const btn = document.getElementById('save-btn');
+  const loader = document.getElementById('save-loader');
+
+  if (!name || !slug) {
+    msgEl.className = 'msg error';
+    msgEl.textContent = 'Bitte Name und Slug ausfüllen.';
+    msgEl.style.display = 'block';
+    return;
   }
-  try{
-    const r = await fetch('/api/tools?tool=makler-get&slug='+encodeURIComponent(slug));
-    const d = await r.json();
-    if(d.error || !d.name){
-      showError();return;
+  if (!authToken) {
+    msgEl.className = 'msg error';
+    msgEl.textContent = 'Bitte erst anmelden.';
+    msgEl.style.display = 'block';
+    return;
+  }
+
+  msgEl.style.display = 'none';
+  btn.disabled = true;
+  loader.classList.add('vis');
+  setLoader(10, 'Landing Page wird gespeichert...');
+
+  const versicherungen = Array.from(document.querySelectorAll('.vers-chip.on')).map(c => c.dataset.v);
+  const headline = document.getElementById('m-headline').value.trim();
+  const beschreibung = document.getElementById('m-beschreibung').value.trim();
+
+  // SCHRITT 1: Landing Page speichern
+  try {
+    const saveBody = {
+      tool: 'makler-save',
+      slug,
+      name,
+      telefon: document.getElementById('m-tel').value.trim(),
+      email: document.getElementById('m-email').value.trim(),
+      headline: headline || ('Ihr persönlicher Versicherungsberater: ' + name),
+      beschreibung: beschreibung || 'Kostenlose und unverbindliche Versicherungsberatung.',
+      versicherungen,
+      farbe: selectedColor
+    };
+    if (uploadedImgB64) saveBody.header_image = uploadedImgB64;
+
+    setLoader(25, 'Landing Page wird gespeichert...');
+    const saveRes = await fetch('/api/tools', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+      body: JSON.stringify(saveBody)
+    });
+    const saveData = await saveRes.json();
+
+    if (saveData.error && !saveData.error.includes('already')) {
+      throw new Error(saveData.error);
     }
-    renderPage(d);
-  }catch(e){
-    showError();
-  }
-}
 
-function showError(){
-  document.getElementById('page-loading').style.display='none';
-  document.getElementById('page-error').style.display='block';
-}
+    savedSlug = slug;
+    setLoader(40, 'Landing Page gespeichert ✓ — Ads werden generiert...');
 
-function renderPage(p){
-  document.title = (p.name||'Ihr Makler') + ' | Versicherungsberatung';
-
-  // Hero Banner oder Fallback
-  const headline = p.headline || ('Ihr persönlicher Berater: ' + (p.name||''));
-  if(p.header_image){
-    // Banner mit Bild und Text drauf
-    document.getElementById('hero-banner').style.display = 'block';
-    document.getElementById('hero-fallback').style.display = 'none';
-    document.getElementById('hero-banner-img').src = p.header_image;
-    document.getElementById('hero-headline').textContent = headline;
-    if(p.beschreibung) document.getElementById('hero-sub').textContent = p.beschreibung;
-    if(p.farbe) document.getElementById('hero-banner').style.borderBottom = '4px solid '+p.farbe;
-  } else {
-    // Fallback ohne Bild
-    document.getElementById('hero-banner').style.display = 'none';
-    document.getElementById('hero-fallback').style.display = '';
-    const av = document.getElementById('hero-avatar');
-    av.textContent = (p.name||'M').charAt(0).toUpperCase();
-    if(p.farbe) av.style.background = p.farbe;
-    document.getElementById('hero-headline-fallback').textContent = headline;
-    if(p.beschreibung) document.getElementById('hero-sub-fallback').textContent = p.beschreibung;
-  }
-
-  // Headline
-  document.getElementById('hero-headline').textContent = p.headline || ('Ihr persönlicher Berater: ' + (p.name||''));
-  if(p.beschreibung) document.getElementById('hero-sub').textContent = p.beschreibung;
-
-  // Angebot Headline
-  document.getElementById('angebot-headline').textContent = 'Meine Versicherungsleistungen';
-  if(p.beschreibung) document.getElementById('beschreibung-text').textContent = p.beschreibung;
-
-  // Versicherungen Tags
-  const tags = document.getElementById('vers-tags');
-  if(p.versicherungen && p.versicherungen.length){
-    tags.innerHTML = p.versicherungen.map(v =>
-      '<span class="vers-tag">✓ '+escHtml(v)+'</span>'
-    ).join('');
-  }
-
-  // Footer
-  document.getElementById('footer-name').textContent = p.name||'';
-  let contact = [];
-  if(p.telefon) contact.push('📞 '+p.telefon);
-  if(p.email) contact.push('✉️ '+p.email);
-  document.getElementById('footer-contact').textContent = contact.join('  ·  ');
-
-  // Farbe anwenden
-  if(p.farbe){
-    document.documentElement.style.setProperty('--acc', p.farbe);
-  }
-
-  // Profil für spätere Bearbeitung merken
-  window._loadedProfile = p;
-  // Custom Sections aus Supabase laden (primär) oder localStorage (Fallback)
-  try{
-    if(p.custom_sections){
-      const cs = typeof p.custom_sections === 'string' ? JSON.parse(p.custom_sections) : p.custom_sections;
-      Object.entries(cs).forEach(([id,text])=>{
-        const el=document.getElementById(id);
-        if(el&&text) el.innerText=text;
-      });
-      // Auch in localStorage speichern für Offline-Fallback
-      localStorage.setItem('virgo_custom_'+slug, JSON.stringify(cs));
-    } else {
-      // Fallback: localStorage
-      const saved=localStorage.getItem('virgo_custom_'+slug);
-      if(saved){
-        const cs=JSON.parse(saved);
-        Object.entries(cs).forEach(([id,text])=>{
-          const el=document.getElementById(id);
-          if(el&&text) el.innerText=text;
+    // SCHRITT 2: Wenn kein Bild vorhanden, KI-Bild generieren
+    if (!uploadedImgB64) {
+      setLoader(50, 'KI-Headerbild wird erstellt...');
+      try {
+        const imgRes = await fetch('/api/generate-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            prompt: `professional insurance broker portrait, ${name}, trustworthy, modern German business, clean office background, photorealistic, 4K`,
+            model: 'nano',
+            negative_prompt: 'cartoon,deformed,text,watermark'
+          })
         });
-      }
-    }
-  }catch(e){}
-  // Seite anzeigen
-  document.getElementById('page-loading').style.display='none';
-  document.getElementById('page-content').style.display='block';
-}
-
-// ── Form Tabs ──
-function switchTab(tab, el){
-  document.querySelectorAll('.form-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.form-panel').forEach(p => p.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('panel-'+tab).classList.add('active');
-}
-
-function scrollToForms(tab){
-  document.getElementById('contact-section').scrollIntoView({behavior:'smooth'});
-  if(tab){
-    setTimeout(()=>{
-      document.querySelectorAll('.form-tab').forEach(t => {
-        if(t.getAttribute('onclick') && t.getAttribute('onclick').includes("'"+tab+"'")){
-          t.click();
+        const imgData = await imgRes.json();
+        if (imgData.imageUrl) {
+          await fetch('/api/tools', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+            body: JSON.stringify({ tool: 'makler-save', slug, name, header_image: imgData.imageUrl, versicherungen, farbe: selectedColor })
+          });
         }
-      });
-    }, 500);
-  }
-}
+      } catch(e) {}
+    }
 
-// ── Form Submit ──
-async function submitForm(type){
-  const btn = document.getElementById('btn-'+type);
-  const msg = document.getElementById('msg-'+type);
-  msg.style.display='none';
-  btn.disabled=true;
+    // SCHRITT 3: Google Ads generieren
+    setLoader(70, 'Google Ads werden generiert...');
+    const versText = versicherungen.slice(0, 3).join(', ') || 'Versicherungen';
+    const adsPrompt = `Erstelle professionelle Google Ads fuer einen Versicherungsvermittler auf Deutsch.
+Name: ${name}
+Angebot: ${versText}
+Landing Page: https://virgoio.com/makler/${slug}
+Beschreibung: ${beschreibung || 'Kostenlose und unverbindliche Versicherungsberatung'}
 
-  let data = {type, slug, timestamp: new Date().toISOString()};
+Erstelle exakt dieses JSON (kein anderer Text, kein Markdown):
+{"headlines":["max 30 Zeichen","max 30 Zeichen","max 30 Zeichen","max 30 Zeichen","max 30 Zeichen"],"descriptions":["max 90 Zeichen","max 90 Zeichen","max 90 Zeichen"],"cta":"Jetzt beraten lassen"}
 
-  if(type==='termin'){
-    const v = document.getElementById('t-vorname').value.trim();
-    const n = document.getElementById('t-nachname').value.trim();
-    const t = document.getElementById('t-telefon').value.trim();
-    if(!v||!n||!t){showMsg(msg,'error','Bitte Vorname, Nachname und Telefon ausfüllen.');btn.disabled=false;return;}
-    data = {...data, vorname:v, nachname:n, name:v+' '+n, telefon:t, email:document.getElementById('t-email').value, datum:document.getElementById('t-datum').value, anliegen:document.getElementById('t-anliegen').value, nachricht:document.getElementById('t-nachricht').value, anfrage_typ:'Terminanfrage'};
-  } else if(type==='rueckruf'){
-    const n = document.getElementById('r-name').value.trim();
-    const t = document.getElementById('r-telefon').value.trim();
-    if(!n||!t){showMsg(msg,'error','Bitte Name und Telefon ausfüllen.');btn.disabled=false;return;}
-    data = {...data, name:n, telefon:t, zeit:document.getElementById('r-zeit').value, nachricht:document.getElementById('r-nachricht').value, anfrage_typ:'Rückruf'};
-  } else if(type==='anfrage'){
-    const v = document.getElementById('a-vorname').value.trim();
-    const n = document.getElementById('a-nachname').value.trim();
-    const e = document.getElementById('a-email').value.trim();
-    const nm = document.getElementById('a-nachricht').value.trim();
-    if(!v||!n||!e||!nm){showMsg(msg,'error','Bitte alle Pflichtfelder ausfüllen.');btn.disabled=false;return;}
-    data = {...data, vorname:v, nachname:n, name:v+' '+n, email:e, telefon:document.getElementById('a-telefon').value, interesse:document.getElementById('a-interesse').value, nachricht:nm, anfrage_typ:'Kostenlose Anfrage'};
-  }
+Regeln:
+- Headlines: max. 30 Zeichen, keyword-stark
+- Descriptions: max. 90 Zeichen, nutzenorientiert
+- Alle auf Deutsch
+- Konkret, vertrauenswürdig, direkt
+Nur JSON.`;
 
-  try{
-    const r = await fetch('/api/tools', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        tool: 'makler-lead',
-        makler_slug: slug,
-        name: data.name,
-        telefon: data.telefon,
-        email: data.email,
-        versicherung: data.interesse || data.anliegen || 'Allgemein',
-        nachricht: data.nachricht || data.anfrage_typ || ''
+    const adsRes = await fetch('/api/business', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'ads',
+        messages: [{ role: 'user', content: adsPrompt }],
+        systemOverride: 'Du bist ein Google Ads Experte. Antworte NUR mit validem JSON. Kein Markdown, keine Erklaerungen.'
       })
     });
-    const d = await r.json();
-    if(d.error){ showMsg(msg,'error','Fehler beim Senden. Bitte nochmal versuchen.'); }
-    else {
-      showMsg(msg,'success','✓ Vielen Dank! Ich melde mich innerhalb von 24 Stunden bei Ihnen.');
-      btn.textContent = '✓ Gesendet';
-      clearForm(type);
+    const adsData = await adsRes.json();
+    const rawText = (adsData.content && adsData.content[0] && adsData.content[0].text) || '{}';
+
+    let ads;
+    try {
+      ads = JSON.parse(rawText.replace(/```json|```/g, '').trim());
+    } catch(e) {
+      ads = {
+        headlines: [name.substring(0,28), 'Kostenlos beraten lassen', 'Jetzt Termin vereinbaren', versText.substring(0,28), 'Unverbindlich anfragen'],
+        descriptions: [
+          'Ich vergleiche alle Top-Anbieter für Sie. Kostenlose & unverbindliche Beratung.',
+          'Ihr persönlicher Versicherungsexperte. Jetzt kostenloses Erstgespräch vereinbaren!',
+          'Sparen Sie bei Ihrer Versicherung. Professionelle Beratung — schnell und einfach.'
+        ],
+        cta: 'Jetzt beraten lassen'
+      };
     }
-  }catch(e){
-    showMsg(msg,'error','Verbindungsfehler. Bitte nochmal versuchen.');
+
+    savedAdsData = ads;
+    setLoader(100, 'Fertig!');
+
+    setTimeout(() => {
+      loader.classList.remove('vis');
+      btn.textContent = '✓ Gespeichert!';
+      btn.style.background = '#16a34a';
+      renderAds(ads, slug);
+      msgEl.className = 'msg success';
+      msgEl.textContent = '✓ Deine Landing Page ist live! Deine Google Ads sind fertig — kopiere sie und schalte sie live.';
+      msgEl.style.display = 'block';
+      document.getElementById('ads-section').scrollIntoView({ behavior: 'smooth' });
+    }, 600);
+
+  } catch(e) {
+    loader.classList.remove('vis');
+    msgEl.className = 'msg error';
+    msgEl.textContent = 'Fehler: ' + e.message;
+    msgEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = '💾 Landing Page speichern & Ads generieren';
   }
-  btn.disabled=false;
 }
 
-function showMsg(el, type, text){
-  el.className = 'form-msg '+type;
-  el.textContent = text;
-  el.style.display='block';
-  el.scrollIntoView({behavior:'smooth', block:'nearest'});
+function renderAds(ads, slug) {
+  const section = document.getElementById('ads-section');
+  section.classList.add('vis');
+
+  const url = 'https://virgoio.com/makler/' + slug;
+  document.getElementById('ads-url').textContent = url;
+
+  document.getElementById('ads-headlines').innerHTML = (ads.headlines || []).map(h => {
+    const ok = h.length <= 30;
+    return '<div class="ads-row"><span>' + escHtml(h) + '</span><span class="ads-char ' + (ok ? 'ok' : 'over') + '">' + h.length + '/30</span></div>';
+  }).join('');
+
+  document.getElementById('ads-descriptions').innerHTML = (ads.descriptions || []).map(d => {
+    const ok = d.length <= 90;
+    return '<div class="ads-row"><span>' + escHtml(d) + '</span><span class="ads-char ' + (ok ? 'ok' : 'over') + '">' + d.length + '/90</span></div>';
+  }).join('');
+
+  document.getElementById('ads-cta').textContent = ads.cta || 'Jetzt beraten lassen';
 }
 
-function clearForm(type){
-  document.getElementById('panel-'+type).querySelectorAll('input,textarea,select').forEach(el=>{
-    if(el.type !== 'submit') el.value='';
+function copyUrl() {
+  const url = document.getElementById('ads-url').textContent;
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = document.querySelector('.ads-url-copy');
+    btn.textContent = 'Kopiert!';
+    setTimeout(() => btn.textContent = 'Kopieren', 2000);
   });
 }
 
-
-function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-// ── INLINE EDITING für eingeloggte Makler ──
-let isOwner = false;
-let editMode = false;
-let ownerToken = null;
-
-async function checkOwner(){
-  try{
-    ownerToken = localStorage.getItem('virgo_token');
-    if(!ownerToken) return;
-    const r = await fetch('/api/tools?tool=makler-mine',{headers:{'Authorization':'Bearer '+ownerToken}});
-    const d = await r.json();
-    if(d && d.slug && d.slug === slug){ isOwner=true; showEditBar(); }
-  }catch(e){}
+function copyAllAds() {
+  if (!savedAdsData) return;
+  const lines = [];
+  lines.push('=== GOOGLE ADS ===');
+  lines.push('Ziel-URL: https://virgoio.com/makler/' + savedSlug);
+  lines.push('');
+  lines.push('--- HEADLINES ---');
+  (savedAdsData.headlines || []).forEach((h, i) => lines.push('H' + (i+1) + ': ' + h));
+  lines.push('');
+  lines.push('--- DESCRIPTIONS ---');
+  (savedAdsData.descriptions || []).forEach((d, i) => lines.push('D' + (i+1) + ': ' + d));
+  lines.push('');
+  lines.push('CTA: ' + (savedAdsData.cta || ''));
+  navigator.clipboard.writeText(lines.join('\n')).then(() => {
+    const btn = document.querySelector('.ads-copy-btn');
+    btn.textContent = 'Kopiert!';
+    setTimeout(() => btn.textContent = 'Alles kopieren', 2000);
+  });
 }
 
-function showEditBar(){
-  const bar = document.createElement('div');
-  bar.id = 'edit-bar';
-  bar.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:999;display:flex;gap:8px;align-items:center;background:#111;color:#fff;padding:10px 16px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.3);font-family:DM Sans,sans-serif;font-size:13px';
-  bar.innerHTML = '<span style="opacity:.6;font-size:11px">✏️ Deine Seite</span>'
-    +'<button onclick="toggleEditMode()" id="edit-toggle-btn" style="padding:7px 16px;border-radius:8px;background:#fff;color:#111;border:none;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer">Bearbeiten</button>'
-    +'<button onclick="saveEdits()" id="edit-save-btn" style="display:none;padding:7px 16px;border-radius:8px;background:#16a34a;color:#fff;border:none;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer">💾 Speichern</button>'
-    +'<button onclick="document.getElementById(\'hero-file-input\').click()" id="edit-img-btn" style="display:none;padding:7px 16px;border-radius:8px;background:#2563eb;color:#fff;border:none;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer">📷 Foto</button>'
-    +'<input type="file" id="hero-file-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="handleHeroImg(event)">';
-  document.body.appendChild(bar);
-}
-
-function toggleEditMode(){
-  editMode = !editMode;
-  const btn=document.getElementById('edit-toggle-btn');
-  const saveBtn=document.getElementById('edit-save-btn');
-  const imgBtn=document.getElementById('edit-img-btn');
-  if(editMode){
-    btn.textContent='Abbrechen';btn.style.background='#ef4444';btn.style.color='#fff';
-    saveBtn.style.display='block';imgBtn.style.display='block';
-    // ALLE Text-Elemente editierbar machen
-    document.querySelectorAll('h1,h2,h3,p,span.ziel-check+*,.ziel-item,.trust-item,.section-label,.section-sub').forEach(el=>{
-      if(el.closest('nav')||el.closest('footer')||el.closest('.forms-section')||el.closest('#edit-bar')) return;
-      el.contentEditable='true';
-      el.style.outline='2px dashed #2563eb';
-      el.style.borderRadius='4px';
-      el.style.minHeight='20px';
-      el.style.cursor='text';
+async function regenerateAds() {
+  if (!savedSlug) return;
+  const name = document.getElementById('m-name').value.trim();
+  const versicherungen = Array.from(document.querySelectorAll('.vers-chip.on')).map(c => c.dataset.v);
+  const section = document.getElementById('ads-section');
+  section.style.opacity = '0.5';
+  try {
+    const adsRes = await fetch('/api/business', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'ads',
+        messages: [{ role: 'user', content: 'Erstelle neue Google Ads fuer ' + name + ', Angebot: ' + versicherungen.join(', ') + '. JSON mit headlines (max 30 Zeichen), descriptions (max 90 Zeichen), cta. Nur JSON.' }],
+        systemOverride: 'Antworte NUR mit validem JSON. Kein Markdown.'
+      })
     });
-    // Ziel-Text-Spans direkt editierbar
-    for(let i=0;i<6;i++){
-      const span=document.getElementById('ziel-text-'+i);
-      if(span){
-        span.contentEditable='true';
-        span.style.outline='2px dashed #2563eb';
-        span.style.borderRadius='4px';
-        span.style.cursor='text';
+    const adsData = await adsRes.json();
+    const raw = (adsData.content && adsData.content[0] && adsData.content[0].text) || '{}';
+    const ads = JSON.parse(raw.replace(/```json|```/g, '').trim());
+    savedAdsData = ads;
+    renderAds(ads, savedSlug);
+  } catch(e) {}
+  section.style.opacity = '1';
+}
+
+// Bestehende Daten laden wenn eingeloggt
+async function loadExisting() {
+  if (!authToken) return;
+  try {
+    const r = await fetch('/api/tools?tool=makler-mine', { headers: { 'Authorization': 'Bearer ' + authToken } });
+    const d = await r.json();
+    if (d && d.name) {
+      document.getElementById('m-name').value = d.name || '';
+      document.getElementById('m-slug').value = d.slug || '';
+      document.getElementById('m-tel').value = d.telefon || '';
+      document.getElementById('m-email').value = d.email || '';
+      document.getElementById('m-headline').value = d.headline || '';
+      document.getElementById('m-beschreibung').value = d.beschreibung || '';
+      updateSlugPreview();
+      document.getElementById('preview-name').textContent = d.name || 'Dein Name';
+      if (d.farbe) {
+        selectedColor = d.farbe;
+        document.getElementById('preview-bar').style.background = d.farbe;
+        document.querySelectorAll('.color-dot').forEach(dot => {
+          dot.classList.toggle('on', dot.dataset.c === d.farbe);
+        });
+      }
+      if (d.versicherungen && d.versicherungen.length) {
+        document.querySelectorAll('.vers-chip').forEach(chip => {
+          chip.classList.toggle('on', d.versicherungen.includes(chip.dataset.v));
+        });
+      }
+      if (d.header_image) {
+        const prev = document.getElementById('img-preview');
+        prev.src = d.header_image;
+        prev.style.display = 'block';
       }
     }
-    showVersEdit();
-    // Hinweis
-    const hint=document.createElement('div');
-    hint.id='edit-hint';
-    hint.style.cssText='position:fixed;top:70px;right:20px;background:#2563eb;color:#fff;padding:10px 16px;border-radius:10px;font-size:12px;z-index:999;max-width:220px;line-height:1.5;font-family:DM Sans,sans-serif';
-    hint.textContent='✏️ Alle blau umrandeten Texte kannst du direkt anklicken und bearbeiten.';
-    document.body.appendChild(hint);
-    setTimeout(()=>{const h=document.getElementById('edit-hint');if(h)h.remove();},4000);
-  }else{
-    btn.textContent='Bearbeiten';btn.style.background='#fff';btn.style.color='#111';
-    saveBtn.style.display='none';imgBtn.style.display='none';
-    document.querySelectorAll('[contenteditable="true"]').forEach(el=>{
-      el.contentEditable='false';
-      el.style.outline='';
-      el.style.borderRadius='';
-      el.style.cursor='';
-      el.style.minHeight='';
-    });
-    hideVersEdit();
-  }
+  } catch(e) {}
 }
 
-function showVersEdit(){
-  const tagsEl=document.getElementById('vers-tags');if(!tagsEl)return;
-  const addBtn=document.createElement('button');
-  addBtn.id='vers-add-btn';addBtn.textContent='+ Hinzufügen';
-  addBtn.style.cssText='padding:4px 12px;border-radius:20px;border:1px dashed #2563eb;font-size:12px;color:#2563eb;background:transparent;cursor:pointer;font-family:inherit';
-  addBtn.onclick=()=>{const val=prompt('Versicherung hinzufügen:');if(val&&val.trim()){const span=document.createElement('span');span.className='vers-tag';span.style.cursor='pointer';span.title='Klicken zum Entfernen';span.textContent='✓ '+val.trim();span.onclick=()=>{if(editMode)span.remove();};tagsEl.insertBefore(span,addBtn);}};
-  tagsEl.appendChild(addBtn);
-  tagsEl.querySelectorAll('.vers-tag').forEach(tag=>{tag.style.cursor='pointer';tag.title='Klicken zum Entfernen';tag.onclick=()=>{if(editMode)tag.remove();};});
-}
-
-function hideVersEdit(){
-  const addBtn=document.getElementById('vers-add-btn');if(addBtn)addBtn.remove();
-  document.querySelectorAll('.vers-tag').forEach(tag=>{tag.style.cursor='';tag.title='';tag.onclick=null;});
-}
-
-function handleHeroImg(e){
-  const file=e.target.files[0];if(!file)return;
-  if(file.size>5*1024*1024){alert('Max. 5MB');return;}
-  const reader=new FileReader();
-  reader.onload=ev=>{
-    window._newHeroImg=ev.target.result;
-    // Banner anzeigen mit neuem Bild
-    const banner=document.getElementById('hero-banner');
-    const fallback=document.getElementById('hero-fallback');
-    const bannerImg=document.getElementById('hero-banner-img');
-    if(banner&&bannerImg){
-      banner.style.display='block';
-      if(fallback)fallback.style.display='none';
-      bannerImg.src=ev.target.result;
-      // Headline aus Fallback übernehmen
-      const hl=document.getElementById('hero-headline-fallback');
-      const heroHl=document.getElementById('hero-headline');
-      if(hl&&heroHl)heroHl.textContent=hl.textContent;
-    }
-  };
-  reader.readAsDataURL(file);e.target.value='';
-}
-
-async function saveEdits(){
-  const saveBtn=document.getElementById('edit-save-btn');
-  saveBtn.textContent='Speichert...';saveBtn.disabled=true;
-  const headline=document.getElementById('hero-headline')?.innerText?.trim()||'';
-  const beschreibung=document.getElementById('hero-sub')?.innerText?.trim()||'';
-  const versicherungen=Array.from(document.querySelectorAll('#vers-tags .vers-tag')).map(t=>t.textContent.replace('✓ ','').trim()).filter(Boolean);
-  // Alle editierten Texte als custom_sections speichern
-  const customSections={};
-  // Alle Elemente mit ID erfassen
-  document.querySelectorAll('[contenteditable]').forEach((el)=>{
-    if(el.id) customSections[el.id]=el.innerText.trim();
-  });
-  // Ziel-Items separat erfassen (haben contenteditable aber komplexe Struktur)
-  for(let i=0;i<6;i++){
-    const span=document.getElementById('ziel-text-'+i);
-    if(span) customSections['ziel-text-'+i]=span.innerText.trim();
-  }
-  // Weitere wichtige Texte
-  ['angebot-headline','beschreibung-text'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el) customSections[id]=el.innerText.trim();
-  });
-  const body={tool:'makler-save',slug,headline,beschreibung,versicherungen,custom_sections:JSON.stringify(customSections)};
-  if(window._newHeroImg) body.header_image=window._newHeroImg;
-  if(window._loadedProfile){
-    body.name=window._loadedProfile.name||'';
-    body.telefon=window._loadedProfile.telefon||'';
-    body.email=window._loadedProfile.email||'';
-    body.farbe=window._loadedProfile.farbe||'#111111';
-    if(!body.header_image&&window._loadedProfile.header_image) body.header_image=window._loadedProfile.header_image;
-  }
-  try{
-    const r=await fetch('/api/tools',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+ownerToken},body:JSON.stringify(body)});
-    const d=await r.json();
-    if(d.error){alert('Fehler: '+d.error);saveBtn.textContent='💾 Speichern';saveBtn.disabled=false;return;}
-    // Lokal speichern für nächsten Besuch
-    try{localStorage.setItem('virgo_custom_'+slug,JSON.stringify(customSections));}catch(e){}
-    saveBtn.textContent='✓ Gespeichert!';
-    setTimeout(()=>{saveBtn.textContent='💾 Speichern';saveBtn.disabled=false;toggleEditMode();window._newHeroImg=null;},1500);
-  }catch(e){alert('Fehler: '+e.message);saveBtn.textContent='💾 Speichern';saveBtn.disabled=false;}
-}
-
-// ── INIT ──
-loadProfile();
-checkOwner();
-
+loadExisting();
 </script>
 </body>
 </html>
+
