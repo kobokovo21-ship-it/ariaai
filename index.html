@@ -80,7 +80,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
 .mw.user{align-items:flex-end}
 .bb{max-width:85%;padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.7;font-weight:300}
 .mw.user .bb{background:var(--t);color:#fff;border-bottom-right-radius:4px}
-.mw.ai .bb{background:var(--sf);border:1px solid var(--bd);border-bottom-left-radius:4px}
+.mw.ai .bb{background:transparent;border:none;border-bottom-left-radius:4px}
 .mt2{font-size:10px;color:var(--td);padding:0 4px}
 .aav{width:22px;height:22px;border-radius:50%;background:var(--t);color:#fff;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;flex-shrink:0;margin-top:2px}
 .tw{display:flex;align-items:flex-start;gap:8px}
@@ -839,6 +839,13 @@ async function send(){
     return;
   }
 
+  // Auto-Bild-Erkennung
+  const _bildKw=['erstell mir ein bild','mach ein bild','generier ein bild','erstelle ein bild','mach mir ein bild','bild erstellen','bild generieren','create an image','make an image'];
+  if(state.model==='chat' && _bildKw.some(k=>txt.toLowerCase().includes(k))){
+    state.model='img-nano';state.modelName='Virgo Vision';
+    document.querySelectorAll('.mp').forEach(p=>p.classList.remove('on'));
+    document.getElementById('mode-img').classList.add('on');
+  }
   const mode=state.model==='video'?'video':(state.model.startsWith('img')?'img':'chat');
   const ct=state.model==='video'?'vid':mode;
   if(isFreePlan()){if(mode!=='chat'){openUpgrade();return;}if(freeChatsUsed()>=5){openUpgrade();return;}localStorage.setItem('virgo_free_chats',freeChatsUsed()+1);applyFreeRestrictions();}
@@ -967,6 +974,30 @@ function _applyWorkspace(ws){document.getElementById('ws-makler').style.display=
 function setWorkspace(ws){_applyWorkspace(ws);applyFreeRestrictions();}
 _applyWorkspace(localStorage.getItem('virgo_workspace')||'makler');
 applyFreeRestrictions();
+
+// Drag & Drop
+document.getElementById('feed').addEventListener('dragover', e => e.preventDefault());
+document.getElementById('feed').addEventListener('drop', async e => {
+  e.preventDefault();
+  const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+  for (const file of files.slice(0, 4 - refImages.length)) {
+    if (file.size > 5*1024*1024) continue;
+    const c = await compressImg(file);
+    refImages.push(c);
+  }
+  renderRefZone();
+});
+// Paste Ctrl+V
+document.addEventListener('paste', async e => {
+  const items = Array.from(e.clipboardData.items).filter(i => i.type.startsWith('image/'));
+  for (const item of items.slice(0, 4 - refImages.length)) {
+    const file = item.getAsFile();
+    if (!file) continue;
+    const c = await compressImg(file);
+    refImages.push(c);
+    renderRefZone();
+  }
+});
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('/sw.js').catch(()=>{});});}</script>
 <script src="/makler-setup.js"></script>
