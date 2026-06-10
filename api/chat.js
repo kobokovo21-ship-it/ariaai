@@ -1,3 +1,18 @@
+export const config = { maxDuration: 60 };
+
+// === BILD-ERKENNUNG: Erkennt, ob der User ein Bild will ===
+function isImageRequest(text) {
+  const t = (text || '').toLowerCase();
+  const verbs = ['erstell', 'mach', 'generier', 'erzeug', 'kreier', 'zeichn', 'design', 'bau mir', 'create', 'generate', 'make'];
+  const nouns = ['bild', 'foto', 'grafik', 'illustration', 'image', 'visual', 'motiv', 'hero'];
+  const hasVerb = verbs.some(v => t.includes(v));
+  const hasNoun = nouns.some(n => t.includes(n));
+  // Direkte Formulierungen ohne Verb
+  const directPatterns = ['ein bild von', 'ein foto von', 'bild für', 'foto für', 'bild zu', 'foto zu'];
+  const isDirect = directPatterns.some(p => t.includes(p));
+  return (hasVerb && hasNoun) || isDirect;
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -29,6 +44,37 @@ export default async function handler(req, res) {
       });
     }
 
+    // === AUTOMATISCHE BILDGENERIERUNG IM CHAT ===
+    // Wenn der User ein Bild will, wird direkt die Bild-API aufgerufen (mit Prompt-Enhancement)
+    if (!codeMode && !isPromptMode && !systemOverride && isImageRequest(lastText)) {
+      try {
+        const host = req.headers.host;
+        const proto = host && host.includes('localhost') ? 'http' : 'https';
+        const imgRes = await fetch(`${proto}://${host}/api/generate-image`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: lastText })
+        });
+        const imgData = await imgRes.json();
+        if (imgRes.ok && imgData.imageUrl) {
+          return res.status(200).json({
+            content: [{ type: 'text', text: 'Hier ist dein Bild. Sag mir, wenn du eine andere Variante möchtest.' }],
+            imageUrl: imgData.imageUrl,
+            generatedImage: true
+          });
+        }
+        // Bild fehlgeschlagen → ehrliche Antwort statt KI-Text
+        return res.status(200).json({
+          content: [{ type: 'text', text: 'Die Bildgenerierung hat gerade nicht geklappt. Versuch es bitte gleich nochmal oder beschreib das Bild etwas genauer.' }]
+        });
+      } catch (imgErr) {
+        console.error('Chat-Bildgenerierung fehlgeschlagen:', imgErr.message);
+        return res.status(200).json({
+          content: [{ type: 'text', text: 'Die Bildgenerierung hat gerade nicht geklappt. Versuch es bitte gleich nochmal.' }]
+        });
+      }
+    }
+
     const systemPrompt = systemOverride || (isPromptMode
       ? `Du bist ein professioneller KI-Prompt-Generator für Bildgenerierung. Wenn der User Stichwörter gibt, wandelst du sie in einen perfekten englischen Bild-Prompt um. Format: Gib NUR den fertigen Prompt zurück, ohne Erklärung. Der Prompt soll detailliert sein mit: Motiv, Stil, Beleuchtung, Qualität, Kamera-Details. Beispiel Input: "versicherungsmakler büro" → Output: "Professional insurance broker office, modern minimalist design, natural daylight through large windows, German business aesthetic, trustworthy and welcoming atmosphere, high-end interior photography, 8K resolution, commercial photography"`
       : codeMode
@@ -37,7 +83,7 @@ export default async function handler(req, res) {
 
 WICHTIG - SCHREIBWEISE: Schreib wie ein Mensch spricht. Normaler fließender Text. KEIN Markdown, KEIN Fettdruck mit Sternchen wie **text**, KEINE Links in Klammern wie [text](url), KEINE Aufzählungszeichen mit Bindestrichen. Nur normaler Text mit Zeilenumbrüchen.
 
-BILDER: Wenn jemand ein Bild will, frag ihn was drauf sein soll — der Bild-Modus wird automatisch aktiviert. Sag NIE "klick auf den Bild-Button". Sag einfach "Beschreib mir was auf dem Bild sein soll" und es wird automatisch generiert.
+BILDER: Wenn jemand ein Bild will, frag ihn was drauf sein soll — das Bild wird dann automatisch direkt im Chat generiert. Sag NIE "klick auf den Bild-Button". Sag einfach "Beschreib mir was auf dem Bild sein soll" und es wird automatisch generiert.
 
 DEINE ZIELGRUPPE: Versicherungsmakler in Deutschland — von Einzelmaklern bis zu Maklerbüros. Du verstehst ihre Pain Points: Leads generieren, Termine bekommen, Anträge abschließen, Kunden binden, Compliance einhalten.
 
