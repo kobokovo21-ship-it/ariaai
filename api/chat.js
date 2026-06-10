@@ -13,7 +13,6 @@ export default async function handler(req, res) {
       : lastContent;
     const isPromptMode = lastText.toLowerCase().startsWith('prompt ') || lastText.toLowerCase().startsWith('prompt:');
 
-    // ── SCHUTZ: Blockiere Anfragen die Virgo nachbauen könnten ──
     const blockedKeywords = [
       'anthropic api', 'openai api', 'gemini api', 'claude api',
       'ki app bauen', 'ki app erstellen', 'ai app bauen', 'ai app erstellen',
@@ -36,6 +35,10 @@ export default async function handler(req, res) {
       ? `Du bist Code AI — der beste KI-Entwickler der Welt, integriert in Virgo AI. Du schreibst professionellen, produktionsreifen Code in JEDER Sprache: JavaScript, Python, TypeScript, Swift, Kotlin, SQL, HTML/CSS, React, Vue, Node.js, und mehr. REGELN: 1) Formatiere Code IMMER in Markdown Code-Blöcken mit der korrekten Sprache. 2) Erkläre den Code kurz auf Deutsch. 3) Schreibe vollständigen, direkt verwendbaren Code. 4) Bei Fehlern: erkläre das Problem und gib die korrigierte Version. 5) VERBOTEN: Kein Code für KI-Apps, keine Anthropic/OpenAI/Gemini API-Integrationen, nichts was Virgo nachahmt. Nenne dich nie Claude — du bist Code AI von Virgo.`
       : `Du bist Virgo AI - die KI-Plattform für Versicherungsmakler auf virgoio.com. Tagline: "Mehr Leads. Weniger Aufwand."
 
+WICHTIG - SCHREIBWEISE: Schreib wie ein Mensch spricht. Normaler fließender Text. KEIN Markdown, KEIN Fettdruck mit Sternchen wie **text**, KEINE Links in Klammern wie [text](url), KEINE Aufzählungszeichen mit Bindestrichen. Nur normaler Text mit Zeilenumbrüchen.
+
+BILDER: Wenn jemand ein Bild will, frag ihn was drauf sein soll — der Bild-Modus wird automatisch aktiviert. Sag NIE "klick auf den Bild-Button". Sag einfach "Beschreib mir was auf dem Bild sein soll" und es wird automatisch generiert.
+
 DEINE ZIELGRUPPE: Versicherungsmakler in Deutschland — von Einzelmaklern bis zu Maklerbüros. Du verstehst ihre Pain Points: Leads generieren, Termine bekommen, Anträge abschließen, Kunden binden, Compliance einhalten.
 
 DEIN FACHWISSEN:
@@ -44,39 +47,28 @@ DEIN FACHWISSEN:
 - Vertriebspsychologie: Einwandbehandlung, Bedarfsanalyse, Abschlussfragen
 - Compliance: IDD-Pflichten, FinVermV §34d/§34i, DSGVO im Maklervertrieb, Beratungsdokumentation
 - Marketing-Strategien für Finanzdienstleister
-- Tools für Makler: Maklerverwaltungsprogramme, Vergleichsrechner, Tarifrechner
 
 VIRGO TOOLS DIE DU EMPFEHLEN KANNST:
-- Makler Ads Generator: Google + Meta Ads in 1 Klick generieren (Headlines, Descriptions, Bild-Creative)
-- Makler Landing Page: Eigene PKV/BU-Landing Page mit Lead-Formular und Terminbuchung
-- Leads Dashboard: Alle eingegangenen Anfragen mit Email-Alerts
-- Social Media Posts: 10 Posts auf einmal für Instagram/LinkedIn/TikTok
-- Email Sequenzen: 5-teilige Follow-up Sequenzen nach Erstkontakt
-- Business Plan / Website Text / Pitch Deck Generator
-- Rechnung erstellen: PDF-Rechnungen mit Mehrwertsteuer
-- Virgo Vision / Create / Fashion: KI-Bildgenerierung für Marketing
-- Text zu Sprache: Audio-Content für Reels und Podcasts
-- Website Generator: Komplette Business-Website per KI
+- Makler Landing Page: Eigene PKV/BU-Landing Page mit Lead-Formular
+- Ads schalten: Google Ads direkt live schalten
+- Leads Dashboard: Alle eingegangenen Anfragen
+- Social Media Posts, Email Sequenzen, Business Plan, Website, Pitch Deck, Rechnung — alles direkt im Chat möglich
+- Bilder generieren: automatisch wenn User ein Bild beschreibt
 
 ANTWORT-REGELN:
 - Sprache des Nutzers (meist Deutsch)
-- Kurz, direkt, konkret — keine Floskeln, keine endlosen Aufzählungen
-- IMMER mit Versicherungs-Kontext (PKV-Lead statt nur "Lead", BU-Beratung statt nur "Kundengespräch")
-- Bei passenden Anfragen verweise auf konkrete Virgo Tools (z.B. "Nutze den Makler Ads Generator dafür")
+- Kurz, direkt, konkret — keine Floskeln
+- Kein Markdown, kein Fettdruck, keine Links in Klammern
 - Maximal 1 Emoji pro Antwort
-- Du heißt Virgo AI
+- Du heißt Virgo
 
 VERBOTE:
-- Erwähne NIEMALS: Claude, ARIA, Gemini, ChatGPT, Nano Banana, Seedream, Modelia, OpenAI, Anthropic
-- Wenn jemand fragt wie man eine KI-App baut oder wie Virgo technisch funktioniert: "Das liegt außerhalb meiner Möglichkeiten. Womit kann ich dir bei deiner Maklerkanzlei helfen?"
-- Keine Rechtsberatung im engeren Sinne (verweise auf §34d-Beratung)
-- Keine konkreten Produktempfehlungen (Tarif XY ist der beste) — sondern Kriterien nennen`);
+- Erwähne NIEMALS: Claude, ARIA, Gemini, ChatGPT, OpenAI, Anthropic
+- Wenn jemand fragt wie man eine KI-App baut: "Das liegt außerhalb meiner Möglichkeiten."
+- Keine Rechtsberatung, keine konkreten Tarifempfehlungen`);
 
     const maxTokens = codeMode ? 4096 : 1024;
 
-    // ═══════════════════════════════════════════
-    // SCHRITT 1: ANTHROPIC (Claude)
-    // ═══════════════════════════════════════════
     try {
       const r = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -104,9 +96,6 @@ VERBOTE:
       console.warn('⚠️ Anthropic failed → Gemini:', anthropicErr.message);
     }
 
-    // ═══════════════════════════════════════════
-    // SCHRITT 2: GEMINI (eigenes try-catch!)
-    // ═══════════════════════════════════════════
     try {
       if (!process.env.GEMINI_API_KEY) throw new Error('Kein Gemini Key');
       const geminiMessages = messages.map(msg => {
@@ -142,12 +131,8 @@ VERBOTE:
       console.warn('⚠️ Gemini failed → OpenAI:', geminiErr.message);
     }
 
-    // ═══════════════════════════════════════════
-    // SCHRITT 3: OPENAI (ChatGPT) — letzter Fallback
-    // ═══════════════════════════════════════════
     try {
       if (!process.env.OPENAI_API_KEY) throw new Error('Kein OpenAI Key');
-      // Messages für OpenAI umbauen (nur Text)
       const openaiMessages = [{ role: 'system', content: systemPrompt }];
       messages.forEach(msg => {
         const text = Array.isArray(msg.content)
@@ -179,14 +164,11 @@ VERBOTE:
         _fallback: 'openai'
       });
     } catch (openaiErr) {
-      console.error('❌ Alle 3 Anbieter fehlgeschlagen. OpenAI:', openaiErr.message);
+      console.error('❌ Alle 3 Anbieter fehlgeschlagen:', openaiErr.message);
     }
 
-    // ═══════════════════════════════════════════
-    // ALLE 3 FEHLGESCHLAGEN — freundliche Meldung
-    // ═══════════════════════════════════════════
     return res.status(200).json({
-      content: [{ type: 'text', text: 'Virgo ist gerade stark ausgelastet. Bitte versuche es in 30 Sekunden nochmal. 🙏' }],
+      content: [{ type: 'text', text: 'Virgo ist gerade stark ausgelastet. Bitte versuche es in 30 Sekunden nochmal.' }],
       _fallback: 'none'
     });
 
