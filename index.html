@@ -807,6 +807,14 @@ async function send(){
     return;
   }
 
+  // Auto-Bild-Erkennung: wenn User ein Bild will, automatisch in Bild-Modus wechseln
+  const bildKeywords = ['erstell mir ein bild','generier ein bild','mach ein bild','bild erstellen','bild generieren','erstelle ein bild','mach mir ein bild','generiere ein bild','create an image','make an image','erzeuge ein bild'];
+  const txtLower = txt.toLowerCase();
+  if(state.model==='chat' && bildKeywords.some(k => txtLower.includes(k))) {
+    state.model='img-nano';state.modelName='Virgo Vision';
+    document.querySelectorAll('.mp').forEach(p=>p.classList.remove('on'));
+    document.getElementById('mode-img').classList.add('on');
+  }
   const mode=state.model==='video'?'video':(state.model.startsWith('img')?'img':'chat');
   const ct=state.model==='video'?'vid':mode;
   if(isFreePlan()){if(mode!=='chat'){openUpgrade();return;}if(freeChatsUsed()>=5){openUpgrade();return;}localStorage.setItem('virgo_free_chats',freeChatsUsed()+1);applyFreeRestrictions();}
