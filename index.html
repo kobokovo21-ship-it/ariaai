@@ -397,7 +397,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
         <button class="preview-close" onclick="closePreview()" title="Schließen">×</button>
       </div>
       <div class="preview-iframe-wrap">
-        <iframe id="preview-frame" title="Website Vorschau" sandbox="allow-scripts allow-same-origin"></iframe>
+        <iframe id="preview-frame" title="Website Vorschau" style="width:100%;height:100%;border:none;background:#fff"></iframe>
       </div>
       <div class="preview-actions">
         <button class="prev-btn" onclick="previewFullscreen()">⛶ Vollbild</button>
@@ -618,13 +618,16 @@ function openPreview(html,title){
   currentWebsiteName=(title||'website').toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'').replace(/-+/g,'-')||'website';
   document.getElementById('preview-title').textContent=title||'Vorschau';
   const frame=document.getElementById('preview-frame');
-  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
-  frame.src=URL.createObjectURL(blob);
+  // Use srcdoc — works everywhere without blob URL or sandbox issues
+  frame.removeAttribute('src');
+  frame.srcdoc=html;
   document.getElementById('preview-panel').classList.add('open');
 }
 function closePreview(){
   document.getElementById('preview-panel').classList.remove('open');
-  document.getElementById('preview-frame').src='about:blank';
+  const frame=document.getElementById('preview-frame');
+  frame.removeAttribute('srcdoc');
+  frame.removeAttribute('src');
 }
 function previewFullscreen(){
   const html=currentWebsiteHtml;if(!html)return;
@@ -652,12 +655,18 @@ function wantsImage(txt){
          /\b(bild|image)\b.{0,20}(erstellen|generieren|machen)/i.test(txt.toLowerCase());
 }
 function extractHtml(raw){
-  let s=String(raw||'').trim().replace(/```html\s*/gi,'').replace(/```/g,'').trim();
-  const i=s.toLowerCase().indexOf('<!doctype html');
-  if(i>=0)s=s.slice(i);
-  else{const j=s.toLowerCase().indexOf('<html');if(j>=0)s=s.slice(j);}
-  const e=s.toLowerCase().lastIndexOf('</html>');
-  if(e>=0)s=s.slice(0,e+7);
+  // strip all markdown fences
+  let s=String(raw||'').replace(/```[a-z]*\n?/gi,'').replace(/```/g,'').trim();
+  // find doctype or html tag
+  const lo=s.toLowerCase();
+  let start=lo.indexOf('<!doctype html');
+  if(start<0)start=lo.indexOf('<html');
+  if(start<0)return '';
+  s=s.slice(start);
+  // find closing tag
+  const end=s.toLowerCase().lastIndexOf('</html>');
+  if(end>=0)s=s.slice(0,end+7);
+  // validate it has basic structure
   return /<html[\s>]/i.test(s)&&/<body[\s>]/i.test(s)?s:'';
 }
 
@@ -865,67 +874,211 @@ function endGen(){state.generating=false;clearInterval(genTimer);document.getEle
 function cancelGen(){clearInterval(genTimer);endGen();hideTyping();}
 
 // ═══════════════════════════════════════
-// SEND
+// UNIVERSELLER AGENT
 // ═══════════════════════════════════════
+
+// Intent detection
+const WEBSITE_INTENT=/(bau|baue|erstell|erstelle|mach|generier|design|entwickl|build|create).{0,30}(website|webseite|homepage|landingpage|landing page|shop|onlineshop|firmenwebsite|makler.?website|seite)|(website|webseite|homepage).{0,20}(bauen|erstellen|machen|generieren)/i;
+const IMAGE_GEN_INTENT=/(erstell|mach|generier|erzeug|zeichn|create|make|draw|design).{0,25}(bild|image|foto|photo|visual|grafik|logo|banner|werbebild|produktbild)/i;
+const WEBSITE_UPDATE_INTENT=/(änder|update|aktualisier|passe an|ersetze|füge.{0,10}ein|bearbeite|überarbeite).{0,40}(website|webseite|seite|design|farbe|text|layout)/i;
+
+function detectIntent(txt){
+  if(WEBSITE_UPDATE_INTENT.test(txt)&&currentWebsiteHtml)return'website_update';
+  if(WEBSITE_INTENT.test(txt))return'website';
+  if(IMAGE_GEN_INTENT.test(txt))return'image';
+  return'chat';
+}
+
+// Website Q&A state
+const WEB={active:false,collecting:false,step:0,data:{},imgBase64:null,imgMime:null};
+const WEB_Q=[
+  {key:'name',q:'Wie heißt dein Unternehmen oder dein Name?'},
+  {key:'branche',q:'In welcher Branche bist du tätig?\n(z.B. Versicherung, Mode, Restaurant, IT, Handwerk...)'},
+  {key:'angebot',q:'Was bietest du an? Kurz in 1-2 Sätzen.'},
+  {key:'zielgruppe',q:'Wer sind deine Kunden?'},
+  {key:'farbe',q:'Welche Hauptfarbe soll die Website haben?\n\n⚫ Schwarz  🔵 Blau  🟢 Grün  🟣 Lila  🔴 Rot  🟠 Orange  🩵 Türkis'},
+];
+const CLR={schwarz:'#111',black:'#111','⚫':'#111',blau:'#2563eb',blue:'#2563eb','🔵':'#2563eb','grün':'#16a34a',gruen:'#16a34a',green:'#16a34a','🟢':'#16a34a',lila:'#9333ea',purple:'#9333ea','🟣':'#9333ea',rot:'#dc2626',red:'#dc2626','🔴':'#dc2626',orange:'#ea580c','🟠':'#ea580c','türkis':'#0891b2',tuerkis:'#0891b2',teal:'#0891b2','🩵':'#0891b2'};
+
 async function send(){
-  const inp=document.getElementById('prompt');const txt=inp.value.trim();if(!txt||state.generating)return;
+  const inp=document.getElementById('prompt');
+  const txt=inp.value.trim();
+  if(!txt||state.generating)return;
   inp.value='';inp.style.height='24px';
+
+  // website Q&A mode
+  if(WEB.active&&WEB.collecting){
+    if(!state.chatStarted){state.chatStarted=true;const _l=document.getElementById('landing');if(_l)_l.style.display='none';}
+    addUserMsg(txt);
+    conversationHistory.push({role:'user',content:txt});
+    await handleWebsiteQA(txt);
+    return;
+  }
 
   // free plan gate
   if(isFreePlan()){if(freeChatsUsed()>=5){openUpgrade();return;}localStorage.setItem('virgo_free_chats',freeChatsUsed()+1);applyFreeRestrictions();}
 
-  // start chat if needed
-  if(!state.chatStarted){state.chatStarted=true;const _l=document.getElementById('landing');if(_l)_l.style.display='none';document.getElementById('chat-title').textContent=txt.substring(0,40)+(txt.length>40?'...':'');}
+  // start chat
+  if(!state.chatStarted){
+    state.chatStarted=true;
+    const _l=document.getElementById('landing');if(_l)_l.style.display='none';
+    document.getElementById('chat-title').textContent=txt.substring(0,40)+(txt.length>40?'...':'');
+  }
 
-  // attach images if present
+  // build message with images
   const hasImgs=refImages.length>0;
-  if(hasImgs){conversationHistory.push({role:'user',content:[...refImages.map(img=>({type:'image',source:{type:'base64',media_type:img.mime,data:img.b64}})),{type:'text',text:txt}]});}
-  else{conversationHistory.push({role:'user',content:txt});}
+  const capturedImgs=[...refImages];
+  if(hasImgs){
+    conversationHistory.push({role:'user',content:[
+      ...capturedImgs.map(img=>({type:'image',source:{type:'base64',media_type:img.mime,data:img.b64}})),
+      {type:'text',text:txt}
+    ]});
+    clearRef();
+  } else {
+    conversationHistory.push({role:'user',content:txt});
+  }
   addUserMsg(txt,hasImgs);
-  if(hasImgs)clearRef();
   lastUserMsg=txt;
   saveChat(document.getElementById('chat-title').textContent,conversationHistory);
 
-  // auto-detect image request
-  if(wantsImage(txt)&&state.model==='chat'){state.model='img-nano';state.modelName='Virgo Vision';}
+  const intent=detectIntent(txt);
 
-  const mode=state.model.startsWith('img')?'img':'chat';
-  if(mode==='img'){if(!(await useCredits('img')))return;genImage(txt);}
-  else{genChat(txt);}
+  if(intent==='image'){
+    if(!(await useCredits('img')))return;
+    genImage(txt,capturedImgs);
+  } else if(intent==='website'){
+    startWebsiteFlow(txt,capturedImgs);
+  } else if(intent==='website_update'){
+    genWebsiteUpdate(txt);
+  } else {
+    genChat(txt);
+  }
+}
+
+function startWebsiteFlow(txt,imgs){
+  WEB.active=true;WEB.collecting=true;WEB.step=0;WEB.data={_request:txt};
+  WEB.imgBase64=imgs&&imgs.length?imgs[0].b64:null;
+  WEB.imgMime=imgs&&imgs.length?imgs[0].mime:null;
+  addAIMsg('🌐 <b>Website wird gebaut!</b> Ich stelle dir 5 kurze Fragen.<br><br>'+WEB_Q[0].q);
+}
+
+async function handleWebsiteQA(answer){
+  const q=WEB_Q[WEB.step];
+  if(q.key==='farbe'){
+    const lo=answer.toLowerCase();let c='#111';
+    for(const[k,v]of Object.entries(CLR)){if(lo.includes(k)){c=v;break;}}
+    WEB.data[q.key]=c;
+  } else if(answer.toLowerCase().trim()==='nein'||answer.trim()==='-'){
+    WEB.data[q.key]='';
+  } else {
+    WEB.data[q.key]=answer;
+  }
+  WEB.step++;
+  if(WEB.step>=WEB_Q.length){
+    WEB.collecting=false;
+    addAIMsg('🔥 Perfekt! Ich baue jetzt deine Website...');
+    await buildWebsite(false,'');
+  } else {
+    addAIMsg(WEB_Q[WEB.step].q);
+  }
+}
+
+async function buildWebsite(isUpdate,updateRequest){
+  startGen(isUpdate?'Website wird aktualisiert...':'Website wird gebaut...');showTyping();
+  const d=WEB.data;
+  const imgNote=WEB.imgBase64?'\nDer User hat ein Referenzbild hochgeladen. Verwende es als Hero-Bild: <img src="data:'+WEB.imgMime+';base64,'+WEB.imgBase64+'" style="max-width:100%;border-radius:12px">':'';
+
+  let prompt;
+  if(isUpdate){
+    prompt='Ich habe diese Website:\n\n'+currentWebsiteHtml.substring(0,4000)+'\n\n[ÄNDERUNG]: '+updateRequest+'\n\nGib mir die komplette aktualisierte Website. Nur HTML, beginne mit <!DOCTYPE html>.';
+  } else {
+    prompt=`Erstelle eine professionelle, vollständige Website als reines HTML.
+
+Name/Unternehmen: ${d.name||d._request||''}
+Branche: ${d.branche||''}
+Angebot: ${d.angebot||''}
+Zielgruppe: ${d.zielgruppe||''}
+Hauptfarbe: ${d.farbe||'#111111'}
+${imgNote}
+
+PFLICHTANFORDERUNGEN:
+1. Fixe Navigation (position:fixed) mit Logo links, Links rechts
+2. Hero mit großem Titel (clamp(48px,10vw,120px)), Untertitel, CTA-Button, Hintergrund-Animation
+3. Leistungen in 3er-Grid mit Icons (Unicode-Emojis direkt im HTML)
+4. Ueber uns Sektion mit Text
+5. Kontaktformular (Name, Email, Nachricht, Senden-Button)
+6. Footer mit Copyright
+7. Vollstaendig responsive mit clamp() und media queries
+8. Scroll-Animationen mit reinem JavaScript IntersectionObserver
+9. CSS Custom Properties in :root fuer Farben
+
+KRITISCH - IFRAME KOMPATIBILITAET:
+- KEIN jQuery, KEIN Bootstrap, KEIN React, KEIN Vue - NUR vanilla JS
+- Google Fonts NUR als @import in <style> Tag: @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
+- KEINE externen <script src="..."> Tags
+- KEIN CDN fuer JS-Libraries
+- Alle JavaScript Animationen in try-catch einwickeln
+- Alle Bilder entweder als Placeholder-Divs (kein <img> mit externen URLs) oder als inline CSS background
+
+NUR HTML - direkt mit <!DOCTYPE html> beginnen. Kein Text davor oder danach. Keine Backticks.`;
+  }
+
+  const sys='Du bist ein Elite-Webdesigner. Antworte NUR mit komplettem HTML-Code. Beginne direkt mit <!DOCTYPE html>. Absolut kein Text davor oder danach, keine Backticks, kein Markdown.';
+
+  try{
+    const r=await fetchWithRetry('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:[{role:'user',content:prompt}],systemOverride:sys})});
+    const resp=await r.json();
+    hideTyping();endGen();
+    let html=(resp.content&&resp.content[0]&&resp.content[0].text)||'';
+    html=extractHtml(html);
+    if(!html){addAIMsg('❌ Fehler beim Generieren. Schreib "nochmal" zum Wiederholen.');WEB.active=false;return;}
+    currentWebsiteHtml=html;
+    currentWebsiteName=(d.name||'website').toLowerCase().replace(/[^a-z0-9]/g,'-').replace(/-+/g,'-')||'website';
+    WEB.active=false;
+    // auto-open preview
+    openPreview(html,d.name||'Website');
+    const pid='p'+Date.now();window['_h_'+pid]=html;
+    conversationHistory.push({role:'assistant',content:'[Website generiert und Vorschau geöffnet]'});
+    saveChat(document.getElementById('chat-title').textContent,conversationHistory);
+    var _previewBtn='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button onclick="openPreview(currentWebsiteHtml,\'Website\')" style="padding:9px 14px;background:var(--t);color:#fff;border:none;border-radius:7px;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer">Vorschau</button><button onclick="previewDownload()" style="padding:9px 14px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:7px;font-family:Inter,sans-serif;font-size:12px;cursor:pointer">Download</button></div>';
+    addAIMsg('✅ <b>Deine Website ist fertig!</b> Die Vorschau ist rechts geöffnet.<br><br>'+_previewBtn+'<br><span style="font-size:12px;color:var(--tm)">Änderung gewünscht? Schreib z.B. "Mache die Farbe blau"</span>');
+  }catch(e){hideTyping();endGen();addAIMsg('❌ Fehler: '+e.message);WEB.active=false;}
+}
+
+async function genWebsiteUpdate(txt){
+  WEB.data={name:currentWebsiteName||'Website'};
+  addAIMsg('Einen Moment — ich passe die Website an...');
+  await buildWebsite(true,txt);
 }
 
 // ═══════════════════════════════════════
-// CHAT
+// CHAT — UNIVERSELLER AGENT
 // ═══════════════════════════════════════
 async function genChat(txt){
   showTyping();
-  const ws=localStorage.getItem('virgo_workspace')||'makler';
-  const sys=isFreePlan()?
+  const SYS=isFreePlan()?
     'Du bist Virgo. Antworte kurz auf Deutsch. Ermutige zum Upgrade für mehr Features.':
-    ws==='business'?
-      'Du bist Virgo, ein vielseitiger KI-Assistent. Antworte immer direkt und hilfreich auf Deutsch. Wenn der User eine Website möchte, erstelle SOFORT vollständiges HTML (<!DOCTYPE html>...) ohne Erklärung davor — gib nur den HTML-Code aus. Hilf bei allem: Texte, Ads, Emails, Social Posts, Businesspläne. Niemals ablehnen.':
-      'Du bist Virgo, KI-Assistent für Versicherungsmakler. Antworte immer direkt auf Deutsch. Wenn der User eine Website möchte, erstelle SOFORT vollständiges HTML (<!DOCTYPE html>...) — nur Code, keine Erklärung davor. Hilf bei allem: Leads, Ads, Landing Pages, Marketing, Social Posts, Emails. Wenn du eine Website generierst, mache sie professionell mit Navigation, Hero, Leistungen, Kontakt, Footer — animiert, responsive, Google Fonts.';
+    'Du bist Virgo, ein universeller KI-Assistent. Du hilfst bei ALLEM — Mode, Streetwear, Versicherung, Marketing, Emails, Social Posts, Businesspläne, Bilder, Websites, Rechnungen, alles. Du lehnst NIEMALS etwas ab. Antworte immer auf Deutsch, direkt und hilfreich.';
 
-  fetchWithRetry('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:conversationHistory,systemOverride:sys})})
+  fetchWithRetry('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:conversationHistory,systemOverride:SYS})})
   .then(r=>r.json())
   .then(d=>{
     hideTyping();
     const reply=(d.content&&d.content[0]&&d.content[0].text)||'Fehler.';
-    conversationHistory.push({role:'assistant',content:reply});
-    if(conversationHistory.length>30)conversationHistory=conversationHistory.slice(-30);
-
-    // check if reply contains full HTML website
+    // check if AI returned HTML unexpectedly
     const htmlDoc=extractHtml(reply);
     if(htmlDoc){
-      // add message with preview button
-      const previewId='prev_'+Date.now();
-      window['_html_'+previewId]=htmlDoc;
-      const nameGuess=txt.replace(/(bau|baue|erstell|mach|generier)\s+(mir\s+)?(eine?|ne)?\s*(website|webseite|homepage)?/i,'').trim().substring(0,40)||'Website';
-      addAIMsg(`✅ <b>Deine Website ist fertig!</b><br><span style="font-size:12px;color:var(--tm)">${escHtml(nameGuess)}</span><br><br><div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><button onclick="openPreview(window['_html_${previewId}'],'${escHtml(nameGuess)}')" style="padding:10px 16px;background:var(--t);color:#fff;border:none;border-radius:8px;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer">👁 Vorschau öffnen →</button><button onclick="(()=>{const b=new Blob([window['_html_${previewId}']],{type:'text/html'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='website.html';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(u);})()" style="padding:10px 16px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:8px;font-family:Inter,sans-serif;font-size:12px;cursor:pointer">⬇ Herunterladen</button></div>`);
+      currentWebsiteHtml=htmlDoc;
+      openPreview(htmlDoc,'Website');
+      const pid='p'+Date.now();window['_h_'+pid]=htmlDoc;
+      conversationHistory.push({role:'assistant',content:'[Website generiert]'});
+      if(conversationHistory.length>30)conversationHistory=conversationHistory.slice(-30);
       saveChat(document.getElementById('chat-title').textContent,conversationHistory);
+      addAIMsg('✅ <b>Website fertig!</b> Vorschau rechts geöffnet.<br><br><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button onclick="openPreview(currentWebsiteHtml,\'Website\')" style="padding:9px 14px;background:var(--t);color:#fff;border:none;border-radius:7px;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer">Vorschau</button><button onclick="previewDownload()" style="padding:9px 14px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:7px;font-family:Inter,sans-serif;font-size:12px;cursor:pointer">Download</button></div>');
       return;
     }
-
+    conversationHistory.push({role:'assistant',content:reply});
+    if(conversationHistory.length>30)conversationHistory=conversationHistory.slice(-30);
     addAIMsg(renderMD(reply));
     saveChat(document.getElementById('chat-title').textContent,conversationHistory);
   })
@@ -935,25 +1088,30 @@ async function genChat(txt){
 // ═══════════════════════════════════════
 // IMAGE GEN
 // ═══════════════════════════════════════
-function genImage(prompt){
+async function genImage(prompt,imgs){
+  imgs=imgs||[];
   startGen('Bild wird erstellt...');showTyping();
-  const body={prompt,model:'nano',negative_prompt:'ai-look,cartoon,deformed'};
-  if(refImages.length){body.image_base64=refImages[0].b64;body.image_mime=refImages[0].mime;}
-  fetchWithRetry('/api/generate-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
-  .then(r=>r.json()).then(d=>{
+  const body={prompt,model:'nano',negative_prompt:'low quality,blurry,deformed'};
+  if(imgs.length){body.image_base64=imgs[0].b64;body.image_mime=imgs[0].mime;}
+  try{
+    const r=await fetchWithRetry('/api/generate-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const d=await r.json();
     hideTyping();endGen();
-    if(d.imageUrl){addImageCard(prompt,d.imageUrl);}
-    else addAIMsg('❌ Bild konnte nicht erstellt werden: '+(d.error||'Unbekannter Fehler'));
-    clearRef();
-    state.model='chat';state.modelName='Virgo Chat';
-  }).catch(()=>{hideTyping();endGen();showFallbackMsg();clearRef();state.model='chat';});
+    if(d.imageUrl){
+      addImageCard(prompt,d.imageUrl);
+      conversationHistory.push({role:'assistant',content:'[Bild generiert: '+prompt.substring(0,60)+']'});
+      saveChat(document.getElementById('chat-title').textContent,conversationHistory);
+    } else {
+      addAIMsg('❌ Bild konnte nicht erstellt werden: '+(d.error||'Unbekannter Fehler'));
+    }
+  }catch(e){hideTyping();endGen();showFallbackMsg();}
 }
+
 function addImageCard(prompt,imgUrl){
   const d=document.createElement('div');d.className='mw ai';
-  d.innerHTML=`<div class="aav">V</div><div><div class="card"><div class="cp2 img"><img src="${imgUrl}" onclick="window.open('${imgUrl}','_blank')" style="cursor:pointer" onload="this.style.opacity=1"></div><div class="cm"><div class="cmod">Virgo Vision</div><div class="cprompt">${escHtml(prompt.substring(0,70))}</div><div class="cas"><a href="${imgUrl}" download class="ca p">Download</a><button class="ca" onclick="doVariant('${prompt.replace(/'/g,"\\'").replace(/"/g,'&quot;')}')">Variante</button></div></div></div><div class="mt2">${now()}</div></div>`;
+  d.innerHTML='<div class="aav">V</div><div><div class="card"><div class="cp2 img"><img src="'+imgUrl+'" onclick="window.open(\''+imgUrl+'\',\'_blank\')" style="cursor:pointer" onload="this.style.opacity=1"></div><div class="cm"><div class="cmod">Virgo Vision</div><div class="cprompt">'+escHtml(prompt.substring(0,70))+'</div><div class="cas"><a href="'+imgUrl+'" download class="ca p">Download</a><button class="ca" onclick="document.getElementById(\'prompt\').value=\'Variante \'+escHtml(prompt.substring(0,40));document.getElementById(\'prompt\').focus()">Variante</button></div></div></div><div class="mt2">'+now()+'</div></div>';
   document.getElementById('fi').appendChild(d);scrollFeed();
 }
-function doVariant(p){document.getElementById('prompt').value=p+' - Variante';document.getElementById('prompt').focus();}
 
 // ═══════════════════════════════════════
 // STRUCTURED OUTPUT RENDERS
