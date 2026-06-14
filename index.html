@@ -596,7 +596,8 @@ function wgHandleAnswer(txt){
 
 async function wgBuildWebsite(){
   const d=WG.data;showTyping();startGen('Website wird gebaut...');
-  const prompt=`Erstelle eine komplette, professionelle HTML-Website:
+  const prompt=`Du bist ein Elite-Webdesigner. Erstelle eine VISUELL BEEINDRUCKENDE animierte HTML-Website auf Agentur-Niveau.
+
 Firmenname: ${d.name||'Unternehmen'}
 Branche: ${d.branche||'Dienstleistung'}
 Angebot: ${d.angebot||''}
@@ -604,27 +605,36 @@ Zielgruppe: ${d.zielgruppe||''}
 USP: ${(d.usp&&d.usp!=='weiss nicht')?d.usp:'Professionell, zuverlaessig, erfahren'}
 ${d.tel?'Telefon: '+d.tel:''}
 ${d.email?'Email: '+d.email:''}
-Hauptfarbe: ${d.farbe||'#111111'}
+Hauptfarbe (HEX): ${d.farbe||'#111111'}
 
-Erstelle eine moderne, vollstaendige HTML-Seite mit:
-1. Navigation (Firmenname links, Menue rechts: Leistungen, Ueber uns, Kontakt)
-2. Hero-Section mit starker Headline, Subheadline, CTA-Button
-3. Leistungen-Section (3-4 Karten mit Emojis als Icons)
-4. Ueber uns Section
-5. Warum wir? Section mit 3 USP-Punkten
-6. Kontaktformular (Name, Email, Nachricht, Senden-Button)
-7. Footer mit Kontakt und Copyright
+PFLICHTANFORDERUNGEN:
+
+1. HERO mit Floating-Animation (@keyframes float: 0%/100% translateY(0), 50% translateY(-14px)) und Text-Einblend-Animationen (@keyframes rise: opacity 0->1, translateY 110%->0). Grosser Titel mit clamp(52px,12vw,160px). CTA-Button. Hintergrund-Glow in Hauptfarbe (rgba).
+
+2. FIXIERTE NAVIGATION: position:fixed, Logo links, Links rechts, letter-spacing .3em, font-size 11px, uppercase.
+
+3. GOOGLE FONT einbinden: Marcellus fuer Headlines + Inter oder Jost fuer Body (link rel=stylesheet).
+
+4. CSS CUSTOM PROPERTIES in :root definieren: --primary (Hauptfarbe), --bg, --text, --soft (helle Variante der Hauptfarbe).
+
+5. SCROLL-REVEALS mit IntersectionObserver: Klasse .reveal (opacity:0, transform:translateY(46px), transition:.9s) -> .in (opacity:1, transform:none). JS am Ende der Seite.
+
+6. MINDESTENS 3 CONTENT-SEKTIONEN: Leistungen (3-4 Karten im Grid), Ueber uns, Warum uns (3 USP).
+
+7. KONTAKTFORMULAR mit Feldern Name, Email, Nachricht, Button.
+
+8. FOOTER mit Copyright.
+
+9. MOBILE-RESPONSIVE: clamp() fuer alle Schriftgroessen und padding, grid -> single column auf Mobile.
+
+QUALITAETSSTANDARD: Wie eine 5000 Euro Agentur-Website. Elegant, clean, animiert.
 
 REGELN:
-- Alles inline im style-Tag, kein externes CSS
-- Moderne, professionelle Optik
-- Hauptfarbe ${d.farbe||'#111111'} fuer Nav, Buttons, Akzente
-- Weisser Hintergrund, system-ui Schrift
-- Vollstaendig mobile-responsive
-- Alle Texte auf Deutsch, ueberzeugend
-- Gib NUR reines HTML zurueck, kein Markdown, keine Backticks, starte direkt mit <!DOCTYPE html>`;
+- NUR reines HTML (inline style + script) - KEIN Markdown, KEINE Backticks
+- Starte direkt mit <!DOCTYPE html>
+- Alle Texte auf Deutsch, ueberzeugend fuer die jeweilige Branche`;
   try{
-    const r=await fetch('/api/business',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'website-html',messages:[{role:'user',content:prompt}],systemOverride:'Du bist ein professioneller Web-Designer. Erstelle NUR vollstaendiges HTML+CSS. Kein Markdown, keine Code-Bloecke. Starte direkt mit <!DOCTYPE html>.'})});
+    const r=await fetch('/api/business',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'website-html',messages:[{role:'user',content:prompt}],systemOverride:'Du bist ein Elite-Webdesigner. Erstelle NUR vollstaendiges HTML+CSS+JS in einer einzigen Datei. Kein Markdown, keine Code-Bloecke. Starte direkt mit <!DOCTYPE html>. Qualitaetsstandard: Professionelle Agentur-Website mit Animationen, Google Fonts, CSS Custom Properties und IntersectionObserver Scroll-Effekten.'})});
     const data=await r.json();
     let html=(data.content&&data.content[0]&&data.content[0].text)||'';
     html=html.replace(/```html|```/g,'').trim();
@@ -782,7 +792,7 @@ function clearRef(){refImages=[];renderRefZone();}
 // ═══════════════════════════════════════
 // MARKDOWN
 // ═══════════════════════════════════════
-function renderMD(t){if(!t)return'';const codeBlocks=[];t=t.replace(/```([\w]*)?\n?([\s\S]*?)```/g,(match,lang,code)=>{const id='cb'+codeBlocks.length;codeBlocks.push({id,lang:lang||'code',code:code.trim()});return'%%%CODEBLOCK_'+id+'%%%';});t=t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');t=t.replace(/^### (.+)$/gm,'<b style="display:block;margin:8px 0 3px;font-size:13px">$1</b>');t=t.replace(/^## (.+)$/gm,'<b style="display:block;margin:10px 0 4px;font-size:14px">$1</b>');t=t.replace(/^# (.+)$/gm,'<b style="display:block;margin:10px 0 5px;font-size:15px">$1</b>');t=t.replace(/\*\*([^*\n]+)\*\*/g,'<b>$1</b>');t=t.replace(/\*([^*\n]+)\*/g,'<i>$1</i>');t=t.replace(/^[-] (.+)$/gm,'<div style="margin:2px 0 2px 12px">- $1</div>');t=t.replace(/`([^`]+)`/g,'<code style="background:var(--sf2);padding:1px 4px;border-radius:3px;font-size:11px;font-family:monospace">$1</code>');t=t.replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');codeBlocks.forEach(({id,lang,code})=>{const escaped=code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');const html='<div class="code-block"><div class="code-header"><span class="code-lang">'+lang+'</span><button class="code-copy" onclick="copyCode(this,\''+id+'\')">Kopieren</button></div><pre id="'+id+'"><code>'+escaped+'</code></pre></div>';t=t.replace('%%%CODEBLOCK_'+id+'%%%',html);});return t;}
+function renderMD(t){if(!t)return'';const codeBlocks=[];t=t.replace(/```([\w]*)?\n?([\s\S]*?)```/g,(match,lang,code)=>{const id='cb'+codeBlocks.length;codeBlocks.push({id,lang:lang||'code',code:code.trim()});return'%%%CODEBLOCK_'+id+'%%%';});t=t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');t=t.replace(/^### (.+)$/gm,'<b style="display:block;margin:8px 0 3px;font-size:13px">$1</b>');t=t.replace(/^## (.+)$/gm,'<b style="display:block;margin:10px 0 4px;font-size:14px">$1</b>');t=t.replace(/^# (.+)$/gm,'<b style="display:block;margin:10px 0 5px;font-size:15px">$1</b>');t=t.replace(/\*\*([^*\n]+)\*\*/g,'<b>$1</b>');t=t.replace(/\*([^*\n]+)\*/g,'<i>$1</i>');t=t.replace(/^[-] (.+)$/gm,'<div style="margin:2px 0 2px 12px">- $1</div>');t=t.replace(/`([^`]+)`/g,'<code style="background:var(--sf2);padding:1px 4px;border-radius:3px;font-size:11px;font-family:monospace">$1</code>');t=t.replace(/\n\n/g,'<br>').replace(/\n/g,' ');codeBlocks.forEach(({id,lang,code})=>{const escaped=code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');const html='<div class="code-block"><div class="code-header"><span class="code-lang">'+lang+'</span><button class="code-copy" onclick="copyCode(this,\''+id+'\')">Kopieren</button></div><pre id="'+id+'"><code>'+escaped+'</code></pre></div>';t=t.replace('%%%CODEBLOCK_'+id+'%%%',html);});return t;}
 function copyCode(btn,id){const el=document.getElementById(id);if(!el)return;navigator.clipboard.writeText(el.innerText).then(()=>{btn.textContent='Kopiert';setTimeout(()=>btn.textContent='Kopieren',2000);});}
 function exportPDF(content){const html='<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;max-width:800px;margin:40px auto;padding:0 20px;color:#111;line-height:1.7}</style></head><body><h1 style="font-size:13px;font-weight:200;letter-spacing:8px;margin-bottom:32px;color:#888">V I R G O AI</h1><div>'+content+'</div></body></html>';const blob=new Blob([html],{type:'text/html'});const url=URL.createObjectURL(blob);const w=window.open(url,'_blank');if(w)setTimeout(()=>w.print(),500);}
 
@@ -853,7 +863,7 @@ async function genChat(txt){
   const bSys={bewerbung:'Erstelle ein professionelles Bewerbungsanschreiben auf Deutsch.',angebot:'Erstelle ein professionelles Angebot auf Deutsch mit Positionen und Preisen.',mahnung:'Erstelle ein professionelles Mahnschreiben auf Deutsch.',kuendigung:'Erstelle ein rechtssicheres Kuendigungsschreiben auf Deutsch.',tiktok:'Du bist ein TikTok Experte. Erstelle 3 Skripte auf Deutsch: Hook, Ablauf, CTA.',plan:'Du bist ein Business-Experte. Erstelle vollstaendige Businessplaene auf Deutsch.',website:'Du bist ein Copywriter. Erstelle Website-Texte auf Deutsch.',ads:'{"type":"ads","topic":"...","ads":[{"number":1,"platform":"Google","headline":"max 30 Zeichen","description":"max 90 Zeichen","cta":"max 15 Zeichen"},{"number":2,"platform":"Meta","headline":"max 40 Zeichen","description":"max 125 Zeichen","cta":"Mehr erfahren"},{"number":3,"platform":"LinkedIn","headline":"max 40 Zeichen","description":"max 100 Zeichen","cta":"Kontakt"}]} — Nur JSON.',social:'{"type":"social_posts","topic":"...","posts":[{"number":1,"platform":"Instagram","caption":"...","hashtags":"#..."},{"number":2,"platform":"LinkedIn","caption":"...","hashtags":"#..."},{"number":3,"platform":"TikTok","caption":"...","hashtags":"#..."}]} — Nur JSON.',email:'{"type":"email","topic":"...","email":{"subject":"...","preheader":"...","body":"..."}} — Nur JSON.',pitch:'{"type":"pitch_deck","topic":"...","slides":[{"number":1,"title":"Problem","content":"..."},{"number":2,"title":"Loesung","content":"..."},{"number":3,"title":"Markt","content":"..."},{"number":4,"title":"Geschaeftsmodell","content":"..."},{"number":5,"title":"Team & Ask","content":"..."}]} — Nur JSON.'};
   const bMessages=isBusinessMode?[{role:'user',content:(bPre[businessType]||'')+txt}]:conversationHistory;
   const _ws=localStorage.getItem('virgo_workspace')||'makler';
-  const _chatSys=isFreePlan()?'Du bist Virgo. Antworte in der Sprache des Users. Beantworte Fragen kurz, ermutige zum Upgrade.':(_ws==='business'?'Du bist Virgo, ein vielseitiger KI-Assistent fuer Selbstaendige. Du hilfst bei ALLEM: Websites, Texte, Marketing, Social Media, Emails, Angebote, Businessplaene, Strategie. Lehne nie eine Anfrage ab. Antworte auf Deutsch, warmherzig und konkret.':'Du bist Virgo, ein vielseitiger KI-Assistent. Du hilfst bei ALLEM: Websites bauen, Texte, Marketing, Social Media, Emails, Ads, Strategie und alles rund um Versicherungsmakler und Leads. Lehne NIE eine Anfrage mit "ich bin nur fuer Versicherung" ab. Antworte auf Deutsch, konkret und hilfsbereit.');
+  const _chatSys=isFreePlan()?'Du bist Virgo. Antworte in der Sprache des Users. Beantworte Fragen kurz, ermutige zum Upgrade.':(_ws==='business'?'Du bist Virgo, ein KI-Assistent. Antworte IMMER kurz, direkt, ohne grosse Abstaende oder leere Zeilen. Wenn jemand eine Website will: erstelle SOFORT fertiges HTML mit CSS - keine Erklaerungen, kein "ich kann keine echte Website", einfach direkt das HTML ausgeben. Hilf bei allem: Texte, Ads, Emails, Businessplaene, Websites. Niemals ablehnen.':'Du bist Virgo, ein KI-Assistent fuer Versicherungsmakler. Antworte IMMER kurz und direkt, ohne grosse Abstaende. Wenn jemand eine Website oder ein Bild will: mach es einfach. Hilf bei allem rund um Leads, Ads, Landing Pages, Marketing. Niemals mit "ich kann das nicht" antworten.');
   const bodyData=isBusinessMode?{type:businessType,messages:bMessages,systemOverride:bSys[businessType]||''}:{messages:conversationHistory,systemOverride:(state.produktMode?PRODUKT_SYS:_chatSys)};
   fetchWithRetry(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(bodyData)}).then(r=>r.json()).then(async d=>{
     hideTyping();const reply=(d.content&&d.content[0]&&d.content[0].text)||'Fehler.';
