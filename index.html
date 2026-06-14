@@ -305,7 +305,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
       </div>
     </div>
     <div class="ph">1 Bild = 1 Credit &middot; virgoio.com</div>
-    <div class="ph" style="color:#ef4444;margin-top:2px">Bitte keine personenbezogenen Daten Ihrer Versicherungskunden eingeben.</div>
+    <div class="ph" id="dsgvo-hint" style="color:#ef4444;margin-top:2px;display:none">Bitte keine personenbezogenen Daten Ihrer Versicherungskunden eingeben.</div>
   </div>
   <div class="footer-links">
     <a href="/impressum.html">Impressum</a>
@@ -945,7 +945,7 @@ function isFreePlan(){if(isAdmin())return false;const p=localStorage.getItem('vi
 function freeChatsUsed(){return parseInt(localStorage.getItem('virgo_free_chats')||'0',10);}
 function freeChatsLeft(){return Math.max(0,5-freeChatsUsed());}
 function applyFreeRestrictions(){const free=isFreePlan();document.querySelectorAll('#ws-makler .ms,#ws-business .ms').forEach(s=>{s.style.display=free?'none':'';});const oldHint=document.getElementById('free-sb-hint');if(oldHint)oldHint.remove();if(free){const ws=localStorage.getItem('virgo_workspace')||'makler';const wsEl=document.getElementById(ws==='business'?'ws-business':'ws-makler');if(wsEl){const hint=document.createElement('div');hint.id='free-sb-hint';hint.style.cssText='margin:18px 12px;padding:18px 16px;border:1px solid var(--bd);border-radius:14px;text-align:center;background:linear-gradient(135deg,rgba(124,58,237,.06),rgba(37,99,235,.06))';hint.innerHTML='<div style="font-size:24px;margin-bottom:8px">\uD83D\uDD12</div><div style="font-size:13px;font-weight:600;margin-bottom:4px">Tools mit Plan</div><div style="font-size:11px;color:var(--td);line-height:1.5;margin-bottom:12px">Landing Page, Leads, Ads, Website Generator, KI-Bilder und mehr</div><button onclick="openUpgrade()" style="width:100%;padding:10px;border-radius:10px;background:linear-gradient(90deg,#7c3aed,#2563eb);color:#fff;border:0;cursor:pointer;font-size:13px;font-weight:600">Plan w\u00e4hlen</button><div style="font-size:10px;color:var(--td);margin-top:10px">Free: '+freeChatsLeft()+' von 5 Chats \u00fcbrig</div>';wsEl.appendChild(hint);}}else{localStorage.removeItem('virgo_free_chats');}}
-function _applyWorkspace(ws){document.getElementById('ws-makler').style.display=ws==='makler'?'block':'none';document.getElementById('ws-business').style.display=ws==='business'?'block':'none';document.querySelectorAll('.mode-tab').forEach(t=>t.classList.toggle('active',t.dataset.ws===ws));localStorage.setItem('virgo_workspace',ws);renderLanding();if(state.model==='chat')document.getElementById('prompt').placeholder=chatPlaceholder();}
+function _applyWorkspace(ws){document.getElementById('ws-makler').style.display=ws==='makler'?'block':'none';document.getElementById('ws-business').style.display=ws==='business'?'block':'none';const _dh=document.getElementById('dsgvo-hint');if(_dh)_dh.style.display=ws==='makler'?'block':'none';document.querySelectorAll('.mode-tab').forEach(t=>t.classList.toggle('active',t.dataset.ws===ws));localStorage.setItem('virgo_workspace',ws);renderLanding();if(state.model==='chat')document.getElementById('prompt').placeholder=chatPlaceholder();}
 function setWorkspace(ws){_applyWorkspace(ws);applyFreeRestrictions();}
 _applyWorkspace(localStorage.getItem('virgo_workspace')||'makler');
 applyFreeRestrictions();
