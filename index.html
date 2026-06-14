@@ -839,6 +839,12 @@ async function send(){
     return;
   }
 
+  // Auto-Website-Erkennung
+  const _webKw=['bau mir eine website','baue mir eine website','bau mir eine webseite','baue mir eine webseite','erstelle eine website','erstelle eine webseite','erstell mir eine website','erstell mir eine webseite','mach mir eine website','mach mir eine webseite','website bauen','webseite bauen','website erstellen','webseite erstellen','kannst du mir eine website','kannst du mir eine webseite','build me a website','build a website'];
+  if(state.model==='chat' && !WG.active && _webKw.some(k=>txt.toLowerCase().includes(k))){
+    inp.value='';inp.style.height='24px';openWebsiteGen();return;
+  }
+
   // Auto-Bild-Erkennung
   const _bildKw=['erstell mir ein bild','mach ein bild','generier ein bild','erstelle ein bild','mach mir ein bild','bild erstellen','bild generieren','create an image','make an image'];
   if(state.model==='chat' && _bildKw.some(k=>txt.toLowerCase().includes(k))){
@@ -878,7 +884,7 @@ async function genChat(txt){
   const bSys={bewerbung:'Erstelle ein professionelles Bewerbungsanschreiben auf Deutsch.',angebot:'Erstelle ein professionelles Angebot auf Deutsch mit Positionen und Preisen.',mahnung:'Erstelle ein professionelles Mahnschreiben auf Deutsch.',kuendigung:'Erstelle ein rechtssicheres Kuendigungsschreiben auf Deutsch.',tiktok:'Du bist ein TikTok Experte. Erstelle 3 Skripte auf Deutsch: Hook, Ablauf, CTA.',plan:'Du bist ein Business-Experte. Erstelle vollstaendige Businessplaene auf Deutsch.',website:'Du bist ein Copywriter. Erstelle Website-Texte auf Deutsch.',ads:'{"type":"ads","topic":"...","ads":[{"number":1,"platform":"Google","headline":"max 30 Zeichen","description":"max 90 Zeichen","cta":"max 15 Zeichen"},{"number":2,"platform":"Meta","headline":"max 40 Zeichen","description":"max 125 Zeichen","cta":"Mehr erfahren"},{"number":3,"platform":"LinkedIn","headline":"max 40 Zeichen","description":"max 100 Zeichen","cta":"Kontakt"}]} — Nur JSON.',social:'{"type":"social_posts","topic":"...","posts":[{"number":1,"platform":"Instagram","caption":"...","hashtags":"#..."},{"number":2,"platform":"LinkedIn","caption":"...","hashtags":"#..."},{"number":3,"platform":"TikTok","caption":"...","hashtags":"#..."}]} — Nur JSON.',email:'{"type":"email","topic":"...","email":{"subject":"...","preheader":"...","body":"..."}} — Nur JSON.',pitch:'{"type":"pitch_deck","topic":"...","slides":[{"number":1,"title":"Problem","content":"..."},{"number":2,"title":"Loesung","content":"..."},{"number":3,"title":"Markt","content":"..."},{"number":4,"title":"Geschaeftsmodell","content":"..."},{"number":5,"title":"Team & Ask","content":"..."}]} — Nur JSON.'};
   const bMessages=isBusinessMode?[{role:'user',content:(bPre[businessType]||'')+txt}]:conversationHistory;
   const _ws=localStorage.getItem('virgo_workspace')||'makler';
-  const _chatSys=isFreePlan()?'Du bist Virgo. Antworte in der Sprache des Users. Beantworte Fragen kurz, ermutige zum Upgrade.':(_ws==='business'?'Du bist Virgo - der motivierende Begleiter fuer Unternehmer. Antworte auf Deutsch, warmherzig, konkret.':'Du bist Virgo, spezialisiert auf Versicherungsmakler. Antworte auf Deutsch, konkret.');
+  const _chatSys=isFreePlan()?'Du bist Virgo. Antworte in der Sprache des Users. Beantworte Fragen kurz, ermutige zum Upgrade.':(_ws==='business'?'Du bist Virgo, ein vielseitiger KI-Assistent fuer Selbstaendige. Du hilfst bei ALLEM: Websites, Texte, Marketing, Social Media, Emails, Angebote, Businessplaene, Strategie. Lehne nie eine Anfrage ab. Antworte auf Deutsch, warmherzig und konkret.':'Du bist Virgo, ein vielseitiger KI-Assistent. Du hilfst bei ALLEM: Websites bauen, Texte, Marketing, Social Media, Emails, Ads, Strategie und alles rund um Versicherungsmakler und Leads. Lehne NIE eine Anfrage mit "ich bin nur fuer Versicherung" ab. Antworte auf Deutsch, konkret und hilfsbereit.');
   const bodyData=isBusinessMode?{type:businessType,messages:bMessages,systemOverride:bSys[businessType]||''}:{messages:conversationHistory,systemOverride:(state.produktMode?PRODUKT_SYS:_chatSys)};
   fetchWithRetry(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(bodyData)}).then(r=>r.json()).then(async d=>{
     hideTyping();const reply=(d.content&&d.content[0]&&d.content[0].text)||'Fehler.';
