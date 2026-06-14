@@ -614,14 +614,20 @@ window.virgoStructured={};
 // PREVIEW PANEL
 // ═══════════════════════════════════════
 function openPreview(html,title){
+  if(!html)return;
   currentWebsiteHtml=html;
   currentWebsiteName=(title||'website').toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'').replace(/-+/g,'-')||'website';
   document.getElementById('preview-title').textContent=title||'Vorschau';
+  const panel=document.getElementById('preview-panel');
   const frame=document.getElementById('preview-frame');
-  // Use srcdoc — works everywhere without blob URL or sandbox issues
+  // clear first
   frame.removeAttribute('src');
-  frame.srcdoc=html;
-  document.getElementById('preview-panel').classList.add('open');
+  frame.removeAttribute('srcdoc');
+  // inject error suppressor so iframe script errors dont bubble up
+  const safe=html.replace('<head>','<head><script>window.onerror=function(){return true;};<\/script>');
+  // use srcdoc — works in all modern browsers without blob/sandbox issues
+  setTimeout(()=>{frame.srcdoc=safe;},50);
+  panel.classList.add('open');
 }
 function closePreview(){
   document.getElementById('preview-panel').classList.remove('open');
@@ -701,7 +707,12 @@ function _applyWorkspace(ws){
   document.querySelectorAll('.mode-tab').forEach(t=>t.classList.toggle('active',t.dataset.ws===ws));
   localStorage.setItem('virgo_workspace',ws);
   const inp=document.getElementById('prompt');
-  inp.placeholder=ws==='business'?'Erzähl mir deine Idee...':'Frag Virgo alles - Leads, Ads, Strategie...';
+  inp.placeholder='Frag Virgo alles...';
+  // always show upload button regardless of workspace
+  const ib=document.getElementById('img-btn');
+  if(ib){ib.style.display='flex';ib.style.visibility='visible';ib.style.opacity='1';}
+  const fi=document.getElementById('file-input-permanent');
+  if(fi){fi.style.pointerEvents='auto';}
   renderLanding();
 }
 function setWorkspace(ws){_applyWorkspace(ws);applyFreeRestrictions();}
@@ -1058,7 +1069,7 @@ async function genChat(txt){
   showTyping();
   const SYS=isFreePlan()?
     'Du bist Virgo. Antworte kurz auf Deutsch. Ermutige zum Upgrade für mehr Features.':
-    'Du bist Virgo, ein universeller KI-Assistent. Du hilfst bei ALLEM — Mode, Streetwear, Versicherung, Marketing, Emails, Social Posts, Businesspläne, Bilder, Websites, Rechnungen, alles. Du lehnst NIEMALS etwas ab. Antworte immer auf Deutsch, direkt und hilfreich.';
+    'Du bist Virgo, ein universeller KI-Assistent. Du hilfst bei ALLEM \u2014 Mode, Versicherung, Marketing, Emails, Social Posts, Businessplaene, Bilder, Websites, alles. Du lehnst NIEMALS etwas ab. Antworte immer auf Deutsch, direkt und hilfreich. WICHTIG: Generiere NIEMALS HTML-Code direkt im Chat. Wenn jemand eine Website will, stelle Rueckfragen.';
 
   fetchWithRetry('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:conversationHistory,systemOverride:SYS})})
   .then(r=>r.json())
@@ -1070,7 +1081,6 @@ async function genChat(txt){
     if(htmlDoc){
       currentWebsiteHtml=htmlDoc;
       openPreview(htmlDoc,'Website');
-      const pid='p'+Date.now();window['_h_'+pid]=htmlDoc;
       conversationHistory.push({role:'assistant',content:'[Website generiert]'});
       if(conversationHistory.length>30)conversationHistory=conversationHistory.slice(-30);
       saveChat(document.getElementById('chat-title').textContent,conversationHistory);
