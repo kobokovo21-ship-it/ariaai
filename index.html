@@ -673,9 +673,8 @@ function extractHtml(raw){
   const end=s.toLowerCase().lastIndexOf('</html>');
   if(end>=0)s=s.slice(0,end+7);
   // validate it has basic structure
-  return /<html[\s>]/i.test(s)&&/<body[\s>]/i.test(s)?s:'';
+  return /<html[\s>]/i.test(s) ? s : `<!DOCTYPE html><html><body>${s}</body></html>`;
 }
-
 // ═══════════════════════════════════════
 // SIDEBAR
 // ═══════════════════════════════════════
