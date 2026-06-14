@@ -1124,11 +1124,19 @@ function renderLanding(){const fi=document.getElementById('fi');if(!state.chatSt
 // FREE RESTRICTIONS
 // ═══════════════════════════════════════
 function applyFreeRestrictions(){
-  const free=isFreePlan();
-  // on free plan, hide tool sections in sidebar (chat and invoice still accessible)
-  // just show a soft upgrade prompt below tools
+  const loggedIn=!!currentUser;
   const oldHint=document.getElementById('free-sb-hint');if(oldHint)oldHint.remove();
-  if(free){
+  // hide all tool sections from non-logged-in users
+  document.querySelectorAll('#ws-makler .ms, #ws-business .ms').forEach(el=>{el.style.display=loggedIn?'':'none';});
+  if(!loggedIn){
+    const ws=localStorage.getItem('virgo_workspace')||'makler';
+    const wsEl=document.getElementById(ws==='business'?'ws-business':'ws-makler');
+    if(wsEl){
+      const hint=document.createElement('div');hint.id='free-sb-hint';hint.style.cssText='margin:14px 10px;padding:14px;border:1px solid var(--bd);border-radius:12px;text-align:center;background:linear-gradient(135deg,rgba(124,58,237,.05),rgba(37,99,235,.05))';
+      hint.innerHTML='<div style="font-size:20px;margin-bottom:6px">🔒</div><div style="font-size:12px;font-weight:600;margin-bottom:3px">Jetzt anmelden</div><div style="font-size:11px;color:var(--td);line-height:1.5;margin-bottom:10px">Landing Pages, Leads, Ads, KI-Tools und mehr</div><button onclick="showM(\'modal-login\')" style="width:100%;padding:9px;border-radius:9px;background:var(--t);color:#fff;border:0;cursor:pointer;font-size:12px;font-weight:600">Anmelden / Registrieren</button>';
+      wsEl.appendChild(hint);
+    }
+  } else if(isFreePlan()){
     const ws=localStorage.getItem('virgo_workspace')||'makler';
     const wsEl=document.getElementById(ws==='business'?'ws-business':'ws-makler');
     if(wsEl){
