@@ -313,6 +313,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
     <a href="/widerrufsbelehrung.html">Widerrufsbelehrung</a>
   </div>
 </div>
+<!-- Permanenter File-Input – bleibt im DOM, kein dynamisches createElement -->
+<input type="file" id="file-input-permanent" accept="image/*" multiple style="display:none">
 
 <!-- MODAL LOGIN -->
 <div class="modal" id="modal-login">
@@ -783,7 +785,7 @@ async function useCredits(type){if(isAdmin())return true;const cost=COST[type]||
 // UPLOAD
 // ═══════════════════════════════════════
 function compressImg(file,maxW=1024){return new Promise(res=>{const img=new Image();const url=URL.createObjectURL(file);img.onload=()=>{const scale=Math.min(1,maxW/Math.max(img.width,img.height));const c=document.createElement('canvas');c.width=img.width*scale;c.height=img.height*scale;c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);c.toBlob(blob=>{const r=new FileReader();r.onload=e=>res({b64:e.target.result.split(',')[1],mime:'image/jpeg',url:e.target.result,name:file.name});r.readAsDataURL(blob);},'image/jpeg',.85);};img.src=url;});}
-function uploadRef(){if(refImages.length>=4)return;const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.multiple=true;inp.onchange=async e=>{const files=Array.from(e.target.files).slice(0,4-refImages.length);for(const f of files){const c=await compressImg(f);refImages.push(c);}renderRefZone();};inp.click();}
+function uploadRef(){if(refImages.length>=4)return;const inp=document.getElementById('file-input-permanent');inp.value='';inp.onchange=async e=>{const files=Array.from(e.target.files).slice(0,4-refImages.length);for(const f of files){const c=await compressImg(f);refImages.push(c);}renderRefZone();inp.value='';};inp.click();}
 function renderRefZone(){const zone=document.getElementById('rz');const container=document.getElementById('ref-imgs');if(!refImages.length){zone.classList.remove('vis');document.getElementById('img-btn').classList.remove('has');document.getElementById('img-btn').textContent='\uD83D\uDCCE';return;}zone.classList.add('vis');document.getElementById('img-btn').classList.add('has');document.getElementById('img-btn').textContent='\uD83D\uDCCE'+refImages.length;container.innerHTML=refImages.map((img,i)=>'<div style="position:relative;display:inline-block"><img src="'+img.url+'" style="width:40px;height:40px;border-radius:6px;object-fit:cover;border:1px solid var(--bd)"><button onclick="removeRef('+i+')" style="position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:var(--t);color:#fff;border:none;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center">x</button></div>').join('');}
 function removeRef(i){refImages.splice(i,1);renderRefZone();}
 function clearRef(){refImages=[];renderRefZone();}
