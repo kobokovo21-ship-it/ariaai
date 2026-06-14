@@ -626,8 +626,12 @@ function openPreview(html,title){
   // inject error suppressor so iframe script errors dont bubble up
   const safe=html.replace('<head>','<head><script>window.onerror=function(){return true;};<\/script>');
   // use srcdoc — works in all modern browsers without blob/sandbox issues
-  setTimeout(()=>{frame.srcdoc=safe;},50);
-  panel.classList.add('open');
+  setTimeout(()=>{
+  frame.srcdoc = safe;
+  console.log("PREVIEW HTML:", frame.srcdoc);
+},50);
+  
+panel.classList.add('open');
 }
 function closePreview(){
   document.getElementById('preview-panel').classList.remove('open');
