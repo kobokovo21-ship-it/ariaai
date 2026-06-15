@@ -1,3 +1,5 @@
+export const config = { maxDuration: 60 };
+
 // === PROMPT-ENHANCEMENT: Claude macht aus dem User-Wunsch einen echten Bild-Prompt ===
 async function enhanceImagePrompt(userPrompt) {
   const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
@@ -58,14 +60,14 @@ export default async function handler(req, res) {
       ? negative_prompt + ', ' + hardNegatives
       : hardNegatives;
 
-    // Modell auswählen
+    // Modell auswählen — flux1-schnell ist schnell (3-6s) und bleibt sicher unter Vercel-Timeout
     const modelMap = {
-      'nano': 'Qubico/flux1-dev',
-      'seed': 'Qubico/flux1-dev',
-      'img-nano': 'Qubico/flux1-dev',
-      'img-seed': 'Qubico/flux1-dev'
+      'nano': 'Qubico/flux1-schnell',
+      'seed': 'Qubico/flux1-schnell',
+      'img-nano': 'Qubico/flux1-schnell',
+      'img-seed': 'Qubico/flux1-schnell'
     };
-    const piModel = modelMap[model] || 'Qubico/flux1-dev';
+    const piModel = modelMap[model] || 'Qubico/flux1-schnell';
     // Task erstellen
     const taskBody = {
       model: piModel,
@@ -76,7 +78,7 @@ export default async function handler(req, res) {
         width: 1024,
         height: 1024,
         guidance_scale: 3.5,
-        num_inference_steps: 28
+        num_inference_steps: 4
       }
     };
     // Ref-Bild falls vorhanden
@@ -104,9 +106,9 @@ export default async function handler(req, res) {
       console.error('Kein Task ID:', JSON.stringify(createData));
       return res.status(500).json({ error: 'Kein Task ID von PiAPI' });
     }
-    // Polling bis fertig (max 60 Sekunden)
+    // Polling bis fertig (max 25 x 2s = 50s, bleibt sicher unter maxDuration 60s)
     let imageUrl = null;
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 25; i++) {
       await new Promise(r => setTimeout(r, 2000));
       const pollRes = await fetch(`https://api.piapi.ai/api/v1/task/${taskId}`, {
         headers: { 'x-api-key': PIAPI_KEY }
@@ -134,4 +136,3 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: err.message });
   }
 }
-
