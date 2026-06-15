@@ -7,7 +7,6 @@ function isImageRequest(text) {
   const nouns = ['bild', 'foto', 'grafik', 'illustration', 'image', 'visual', 'motiv', 'hero'];
   const hasVerb = verbs.some(v => t.includes(v));
   const hasNoun = nouns.some(n => t.includes(n));
-  // Direkte Formulierungen ohne Verb
   const directPatterns = ['ein bild von', 'ein foto von', 'bild für', 'foto für', 'bild zu', 'foto zu'];
   const isDirect = directPatterns.some(p => t.includes(p));
   return (hasVerb && hasNoun) || isDirect;
@@ -45,7 +44,6 @@ export default async function handler(req, res) {
     }
 
     // === AUTOMATISCHE BILDGENERIERUNG IM CHAT ===
-    // Wenn der User ein Bild will, wird direkt die Bild-API aufgerufen (mit Prompt-Enhancement)
     if (!codeMode && !isPromptMode && !systemOverride && isImageRequest(lastText)) {
       try {
         const host = req.headers.host;
@@ -63,7 +61,6 @@ export default async function handler(req, res) {
             generatedImage: true
           });
         }
-        // Bild fehlgeschlagen → ehrliche Antwort statt KI-Text
         return res.status(200).json({
           content: [{ type: 'text', text: 'Die Bildgenerierung hat gerade nicht geklappt. Versuch es bitte gleich nochmal oder beschreib das Bild etwas genauer.' }]
         });
@@ -196,7 +193,7 @@ VERBOTE:
           'Authorization': 'Bearer ' + process.env.OPENAI_API_KEY
         },
         body: JSON.stringify({
-          model: 'gpt-5.4',
+          model: 'gpt-4o',
           max_completion_tokens: maxTokens,
           messages: openaiMessages
         })
@@ -225,3 +222,4 @@ VERBOTE:
     });
   }
 }
+
