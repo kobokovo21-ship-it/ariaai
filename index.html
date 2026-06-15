@@ -1341,17 +1341,14 @@ applyFreeRestrictions();
 <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('/sw.js').catch(()=>{});});}</script>
 <script src="/makler-setup.js"></script>
 <script src="/business-extras.js"></script> 
-  // ═══════════════════════════════════════════════════════
-// VIRGO FIXES — vor </body> einfügen, ersetzt kaputte Funktionen
-// ═══════════════════════════════════════════════════════
-
-// ── FIX 1: buildWebsite — HTML-Extraktion robuster, Preview korrekt ──
+<script>
+// ── FIX 1: buildWebsite — robuste HTML-Extraktion, Preview korrekt ──
 async function buildWebsite(isUpdate, updateRequest) {
   startGen(isUpdate ? 'Website wird aktualisiert...' : 'Website wird gebaut...');
   showTyping();
   const d = WEB.data;
   const imgNote = WEB.imgBase64
-    ? '\nReferenzbild vorhanden als Base64 (zeige es als Hero-Bild ein): data:' + WEB.imgMime + ';base64,' + WEB.imgBase64
+    ? '\nReferenzbild als Base64: data:' + WEB.imgMime + ';base64,' + WEB.imgBase64
     : '';
 
   let prompt;
@@ -1360,55 +1357,41 @@ async function buildWebsite(isUpdate, updateRequest) {
       '\n\n[ÄNDERUNG]: ' + updateRequest +
       '\n\nGib mir die komplette aktualisierte Website. Nur HTML, beginne mit <!DOCTYPE html>. Kein Markdown, keine Backticks.';
   } else {
-    prompt = `Erstelle eine professionelle, vollständige Website als reines HTML.
-
-Name/Unternehmen: ${d.name || d._request || ''}
-Branche: ${d.branche || ''}
-Angebot: ${d.angebot || ''}
-Zielgruppe: ${d.zielgruppe || ''}
-Hauptfarbe: ${d.farbe || '#111111'}
-${imgNote}
-
-PFLICHTANFORDERUNGEN:
-1. Fixe Navigation (position:fixed) mit Logo links, Links rechts
-2. Hero mit großem Titel (clamp(48px,10vw,120px)), Untertitel, CTA-Button, Hintergrund-Animation
-3. Leistungen in 3er-Grid mit Icons (Unicode-Emojis direkt im HTML)
-4. Über uns Sektion mit Text
-5. Kontaktformular (Name, Email, Nachricht, Senden-Button)
-6. Footer mit Copyright
-7. Vollständig responsive mit clamp() und media queries
-8. Scroll-Animationen mit reinem JavaScript IntersectionObserver
-9. CSS Custom Properties in :root für Farben
-
-KRITISCH - IFRAME KOMPATIBILITÄT:
-- KEIN jQuery, KEIN Bootstrap, KEIN React, KEIN Vue - NUR vanilla JS
-- Google Fonts NUR als @import in <style> Tag
-- KEINE externen <script src="..."> Tags
-- Alle JavaScript Animationen in try-catch einwickeln
-- Keine externen Bild-URLs
-
-NUR HTML - direkt mit <!DOCTYPE html> beginnen. Kein Text davor oder danach. Keine Backticks.`;
+    prompt = 'Erstelle eine professionelle, vollständige Website als reines HTML.\n\n' +
+      'Name/Unternehmen: ' + (d.name || d._request || '') + '\n' +
+      'Branche: ' + (d.branche || '') + '\n' +
+      'Angebot: ' + (d.angebot || '') + '\n' +
+      'Zielgruppe: ' + (d.zielgruppe || '') + '\n' +
+      'Hauptfarbe: ' + (d.farbe || '#111111') + '\n' +
+      imgNote + '\n\n' +
+      'PFLICHTANFORDERUNGEN:\n' +
+      '1. Fixe Navigation (position:fixed) mit Logo links, Links rechts\n' +
+      '2. Hero mit großem Titel (clamp(48px,10vw,120px)), Untertitel, CTA-Button\n' +
+      '3. Leistungen in 3er-Grid mit Unicode-Emojis\n' +
+      '4. Über uns Sektion\n' +
+      '5. Kontaktformular (Name, Email, Nachricht, Senden-Button)\n' +
+      '6. Footer mit Copyright\n' +
+      '7. Vollständig responsive\n' +
+      '8. NUR vanilla JS, KEIN jQuery/Bootstrap/React\n' +
+      '9. Google Fonts NUR als @import in <style>\n' +
+      '10. Alle JS in try-catch\n\n' +
+      'NUR HTML - direkt mit <!DOCTYPE html> beginnen. Kein Text davor oder danach. Keine Backticks.';
   }
 
-  const sys = 'Du bist ein Elite-Webdesigner. Antworte NUR mit komplettem HTML-Code. Beginne direkt mit <!DOCTYPE html>. Absolut kein Text davor oder danach, keine Backticks, kein Markdown.';
+  const sys = 'Du bist ein Elite-Webdesigner. Antworte NUR mit komplettem HTML-Code. Beginne direkt mit <!DOCTYPE html>. Kein Text davor oder danach, keine Backticks, kein Markdown.';
 
   try {
     const r = await fetchWithRetry('/api/business', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        type: 'website-html',
-        messages: [{ role: 'user', content: prompt }],
-        systemOverride: sys
-      })
+      body: JSON.stringify({ type: 'website-html', messages: [{ role: 'user', content: prompt }], systemOverride: sys })
     });
     const resp = await r.json();
     hideTyping();
     endGen();
 
     let raw = (resp.content && resp.content[0] && resp.content[0].text) || '';
-
-    // Robuste HTML-Extraktion: Markdown-Fences entfernen
+    // Markdown-Fences entfernen
     raw = raw.replace(/^```[a-z]*\s*/i, '').replace(/```\s*$/i, '').trim();
 
     // HTML-Block finden
@@ -1425,7 +1408,6 @@ NUR HTML - direkt mit <!DOCTYPE html> beginnen. Kein Text davor oder danach. Kei
     if (endIdx >= 0) {
       html = html.slice(0, endIdx + 7);
     } else {
-      // Reparieren wenn abgeschnitten
       if (!/<\/style>/i.test(html)) html += '</style>';
       if (!/<\/body>/i.test(html)) html += '</body>';
       html += '</html>';
@@ -1447,11 +1429,11 @@ NUR HTML - direkt mit <!DOCTYPE html> beginnen. Kein Text davor oder danach. Kei
     if (conversationHistory.length > 30) conversationHistory = conversationHistory.slice(-30);
     saveChat(document.getElementById('chat-title').textContent, conversationHistory);
 
-    const previewBtn = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">' +
+    addAIMsg('Deine Website ist fertig! Die Vorschau ist rechts geöffnet.<br><br>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">' +
       '<button onclick="openPreview(currentWebsiteHtml,\'Website\')" style="padding:9px 14px;background:var(--t);color:#fff;border:none;border-radius:7px;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer">Vorschau</button>' +
       '<button onclick="previewDownload()" style="padding:9px 14px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:7px;font-family:Inter,sans-serif;font-size:12px;cursor:pointer">Download</button>' +
-      '</div>';
-    addAIMsg('Deine Website ist fertig! Die Vorschau ist rechts geöffnet.<br><br>' + previewBtn + '<br><span style="font-size:12px;color:var(--tm)">Änderung gewünscht? Schreib z.B. "Mache die Farbe blau"</span>');
+      '</div><br><span style="font-size:12px;color:var(--tm)">Änderung gewünscht? Schreib z.B. "Mache die Farbe blau"</span>');
 
   } catch (e) {
     hideTyping();
@@ -1478,7 +1460,7 @@ async function genChat(txt) {
   .then(d => {
     hideTyping();
 
-    // Bild-Response aus chat.js verarbeiten
+    // Bild-Response verarbeiten
     if (d.generatedImage && d.imageUrl) {
       addImageCard(lastUserMsg, d.imageUrl);
       const txt2 = (d.content && d.content[0] && d.content[0].text) || '';
@@ -1524,7 +1506,6 @@ function _applyWorkspace(ws) {
   document.querySelectorAll('.mode-tab').forEach(t => t.classList.toggle('active', t.dataset.ws === ws));
   localStorage.setItem('virgo_workspace', ws);
 
-  // Upload-Button immer sichtbar und klickbar
   const ib = document.getElementById('img-btn');
   if (ib) {
     ib.style.display = 'flex';
