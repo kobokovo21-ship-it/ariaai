@@ -980,10 +980,12 @@ async function send(){
 }
 
 function startWebsiteFlow(txt,imgs){
-  WEB.active=true;WEB.collecting=true;WEB.step=0;WEB.data={_request:txt};
+  WEB.active=true;WEB.collecting=false;WEB.step=0;
+  WEB.data={_request:txt, name:'', branche:'', angebot:txt, zielgruppe:'', farbe:'#111111'};
   WEB.imgBase64=imgs&&imgs.length?imgs[0].b64:null;
   WEB.imgMime=imgs&&imgs.length?imgs[0].mime:null;
-  addAIMsg('🌐 <b>Website wird gebaut!</b> Ich stelle dir 5 kurze Fragen.<br><br>'+WEB_Q[0].q);
+  addAIMsg('Website wird gebaut...');
+  buildWebsite(false,'');
 }
 
 async function handleWebsiteQA(answer){
