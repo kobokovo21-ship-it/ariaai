@@ -1340,6 +1340,205 @@ applyFreeRestrictions();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('/sw.js').catch(()=>{});});}</script>
 <script src="/makler-setup.js"></script>
-<script src="/business-extras.js"></script>
+<script src="/business-extras.js"></script> 
+  // ═══════════════════════════════════════════════════════
+// VIRGO FIXES — vor </body> einfügen, ersetzt kaputte Funktionen
+// ═══════════════════════════════════════════════════════
+
+// ── FIX 1: buildWebsite — HTML-Extraktion robuster, Preview korrekt ──
+async function buildWebsite(isUpdate, updateRequest) {
+  startGen(isUpdate ? 'Website wird aktualisiert...' : 'Website wird gebaut...');
+  showTyping();
+  const d = WEB.data;
+  const imgNote = WEB.imgBase64
+    ? '\nReferenzbild vorhanden als Base64 (zeige es als Hero-Bild ein): data:' + WEB.imgMime + ';base64,' + WEB.imgBase64
+    : '';
+
+  let prompt;
+  if (isUpdate) {
+    prompt = 'Hier ist die aktuelle Website:\n\n' + currentWebsiteHtml.substring(0, 6000) +
+      '\n\n[ÄNDERUNG]: ' + updateRequest +
+      '\n\nGib mir die komplette aktualisierte Website. Nur HTML, beginne mit <!DOCTYPE html>. Kein Markdown, keine Backticks.';
+  } else {
+    prompt = `Erstelle eine professionelle, vollständige Website als reines HTML.
+
+Name/Unternehmen: ${d.name || d._request || ''}
+Branche: ${d.branche || ''}
+Angebot: ${d.angebot || ''}
+Zielgruppe: ${d.zielgruppe || ''}
+Hauptfarbe: ${d.farbe || '#111111'}
+${imgNote}
+
+PFLICHTANFORDERUNGEN:
+1. Fixe Navigation (position:fixed) mit Logo links, Links rechts
+2. Hero mit großem Titel (clamp(48px,10vw,120px)), Untertitel, CTA-Button, Hintergrund-Animation
+3. Leistungen in 3er-Grid mit Icons (Unicode-Emojis direkt im HTML)
+4. Über uns Sektion mit Text
+5. Kontaktformular (Name, Email, Nachricht, Senden-Button)
+6. Footer mit Copyright
+7. Vollständig responsive mit clamp() und media queries
+8. Scroll-Animationen mit reinem JavaScript IntersectionObserver
+9. CSS Custom Properties in :root für Farben
+
+KRITISCH - IFRAME KOMPATIBILITÄT:
+- KEIN jQuery, KEIN Bootstrap, KEIN React, KEIN Vue - NUR vanilla JS
+- Google Fonts NUR als @import in <style> Tag
+- KEINE externen <script src="..."> Tags
+- Alle JavaScript Animationen in try-catch einwickeln
+- Keine externen Bild-URLs
+
+NUR HTML - direkt mit <!DOCTYPE html> beginnen. Kein Text davor oder danach. Keine Backticks.`;
+  }
+
+  const sys = 'Du bist ein Elite-Webdesigner. Antworte NUR mit komplettem HTML-Code. Beginne direkt mit <!DOCTYPE html>. Absolut kein Text davor oder danach, keine Backticks, kein Markdown.';
+
+  try {
+    const r = await fetchWithRetry('/api/business', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'website-html',
+        messages: [{ role: 'user', content: prompt }],
+        systemOverride: sys
+      })
+    });
+    const resp = await r.json();
+    hideTyping();
+    endGen();
+
+    let raw = (resp.content && resp.content[0] && resp.content[0].text) || '';
+
+    // Robuste HTML-Extraktion: Markdown-Fences entfernen
+    raw = raw.replace(/^```[a-z]*\s*/i, '').replace(/```\s*$/i, '').trim();
+
+    // HTML-Block finden
+    const lo = raw.toLowerCase();
+    let start = lo.indexOf('<!doctype html');
+    if (start < 0) start = lo.indexOf('<html');
+    if (start < 0) {
+      addAIMsg('Fehler beim Generieren der Website. Schreib "nochmal" zum Wiederholen.');
+      WEB.active = false;
+      return;
+    }
+    let html = raw.slice(start);
+    const endIdx = html.toLowerCase().lastIndexOf('</html>');
+    if (endIdx >= 0) {
+      html = html.slice(0, endIdx + 7);
+    } else {
+      // Reparieren wenn abgeschnitten
+      if (!/<\/style>/i.test(html)) html += '</style>';
+      if (!/<\/body>/i.test(html)) html += '</body>';
+      html += '</html>';
+    }
+
+    if (!html || !/<html[\s>]/i.test(html)) {
+      addAIMsg('Die Website konnte nicht generiert werden. Bitte nochmal versuchen.');
+      WEB.active = false;
+      return;
+    }
+
+    currentWebsiteHtml = html;
+    currentWebsiteName = (d.name || 'website').toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-') || 'website';
+    WEB.active = false;
+
+    openPreview(html, d.name || 'Website');
+
+    conversationHistory.push({ role: 'assistant', content: '[Website generiert und Vorschau geöffnet]' });
+    if (conversationHistory.length > 30) conversationHistory = conversationHistory.slice(-30);
+    saveChat(document.getElementById('chat-title').textContent, conversationHistory);
+
+    const previewBtn = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">' +
+      '<button onclick="openPreview(currentWebsiteHtml,\'Website\')" style="padding:9px 14px;background:var(--t);color:#fff;border:none;border-radius:7px;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer">Vorschau</button>' +
+      '<button onclick="previewDownload()" style="padding:9px 14px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:7px;font-family:Inter,sans-serif;font-size:12px;cursor:pointer">Download</button>' +
+      '</div>';
+    addAIMsg('Deine Website ist fertig! Die Vorschau ist rechts geöffnet.<br><br>' + previewBtn + '<br><span style="font-size:12px;color:var(--tm)">Änderung gewünscht? Schreib z.B. "Mache die Farbe blau"</span>');
+
+  } catch (e) {
+    hideTyping();
+    endGen();
+    addAIMsg('Fehler beim Generieren: ' + e.message);
+    WEB.active = false;
+  }
+}
+
+// ── FIX 2: genChat — kein Website-Block, Bild-Response korrekt verarbeiten ──
+async function genChat(txt) {
+  showTyping();
+
+  const SYS = isFreePlan()
+    ? 'Du bist Virgo. Antworte kurz auf Deutsch. Ermutige zum Upgrade für mehr Features.'
+    : 'Du bist Virgo, ein universeller KI-Assistent. Du hilfst bei ALLEM. Antworte immer auf Deutsch, direkt und hilfreich.';
+
+  fetchWithRetry('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages: conversationHistory, systemOverride: SYS })
+  })
+  .then(r => r.json())
+  .then(d => {
+    hideTyping();
+
+    // Bild-Response aus chat.js verarbeiten
+    if (d.generatedImage && d.imageUrl) {
+      addImageCard(lastUserMsg, d.imageUrl);
+      const txt2 = (d.content && d.content[0] && d.content[0].text) || '';
+      if (txt2) addAIMsg(renderMD(txt2));
+      conversationHistory.push({ role: 'assistant', content: '[Bild generiert: ' + lastUserMsg.substring(0, 60) + ']' });
+      if (conversationHistory.length > 30) conversationHistory = conversationHistory.slice(-30);
+      saveChat(document.getElementById('chat-title').textContent, conversationHistory);
+      return;
+    }
+
+    const reply = (d.content && d.content[0] && d.content[0].text) || 'Fehler.';
+
+    // Falls KI unerwartet HTML zurückgibt
+    const htmlDoc = extractHtml(reply);
+    if (htmlDoc) {
+      currentWebsiteHtml = htmlDoc;
+      openPreview(htmlDoc, 'Website');
+      conversationHistory.push({ role: 'assistant', content: '[Website generiert]' });
+      if (conversationHistory.length > 30) conversationHistory = conversationHistory.slice(-30);
+      saveChat(document.getElementById('chat-title').textContent, conversationHistory);
+      addAIMsg('Website fertig! Vorschau rechts geöffnet.<br><br>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">' +
+        '<button onclick="openPreview(currentWebsiteHtml,\'Website\')" style="padding:9px 14px;background:var(--t);color:#fff;border:none;border-radius:7px;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer">Vorschau</button>' +
+        '<button onclick="previewDownload()" style="padding:9px 14px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:7px;font-family:Inter,sans-serif;font-size:12px;cursor:pointer">Download</button>' +
+        '</div>');
+      return;
+    }
+
+    conversationHistory.push({ role: 'assistant', content: reply });
+    if (conversationHistory.length > 30) conversationHistory = conversationHistory.slice(-30);
+    addAIMsg(renderMD(reply));
+    saveChat(document.getElementById('chat-title').textContent, conversationHistory);
+  })
+  .catch(() => { hideTyping(); showFallbackMsg(); });
+}
+
+// ── FIX 3: _applyWorkspace — Bild-Upload in ALLEN Workspaces aktiv ──
+function _applyWorkspace(ws) {
+  document.getElementById('ws-makler').style.display = ws === 'makler' ? 'block' : 'none';
+  document.getElementById('ws-business').style.display = ws === 'business' ? 'block' : 'none';
+  const dh = document.getElementById('dsgvo-hint');
+  if (dh) dh.style.display = ws === 'makler' ? 'block' : 'none';
+  document.querySelectorAll('.mode-tab').forEach(t => t.classList.toggle('active', t.dataset.ws === ws));
+  localStorage.setItem('virgo_workspace', ws);
+
+  // Upload-Button immer sichtbar und klickbar
+  const ib = document.getElementById('img-btn');
+  if (ib) {
+    ib.style.display = 'flex';
+    ib.style.visibility = 'visible';
+    ib.style.opacity = '1';
+    ib.style.pointerEvents = 'auto';
+  }
+  const fi = document.getElementById('file-input-permanent');
+  if (fi) {
+    fi.style.pointerEvents = 'auto';
+    fi.removeAttribute('disabled');
+  }
+
+  renderLanding();
+}
 </body>
 </html>
