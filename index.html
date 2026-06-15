@@ -1040,7 +1040,7 @@ NUR HTML - direkt mit <!DOCTYPE html> beginnen. Kein Text davor oder danach. Kei
   const sys='Du bist ein Elite-Webdesigner. Antworte NUR mit komplettem HTML-Code. Beginne direkt mit <!DOCTYPE html>. Absolut kein Text davor oder danach, keine Backticks, kein Markdown.';
 
   try{
-    const r=await fetchWithRetry('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:[{role:'user',content:prompt}],systemOverride:sys})});
+    const r=await fetchWithRetry('/api/business',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'website-html',messages:[{role:'user',content:prompt}],systemOverride:sys})});
     const resp=await r.json();
     hideTyping();endGen();
     let html=(resp.content&&resp.content[0]&&resp.content[0].text)||'';
