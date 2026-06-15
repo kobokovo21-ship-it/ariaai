@@ -1398,8 +1398,8 @@ async function buildWebsite(isUpdate,updateRequest){
 function startWebsiteFlow(txt,imgs){
   WEB.active=true;WEB.collecting=false;WEB.step=0;
   WEB.data={_request:txt,name:'',branche:'',angebot:txt,zielgruppe:'',farbe:'#111111'};
-  WEB.imgBase64=imgs&&imgs.length?imgs[0].b64:null;
-  WEB.imgMime=imgs&&imgs.length?imgs[0].mime:null;
+  WEB.imgBase64=null;
+  WEB.imgMime=null;
   addAIMsg('Website wird gebaut...');
   buildWebsite(false,'');
 }
@@ -1475,3 +1475,4 @@ function _applyWorkspace(ws){
 </script>
 </body>
 </html>
+  
