@@ -675,9 +675,19 @@ function extractHtml(raw){
   s=s.slice(start);
   // find closing tag
   const end=s.toLowerCase().lastIndexOf('</html>');
-  if(end>=0)s=s.slice(0,end+7);
+  if(end>=0){
+    s=s.slice(0,end+7);
+  } else {
+    // HTML wurde abgeschnitten — reparieren, damit es trotzdem rendert statt weiss zu bleiben
+    const styleOpen=(s.match(/<style[\s>]/gi)||[]).length;
+    const styleClose=(s.match(/<\/style>/gi)||[]).length;
+    if(styleOpen>styleClose) s+='</style>';
+    if(!/<\/body>/i.test(s)) s+='</body>';
+    s+='</html>';
+  }
   // validate it has basic structure
   return /<html[\s>]/i.test(s) ? s : `<!DOCTYPE html><html><body>${s}</body></html>`;
+
 }
 // ═══════════════════════════════════════
 // SIDEBAR
