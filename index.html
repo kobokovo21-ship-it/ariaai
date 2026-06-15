@@ -661,8 +661,11 @@ function wantsWebsite(txt){
          /build\s+(me\s+)?(a\s+)?(website|landing\s*page)/i.test(s);
 }
 function wantsImage(txt){
-  return /\b(erstell|mach|generier|create|make|draw)\b.{0,20}(bild|image|foto|photo|visual|grafik)/i.test(txt.toLowerCase())||
-         /\b(bild|image)\b.{0,20}(erstellen|generieren|machen)/i.test(txt.toLowerCase());
+  const t=(txt||"").toLowerCase();
+  const verb=/erstell|mach|generier|erzeug|kreier|zeichn|design|create|generate|make|draw/.test(t);
+  const noun=/\bbild\b|foto|grafik|illustration|\bimage\b|visual|motiv|headerbild|werbebild|produktbild|hero.?bild/.test(t);
+  const direct=/ein bild von|ein foto von|bild f[uü]r|foto f[uü]r/.test(t);
+  return (verb&&noun)||direct;
 }
 function extractHtml(raw){
   // strip all markdown fences
@@ -903,7 +906,7 @@ function cancelGen(){clearInterval(genTimer);endGen();hideTyping();}
 
 // Intent detection
 const WEBSITE_INTENT=/(bau|baue|erstell|erstelle|mach|generier|design|entwickl|build|create).{0,30}(website|webseite|homepage|landingpage|landing page|shop|onlineshop|firmenwebsite|makler.?website|seite)|(website|webseite|homepage).{0,20}(bauen|erstellen|machen|generieren)/i;
-const IMAGE_GEN_INTENT=/(erstell|mach|generier|erzeug|zeichn|create|make|draw|design).{0,25}(bild|image|foto|photo|visual|grafik|logo|banner|werbebild|produktbild)/i;
+const IMAGE_GEN_INTENT=/(erstell|mach|generier|erzeug|kreier|zeichn|design|create|generate|make|draw).{0,30}(bild|bid|foto|image|grafik|visual|motiv|banner|logo|werbebild|produktbild|headerbild|hero)|(bild|foto|image).{0,20}(erstell|generier|machen|für|von|zu)/i;
 const WEBSITE_UPDATE_INTENT=/(änder|update|aktualisier|passe an|ersetze|füge.{0,10}ein|bearbeite|überarbeite).{0,40}(website|webseite|seite|design|farbe|text|layout)/i;
 
 function detectIntent(txt){
@@ -1448,6 +1451,18 @@ async function buildWebsite(isUpdate, updateRequest) {
 // ── FIX 2: genChat — kein Website-Block, Bild-Response korrekt verarbeiten ──
 async function genChat(txt) {
   showTyping();
+
+  // BILD: direkt im Frontend abfangen — unabhängig vom Backend
+  const _t = (txt||'').toLowerCase();
+  const _imgVerb = /erstell|mach|generier|erzeug|kreier|zeichn|design|create|generate|make|draw/.test(_t);
+  const _imgNoun = /\bbild\b|foto|grafik|illustration|\bimage\b|visual|motiv|headerbild|werbebild|produktbild|hero.?bild/.test(_t);
+  const _imgDirect = /ein bild von|ein foto von|bild f[uü]r|foto f[uü]r|bild zu|foto zu/.test(_t);
+  if (_imgVerb && _imgNoun || _imgDirect) {
+    hideTyping();
+    if(!(await useCredits('img'))) return;
+    genImage(txt, []);
+    return;
+  }
 
   const SYS = isFreePlan()
     ? 'Du bist Virgo. Antworte kurz auf Deutsch. Ermutige zum Upgrade für mehr Features.'
