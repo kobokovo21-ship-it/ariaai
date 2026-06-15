@@ -661,11 +661,8 @@ function wantsWebsite(txt){
          /build\s+(me\s+)?(a\s+)?(website|landing\s*page)/i.test(s);
 }
 function wantsImage(txt){
-  const t=(txt||"").toLowerCase();
-  const verb=/erstell|mach|generier|erzeug|kreier|zeichn|design|create|generate|make|draw/.test(t);
-  const noun=/\bbild\b|foto|grafik|illustration|\bimage\b|visual|motiv|headerbild|werbebild|produktbild|hero.?bild/.test(t);
-  const direct=/ein bild von|ein foto von|bild f[uü]r|foto f[uü]r/.test(t);
-  return (verb&&noun)||direct;
+  return /\b(erstell|mach|generier|create|make|draw)\b.{0,20}(bild|image|foto|photo|visual|grafik)/i.test(txt.toLowerCase())||
+         /\b(bild|image)\b.{0,20}(erstellen|generieren|machen)/i.test(txt.toLowerCase());
 }
 function extractHtml(raw){
   // strip all markdown fences
@@ -906,7 +903,7 @@ function cancelGen(){clearInterval(genTimer);endGen();hideTyping();}
 
 // Intent detection
 const WEBSITE_INTENT=/(bau|baue|erstell|erstelle|mach|generier|design|entwickl|build|create).{0,30}(website|webseite|homepage|landingpage|landing page|shop|onlineshop|firmenwebsite|makler.?website|seite)|(website|webseite|homepage).{0,20}(bauen|erstellen|machen|generieren)/i;
-const IMAGE_GEN_INTENT=/(erstell|mach|generier|erzeug|kreier|zeichn|design|create|generate|make|draw).{0,30}(bild|bid|foto|image|grafik|visual|motiv|banner|logo|werbebild|produktbild|headerbild|hero)|(bild|foto|image).{0,20}(erstell|generier|machen|für|von|zu)/i;
+const IMAGE_GEN_INTENT=/(erstell|mach|generier|erzeug|zeichn|create|make|draw|design).{0,25}(bild|image|foto|photo|visual|grafik|logo|banner|werbebild|produktbild)/i;
 const WEBSITE_UPDATE_INTENT=/(änder|update|aktualisier|passe an|ersetze|füge.{0,10}ein|bearbeite|überarbeite).{0,40}(website|webseite|seite|design|farbe|text|layout)/i;
 
 function detectIntent(txt){
@@ -983,12 +980,10 @@ async function send(){
 }
 
 function startWebsiteFlow(txt,imgs){
-  WEB.active=true;WEB.collecting=false;WEB.step=0;
-  WEB.data={_request:txt, name:'', branche:'', angebot:txt, zielgruppe:'', farbe:'#111111'};
+  WEB.active=true;WEB.collecting=true;WEB.step=0;WEB.data={_request:txt};
   WEB.imgBase64=imgs&&imgs.length?imgs[0].b64:null;
   WEB.imgMime=imgs&&imgs.length?imgs[0].mime:null;
-  addAIMsg('Website wird gebaut...');
-  buildWebsite(false,'');
+  addAIMsg('🌐 <b>Website wird gebaut!</b> Ich stelle dir 5 kurze Fragen.<br><br>'+WEB_Q[0].q);
 }
 
 async function handleWebsiteQA(answer){
@@ -1347,195 +1342,123 @@ applyFreeRestrictions();
 <script src="/makler-setup.js"></script>
 <script src="/business-extras.js"></script> 
 <script>
-// ── FIX 1: buildWebsite — robuste HTML-Extraktion, Preview korrekt ──
-async function buildWebsite(isUpdate, updateRequest) {
-  startGen(isUpdate ? 'Website wird aktualisiert...' : 'Website wird gebaut...');
-  showTyping();
-  const d = WEB.data;
-  const imgNote = WEB.imgBase64
-    ? '\nReferenzbild als Base64: data:' + WEB.imgMime + ';base64,' + WEB.imgBase64
-    : '';
-
-  let prompt;
-  if (isUpdate) {
-    prompt = 'Hier ist die aktuelle Website:\n\n' + currentWebsiteHtml.substring(0, 6000) +
-      '\n\n[ÄNDERUNG]: ' + updateRequest +
-      '\n\nGib mir die komplette aktualisierte Website. Nur HTML, beginne mit <!DOCTYPE html>. Kein Markdown, keine Backticks.';
-  } else {
-    prompt = 'Erstelle eine professionelle, vollständige Website als reines HTML.\n\n' +
-      'Name/Unternehmen: ' + (d.name || d._request || '') + '\n' +
-      'Branche: ' + (d.branche || '') + '\n' +
-      'Angebot: ' + (d.angebot || '') + '\n' +
-      'Zielgruppe: ' + (d.zielgruppe || '') + '\n' +
-      'Hauptfarbe: ' + (d.farbe || '#111111') + '\n' +
-      imgNote + '\n\n' +
-      'PFLICHTANFORDERUNGEN:\n' +
-      '1. Fixe Navigation (position:fixed) mit Logo links, Links rechts\n' +
-      '2. Hero mit großem Titel (clamp(48px,10vw,120px)), Untertitel, CTA-Button\n' +
-      '3. Leistungen in 3er-Grid mit Unicode-Emojis\n' +
-      '4. Über uns Sektion\n' +
-      '5. Kontaktformular (Name, Email, Nachricht, Senden-Button)\n' +
-      '6. Footer mit Copyright\n' +
-      '7. Vollständig responsive\n' +
-      '8. NUR vanilla JS, KEIN jQuery/Bootstrap/React\n' +
-      '9. Google Fonts NUR als @import in <style>\n' +
-      '10. Alle JS in try-catch\n\n' +
-      'NUR HTML - direkt mit <!DOCTYPE html> beginnen. Kein Text davor oder danach. Keine Backticks.';
-  }
-
-  const sys = 'Du bist ein Elite-Webdesigner. Antworte NUR mit komplettem HTML-Code. Beginne direkt mit <!DOCTYPE html>. Kein Text davor oder danach, keine Backticks, kein Markdown.';
-
-  try {
-    const r = await fetchWithRetry('/api/business', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'website-html', messages: [{ role: 'user', content: prompt }], systemOverride: sys })
-    });
-    const resp = await r.json();
-    hideTyping();
-    endGen();
-
-    let raw = (resp.content && resp.content[0] && resp.content[0].text) || '';
-    // Markdown-Fences entfernen
-    raw = raw.replace(/^```[a-z]*\s*/i, '').replace(/```\s*$/i, '').trim();
-
-    // HTML-Block finden
-    const lo = raw.toLowerCase();
-    let start = lo.indexOf('<!doctype html');
-    if (start < 0) start = lo.indexOf('<html');
-    if (start < 0) {
-      addAIMsg('Fehler beim Generieren der Website. Schreib "nochmal" zum Wiederholen.');
-      WEB.active = false;
-      return;
-    }
-    let html = raw.slice(start);
-    const endIdx = html.toLowerCase().lastIndexOf('</html>');
-    if (endIdx >= 0) {
-      html = html.slice(0, endIdx + 7);
-    } else {
-      if (!/<\/style>/i.test(html)) html += '</style>';
-      if (!/<\/body>/i.test(html)) html += '</body>';
-      html += '</html>';
-    }
-
-    if (!html || !/<html[\s>]/i.test(html)) {
-      addAIMsg('Die Website konnte nicht generiert werden. Bitte nochmal versuchen.');
-      WEB.active = false;
-      return;
-    }
-
-    currentWebsiteHtml = html;
-    currentWebsiteName = (d.name || 'website').toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-') || 'website';
-    WEB.active = false;
-
-    openPreview(html, d.name || 'Website');
-
-    conversationHistory.push({ role: 'assistant', content: '[Website generiert und Vorschau geöffnet]' });
-    if (conversationHistory.length > 30) conversationHistory = conversationHistory.slice(-30);
-    saveChat(document.getElementById('chat-title').textContent, conversationHistory);
-
-    addAIMsg('Deine Website ist fertig! Die Vorschau ist rechts geöffnet.<br><br>' +
-      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">' +
-      '<button onclick="openPreview(currentWebsiteHtml,\'Website\')" style="padding:9px 14px;background:var(--t);color:#fff;border:none;border-radius:7px;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer">Vorschau</button>' +
-      '<button onclick="previewDownload()" style="padding:9px 14px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:7px;font-family:Inter,sans-serif;font-size:12px;cursor:pointer">Download</button>' +
-      '</div><br><span style="font-size:12px;color:var(--tm)">Änderung gewünscht? Schreib z.B. "Mache die Farbe blau"</span>');
-
-  } catch (e) {
-    hideTyping();
-    endGen();
-    addAIMsg('Fehler beim Generieren: ' + e.message);
-    WEB.active = false;
-  }
+function openPreview(html,title){
+  if(!html)return;
+  currentWebsiteHtml=html;
+  currentWebsiteName=(title||'website').toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'').replace(/-+/g,'-')||'website';
+  document.getElementById('preview-title').textContent=title||'Vorschau';
+  var panel=document.getElementById('preview-panel');
+  var frame=document.getElementById('preview-frame');
+  frame.removeAttribute('src');
+  frame.removeAttribute('srcdoc');
+  panel.classList.add('open');
+  var safe=html.replace('<head>','<head><scr'+'ipt>window.onerror=function(){return true;};<'+'/scr'+'ipt>');
+  setTimeout(function(){ frame.srcdoc=safe; },200);
 }
 
-// ── FIX 2: genChat — kein Website-Block, Bild-Response korrekt verarbeiten ──
-async function genChat(txt) {
+async function buildWebsite(isUpdate,updateRequest){
+  startGen(isUpdate?'Website wird aktualisiert...':'Website wird gebaut...');
   showTyping();
+  var d=WEB.data;
+  var imgNote=WEB.imgBase64?'Referenzbild vorhanden':'';
+  var prompt;
+  if(isUpdate){
+    prompt='Aktuelle Website (Ausschnitt):\n'+currentWebsiteHtml.substring(0,5000)+'\n\n[ÄNDERUNG]: '+updateRequest+'\n\nGib die komplette aktualisierte Website. Nur HTML, beginne mit <!DOCTYPE html>. Keine Backticks.';
+  } else {
+    prompt='Erstelle eine professionelle Website als reines HTML.\n\nName: '+(d.name||d._request||'')+'\nAngebot: '+(d.angebot||d._request||'')+'\nHauptfarbe: '+(d.farbe||'#111111')+'\n\nPFLICHT: Fixe Navigation, Hero mit großem Titel, 3er-Grid Leistungen mit Emojis, Über uns, Kontaktformular, Footer, responsive, nur vanilla JS, Google Fonts als @import im style tag.\n\nNUR HTML - direkt mit <!DOCTYPE html> beginnen. Keine Backticks, kein Markdown.';
+  }
+  var sys='Du bist ein Elite-Webdesigner. Antworte NUR mit komplettem HTML. Beginne mit <!DOCTYPE html>. Keine Backticks, kein Markdown.';
+  try{
+    var r=await fetchWithRetry('/api/business',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'website-html',messages:[{role:'user',content:prompt}],systemOverride:sys})});
+    var resp=await r.json();
+    hideTyping();endGen();
+    var raw=(resp.content&&resp.content[0]&&resp.content[0].text)||'';
+    raw=raw.replace(/^```[a-z]*\s*/i,'').replace(/```\s*$/i,'').trim();
+    var lo=raw.toLowerCase();
+    var start=lo.indexOf('<!doctype html');
+    if(start<0)start=lo.indexOf('<html');
+    if(start<0){addAIMsg('Fehler beim Generieren. Schreib "nochmal" zum Wiederholen.');WEB.active=false;return;}
+    var html=raw.slice(start);
+    var endIdx=html.toLowerCase().lastIndexOf('</html>');
+    if(endIdx>=0){html=html.slice(0,endIdx+7);}
+    else{if(!/<\/style>/i.test(html))html+='</style>';if(!/<\/body>/i.test(html))html+='</body>';html+='</html>';}
+    if(!html||!/<html[\s>]/i.test(html)){addAIMsg('Website konnte nicht generiert werden.');WEB.active=false;return;}
+    currentWebsiteHtml=html;
+    currentWebsiteName=(d.name||'website').toLowerCase().replace(/[^a-z0-9]/g,'-').replace(/-+/g,'-')||'website';
+    WEB.active=false;
+    openPreview(html,d.name||'Website');
+    conversationHistory.push({role:'assistant',content:'[Website generiert]'});
+    if(conversationHistory.length>30)conversationHistory=conversationHistory.slice(-30);
+    saveChat(document.getElementById('chat-title').textContent,conversationHistory);
+    addAIMsg('Deine Website ist fertig! Vorschau rechts geöffnet.<br><br><div style="display:flex;gap:8px;margin-top:8px"><button onclick="openPreview(currentWebsiteHtml,\'Website\')" style="padding:9px 14px;background:var(--t);color:#fff;border:none;border-radius:7px;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer">Vorschau</button><button onclick="previewDownload()" style="padding:9px 14px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:7px;font-family:Inter,sans-serif;font-size:12px;cursor:pointer">Download</button></div>');
+  }catch(e){hideTyping();endGen();addAIMsg('Fehler: '+e.message);WEB.active=false;}
+}
 
-  // BILD: direkt im Frontend abfangen — unabhängig vom Backend
-  const _t = (txt||'').toLowerCase();
-  const _imgVerb = /erstell|mach|generier|erzeug|kreier|zeichn|design|create|generate|make|draw/.test(_t);
-  const _imgNoun = /\bbild\b|foto|grafik|illustration|\bimage\b|visual|motiv|headerbild|werbebild|produktbild|hero.?bild/.test(_t);
-  const _imgDirect = /ein bild von|ein foto von|bild f[uü]r|foto f[uü]r|bild zu|foto zu/.test(_t);
-  if (_imgVerb && _imgNoun || _imgDirect) {
+function startWebsiteFlow(txt,imgs){
+  WEB.active=true;WEB.collecting=false;WEB.step=0;
+  WEB.data={_request:txt,name:'',branche:'',angebot:txt,zielgruppe:'',farbe:'#111111'};
+  WEB.imgBase64=imgs&&imgs.length?imgs[0].b64:null;
+  WEB.imgMime=imgs&&imgs.length?imgs[0].mime:null;
+  addAIMsg('Website wird gebaut...');
+  buildWebsite(false,'');
+}
+
+async function genChat(txt){
+  showTyping();
+  var _t=(txt||'').toLowerCase();
+  var _v=/erstell|mach|generier|erzeug|kreier|zeichn|design|create|generate|make|draw/.test(_t);
+  var _n=/\bbild\b|\bbid\b|foto|grafik|illustration|\bimage\b|visual|motiv|headerbild|werbebild|produktbild|hero/.test(_t);
+  var _d=/ein bild von|ein foto von|bild f.r|foto f.r|bild zu|foto zu/.test(_t);
+  if((_v&&_n)||_d){
     hideTyping();
-    if(!(await useCredits('img'))) return;
-    genImage(txt, []);
+    if(!(await useCredits('img')))return;
+    genImage(txt,[]);
     return;
   }
-
-  const SYS = isFreePlan()
-    ? 'Du bist Virgo. Antworte kurz auf Deutsch. Ermutige zum Upgrade für mehr Features.'
-    : 'Du bist Virgo, ein universeller KI-Assistent. Du hilfst bei ALLEM. Antworte immer auf Deutsch, direkt und hilfreich.';
-
-  fetchWithRetry('/api/chat', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ messages: conversationHistory, systemOverride: SYS })
-  })
-  .then(r => r.json())
-  .then(d => {
+  var SYS=isFreePlan()?'Du bist Virgo. Antworte kurz auf Deutsch. Ermutige zum Upgrade.':'Du bist Virgo, der KI-Assistent fuer Versicherungsmakler auf virgoio.com. Antworte auf Deutsch, direkt und hilfreich. Du kannst Bilder generieren, Websites bauen, Texte schreiben und Ads erstellen. Sage NIEMALS dass du keine Bilder erstellen kannst. Erwahne niemals Claude, ChatGPT, OpenAI oder Anthropic.';
+  fetchWithRetry('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:conversationHistory,systemOverride:SYS})})
+  .then(function(r){return r.json();})
+  .then(function(d){
     hideTyping();
-
-    // Bild-Response verarbeiten
-    if (d.generatedImage && d.imageUrl) {
-      addImageCard(lastUserMsg, d.imageUrl);
-      const txt2 = (d.content && d.content[0] && d.content[0].text) || '';
-      if (txt2) addAIMsg(renderMD(txt2));
-      conversationHistory.push({ role: 'assistant', content: '[Bild generiert: ' + lastUserMsg.substring(0, 60) + ']' });
-      if (conversationHistory.length > 30) conversationHistory = conversationHistory.slice(-30);
-      saveChat(document.getElementById('chat-title').textContent, conversationHistory);
+    if(d.generatedImage&&d.imageUrl){
+      addImageCard(lastUserMsg,d.imageUrl);
+      var t2=(d.content&&d.content[0]&&d.content[0].text)||'';
+      if(t2)addAIMsg(renderMD(t2));
+      conversationHistory.push({role:'assistant',content:'[Bild generiert]'});
+      if(conversationHistory.length>30)conversationHistory=conversationHistory.slice(-30);
+      saveChat(document.getElementById('chat-title').textContent,conversationHistory);
       return;
     }
-
-    const reply = (d.content && d.content[0] && d.content[0].text) || 'Fehler.';
-
-    // Falls KI unerwartet HTML zurückgibt
-    const htmlDoc = extractHtml(reply);
-    if (htmlDoc) {
-      currentWebsiteHtml = htmlDoc;
-      openPreview(htmlDoc, 'Website');
-      conversationHistory.push({ role: 'assistant', content: '[Website generiert]' });
-      if (conversationHistory.length > 30) conversationHistory = conversationHistory.slice(-30);
-      saveChat(document.getElementById('chat-title').textContent, conversationHistory);
-      addAIMsg('Website fertig! Vorschau rechts geöffnet.<br><br>' +
-        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">' +
-        '<button onclick="openPreview(currentWebsiteHtml,\'Website\')" style="padding:9px 14px;background:var(--t);color:#fff;border:none;border-radius:7px;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer">Vorschau</button>' +
-        '<button onclick="previewDownload()" style="padding:9px 14px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:7px;font-family:Inter,sans-serif;font-size:12px;cursor:pointer">Download</button>' +
-        '</div>');
+    var reply=(d.content&&d.content[0]&&d.content[0].text)||'Fehler.';
+    var htmlDoc=extractHtml(reply);
+    if(htmlDoc){
+      currentWebsiteHtml=htmlDoc;
+      openPreview(htmlDoc,'Website');
+      conversationHistory.push({role:'assistant',content:'[Website generiert]'});
+      if(conversationHistory.length>30)conversationHistory=conversationHistory.slice(-30);
+      saveChat(document.getElementById('chat-title').textContent,conversationHistory);
+      addAIMsg('Website fertig! Vorschau rechts.');
       return;
     }
-
-    conversationHistory.push({ role: 'assistant', content: reply });
-    if (conversationHistory.length > 30) conversationHistory = conversationHistory.slice(-30);
+    conversationHistory.push({role:'assistant',content:reply});
+    if(conversationHistory.length>30)conversationHistory=conversationHistory.slice(-30);
     addAIMsg(renderMD(reply));
-    saveChat(document.getElementById('chat-title').textContent, conversationHistory);
+    saveChat(document.getElementById('chat-title').textContent,conversationHistory);
   })
-  .catch(() => { hideTyping(); showFallbackMsg(); });
+  .catch(function(){hideTyping();showFallbackMsg();});
 }
 
-// ── FIX 3: _applyWorkspace — Bild-Upload in ALLEN Workspaces aktiv ──
-function _applyWorkspace(ws) {
-  document.getElementById('ws-makler').style.display = ws === 'makler' ? 'block' : 'none';
-  document.getElementById('ws-business').style.display = ws === 'business' ? 'block' : 'none';
-  const dh = document.getElementById('dsgvo-hint');
-  if (dh) dh.style.display = ws === 'makler' ? 'block' : 'none';
-  document.querySelectorAll('.mode-tab').forEach(t => t.classList.toggle('active', t.dataset.ws === ws));
-  localStorage.setItem('virgo_workspace', ws);
-
-  const ib = document.getElementById('img-btn');
-  if (ib) {
-    ib.style.display = 'flex';
-    ib.style.visibility = 'visible';
-    ib.style.opacity = '1';
-    ib.style.pointerEvents = 'auto';
-  }
-  const fi = document.getElementById('file-input-permanent');
-  if (fi) {
-    fi.style.pointerEvents = 'auto';
-    fi.removeAttribute('disabled');
-  }
-
+function _applyWorkspace(ws){
+  document.getElementById('ws-makler').style.display=ws==='makler'?'block':'none';
+  document.getElementById('ws-business').style.display=ws==='business'?'block':'none';
+  var dh=document.getElementById('dsgvo-hint');
+  if(dh)dh.style.display=ws==='makler'?'block':'none';
+  document.querySelectorAll('.mode-tab').forEach(function(t){t.classList.toggle('active',t.dataset.ws===ws);});
+  localStorage.setItem('virgo_workspace',ws);
+  var ib=document.getElementById('img-btn');
+  if(ib){ib.style.display='flex';ib.style.visibility='visible';ib.style.opacity='1';ib.style.pointerEvents='auto';}
+  var fi=document.getElementById('file-input-permanent');
+  if(fi){fi.style.pointerEvents='auto';fi.removeAttribute('disabled');}
   renderLanding();
 }
 </script>
