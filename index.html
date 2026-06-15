@@ -1342,125 +1342,152 @@ applyFreeRestrictions();
 <script src="/makler-setup.js"></script>
 <script src="/business-extras.js"></script> 
 <script>
-function openPreview(html,title){
-  if(!html)return;
-  currentWebsiteHtml=html;
-  currentWebsiteName=(title||'website').toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'').replace(/-+/g,'-')||'website';
-  document.getElementById('preview-title').textContent=title||'Vorschau';
-  var panel=document.getElementById('preview-panel');
-  var frame=document.getElementById('preview-frame');
+// ── openPreview: Blob URL statt srcdoc (löst leere Preview) ──
+function openPreview(html, title) {
+  if (!html) return;
+  currentWebsiteHtml = html;
+  currentWebsiteName = (title || 'website').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-') || 'website';
+  document.getElementById('preview-title').textContent = title || 'Vorschau';
+  var panel = document.getElementById('preview-panel');
+  var frame = document.getElementById('preview-frame');
   frame.removeAttribute('src');
   frame.removeAttribute('srcdoc');
   panel.classList.add('open');
-  var safe=html.replace('<head>','<head><scr'+'ipt>window.onerror=function(){return true;};<'+'/scr'+'ipt>');
-  setTimeout(function(){ frame.srcdoc=safe; },200);
+  // Blob URL statt srcdoc — funktioniert zuverlässig
+  var blob = new Blob([html], {type: 'text/html'});
+  var url = URL.createObjectURL(blob);
+  setTimeout(function() {
+    frame.src = url;
+    setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
+  }, 100);
 }
 
-async function buildWebsite(isUpdate,updateRequest){
-  startGen(isUpdate?'Website wird aktualisiert...':'Website wird gebaut...');
+// ── buildWebsite: robuste HTML-Extraktion ──
+async function buildWebsite(isUpdate, updateRequest) {
+  startGen(isUpdate ? 'Website wird aktualisiert...' : 'Website wird gebaut...');
   showTyping();
-  var d=WEB.data;
-  var imgNote=WEB.imgBase64?'Referenzbild vorhanden':'';
+  var d = WEB.data;
   var prompt;
-  if(isUpdate){
-    prompt='Aktuelle Website (Ausschnitt):\n'+currentWebsiteHtml.substring(0,5000)+'\n\n[ÄNDERUNG]: '+updateRequest+'\n\nGib die komplette aktualisierte Website. Nur HTML, beginne mit <!DOCTYPE html>. Keine Backticks.';
+  if (isUpdate) {
+    prompt = 'Aktuelle Website:\n\n' + currentWebsiteHtml.substring(0, 5000) + '\n\n[ÄNDERUNG]: ' + updateRequest + '\n\nGib die komplette aktualisierte Website. Nur HTML, beginne mit <!DOCTYPE html>. Keine Backticks.';
   } else {
-    prompt='Erstelle eine professionelle Website als reines HTML.\n\nName: '+(d.name||d._request||'')+'\nAngebot: '+(d.angebot||d._request||'')+'\nHauptfarbe: '+(d.farbe||'#111111')+'\n\nPFLICHT: Fixe Navigation, Hero mit großem Titel, 3er-Grid Leistungen mit Emojis, Über uns, Kontaktformular, Footer, responsive, nur vanilla JS, Google Fonts als @import im style tag.\n\nNUR HTML - direkt mit <!DOCTYPE html> beginnen. Keine Backticks, kein Markdown.';
+    prompt = 'Erstelle eine professionelle, moderne Website als reines HTML.\n\nName/Thema: ' + (d.name || d._request || '') + '\nAngebot: ' + (d.angebot || d._request || '') + '\nHauptfarbe: ' + (d.farbe || '#111111') + '\n\nPFLICHT:\n1. Fixe Navigation mit Logo\n2. Hero mit großem Titel, Animation, CTA-Button\n3. Features/Leistungen in 3er-Grid mit Emojis\n4. Über uns Sektion\n5. Kontaktformular\n6. Footer\n7. Responsive, nur vanilla JS\n8. Google Fonts als @import\n9. Scroll-Animationen mit IntersectionObserver\n10. Modernes Design, viel Weißraum, klare Typografie\n\nNUR reines HTML — direkt mit <!DOCTYPE html> beginnen. Keine Backticks, kein Markdown, kein erklärender Text.';
   }
-  var sys='Du bist ein Elite-Webdesigner. Antworte NUR mit komplettem HTML. Beginne mit <!DOCTYPE html>. Keine Backticks, kein Markdown.';
-  try{
-    var r=await fetchWithRetry('/api/business',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'website-html',messages:[{role:'user',content:prompt}],systemOverride:sys})});
-    var resp=await r.json();
-    hideTyping();endGen();
-    var raw=(resp.content&&resp.content[0]&&resp.content[0].text)||'';
-    raw=raw.replace(/^```[a-z]*\s*/i,'').replace(/```\s*$/i,'').trim();
-    var lo=raw.toLowerCase();
-    var start=lo.indexOf('<!doctype html');
-    if(start<0)start=lo.indexOf('<html');
-    if(start<0){addAIMsg('Fehler beim Generieren. Schreib "nochmal" zum Wiederholen.');WEB.active=false;return;}
-    var html=raw.slice(start);
-    var endIdx=html.toLowerCase().lastIndexOf('</html>');
-    if(endIdx>=0){html=html.slice(0,endIdx+7);}
-    else{if(!/<\/style>/i.test(html))html+='</style>';if(!/<\/body>/i.test(html))html+='</body>';html+='</html>';}
-    if(!html||!/<html[\s>]/i.test(html)){addAIMsg('Website konnte nicht generiert werden.');WEB.active=false;return;}
-    currentWebsiteHtml=html;
-    currentWebsiteName=(d.name||'website').toLowerCase().replace(/[^a-z0-9]/g,'-').replace(/-+/g,'-')||'website';
-    WEB.active=false;
-    openPreview(html,d.name||'Website');
-    conversationHistory.push({role:'assistant',content:'[Website generiert]'});
-    if(conversationHistory.length>30)conversationHistory=conversationHistory.slice(-30);
-    saveChat(document.getElementById('chat-title').textContent,conversationHistory);
-    addAIMsg('Deine Website ist fertig! Vorschau rechts geöffnet.<br><br><div style="display:flex;gap:8px;margin-top:8px"><button onclick="openPreview(currentWebsiteHtml,\'Website\')" style="padding:9px 14px;background:var(--t);color:#fff;border:none;border-radius:7px;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer">Vorschau</button><button onclick="previewDownload()" style="padding:9px 14px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:7px;font-family:Inter,sans-serif;font-size:12px;cursor:pointer">Download</button></div>');
-  }catch(e){hideTyping();endGen();addAIMsg('Fehler: '+e.message);WEB.active=false;}
+  var sys = 'Du bist ein Elite-Webdesigner der modernen, professionellen Websites baut. Antworte NUR mit komplettem HTML-Code. Beginne DIREKT mit <!DOCTYPE html>. Absolut kein Text davor oder danach, keine Backticks, kein Markdown.';
+  try {
+    var r = await fetchWithRetry('/api/business', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({type: 'website-html', messages: [{role: 'user', content: prompt}], systemOverride: sys})
+    });
+    var resp = await r.json();
+    hideTyping(); endGen();
+    var raw = (resp.content && resp.content[0] && resp.content[0].text) || '';
+    raw = raw.replace(/^```html\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
+    var lo = raw.toLowerCase();
+    var start = lo.indexOf('<!doctype html');
+    if (start < 0) start = lo.indexOf('<html');
+    if (start < 0) { addAIMsg('Fehler beim Generieren. Schreib "nochmal" zum Wiederholen.'); WEB.active = false; return; }
+    var html = raw.slice(start);
+    var endIdx = html.toLowerCase().lastIndexOf('</html>');
+    if (endIdx >= 0) { html = html.slice(0, endIdx + 7); }
+    else { if (!/<\/style>/i.test(html)) html += '</style>'; if (!/<\/body>/i.test(html)) html += '</body>'; html += '</html>'; }
+    if (!html || !/<html[\s>]/i.test(html)) { addAIMsg('Website konnte nicht generiert werden. Bitte nochmal versuchen.'); WEB.active = false; return; }
+    currentWebsiteHtml = html;
+    currentWebsiteName = (d.name || 'website').toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-') || 'website';
+    WEB.active = false;
+    openPreview(html, d.name || 'Website');
+    conversationHistory.push({role: 'assistant', content: '[Website generiert]'});
+    if (conversationHistory.length > 30) conversationHistory = conversationHistory.slice(-30);
+    saveChat(document.getElementById('chat-title').textContent, conversationHistory);
+    addAIMsg('Deine Website ist fertig! Vorschau rechts geöffnet.<br><br><div style="display:flex;gap:8px;margin-top:8px"><button onclick="openPreview(currentWebsiteHtml,\'Website\')" style="padding:9px 14px;background:var(--t);color:#fff;border:none;border-radius:7px;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer">Vorschau</button><button onclick="previewDownload()" style="padding:9px 14px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:7px;font-family:Inter,sans-serif;font-size:12px;cursor:pointer">Download</button></div><br><span style="font-size:12px;color:var(--tm)">Änderung? Schreib z.B. "Mache die Farbe blau"</span>');
+  } catch(e) { hideTyping(); endGen(); addAIMsg('Fehler: ' + e.message); WEB.active = false; }
 }
 
-function startWebsiteFlow(txt,imgs){
-  WEB.active=true;WEB.collecting=false;WEB.step=0;
-  WEB.data={_request:txt,name:'',branche:'',angebot:txt,zielgruppe:'',farbe:'#111111'};
-  WEB.imgBase64=imgs&&imgs.length?imgs[0].b64:null;
-  WEB.imgMime=imgs&&imgs.length?imgs[0].mime:null;
+// ── startWebsiteFlow: sofort bauen ──
+function startWebsiteFlow(txt, imgs) {
+  WEB.active = true; WEB.collecting = false; WEB.step = 0;
+  WEB.data = {_request: txt, name: '', branche: '', angebot: txt, zielgruppe: '', farbe: '#111111'};
+  WEB.imgBase64 = imgs && imgs.length ? imgs[0].b64 : null;
+  WEB.imgMime = imgs && imgs.length ? imgs[0].mime : null;
   addAIMsg('Website wird gebaut...');
-  buildWebsite(false,'');
+  buildWebsite(false, '');
 }
 
-async function genChat(txt){
+// ── genChat: Bild-Erkennung im Frontend ──
+async function genChat(txt) {
   showTyping();
-  var _t=(txt||'').toLowerCase();
-  var _v=/erstell|mach|generier|erzeug|kreier|zeichn|design|create|generate|make|draw/.test(_t);
-  var _n=/\bbild\b|\bbid\b|foto|grafik|illustration|\bimage\b|visual|motiv|headerbild|werbebild|produktbild|hero/.test(_t);
-  var _d=/ein bild von|ein foto von|bild f.r|foto f.r|bild zu|foto zu/.test(_t);
-  if((_v&&_n)||_d){
+  var _t = (txt || '').toLowerCase();
+  var _v = /erstell|mach|generier|erzeug|kreier|zeichn|design|create|generate|make|draw/.test(_t);
+  var _n = /\bbild\b|\bbid\b|foto|grafik|illustration|\bimage\b|visual|motiv|headerbild|werbebild|produktbild|hero/.test(_t);
+  var _d = /ein bild von|ein foto von|bild f.r|foto f.r/.test(_t);
+  if ((_v && _n) || _d) {
     hideTyping();
-    if(!(await useCredits('img')))return;
-    genImage(txt,[]);
+    if (!(await useCredits('img'))) return;
+    genImage(txt, []);
     return;
   }
-  var SYS=isFreePlan()?'Du bist Virgo. Antworte kurz auf Deutsch. Ermutige zum Upgrade.':'Du bist Virgo, der KI-Assistent fuer Versicherungsmakler auf virgoio.com. Antworte auf Deutsch, direkt und hilfreich. Du kannst Bilder generieren, Websites bauen, Texte schreiben und Ads erstellen. Sage NIEMALS dass du keine Bilder erstellen kannst. Erwahne niemals Claude, ChatGPT, OpenAI oder Anthropic.';
-  fetchWithRetry('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:conversationHistory,systemOverride:SYS})})
-  .then(function(r){return r.json();})
-  .then(function(d){
+  var SYS = isFreePlan()
+    ? 'Du bist Virgo. Antworte kurz auf Deutsch. Ermutige zum Upgrade.'
+    : 'Du bist Virgo, der KI-Assistent fuer Versicherungsmakler auf virgoio.com. Antworte auf Deutsch, direkt und hilfreich. Du kannst Bilder generieren, Websites bauen, Texte schreiben und Ads erstellen. Sage NIEMALS dass du keine Bilder erstellen kannst. Erwahne niemals Claude, ChatGPT, OpenAI oder Anthropic.';
+  fetchWithRetry('/api/chat', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({messages: conversationHistory, systemOverride: SYS})})
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
     hideTyping();
-    if(d.generatedImage&&d.imageUrl){
-      addImageCard(lastUserMsg,d.imageUrl);
-      var t2=(d.content&&d.content[0]&&d.content[0].text)||'';
-      if(t2)addAIMsg(renderMD(t2));
-      conversationHistory.push({role:'assistant',content:'[Bild generiert]'});
-      if(conversationHistory.length>30)conversationHistory=conversationHistory.slice(-30);
-      saveChat(document.getElementById('chat-title').textContent,conversationHistory);
+    if (d.generatedImage && d.imageUrl) {
+      addImageCard(lastUserMsg, d.imageUrl);
+      var t2 = (d.content && d.content[0] && d.content[0].text) || '';
+      if (t2) addAIMsg(renderMD(t2));
+      conversationHistory.push({role: 'assistant', content: '[Bild generiert]'});
+      if (conversationHistory.length > 30) conversationHistory = conversationHistory.slice(-30);
+      saveChat(document.getElementById('chat-title').textContent, conversationHistory);
       return;
     }
-    var reply=(d.content&&d.content[0]&&d.content[0].text)||'Fehler.';
-    var htmlDoc=extractHtml(reply);
-    if(htmlDoc){
-      currentWebsiteHtml=htmlDoc;
-      openPreview(htmlDoc,'Website');
-      conversationHistory.push({role:'assistant',content:'[Website generiert]'});
-      if(conversationHistory.length>30)conversationHistory=conversationHistory.slice(-30);
-      saveChat(document.getElementById('chat-title').textContent,conversationHistory);
+    var reply = (d.content && d.content[0] && d.content[0].text) || 'Fehler.';
+    var htmlDoc = extractHtml(reply);
+    if (htmlDoc) {
+      currentWebsiteHtml = htmlDoc;
+      openPreview(htmlDoc, 'Website');
+      conversationHistory.push({role: 'assistant', content: '[Website generiert]'});
+      if (conversationHistory.length > 30) conversationHistory = conversationHistory.slice(-30);
+      saveChat(document.getElementById('chat-title').textContent, conversationHistory);
       addAIMsg('Website fertig! Vorschau rechts.');
       return;
     }
-    conversationHistory.push({role:'assistant',content:reply});
-    if(conversationHistory.length>30)conversationHistory=conversationHistory.slice(-30);
+    conversationHistory.push({role: 'assistant', content: reply});
+    if (conversationHistory.length > 30) conversationHistory = conversationHistory.slice(-30);
     addAIMsg(renderMD(reply));
-    saveChat(document.getElementById('chat-title').textContent,conversationHistory);
+    saveChat(document.getElementById('chat-title').textContent, conversationHistory);
   })
-  .catch(function(){hideTyping();showFallbackMsg();});
+  .catch(function() { hideTyping(); showFallbackMsg(); });
 }
 
-function _applyWorkspace(ws){
-  document.getElementById('ws-makler').style.display=ws==='makler'?'block':'none';
-  document.getElementById('ws-business').style.display=ws==='business'?'block':'none';
-  var dh=document.getElementById('dsgvo-hint');
-  if(dh)dh.style.display=ws==='makler'?'block':'none';
-  document.querySelectorAll('.mode-tab').forEach(function(t){t.classList.toggle('active',t.dataset.ws===ws);});
-  localStorage.setItem('virgo_workspace',ws);
-  var ib=document.getElementById('img-btn');
-  if(ib){ib.style.display='flex';ib.style.visibility='visible';ib.style.opacity='1';ib.style.pointerEvents='auto';}
-  var fi=document.getElementById('file-input-permanent');
-  if(fi){fi.style.pointerEvents='auto';fi.removeAttribute('disabled');}
+// ── _applyWorkspace: Upload in ALLEN Tabs aktiv ──
+function _applyWorkspace(ws) {
+  document.getElementById('ws-makler').style.display = ws === 'makler' ? 'block' : 'none';
+  document.getElementById('ws-business').style.display = ws === 'business' ? 'block' : 'none';
+  var dh = document.getElementById('dsgvo-hint');
+  if (dh) dh.style.display = ws === 'makler' ? 'block' : 'none';
+  document.querySelectorAll('.mode-tab').forEach(function(t) { t.classList.toggle('active', t.dataset.ws === ws); });
+  localStorage.setItem('virgo_workspace', ws);
+  var ib = document.getElementById('img-btn');
+  if (ib) { ib.style.display = 'flex'; ib.style.visibility = 'visible'; ib.style.opacity = '1'; ib.style.pointerEvents = 'auto'; }
+  var fi = document.getElementById('file-input-permanent');
+  if (fi) { fi.style.pointerEvents = 'auto'; fi.removeAttribute('disabled'); }
   renderLanding();
 }
+
+// ── Paste Screenshot direkt in Chat ──
+document.addEventListener('paste', async function(e) {
+  var items = Array.from(e.clipboardData.items).filter(function(i) { return i.type.startsWith('image/'); });
+  if (!items.length) return;
+  for (var item of items.slice(0, 4 - refImages.length)) {
+    var f = item.getAsFile();
+    if (!f) continue;
+    try { var c = await compressImg(f); refImages.push(c); } catch(err) {}
+  }
+  renderRefZone();
+});
 </script>
 </body>
 </html>
