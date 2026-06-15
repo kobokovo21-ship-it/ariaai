@@ -18,8 +18,11 @@
     const inp = document.createElement('input');
     inp.type = 'file';
     inp.accept = 'application/pdf,image/jpeg,image/png,image/webp';
+    inp.style.position = 'fixed';
+    inp.style.left = '-9999px';
     inp.onchange = function(ev){
       const file = ev.target.files[0];
+      if(inp.parentNode) inp.parentNode.removeChild(inp);
       if(!file) return;
       if(file.type === 'application/pdf'){
         if(file.size > 15*1024*1024){ alert('PDF max. 15MB'); return; }
@@ -31,14 +34,15 @@
         reader.readAsDataURL(file);
       } else {
         if(typeof compressImg === 'function'){
-          if(window.refImages && window.refImages.length >= 4){ alert('Max. 4 Bilder'); return; }
+          if(typeof refImages !== 'undefined' && refImages.length >= 4){ alert('Max. 4 Bilder'); return; }
           compressImg(file).then(c => {
-            if(window.refImages) window.refImages.push(c);
+            if(typeof refImages !== 'undefined') refImages.push(c);
             if(typeof renderRefZone === 'function') renderRefZone();
           });
         }
       }
     };
+    document.body.appendChild(inp);
     inp.click();
   }
 
