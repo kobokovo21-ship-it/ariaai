@@ -1351,15 +1351,7 @@ function openPreview(html,title){
   panel.classList.add('open');
   frame.removeAttribute('src');
   frame.removeAttribute('srcdoc');
-  var id='prev_'+Date.now();
-  fetch('/api/preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({html:html,id:id})})
-  .then(function(r){return r.json();})
-  .then(function(d){
-    if(d.url) frame.src=d.url;
-  })
-  .catch(function(){
-    frame.srcdoc=html;
-  });
+  setTimeout(function(){ frame.srcdoc=html; },300);
 }
 
 function closePreview(){
