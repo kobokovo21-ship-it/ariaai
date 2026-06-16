@@ -13,7 +13,7 @@ export default async function handler(req, res) {
     const defaultSystems = {
       'plan': 'Du bist ein Business-Experte. Erstelle NUR vollständige Businesspläne auf Deutsch. Struktur: 1) Executive Summary 2) Produkt/Dienstleistung 3) Marktanalyse 4) Zielgruppe 5) Wettbewerb 6) Marketing 7) Finanzen 8) Meilensteine. Direkt verwendbar, keine Platzhalter.',
       'website': 'Du bist ein Copywriter. Erstelle NUR professionelle Website-Texte auf Deutsch. Struktur: Hero-Headline (max 8 Wörter), Subheadline, 3 USPs mit Erklärung, Über uns, Leistungen, CTA. Conversion-optimiert.',
-      'website-html': 'Du bist ein Webdesigner. Erstelle eine vollständige professionelle Website als HTML. WICHTIG: Halte den Code KOMPAKT - max 200 Zeilen. Nutze inline CSS. Kein externes JS, keine CDN-Links. Nur: Navigation, Hero mit Titel+CTA, 3 Feature-Karten, Footer. Starte DIREKT mit <!DOCTYPE html>. Keine Backticks.',
+      'website-html': 'Du bist ein weltklasse Creative Director und Frontend-Entwickler. Erstelle eine visuell beeindruckende, cinematic Website als reines HTML — wie eine premium Agentur-Website (Altitudes, Awwwards-Niveau). STIL: Großes Hero-Bild oder animierter Gradient-Hintergrund, elegante serifenlose Typografie (Inter oder Playfair Display), viel Weißraum, subtile Animationen, premium Farbpalette. PFLICHT: 1) Fixe Navigation mit Logo, transparent über Hero 2) Fullscreen Hero mit großem cinematic Titel (clamp(60px,10vw,140px)), Untertitel, animierter CTA 3) CSS @keyframes: fadeInUp, floatAnimation, gradientShift, pulseGlow 4) 5-8 floating geometrische Formen im Hero 5) IntersectionObserver Scroll-Reveal auf allen Sektionen 6) Features/Produkte als elegante Cards mit Hover-Effekten 7) Über uns Sektion 8) Kontaktbereich 9) Footer 10) Google Fonts als @import, nur vanilla JS, responsive. QUALITÄT: Jedes Detail muss premium wirken — Abstände, Typografie-Hierarchie, Farben, Animationsgeschwindigkeit. NUR HTML — direkt mit <!DOCTYPE html>. Keine Backticks, kein Markdown.',
       'ads': 'Du bist ein Performance Marketing Experte. Erstelle NUR Werbeanzeigen-Texte auf Deutsch. Format für jede Anzeige: HEADLINE (max 6 Wörter) + TEXT (max 125 Zeichen) + CTA. Erstelle 5 verschiedene Varianten.',
       'social': 'Du bist ein Social Media Manager. Erstelle NUR Social Media Posts auf Deutsch. Für jeden Post: Plattform (Instagram/LinkedIn/TikTok) + Caption + max 5 Hashtags. Erstelle 10 abwechslungsreiche Posts. KEIN Businessplan, nur Posts!',
       'email': 'Du bist ein Email Marketing Experte. Erstelle NUR eine 5-teilige Email-Sequenz auf Deutsch. Jede Email: Betreff + Inhalt + CTA. 1) Willkommen 2) Mehrwert 3) Beweis/Case Study 4) Angebot 5) Follow-up.',
@@ -22,7 +22,6 @@ export default async function handler(req, res) {
 
     let systemPrompt = systemOverride || defaultSystems[type] || 'Du bist Virgo Business AI — erstelle professionelle Business-Inhalte auf Deutsch. Antworte vollständig und direkt verwendbar.';
 
-    // Website-HTML: kompakter Prompt für schnellere Generierung
     const maxTokens = type === 'website-html' ? 8000 : 2048;
 
     // Anthropic
