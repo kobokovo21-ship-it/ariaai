@@ -23,7 +23,7 @@ export default async function handler(req, res) {
     let systemPrompt = systemOverride || defaultSystems[type] || 'Du bist Virgo Business AI — erstelle professionelle Business-Inhalte auf Deutsch. Antworte vollständig und direkt verwendbar.';
 
     // Website-HTML: kompakter Prompt für schnellere Generierung
-    const maxTokens = type === 'website-html' ? 3000 : 2048;
+    const maxTokens = type === 'website-html' ? 6000 : 2048;
 
     // Anthropic
     try {
@@ -35,7 +35,7 @@ export default async function handler(req, res) {
           'anthropic-version': '2023-06-01'
         },
         body: JSON.stringify({
-          model: 'claude-haiku-4-5-20251001',
+          model: 'claude-sonnet-4-6',
           max_tokens: maxTokens,
           system: systemPrompt,
           messages
