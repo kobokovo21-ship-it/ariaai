@@ -640,8 +640,9 @@ function closePreview(){
   frame.removeAttribute('src');
 }
 function previewFullscreen(){
-  const html=currentWebsiteHtml;if(!html)return;
-  const w=window.open('','_blank');if(w){w.document.open();w.document.write(html);w.document.close();}
+  if(!currentWebsiteHtml)return;
+  var w=window.open('','_blank');
+  if(w){w.document.open();w.document.write(currentWebsiteHtml);w.document.close();}
 }
 function previewDownload(){
   if(!currentWebsiteHtml)return;
@@ -1350,12 +1351,15 @@ function openPreview(html,title){
   document.getElementById('preview-title').textContent=title||'Vorschau';
   var panel=document.getElementById('preview-panel');
   var frame=document.getElementById('preview-frame');
+  panel.classList.add('open');
   frame.removeAttribute('src');
   frame.removeAttribute('srcdoc');
-  panel.classList.add('open');
-  var blob=new Blob([html],{type:'text/html'});
-  var url=URL.createObjectURL(blob);
-  setTimeout(function(){frame.src=url;setTimeout(function(){URL.revokeObjectURL(url);},10000);},150);
+  try {
+    localStorage.setItem('virgo_preview_html', html);
+  } catch(e) {}
+  setTimeout(function(){
+    frame.srcdoc = html;
+  }, 300);
 }
 
 async function buildWebsite(isUpdate,updateRequest){
@@ -1475,4 +1479,3 @@ function _applyWorkspace(ws){
 </script>
 </body>
 </html>
-  
