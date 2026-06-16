@@ -1341,7 +1341,6 @@ applyFreeRestrictions();
 <script src="/business-extras.js"></script> 
 
 <script>
-// openPreview: srcdoc mit 300ms delay
 function openPreview(html,title){
   if(!html)return;
   currentWebsiteHtml=html;
@@ -1352,22 +1351,27 @@ function openPreview(html,title){
   panel.classList.add('open');
   frame.removeAttribute('src');
   frame.removeAttribute('srcdoc');
-  setTimeout(function(){ frame.srcdoc=html; },300);
+  var id='prev_'+Date.now();
+  fetch('/api/preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({html:html,id:id})})
+  .then(function(r){return r.json();})
+  .then(function(d){
+    if(d.url) frame.src=d.url;
+  })
+  .catch(function(){
+    frame.srcdoc=html;
+  });
 }
 
-// closePreview: nur Panel schliessen, HTML behalten
 function closePreview(){
   document.getElementById('preview-panel').classList.remove('open');
 }
 
-// previewFullscreen
 function previewFullscreen(){
   if(!currentWebsiteHtml)return;
   var w=window.open('','_blank');
   if(w){w.document.open();w.document.write(currentWebsiteHtml);w.document.close();}
 }
 
-// buildWebsite
 async function buildWebsite(isUpdate,updateRequest){
   startGen(isUpdate?'Website wird aktualisiert...':'Website wird gebaut...');
   showTyping();
@@ -1376,9 +1380,9 @@ async function buildWebsite(isUpdate,updateRequest){
   if(isUpdate){
     prompt='Aktuelle Website:\n\n'+currentWebsiteHtml.substring(0,6000)+'\n\n[AENDERUNG]: '+updateRequest+'\n\nGib die komplette aktualisierte Website. Nur HTML, beginne mit <!DOCTYPE html>. Keine Backticks.';
   } else {
-    prompt='Erstelle eine professionelle, vollstaendige Website als reines HTML.\n\nThema/Name: '+(d.name||d._request||'')+'\nAngebot: '+(d.angebot||d._request||'')+'\nHauptfarbe: '+(d.farbe||'#111111')+'\n\nPFLICHT:\n1. Fixe Navigation mit Logo und Links\n2. Hero mit grossem Titel, Animation, CTA-Button\n3. Features/Produkte in 3er-Grid mit Emojis\n4. Ueber uns Sektion\n5. Kontaktformular\n6. Footer\n7. Vollstaendig responsive\n8. Nur vanilla JS\n9. Google Fonts als @import\n10. Scroll-Animationen mit IntersectionObserver\n11. Modernes Design, viel Weissraum\n\nNUR HTML - direkt mit <!DOCTYPE html> beginnen. Keine Backticks, kein Markdown, kein Text davor oder danach.';
+    prompt='Erstelle eine professionelle, vollstaendige Website als reines HTML.\n\nThema: '+(d.name||d._request||'')+'\nAngebot: '+(d.angebot||d._request||'')+'\nHauptfarbe: '+(d.farbe||'#111111')+'\n\nPFLICHT:\n1. Fixe Navigation mit Logo\n2. Hero mit grossem Titel, Animation, CTA-Button\n3. Features in 3er-Grid mit Emojis\n4. Ueber uns\n5. Kontaktformular\n6. Footer\n7. Responsive, vanilla JS, Google Fonts als @import\n8. Scroll-Animationen\n\nNUR HTML - direkt mit <!DOCTYPE html> beginnen. Keine Backticks, kein Markdown.';
   }
-  var sys='Du bist ein Elite-Webdesigner. Antworte NUR mit komplettem HTML. Beginne DIREKT mit <!DOCTYPE html>. Keine Backticks, kein Markdown, kein Text.';
+  var sys='Du bist ein Elite-Webdesigner. Antworte NUR mit komplettem HTML. Beginne DIREKT mit <!DOCTYPE html>. Keine Backticks, kein Markdown.';
   try{
     var r=await fetchWithRetry('/api/business',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'website-html',messages:[{role:'user',content:prompt}],systemOverride:sys})});
     var resp=await r.json();
@@ -1393,12 +1397,12 @@ async function buildWebsite(isUpdate,updateRequest){
     var endIdx=html.toLowerCase().lastIndexOf('</html>');
     if(endIdx>=0){html=html.slice(0,endIdx+7);}
     else{
-      var styleOpen=(html.match(/<style[\s>]/gi)||[]).length;
-      var styleClose=(html.match(/<\/style>/gi)||[]).length;
-      if(styleOpen>styleClose)html+='</style>';
-      var bodyOpen=(html.match(/<body[\s>]/gi)||[]).length;
-      var bodyClose=(html.match(/<\/body>/gi)||[]).length;
-      if(bodyOpen>bodyClose)html+='</body>';
+      var sO=(html.match(/<style[\s>]/gi)||[]).length;
+      var sC=(html.match(/<\/style>/gi)||[]).length;
+      if(sO>sC)html+='</style>';
+      var bO=(html.match(/<body[\s>]/gi)||[]).length;
+      var bC=(html.match(/<\/body>/gi)||[]).length;
+      if(bO>bC)html+='</body>';
       html+='</html>';
     }
     if(!html||!/<html[\s>]/i.test(html)){addAIMsg('Website konnte nicht generiert werden.');WEB.active=false;return;}
@@ -1409,11 +1413,10 @@ async function buildWebsite(isUpdate,updateRequest){
     conversationHistory.push({role:'assistant',content:'[Website generiert]'});
     if(conversationHistory.length>30)conversationHistory=conversationHistory.slice(-30);
     saveChat(document.getElementById('chat-title').textContent,conversationHistory);
-    addAIMsg('Deine Website ist fertig! Vorschau rechts.<br><br><div style="display:flex;gap:8px;margin-top:8px"><button onclick="openPreview(currentWebsiteHtml,\'Website\')" style="padding:9px 14px;background:var(--t);color:#fff;border:none;border-radius:7px;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer">Vorschau</button><button onclick="previewDownload()" style="padding:9px 14px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:7px;font-family:Inter,sans-serif;font-size:12px;cursor:pointer">Download</button></div><br><span style="font-size:12px;color:var(--tm)">Aenderung? z.B. "Mache die Farbe blau"</span>');
+    addAIMsg('Deine Website ist fertig! Vorschau rechts.<br><br><div style="display:flex;gap:8px;margin-top:8px"><button onclick="openPreview(currentWebsiteHtml,\'Website\')" style="padding:9px 14px;background:var(--t);color:#fff;border:none;border-radius:7px;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer">Vorschau</button><button onclick="previewDownload()" style="padding:9px 14px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:7px;font-family:Inter,sans-serif;font-size:12px;cursor:pointer">Download</button></div><br><span style="font-size:12px;color:var(--tm)">Aenderung? z.B. Farbe aendern</span>');
   }catch(e){hideTyping();endGen();addAIMsg('Fehler: '+e.message);WEB.active=false;}
 }
 
-// startWebsiteFlow
 function startWebsiteFlow(txt,imgs){
   WEB.active=true;WEB.collecting=false;WEB.step=0;
   WEB.data={_request:txt,name:'',branche:'',angebot:txt,zielgruppe:'',farbe:'#111111'};
@@ -1422,7 +1425,6 @@ function startWebsiteFlow(txt,imgs){
   buildWebsite(false,'');
 }
 
-// detectIntent: erweitert
 function detectIntent(txt){
   var WI=/(bau|baue|erstell|erstelle|mach|generier|design|entwickl|build|create).{0,40}(website|webseite|homepage|landingpage|landing\s*page|shop|onlineshop|seite|showcase|produktseite|firmenwebsite)|(website|webseite|homepage|showcase|landingpage).{0,20}(bauen|erstellen|machen|generieren)/i;
   var II=/(erstell|mach|generier|erzeug|kreier|zeichn|design|create|generate|make|draw).{0,30}(bild|bid|foto|image|grafik|visual|motiv|banner|logo|werbebild|produktbild|headerbild|hero)|(bild|foto|image).{0,20}(erstell|generier|machen|fuer|von|zu)/i;
@@ -1433,7 +1435,6 @@ function detectIntent(txt){
   return'chat';
 }
 
-// genChat
 async function genChat(txt){
   showTyping();
   var _t=(txt||'').toLowerCase();
@@ -1446,7 +1447,7 @@ async function genChat(txt){
     genImage(txt,[]);
     return;
   }
-  var SYS=isFreePlan()?'Du bist Virgo. Antworte kurz auf Deutsch. Ermutige zum Upgrade.':'Du bist Virgo, der KI-Assistent fuer Versicherungsmakler und Unternehmen auf virgoio.com. Antworte auf Deutsch, direkt und hilfreich. Du kannst Bilder generieren, Websites bauen, Texte schreiben und Ads erstellen. Sage NIEMALS dass du keine Bilder erstellen kannst. Wenn jemand eine Website, Showcase oder Landingpage will, baue sie sofort. Erwahne niemals Claude, ChatGPT, OpenAI oder Anthropic.';
+  var SYS=isFreePlan()?'Du bist Virgo. Antworte kurz auf Deutsch. Ermutige zum Upgrade.':'Du bist Virgo, der KI-Assistent fuer Versicherungsmakler und Unternehmen auf virgoio.com. Antworte auf Deutsch, direkt und hilfreich. Du kannst Bilder generieren, Websites bauen, Texte schreiben und Ads erstellen. Sage NIEMALS dass du keine Bilder erstellen kannst. Wenn jemand eine Website will, baue sie sofort. Erwahne niemals Claude, ChatGPT, OpenAI oder Anthropic.';
   fetchWithRetry('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:conversationHistory,systemOverride:SYS})})
   .then(function(r){return r.json();})
   .then(function(d){
@@ -1479,7 +1480,6 @@ async function genChat(txt){
   .catch(function(){hideTyping();showFallbackMsg();});
 }
 
-// _applyWorkspace
 function _applyWorkspace(ws){
   document.getElementById('ws-makler').style.display=ws==='makler'?'block':'none';
   document.getElementById('ws-business').style.display=ws==='business'?'block':'none';
