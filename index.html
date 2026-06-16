@@ -666,29 +666,26 @@ function wantsImage(txt){
          /\b(bild|image)\b.{0,20}(erstellen|generieren|machen)/i.test(txt.toLowerCase());
 }
 function extractHtml(raw){
-  // strip all markdown fences
-  let s=String(raw||'').replace(/```[a-z]*\n?/gi,'').replace(/```/g,'').trim();
-  // find doctype or html tag
+  let s=String(raw||'').replace(/^```html\s*/i,'').replace(/^```\s*/i,'').replace(/```\s*$/i,'').trim();
   const lo=s.toLowerCase();
   let start=lo.indexOf('<!doctype html');
   if(start<0)start=lo.indexOf('<html');
   if(start<0)return '';
   s=s.slice(start);
-  // find closing tag
   const end=s.toLowerCase().lastIndexOf('</html>');
   if(end>=0){
     s=s.slice(0,end+7);
   } else {
-    // HTML wurde abgeschnitten — reparieren, damit es trotzdem rendert statt weiss zu bleiben
+    // Abgeschnitten: CSS und Body schließen
     const styleOpen=(s.match(/<style[\s>]/gi)||[]).length;
     const styleClose=(s.match(/<\/style>/gi)||[]).length;
-    if(styleOpen>styleClose) s+='</style>';
-    if(!/<\/body>/i.test(s)) s+='</body>';
-    s+='</html>';
+    if(styleOpen>styleClose) s+='\n</style>';
+    const bodyOpen=(s.match(/<body[\s>]/gi)||[]).length;
+    const bodyClose=(s.match(/<\/body>/gi)||[]).length;
+    if(bodyOpen>bodyClose) s+='\n</body>';
+    s+='\n</html>';
   }
-  // validate it has basic structure
-  return /<html[\s>]/i.test(s) ? s : `<!DOCTYPE html><html><body>${s}</body></html>`;
-
+  return /<html[\s>]/i.test(s) ? s : '<!DOCTYPE html><html><body>'+s+'</body></html>';
 }
 // ═══════════════════════════════════════
 // SIDEBAR
