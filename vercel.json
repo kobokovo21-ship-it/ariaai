@@ -1,1 +1,17 @@
-{}
+{
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    { "source": "/makler/:slug", "destination": "/makler.html" },
+    { "source": "/makler/:slug/", "destination": "/makler.html" }
+  ]
+}
