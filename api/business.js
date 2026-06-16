@@ -35,7 +35,7 @@ export default async function handler(req, res) {
           'anthropic-version': '2023-06-01'
         },
         body: JSON.stringify({
-          model: 'claude-opus-4-8',
+          model: 'claude-sonnet-4-6',
           max_tokens: maxTokens,
           system: systemPrompt,
           messages
@@ -117,4 +117,3 @@ export default async function handler(req, res) {
     });
   }
 }
-
