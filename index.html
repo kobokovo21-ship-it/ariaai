@@ -614,24 +614,38 @@ window.virgoStructured={};
 // PREVIEW PANEL
 // ═══════════════════════════════════════
 function openPreview(html,title){
-  if(!html)return;
+  if(!html||!html.includes('<html'))return console.error('⚠️ Invalid or empty HTML');
   currentWebsiteHtml=html;
   currentWebsiteName=(title||'website').toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'').replace(/-+/g,'-')||'website';
   document.getElementById('preview-title').textContent=title||'Vorschau';
   const panel=document.getElementById('preview-panel');
   const frame=document.getElementById('preview-frame');
-  // clear first
+  
+  // Clear old content first
   frame.removeAttribute('src');
   frame.removeAttribute('srcdoc');
-  // inject error suppressor so iframe script errors dont bubble up
-  const safe=html.replace('<head>','<head><script>window.onerror=function(){return true;};<\/script>');
-  // use srcdoc — works in all modern browsers without blob/sandbox issues
-  setTimeout(()=>{
-  frame.srcdoc = safe;
-  console.log("PREVIEW HTML:", frame.srcdoc);
-},50);
   
-panel.classList.add('open');
+  // Inject error suppressor
+  const safe=html.replace('<head>','<head><script>window.onerror=function(){return true;};<\/script>');
+  
+  // Set srcdoc IMMEDIATELY (no setTimeout = no race condition)
+  frame.srcdoc=safe;
+  console.log('✓ Preview srcdoc set, HTML length:',safe.length);
+  
+  // Open panel AFTER srcdoc is set
+  panel.classList.add('open');
+  
+  // Debug: verify iframe rendering after a moment
+  setTimeout(()=>{
+    try{
+      const iframeDoc=frame.contentDocument||frame.contentWindow?.document;
+      const hasContent=iframeDoc&&iframeDoc.body&&iframeDoc.body.children.length>0;
+      console.log('✓ iframe content verified:',hasContent?'✓ Has content':'⚠️ Empty body');
+    }catch(e){
+      // Expected: srcdoc iframes may throw on same-origin access
+      console.log('✓ iframe rendering (cannot inspect due to srcdoc security)');
+    }
+  },100);
 }
 function closePreview(){
   document.getElementById('preview-panel').classList.remove('open');
@@ -1052,19 +1066,44 @@ NUR HTML - direkt mit <!DOCTYPE html> beginnen. Kein Text davor oder danach. Kei
     const resp=await r.json();
     hideTyping();endGen();
     let html=(resp.content&&resp.content[0]&&resp.content[0].text)||'';
+    
+    // Extract HTML and validate
     html=extractHtml(html);
-    if(!html){addAIMsg('❌ Fehler beim Generieren. Schreib "nochmal" zum Wiederholen.');WEB.active=false;return;}
+    if(!html||html.length<100){
+      console.error('⚠️ HTML zu kurz oder leer:',html?.length);
+      addAIMsg('❌ <b>Fehler:</b> Website konnte nicht vollständig generiert werden. Schreib "nochmal" zum Wiederholen.');
+      WEB.active=false;
+      return;
+    }
+    
+    // Sanity check: ensure HTML has body content
+    if(!html.toLowerCase().includes('<body')||!/<body[\s>][\s\S]{20,}/i.test(html)){
+      console.error('⚠️ HTML hat keinen validen body');
+      addAIMsg('❌ <b>Fehler:</b> Generierte Website ist leer. Versuche es erneut.');
+      WEB.active=false;
+      return;
+    }
+    
     currentWebsiteHtml=html;
     currentWebsiteName=(d.name||'website').toLowerCase().replace(/[^a-z0-9]/g,'-').replace(/-+/g,'-')||'website';
     WEB.active=false;
+    
+    console.log('✓ HTML validated, length:',html.length,'opening preview...');
     // auto-open preview
     openPreview(html,d.name||'Website');
-    const pid='p'+Date.now();window['_h_'+pid]=html;
+    
     conversationHistory.push({role:'assistant',content:'[Website generiert und Vorschau geöffnet]'});
     saveChat(document.getElementById('chat-title').textContent,conversationHistory);
+    
     var _previewBtn='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button onclick="openPreview(currentWebsiteHtml,\'Website\')" style="padding:9px 14px;background:var(--t);color:#fff;border:none;border-radius:7px;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer">Vorschau</button><button onclick="previewDownload()" style="padding:9px 14px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:7px;font-family:Inter,sans-serif;font-size:12px;cursor:pointer">Download</button></div>';
     addAIMsg('✅ <b>Deine Website ist fertig!</b> Die Vorschau ist rechts geöffnet.<br><br>'+_previewBtn+'<br><span style="font-size:12px;color:var(--tm)">Änderung gewünscht? Schreib z.B. "Mache die Farbe blau"</span>');
-  }catch(e){hideTyping();endGen();addAIMsg('❌ Fehler: '+e.message);WEB.active=false;}
+  }catch(e){
+    hideTyping();
+    endGen();
+    console.error('⚠️ buildWebsite error:',e);
+    addAIMsg('❌ <b>Fehler:</b> '+e.message+'. Versuche es erneut.');
+    WEB.active=false;
+  }
 }
 
 async function genWebsiteUpdate(txt){
