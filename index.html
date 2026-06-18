@@ -614,44 +614,32 @@ window.virgoStructured={};
 // PREVIEW PANEL
 // ═══════════════════════════════════════
 function openPreview(html,title){
-  if(!html||!html.includes('<html'))return console.error('⚠️ Invalid or empty HTML');
+  if(!html||!html.includes('<html'))return console.error('⚠️ Invalid HTML');
   currentWebsiteHtml=html;
   currentWebsiteName=(title||'website').toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'').replace(/-+/g,'-')||'website';
   document.getElementById('preview-title').textContent=title||'Vorschau';
   const panel=document.getElementById('preview-panel');
   const frame=document.getElementById('preview-frame');
   
-  // Clear old content first
-  frame.removeAttribute('src');
+  // Clear old
+  if(window._prevBlobUrl){URL.revokeObjectURL(window._prevBlobUrl);}
   frame.removeAttribute('srcdoc');
+  frame.removeAttribute('src');
   
-  // Inject error suppressor
-  const safe=html.replace('<head>','<head><script>window.onerror=function(){return true;};<\/script>');
+  // Blob URL (works with CSP, no sandbox issues)
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  window._prevBlobUrl=URL.createObjectURL(blob);
+  frame.src=window._prevBlobUrl;
   
-  // Set srcdoc IMMEDIATELY (no setTimeout = no race condition)
-  frame.srcdoc=safe;
-  console.log('✓ Preview srcdoc set, HTML length:',safe.length);
-  
-  // Open panel AFTER srcdoc is set
+  console.log('✓ Preview loaded via Blob URL, size:',html.length+'B');
   panel.classList.add('open');
-  
-  // Debug: verify iframe rendering after a moment
-  setTimeout(()=>{
-    try{
-      const iframeDoc=frame.contentDocument||frame.contentWindow?.document;
-      const hasContent=iframeDoc&&iframeDoc.body&&iframeDoc.body.children.length>0;
-      console.log('✓ iframe content verified:',hasContent?'✓ Has content':'⚠️ Empty body');
-    }catch(e){
-      // Expected: srcdoc iframes may throw on same-origin access
-      console.log('✓ iframe rendering (cannot inspect due to srcdoc security)');
-    }
-  },100);
 }
 function closePreview(){
   document.getElementById('preview-panel').classList.remove('open');
   const frame=document.getElementById('preview-frame');
-  frame.removeAttribute('srcdoc');
+  if(window._prevBlobUrl){URL.revokeObjectURL(window._prevBlobUrl);window._prevBlobUrl=null;}
   frame.removeAttribute('src');
+  frame.removeAttribute('srcdoc');
 }
 function previewFullscreen(){
   if(!currentWebsiteHtml)return;
