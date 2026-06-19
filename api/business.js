@@ -13,18 +13,19 @@ export default async function handler(req, res) {
     const defaultSystems = {
       'plan': 'Du bist ein Business-Experte. Erstelle NUR vollständige Businesspläne auf Deutsch. Struktur: 1) Executive Summary 2) Produkt/Dienstleistung 3) Marktanalyse 4) Zielgruppe 5) Wettbewerb 6) Marketing 7) Finanzen 8) Meilensteine. Direkt verwendbar, keine Platzhalter.',
       'website': 'Du bist ein Copywriter. Erstelle NUR professionelle Website-Texte auf Deutsch. Struktur: Hero-Headline (max 8 Wörter), Subheadline, 3 USPs mit Erklärung, Über uns, Leistungen, CTA. Conversion-optimiert.',
-      'website-html': 'Du bist ein Elite-Webdesigner (Awwwards-Niveau). Erstelle eine cinematic premium Website als reines HTML. PFLICHT: fixe transparente Nav, Fullscreen-Hero mit großem Titel (clamp(60px,10vw,140px)) + CSS Animationen (fadeInUp, floatAnimation, gradientShift), floating Elemente, IntersectionObserver Scroll-Reveal, elegante Feature-Cards mit Hover-Effekten, Google Fonts @import, nur vanilla JS, responsive. Premium Typografie, viel Weißraum. NUR HTML direkt mit <!DOCTYPE html>. Keine Backticks.',
+      'website-html': 'Du bist ein Motion Design & Web Animation Expert. Generiere WUNDERSCHÖNES, modernes HTML mit echten CSS/SVG Animationen. Antworte NUR mit vollständigem HTML-Code. Beginne direkt mit <!DOCTYPE html>. KEIN Text davor/danach, KEINE Backticks. Das HTML muss atemberaubend schön sein mit Bewegungen überall. @keyframes, Hover-Effects, Scroll-Animationen, Gradient-Shifts - alles muss animiert und luxuriös sein.',
       'ads': 'Du bist ein Performance Marketing Experte. Erstelle NUR Werbeanzeigen-Texte auf Deutsch. Format für jede Anzeige: HEADLINE (max 6 Wörter) + TEXT (max 125 Zeichen) + CTA. Erstelle 5 verschiedene Varianten.',
       'social': 'Du bist ein Social Media Manager. Erstelle NUR Social Media Posts auf Deutsch. Für jeden Post: Plattform (Instagram/LinkedIn/TikTok) + Caption + max 5 Hashtags. Erstelle 10 abwechslungsreiche Posts. KEIN Businessplan, nur Posts!',
       'email': 'Du bist ein Email Marketing Experte. Erstelle NUR eine 5-teilige Email-Sequenz auf Deutsch. Jede Email: Betreff + Inhalt + CTA. 1) Willkommen 2) Mehrwert 3) Beweis/Case Study 4) Angebot 5) Follow-up.',
       'pitch': 'Du bist ein Startup-Pitch Experte. Erstelle NUR ein vollständiges Pitch Deck auf Deutsch. Struktur: Problem, Lösung, Marktgröße, Geschäftsmodell, Traktion, Team, Finanzierung. Überzeugend für Investoren.'
     };
 
+    // systemOverride wird benutzt wenn vom Frontend gesendet, sonst default
     let systemPrompt = systemOverride || defaultSystems[type] || 'Du bist Virgo Business AI — erstelle professionelle Business-Inhalte auf Deutsch. Antworte vollständig und direkt verwendbar.';
 
     const maxTokens = type === 'website-html' ? 8000 : 2048;
 
-    // Anthropic
+    // Anthropic API
     try {
       const r = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -45,12 +46,13 @@ export default async function handler(req, res) {
       }
       const data = await r.json();
       if (data.type === 'error' || !data.content) throw new Error('Anthropic error');
+      console.log('✓ Anthropic erfolgreich');
       return res.status(200).json(data);
     } catch (anthropicErr) {
-      console.warn('Anthropic failed → Gemini:', anthropicErr.message);
+      console.warn('⚠️ Anthropic failed → Gemini:', anthropicErr.message);
     }
 
-    // Gemini
+    // Gemini API
     try {
       if (!process.env.GEMINI_API_KEY) throw new Error('Kein Gemini Key');
       const geminiMessages = messages.map(msg => {
@@ -75,12 +77,13 @@ export default async function handler(req, res) {
       const geminiData = await geminiRes.json();
       const geminiText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!geminiText) throw new Error('Gemini no content');
+      console.log('✓ Gemini erfolgreich');
       return res.status(200).json({ content: [{ type: 'text', text: geminiText }], _fallback: 'gemini' });
     } catch (geminiErr) {
-      console.warn('Gemini failed → OpenAI:', geminiErr.message);
+      console.warn('⚠️ Gemini failed → OpenAI:', geminiErr.message);
     }
 
-    // OpenAI
+    // OpenAI API (Fallback)
     try {
       if (!process.env.OPENAI_API_KEY) throw new Error('Kein OpenAI Key');
       const openaiMessages = [{ role: 'system', content: systemPrompt }];
@@ -99,17 +102,20 @@ export default async function handler(req, res) {
       const openaiData = await openaiRes.json();
       const openaiText = openaiData?.choices?.[0]?.message?.content;
       if (!openaiText) throw new Error('OpenAI no content');
+      console.log('✓ OpenAI erfolgreich');
       return res.status(200).json({ content: [{ type: 'text', text: openaiText }], _fallback: 'openai' });
     } catch (openaiErr) {
-      console.error('Alle 3 fehlgeschlagen:', openaiErr.message);
+      console.error('❌ Alle 3 APIs fehlgeschlagen:', openaiErr.message);
     }
 
+    // Fallback wenn alle fehlschlagen
     return res.status(200).json({
       content: [{ type: 'text', text: 'Virgo ist gerade stark ausgelastet. Bitte versuche es in 30 Sekunden nochmal.' }],
       _fallback: 'none'
     });
 
   } catch (err) {
+    console.error('Fatal error:', err.message);
     return res.status(200).json({
       content: [{ type: 'text', text: 'Virgo ist gerade kurz überlastet. Bitte versuche es gleich nochmal.' }],
       _error: err.message
