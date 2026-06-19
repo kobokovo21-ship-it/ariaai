@@ -902,15 +902,15 @@ function cancelGen(){clearInterval(genTimer);endGen();hideTyping();}
 // ═══════════════════════════════════════
 
 // Intent detection
-const WEBSITE_INTENT=/(bau|baue|erstell|erstelle|mach|generier|design|entwickl|build|create).{0,30}(website|webseite|homepage|landingpage|landing page|shop|onlineshop|firmenwebsite|makler.?website|seite)|(website|webseite|homepage).{0,20}(bauen|erstellen|machen|generieren)/i;
-const IMAGE_GEN_INTENT=/(erstell|mach|generier|erzeug|zeichn|create|make|draw|design).{0,25}(bild|image|foto|photo|visual|grafik|logo|banner|werbebild|produktbild)/i;
-const WEBSITE_UPDATE_INTENT=/(änder|update|aktualisier|passe an|ersetze|füge.{0,10}ein|bearbeite|überarbeite).{0,40}(website|webseite|seite|design|farbe|text|layout)/i;
+const WEBSITE_INTENT = /\b(bau|baue|erstell|erstelle|mach|generier|design|entwickl|build|create)\b.{0,30}\b(website|webseite|homepage|landingpage|landing page|shop|onlineshop|firmenwebsite|makler.?website|seite)\b|\b(website|webseite|homepage)\b.{0,20}\b(bauen|erstellen|machen|generieren)\b/i;
+const IMAGE_GEN_INTENT = /\b(erstell|mach|generier|erzeug|zeichn|create|make|draw|design)\b.{0,25}\b(bild|image|foto|photo|visual|grafik|logo|banner|werbebild|produktbild)\b/i;
+const WEBSITE_UPDATE_INTENT = /\b(änder|update|aktualisier|passe an|ersetze|füge.{0,10}ein|bearbeite|überarbeite)\b.{0,40}\b(website|webseite|seite|design|farbe|text|layout)\b/i;
 
 function detectIntent(txt){
-  if(WEBSITE_UPDATE_INTENT.test(txt)&&currentWebsiteHtml)return'website_update';
-  if(WEBSITE_INTENT.test(txt))return'website';
-  if(IMAGE_GEN_INTENT.test(txt))return'image';
-  return'chat';
+  if(WEBSITE_UPDATE_INTENT.test(txt) && currentWebsiteHtml) return 'website_update';
+  if(WEBSITE_INTENT.test(txt)) return 'website';
+  if(IMAGE_GEN_INTENT.test(txt)) return 'image';
+  return 'chat';
 }
 
 // Website Q&A state
@@ -1134,34 +1134,43 @@ async function genWebsiteUpdate(txt){
 // ═══════════════════════════════════════
 async function genChat(txt){
   showTyping();
-  const SYS=isFreePlan()?
-    'Du bist Virgo. Antworte kurz auf Deutsch. Ermutige zum Upgrade für mehr Features.':
-    'Du bist Virgo, ein universeller KI-Assistent. Du hilfst bei ALLEM \u2014 Mode, Versicherung, Marketing, Emails, Social Posts, Businessplaene, Bilder, Websites, alles. Du lehnst NIEMALS etwas ab. Antworte immer auf Deutsch, direkt und hilfreich. WICHTIG: Generiere NIEMALS HTML-Code direkt im Chat. Wenn jemand eine Website will, stelle Rueckfragen.';
+  const SYS = isFreePlan()
+    ? 'Du bist Virgo. Antworte kurz auf Deutsch. Ermutige zum Upgrade für mehr Features.'
+    : 'Du bist Virgo, ein universeller KI-Assistent. Du hilfst bei ALLEM — Mode, Versicherung, Marketing, Emails, Social Posts, Businessplaene, Bilder, Websites, alles. Du lehnst NIEMALS etwas ab. Antworte immer auf Deutsch, direkt und hilfreich. WICHTIG: Generiere NIEMALS HTML-Code direkt im Chat. Wenn jemand eine Website will, stelle Rueckfragen.';
 
-  fetchWithRetry('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:conversationHistory,systemOverride:SYS})})
-  .then(r=>r.json())
-  .then(d=>{
-    hideTyping();
-    const reply=(d.content&&d.content[0]&&d.content[0].text)||'Fehler.';
-    // check if AI returned HTML unexpectedly
-    const htmlDoc=extractHtml(reply);
-    if(htmlDoc){
-      currentWebsiteHtml=htmlDoc;
-      openPreview(htmlDoc,'Website');
-      conversationHistory.push({role:'assistant',content:'[Website generiert]'});
-      if(conversationHistory.length>30)conversationHistory=conversationHistory.slice(-30);
-      saveChat(document.getElementById('chat-title').textContent,conversationHistory);
-      addAIMsg('✅ <b>Website fertig!</b> Vorschau rechts geöffnet.<br><br><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button onclick="openPreview(currentWebsiteHtml,\'Website\')" style="padding:9px 14px;background:var(--t);color:#fff;border:none;border-radius:7px;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer">Vorschau</button><button onclick="previewDownload()" style="padding:9px 14px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:7px;font-family:Inter,sans-serif;font-size:12px;cursor:pointer">Download</button></div>');
-      return;
-    }
-    conversationHistory.push({role:'assistant',content:reply});
-    if(conversationHistory.length>30)conversationHistory=conversationHistory.slice(-30);
-    addAIMsg(renderMD(reply));
-    saveChat(document.getElementById('chat-title').textContent,conversationHistory);
+  fetchWithRetry('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages: conversationHistory, systemOverride: SYS })
   })
-  .catch(()=>{hideTyping();showFallbackMsg();});
-}
+    .then(r => r.json())
+    .then(d => {
+      hideTyping();
 
+      const reply = (d.content && d.content[0] && d.content[0].text) || 'Fehler.';
+
+      const htmlDoc = extractHtml(reply);
+      if (htmlDoc) {
+        currentWebsiteHtml = htmlDoc;
+        openPreview(htmlDoc, 'Website');
+        conversationHistory.push({ role: 'assistant', content: '[Website generiert]' });
+        if (conversationHistory.length > 30) conversationHistory = conversationHistory.slice(-30);
+        saveChat(document.getElementById('chat-title').textContent, conversationHistory);
+
+        addAIMsg('✅ <b>Website fertig!</b> Vorschau rechts geöffnet.<br><br><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button onclick="openPreview(currentWebsiteHtml,\'Website\')" style="padding:9px 14px;background:var(--t);color:#fff;border:none;border-radius:7px;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer">Vorschau</button><button onclick="previewDownload()" style="padding:9px 14px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:7px;font-family:Inter,sans-serif;font-size:12px;cursor:pointer">Download</button></div>');
+        return;
+      }
+
+      conversationHistory.push({ role: 'assistant', content: reply });
+      if (conversationHistory.length > 30) conversationHistory = conversationHistory.slice(-30);
+      addAIMsg(renderMD(reply));
+      saveChat(document.getElementById('chat-title').textContent, conversationHistory);
+    })
+    .catch(() => {
+      hideTyping();
+      showFallbackMsg();
+    });
+}
 // ═══════════════════════════════════════
 // IMAGE GEN
 // ═══════════════════════════════════════
@@ -1396,151 +1405,5 @@ applyFreeRestrictions();
 <script src="/makler-setup.js"></script>
 <script src="/business-extras.js"></script> 
 
-<script>
-function openPreview(html,title){
-  if(!html)return;
-  currentWebsiteHtml=html;
-  currentWebsiteName=(title||'website').toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'').replace(/-+/g,'-')||'website';
-  document.getElementById('preview-title').textContent=title||'Vorschau';
-  var panel=document.getElementById('preview-panel');
-  var frame=document.getElementById('preview-frame');
-  panel.classList.add('open');
-  frame.removeAttribute('src');
-  frame.removeAttribute('srcdoc');
-  setTimeout(function(){ frame.srcdoc=html; },300);
-}
-
-function closePreview(){
-  document.getElementById('preview-panel').classList.remove('open');
-}
-
-function previewFullscreen(){
-  if(!currentWebsiteHtml)return;
-  var w=window.open('','_blank');
-  if(w){w.document.open();w.document.write(currentWebsiteHtml);w.document.close();}
-}
-
-async function buildWebsite(isUpdate,updateRequest){
-  startGen(isUpdate?'Website wird aktualisiert...':'Website wird gebaut...');
-  showTyping();
-  var d=WEB.data;
-  var prompt;
-  if(isUpdate){
-    prompt='Aktuelle Website:\n\n'+currentWebsiteHtml.substring(0,6000)+'\n\n[AENDERUNG]: '+updateRequest+'\n\nGib die komplette aktualisierte Website. Nur HTML, beginne mit <!DOCTYPE html>. Keine Backticks.';
-  } else {
-    prompt='Erstelle eine professionelle, vollstaendige Website als reines HTML.\n\nThema: '+(d.name||d._request||'')+'\nAngebot: '+(d.angebot||d._request||'')+'\nHauptfarbe: '+(d.farbe||'#111111')+'\n\nPFLICHT:\n1. Fixe Navigation mit smooth scroll\n2. Hero: grosser animierter Titel mit CSS fadeInUp Keyframe, floating geometrische Formen (Kreise/Rechtecke die schweben mit floatAnimation Keyframe), animierter Gradient-Hintergrund, CTA-Button mit Pulse-Animation\n3. Features in 3er-Grid - jede Card mit Hover scale+glow Animation\n4. Ueber uns Sektion mit slideIn Animation\n5. Kontaktformular\n6. Footer\n7. MOTION GRAPHICS - PFLICHT:\n   - CSS @keyframes: fadeInUp, floatAnimation, pulseGlow, gradientShift, slideInLeft, slideInRight, scaleIn\n   - 5-8 floating Elemente im Hero die sich bewegen\n   - IntersectionObserver Scroll-Reveal auf jeder Sektion\n   - Animated gradient oder Partikel-Hintergrund im Hero\n   - Smooth hover transitions auf allen interaktiven Elementen\n8. Google Fonts (Inter oder Poppins) als @import, nur vanilla JS, responsive\n\nVISUELL BEEINDRUCKEND wie eine premium Design-Agentur. Viel Weissraum, starke Typografie, premium Animationen.\n\nNUR HTML - direkt mit <!DOCTYPE html>. Keine Backticks, kein Markdown.';
-  }
-  var sys='Du bist ein Elite-Webdesigner. Antworte NUR mit komplettem HTML. Beginne DIREKT mit <!DOCTYPE html>. Keine Backticks, kein Markdown.';
-  try{
-    var r=await fetchWithRetry('/api/business',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'website-html',messages:[{role:'user',content:prompt}],systemOverride:sys})});
-    var resp=await r.json();
-    hideTyping();endGen();
-    var raw=(resp.content&&resp.content[0]&&resp.content[0].text)||'';
-    raw=raw.replace(/^```html\s*/i,'').replace(/^```\s*/i,'').replace(/```\s*$/i,'').trim();
-    var lo=raw.toLowerCase();
-    var start=lo.indexOf('<!doctype html');
-    if(start<0)start=lo.indexOf('<html');
-    if(start<0){addAIMsg('Fehler beim Generieren. Schreib "nochmal" zum Wiederholen.');WEB.active=false;return;}
-    var html=raw.slice(start);
-    var endIdx=html.toLowerCase().lastIndexOf('</html>');
-    if(endIdx>=0){html=html.slice(0,endIdx+7);}
-    else{
-      var sO=(html.match(/<style[\s>]/gi)||[]).length;
-      var sC=(html.match(/<\/style>/gi)||[]).length;
-      if(sO>sC)html+='</style>';
-      var bO=(html.match(/<body[\s>]/gi)||[]).length;
-      var bC=(html.match(/<\/body>/gi)||[]).length;
-      if(bO>bC)html+='</body>';
-      html+='</html>';
-    }
-    if(!html||!/<html[\s>]/i.test(html)){addAIMsg('Website konnte nicht generiert werden.');WEB.active=false;return;}
-    currentWebsiteHtml=html;
-    currentWebsiteName=(d.name||'website').toLowerCase().replace(/[^a-z0-9]/g,'-').replace(/-+/g,'-')||'website';
-    WEB.active=false;
-    openPreview(html,d.name||'Website');
-    conversationHistory.push({role:'assistant',content:'[Website generiert]'});
-    if(conversationHistory.length>30)conversationHistory=conversationHistory.slice(-30);
-    saveChat(document.getElementById('chat-title').textContent,conversationHistory);
-    addAIMsg('Deine Website ist fertig! Vorschau rechts.<br><br><div style="display:flex;gap:8px;margin-top:8px"><button onclick="openPreview(currentWebsiteHtml,\'Website\')" style="padding:9px 14px;background:var(--t);color:#fff;border:none;border-radius:7px;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer">Vorschau</button><button onclick="previewDownload()" style="padding:9px 14px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:7px;font-family:Inter,sans-serif;font-size:12px;cursor:pointer">Download</button></div><br><span style="font-size:12px;color:var(--tm)">Aenderung? z.B. Farbe aendern</span>');
-  }catch(e){hideTyping();endGen();addAIMsg('Fehler: '+e.message);WEB.active=false;}
-}
-
-function startWebsiteFlow(txt,imgs){
-  WEB.active=true;WEB.collecting=false;WEB.step=0;
-  WEB.data={_request:txt,name:'',branche:'',angebot:txt,zielgruppe:'',farbe:'#111111'};
-  WEB.imgBase64=null;WEB.imgMime=null;
-  addAIMsg('Website wird gebaut...');
-  buildWebsite(false,'');
-}
-
-function detectIntent(txt){
-  var WI=/(bau|baue|erstell|erstelle|mach|generier|design|entwickl|build|create).{0,40}(website|webseite|homepage|landingpage|landing\s*page|shop|onlineshop|seite|showcase|produktseite|firmenwebsite)|(website|webseite|homepage|showcase|landingpage).{0,20}(bauen|erstellen|machen|generieren)/i;
-  var II=/(erstell|mach|generier|erzeug|kreier|zeichn|design|create|generate|make|draw).{0,30}(bild|bid|foto|image|grafik|visual|motiv|banner|logo|werbebild|produktbild|headerbild|hero)|(bild|foto|image).{0,20}(erstell|generier|machen|fuer|von|zu)/i;
-  var UI=/(aender|aendere|update|aktualisier|passe an|ersetze|bearbeite).{0,40}(website|webseite|seite|design|farbe|text|layout)/i;
-  if(UI.test(txt)&&currentWebsiteHtml)return'website_update';
-  if(WI.test(txt))return'website';
-  if(II.test(txt))return'image';
-  return'chat';
-}
-
-async function genChat(txt){
-  showTyping();
-  var _t=(txt||'').toLowerCase();
-  var _v=/erstell|mach|generier|erzeug|kreier|zeichn|design|create|generate|make|draw/.test(_t);
-  var _n=/bild|bid|foto|grafik|image|visual|motiv|headerbild|werbebild|produktbild|hero/.test(_t);
-  var _d=/ein bild von|ein foto von|bild fuer|foto fuer/.test(_t);
-  if((_v&&_n)||_d){
-    hideTyping();
-    if(!(await useCredits('img')))return;
-    genImage(txt,[]);
-    return;
-  }
-  var SYS=isFreePlan()?'Du bist Virgo. Antworte kurz auf Deutsch. Ermutige zum Upgrade.':'Du bist Virgo, der KI-Assistent fuer Versicherungsmakler und Unternehmen auf virgoio.com. Antworte auf Deutsch, direkt und hilfreich. Du kannst Bilder generieren, Websites bauen, Texte schreiben und Ads erstellen. Sage NIEMALS dass du keine Bilder erstellen kannst. Wenn jemand eine Website will, baue sie sofort. Erwahne niemals Claude, ChatGPT, OpenAI oder Anthropic.';
-  fetchWithRetry('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:conversationHistory,systemOverride:SYS})})
-  .then(function(r){return r.json();})
-  .then(function(d){
-    hideTyping();
-    if(d.generatedImage&&d.imageUrl){
-      addImageCard(lastUserMsg,d.imageUrl);
-      var t2=(d.content&&d.content[0]&&d.content[0].text)||'';
-      if(t2)addAIMsg(renderMD(t2));
-      conversationHistory.push({role:'assistant',content:'[Bild generiert]'});
-      if(conversationHistory.length>30)conversationHistory=conversationHistory.slice(-30);
-      saveChat(document.getElementById('chat-title').textContent,conversationHistory);
-      return;
-    }
-    var reply=(d.content&&d.content[0]&&d.content[0].text)||'Fehler.';
-    var htmlDoc=extractHtml(reply);
-    if(htmlDoc){
-      currentWebsiteHtml=htmlDoc;
-      openPreview(htmlDoc,'Website');
-      conversationHistory.push({role:'assistant',content:'[Website generiert]'});
-      if(conversationHistory.length>30)conversationHistory=conversationHistory.slice(-30);
-      saveChat(document.getElementById('chat-title').textContent,conversationHistory);
-      addAIMsg('Website fertig! Vorschau rechts.');
-      return;
-    }
-    conversationHistory.push({role:'assistant',content:reply});
-    if(conversationHistory.length>30)conversationHistory=conversationHistory.slice(-30);
-    addAIMsg(renderMD(reply));
-    saveChat(document.getElementById('chat-title').textContent,conversationHistory);
-  })
-  .catch(function(){hideTyping();showFallbackMsg();});
-}
-
-function _applyWorkspace(ws){
-  document.getElementById('ws-makler').style.display=ws==='makler'?'block':'none';
-  document.getElementById('ws-business').style.display=ws==='business'?'block':'none';
-  var dh=document.getElementById('dsgvo-hint');
-  if(dh)dh.style.display=ws==='makler'?'block':'none';
-  document.querySelectorAll('.mode-tab').forEach(function(t){t.classList.toggle('active',t.dataset.ws===ws);});
-  localStorage.setItem('virgo_workspace',ws);
-  var ib=document.getElementById('img-btn');
-  if(ib){ib.style.display='flex';ib.style.visibility='visible';ib.style.opacity='1';ib.style.pointerEvents='auto';}
-  var fi=document.getElementById('file-input-permanent');
-  if(fi){fi.style.pointerEvents='auto';fi.removeAttribute('disabled');}
-  renderLanding();
-}
-</script>
 </body>
 </html>
