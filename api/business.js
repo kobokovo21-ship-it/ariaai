@@ -1,6 +1,6 @@
-export const config = { maxDuration: 300 };
+const config = { maxDuration: 300 };
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -14,7 +14,7 @@ export default async function handler(req, res) {
     const defaultSystems = {
       plan: 'Du bist ein Business-Experte. Erstelle NUR vollständige Businesspläne auf Deutsch. Struktur: 1) Executive Summary 2) Produkt/Dienstleistung 3) Marktanalyse 4) Zielgruppe 5) Wettbewerb 6) Marketing 7) Finanzen 8) Meilensteine. Direkt verwendbar, keine Platzhalter.',
       website: 'Du bist ein Copywriter. Erstelle NUR professionelle Website-Texte auf Deutsch. Struktur: Hero-Headline (max 8 Wörter), Subheadline, 3 USPs mit Erklärung, Über uns, Leistungen, CTA. Conversion-optimiert.',
-      website-html: 'Du bist ein Motion Design & Web Animation Expert. Generiere WUNDERSCHÖNES, modernes HTML mit echten CSS/SVG Animationen. Antworte NUR mit vollständigem HTML-Code. Beginne direkt mit <!DOCTYPE html>. KEIN Text davor/danach, KEINE Backticks. Das HTML muss atemberaubend schön sein mit Bewegungen überall. @keyframes, Hover-Effects, Scroll-Animationen, Gradient-Shifts - alles muss animiert und luxuriös sein.',
+      'website-html': 'Du bist ein Motion Design & Web Animation Expert. Generiere WUNDERSCHÖNES, modernes HTML mit echten CSS/SVG Animationen. Antworte NUR mit vollständigem HTML-Code. Beginne direkt mit <!DOCTYPE html>. KEIN Text davor/danach, KEINE Backticks. Das HTML muss atemberaubend schön sein mit Bewegungen überall. @keyframes, Hover-Effects, Scroll-Animationen, Gradient-Shifts - alles muss animiert und luxuriös sein.',
       ads: 'Du bist ein Performance Marketing Experte. Erstelle NUR Werbeanzeigen-Texte auf Deutsch. Format für jede Anzeige: HEADLINE (max 6 Wörter) + TEXT (max 125 Zeichen) + CTA. Erstelle 5 verschiedene Varianten.',
       social: 'Du bist ein Social Media Manager. Erstelle NUR Social Media Posts auf Deutsch. Für jeden Post: Plattform (Instagram/LinkedIn/TikTok) + Caption + max 5 Hashtags. Erstelle 10 abwechslungsreiche Posts. KEIN Businessplan, nur Posts!',
       email: 'Du bist ein Email Marketing Experte. Erstelle NUR eine 5-teilige Email-Sequenz auf Deutsch. Jede Email: Betreff + Inhalt + CTA. 1) Willkommen 2) Mehrwert 3) Beweis/Case Study 4) Angebot 5) Follow-up.',
@@ -150,3 +150,6 @@ export default async function handler(req, res) {
     });
   }
 }
+
+module.exports = handler;
+exports.config = config;
