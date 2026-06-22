@@ -14,7 +14,7 @@ async function handler(req, res) {
     const defaultSystems = {
       plan: 'Du bist ein Business-Experte. Erstelle NUR vollständige Businesspläne auf Deutsch. Struktur: 1) Executive Summary 2) Produkt/Dienstleistung 3) Marktanalyse 4) Zielgruppe 5) Wettbewerb 6) Marketing 7) Finanzen 8) Meilensteine. Direkt verwendbar, keine Platzhalter.',
       website: 'Du bist ein Copywriter. Erstelle NUR professionelle Website-Texte auf Deutsch. Struktur: Hero-Headline (max 8 Wörter), Subheadline, 3 USPs mit Erklärung, Über uns, Leistungen, CTA. Conversion-optimiert.',
-      'website-html': 'Du bist ein Motion Design & Web Animation Expert. Generiere WUNDERSCHÖNES, modernes HTML mit echten CSS/SVG Animationen. Antworte NUR mit vollständigem HTML-Code. Beginne direkt mit <!DOCTYPE html>. KEIN Text davor/danach, KEINE Backticks. Das HTML muss atemberaubend schön sein mit Bewegungen überall. @keyframes, Hover-Effects, Scroll-Animationen, Gradient-Shifts - alles muss animiert und luxuriös sein.',
+      'website-html': 'Du bist ein MOTION DESIGN & WEB ANIMATION EXPERT. GENERIERE NUR WUNDERSCHÖNES, modernes HTML mit ECHTEN CSS/SVG Animationen. ANIMATIONEN SIND NICHT OPTIONAL — JEDE Website MUSS atemberaubend animiert sein! Antworte NUR mit vollständigem HTML-Code. Beginne direkt mit <!DOCTYPE html>. KEIN Text davor/danach, KEINE Backticks. PFLICHT-ANIMATIONEN in jeder Website: @keyframes (fade-in, slide-up, pulse, glow, float), Hover-Effekte auf ALLEN Buttons/Cards (scale + glow), Scroll-Reveal Animationen, animierte Hintergründe, SVG-Bewegungen, Gradient-Shifts, Parallax-Effekte. Keine statischen Seiten — ALLES MUSS SICH BEWEGEN. Das HTML muss luxuriös, modern und ständig in Bewegung sein.',
       ads: 'Du bist ein Performance Marketing Experte. Erstelle NUR Werbeanzeigen-Texte auf Deutsch. Format für jede Anzeige: HEADLINE (max 6 Wörter) + TEXT (max 125 Zeichen) + CTA. Erstelle 5 verschiedene Varianten.',
       social: 'Du bist ein Social Media Manager. Erstelle NUR Social Media Posts auf Deutsch. Für jeden Post: Plattform (Instagram/LinkedIn/TikTok) + Caption + max 5 Hashtags. Erstelle 10 abwechslungsreiche Posts. KEIN Businessplan, nur Posts!',
       email: 'Du bist ein Email Marketing Experte. Erstelle NUR eine 5-teilige Email-Sequenz auf Deutsch. Jede Email: Betreff + Inhalt + CTA. 1) Willkommen 2) Mehrwert 3) Beweis/Case Study 4) Angebot 5) Follow-up.',
@@ -26,7 +26,7 @@ async function handler(req, res) {
       defaultSystems[type] ||
       'Du bist Virgo Business AI — erstelle professionelle Business-Inhalte auf Deutsch. Antworte vollständig und direkt verwendbar.';
 
-    const maxTokens = type === 'website-html' ? 8000 : 2048;
+    const maxTokens = type === 'website-html' ? 16000 : 4096;
 
     const extractText = (msg) => {
       if (!msg) return '';
@@ -35,9 +35,10 @@ async function handler(req, res) {
         : (msg.content || '');
     };
 
-    // Anthropic API
+    // Anthropic API - OPUS 4.8 für Website, Sonnet 4.6 für Rest
     try {
-      const anthropicModel = process.env.ANTHROPIC_MODEL || 'claude-3-5-sonnet-20240620';
+      const isWebsite = type === 'website-html';
+      const anthropicModel = process.env.ANTHROPIC_MODEL || (isWebsite ? 'claude-opus-4-8' : 'claude-sonnet-4-6');
 
       const r = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -61,7 +62,7 @@ async function handler(req, res) {
       const data = await r.json();
       if (data.type === 'error' || !data.content) throw new Error('Anthropic error');
 
-      console.log('✓ Anthropic erfolgreich');
+      console.log(`✓ Anthropic (${anthropicModel}) erfolgreich`);
       return res.status(200).json(data);
     } catch (anthropicErr) {
       console.warn('⚠️ Anthropic failed → Gemini:', anthropicErr.message);
@@ -118,7 +119,7 @@ async function handler(req, res) {
           'Authorization': 'Bearer ' + process.env.OPENAI_API_KEY
         },
         body: JSON.stringify({
-          model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+          model: process.env.OPENAI_MODEL || 'gpt-4o',
           max_tokens: maxTokens,
           messages: openaiMessages,
           temperature: 0.7
