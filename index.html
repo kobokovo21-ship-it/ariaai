@@ -1046,6 +1046,19 @@ async function buildWebsite(isUpdate,updateRequest){
   startGen(isUpdate?'Website wird aktualisiert...':'Website wird gebaut...');showTyping();
   const d=WEB.data;
 
+  // ── Bild zu Supabase Storage hochladen, echte URL holen (nur Neubau mit Bild) ──
+  let uploadedImageUrl='';
+  if(WEB.imgBase64 && !isUpdate){
+    try{
+      document.getElementById('gl').textContent='Bild wird hochgeladen...';
+      const ur=await fetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image_base64:WEB.imgBase64,mime:WEB.imgMime||'image/jpeg'})});
+      const ud=await ur.json();
+      if(ud&&ud.url){uploadedImageUrl=ud.url;console.log('✓ Bild hochgeladen:',uploadedImageUrl);}
+      else{console.warn('⚠️ Bild-Upload ohne URL:',ud&&ud.error);}
+    }catch(e){console.warn('⚠️ Bild-Upload fehlgeschlagen:',e.message);}
+    document.getElementById('gl').textContent='Website wird gebaut...';
+  }
+
   let prompt;
   if(isUpdate){
     prompt='Ich habe diese Website:\n\n'+currentWebsiteHtml.substring(0,3000)+'\n\n[ÄNDERUNG]: '+updateRequest+'\n\nGib mir die komplette aktualisierte Website mit allen Animationen. Nur HTML, beginne mit <!DOCTYPE html>.';
@@ -1055,7 +1068,7 @@ async function buildWebsite(isUpdate,updateRequest){
 
 BRIEFING DES KUNDEN:
 ${d._request}
-${WEB.imgBase64?'\nHINWEIS: Der Kunde hat ein Referenzbild hochgeladen (siehe Bild). Orientiere dich am Stil, den Farben, dem Logo und der Stimmung des Bildes. Baue das Look & Feel des Bildes in die Website ein.':''}
+${uploadedImageUrl?`\nECHTES PRODUKTBILD — SEHR WICHTIG:\nDer Kunde hat ein echtes Foto hochgeladen. Es liegt unter dieser URL:\n${uploadedImageUrl}\nDu MUSST dieses echte Foto in die Website einbauen mit: <img src="${uploadedImageUrl}" alt="Produkt" style="...">. Setze es prominent in den Hero-Bereich und/oder die Galerie. Zeichne KEIN eigenes Produkt nach — verwende GENAU diese Bild-URL. Das echte Foto ist Pflicht.`:(WEB.imgBase64?'\nHINWEIS: Der Kunde hat ein Referenzbild hochgeladen (siehe Bild). Orientiere dich am Stil, den Farben, dem Logo und der Stimmung des Bildes.':'')}
 
 ANIMATIONEN - PFLICHT (das Briefing kann zusätzliche nennen):
 ✓ SVG/CSS Animated Hero: Bewegte Shapes/Wellen/Gradients
@@ -1069,7 +1082,7 @@ TECHNISCH:
 - KEIN jQuery, Bootstrap, React, Vue — NUR Vanilla JS + CSS
 - Google Fonts @import in <style>
 - KEINE externen <script src>
-- KEINE externen Bilder (nur CSS/SVG/Emojis)
+${uploadedImageUrl?'- Das echte Produktbild von der oben genannten URL MUSST du per <img src> einbinden. Sonst keine weiteren externen Bilder (nur CSS/SVG/Emojis).':'- KEINE externen Bilder (nur CSS/SVG/Emojis)'}
 - Alles inline, vollständig responsive (clamp, media queries)
 - IntersectionObserver für Scroll-Effekte
 
@@ -1136,7 +1149,7 @@ Das HTML MUSS mind. 5KB sein (echte Inhalte + Animationen).
 `;
   }
 
-  const sys='Du bist ein Motion Design & Web Animation Expert. Generiere WUNDERSCHÖNES, modernes HTML mit echten CSS/SVG Animationen. Antworte NUR mit vollständigem HTML-Code. Beginne direkt mit <!DOCTYPE html>. KEIN Text davor/danach, KEINE Backticks, KEIN Markdown. Das HTML muss atemberaubend schön sein mit Bewegungen überall.';
+  const sys='Du bist ein Motion Design & Web Animation Expert. Generiere WUNDERSCHÖNES, modernes HTML mit echten CSS/SVG Animationen. Antworte NUR mit vollständigem HTML-Code. Beginne direkt mit <!DOCTYPE html>. KEIN Text davor/danach, KEINE Backticks, KEIN Markdown. Das HTML muss atemberaubend schön sein mit Bewegungen überall.'+(uploadedImageUrl?' WICHTIG: Wenn im Briefing eine echte Bild-URL genannt wird, baue dieses Bild per <img src="..."> ein und zeichne es NICHT nach.':'');
 
   // ── Message-Content bauen: Bild mitschicken wenn vorhanden ──
   let userContent;
