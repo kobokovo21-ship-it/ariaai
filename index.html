@@ -933,13 +933,17 @@ const WEBSITE_UPDATE_INTENT = /\b(änder|update|aktualisier|passe an|ersetze|fü
 
 function detectIntent(txt){
   if(WEBSITE_UPDATE_INTENT.test(txt) && currentWebsiteHtml) return 'website_update';
+  // ROBUST: Bau-Verb IRGENDWO + Website-Wort IRGENDWO (egal wie weit auseinander)
+  var webVerb=/\b(bau|baue|erstell|erstelle|mach|mache|generier|generiere|design|designe|entwickl|gestalte|build|create)\b/i.test(txt);
+  var webNoun=/\b(website|webseite|web-?site|homepage|landingpage|landing\s*page|onlineshop|online-?shop|firmenwebsite|webshop|landing)\b/i.test(txt);
+  if(webVerb && webNoun) return 'website';
   if(WEBSITE_INTENT.test(txt)) return 'website';
   if(IMAGE_GEN_INTENT.test(txt)) return 'image';
   return 'chat';
 }
 
 // Website Q&A state
-const WEB={active:false,collecting:false,step:0,data:{},imgBase64:null,imgMime:null};
+const WEB={active:false,collecting:false,step:0,data:{},imgBase64:null,imgMime:null,imgs:[]};
 const WEB_Q=[
   {key:'name',q:'Wie heißt dein Unternehmen oder dein Name?'},
   {key:'branche',q:'In welcher Branche bist du tätig?\n(z.B. Versicherung, Mode, Restaurant, IT, Handwerk...)'},
@@ -1009,11 +1013,12 @@ async function send(){
 // ═══════════════════════════════════════
 async function startWebsiteFlow(txt,imgs){
   WEB.active=true;WEB.step=0;WEB.data={_request:txt};
-  WEB.imgBase64=imgs&&imgs.length?imgs[0].b64:null;
-  WEB.imgMime=imgs&&imgs.length?imgs[0].mime:null;
+  WEB.imgs=imgs&&imgs.length?imgs.slice(0,4):[];
+  WEB.imgBase64=WEB.imgs.length?WEB.imgs[0].b64:null;
+  WEB.imgMime=WEB.imgs.length?WEB.imgs[0].mime:null;
 
   const wordCount=txt.trim().split(/\s+/).filter(Boolean).length;
-  const hasImage=imgs&&imgs.length>0;
+  const hasImage=WEB.imgs.length>0;
 
   // Ausführlicher Prompt ODER Bild → direkt bauen
   if(wordCount>15||hasImage){
@@ -1085,17 +1090,30 @@ async function buildWebsite(isUpdate,updateRequest){
   startGen(isUpdate?'Website wird aktualisiert...':'Website wird gebaut...');showTyping();
   const d=WEB.data;
 
-  // ── Bild zu Supabase Storage hochladen, echte URL holen (nur Neubau mit Bild) ──
+  // ── Alle Bilder zu Supabase Storage hochladen, echte URLs holen (nur Neubau) ──
   let uploadedImageUrl='';
-  if(WEB.imgBase64 && !isUpdate){
-    try{
-      document.getElementById('gl').textContent='Bild wird hochgeladen...';
-      const ur=await fetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image_base64:WEB.imgBase64,mime:WEB.imgMime||'image/jpeg'})});
-      const ud=await ur.json();
-      if(ud&&ud.url){uploadedImageUrl=ud.url;console.log('✓ Bild hochgeladen:',uploadedImageUrl);}
-      else{console.warn('⚠️ Bild-Upload ohne URL:',ud&&ud.error);}
-    }catch(e){console.warn('⚠️ Bild-Upload fehlgeschlagen:',e.message);}
+  let uploadedUrls=[];
+  const imgList=(WEB.imgs&&WEB.imgs.length)?WEB.imgs:(WEB.imgBase64?[{b64:WEB.imgBase64,mime:WEB.imgMime}]:[]);
+  if(imgList.length && !isUpdate){
+    for(let i=0;i<imgList.length;i++){
+      try{
+        document.getElementById('gl').textContent='Bild '+(i+1)+'/'+imgList.length+' wird hochgeladen...';
+        const ur=await fetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image_base64:imgList[i].b64,mime:imgList[i].mime||'image/jpeg'})});
+        const ud=await ur.json();
+        if(ud&&ud.url){uploadedUrls.push(ud.url);console.log('✓ Bild '+(i+1)+' hochgeladen:',ud.url);}
+        else{console.warn('⚠️ Bild '+(i+1)+' ohne URL:',ud&&ud.error);}
+      }catch(e){console.warn('⚠️ Bild '+(i+1)+' Upload fehlgeschlagen:',e.message);}
+    }
+    uploadedImageUrl=uploadedUrls[0]||'';
     document.getElementById('gl').textContent='Website wird gebaut...';
+  }
+
+  // Bild-Anweisung für den Prompt (alle echten URLs)
+  let imgBlock='';
+  if(uploadedUrls.length){
+    imgBlock='\nECHTE PRODUKTBILDER — SEHR WICHTIG ('+uploadedUrls.length+' Stück):\nDer Kunde hat echte Fotos hochgeladen. Sie liegen unter diesen URLs:\n'+uploadedUrls.map((u,i)=>(i+1)+'. '+u).join('\n')+'\nDu MUSST ALLE diese echten Fotos prominent einbauen mit <img src="...">. Setze sie GROSS in den Hero-Bereich (nebeneinander oder als Galerie/Lookbook). Zeichne KEINE eigenen Produkte nach — verwende GENAU diese Bild-URLs. Alle Fotos sind Pflicht.';
+  } else if(WEB.imgBase64){
+    imgBlock='\nHINWEIS: Der Kunde hat Referenzbild(er) hochgeladen (siehe Bild). Orientiere dich am Stil, den Farben, dem Logo und der Stimmung der Bilder.';
   }
 
   // GRAFIKVIDEO-OPTIK: dieser Block wird in den Bau-Prompt eingefügt (kinoreife CSS-Bewegung)
@@ -1118,7 +1136,7 @@ GRAFIKVIDEO-OPTIK — PFLICHT (lässt die Seite aussehen wie ein bewegtes Studio
 
 BRIEFING DES KUNDEN:
 ${d._request}
-${uploadedImageUrl?`\nECHTES PRODUKTBILD — SEHR WICHTIG:\nDer Kunde hat ein echtes Foto hochgeladen. Es liegt unter dieser URL:\n${uploadedImageUrl}\nDu MUSST dieses echte Foto in die Website einbauen mit: <img src="${uploadedImageUrl}" alt="Produkt" style="...">. Setze es prominent in den Hero-Bereich und/oder die Galerie. Zeichne KEIN eigenes Produkt nach — verwende GENAU diese Bild-URL. Das echte Foto ist Pflicht.`:(WEB.imgBase64?'\nHINWEIS: Der Kunde hat ein Referenzbild hochgeladen (siehe Bild). Orientiere dich am Stil, den Farben, dem Logo und der Stimmung des Bildes.':'')}
+${imgBlock}
 ${GRAFIKVIDEO}
 
 ANIMATIONEN - PFLICHT (zusätzlich zur Grafikvideo-Optik):
@@ -1186,11 +1204,11 @@ Das HTML MUSS mind. 6KB sein (echte Inhalte + Animationen + Grafikvideo-Optik).
 
   const sys='Du bist ein Motion Design & Web Animation Expert für High-End-Agentur-Websites. Generiere WUNDERSCHÖNES, modernes HTML mit echten CSS/SVG Animationen und kinoreifer Grafikvideo-Optik (bewegte Gradient-Meshes, schwebende Blur-Orbs, Glassmorphism, Glow). Antworte NUR mit vollständigem HTML-Code. Beginne direkt mit <!DOCTYPE html>. KEIN Text davor/danach, KEINE Backticks, KEIN Markdown. Das HTML muss atemberaubend schön sein mit Bewegungen überall, als hätte es eine teure Agentur gebaut.'+(uploadedImageUrl?' WICHTIG: Wenn im Briefing eine echte Bild-URL genannt wird, baue dieses Bild per <img src="..."> ein und zeichne es NICHT nach.':'');
 
-  // ── Message-Content bauen: Bild mitschicken wenn vorhanden ──
+  // ── Message-Content bauen: alle Bilder mitschicken wenn vorhanden ──
   let userContent;
-  if(WEB.imgBase64 && !isUpdate){
+  if(WEB.imgs && WEB.imgs.length && !isUpdate){
     userContent=[
-      {type:'image',source:{type:'base64',media_type:WEB.imgMime||'image/jpeg',data:WEB.imgBase64}},
+      ...WEB.imgs.map(im=>({type:'image',source:{type:'base64',media_type:im.mime||'image/jpeg',data:im.b64}})),
       {type:'text',text:prompt}
     ];
   } else {
@@ -1225,7 +1243,7 @@ Das HTML MUSS mind. 6KB sein (echte Inhalte + Animationen + Grafikvideo-Optik).
     
     currentWebsiteHtml=html;
     currentWebsiteName=(d.name||'website').toLowerCase().replace(/[^a-z0-9]/g,'-').replace(/-+/g,'-')||'website';
-    WEB.active=false;WEB.imgBase64=null;WEB.imgMime=null;
+    WEB.active=false;WEB.imgBase64=null;WEB.imgMime=null;WEB.imgs=[];
     
     // Open preview
     openPreview(html,d.name||'Website');
@@ -1477,7 +1495,7 @@ function newChat(){
   document.getElementById('chat-title').textContent='Neuer Chat';
   document.getElementById('prompt').value='';
   conversationHistory=[];clearRef();closePreview();
-  WEB.active=false;WEB.collecting=false;WEB.step=0;WEB.data={};WEB.imgBase64=null;WEB.imgMime=null;
+  WEB.active=false;WEB.collecting=false;WEB.step=0;WEB.data={};WEB.imgBase64=null;WEB.imgMime=null;WEB.imgs=[];
   document.getElementById('fi').innerHTML=landingHTML();closeSb();
   loadChats();
 }
