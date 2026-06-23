@@ -654,6 +654,13 @@ function previewDownload(){
   const a=document.createElement('a');a.href=url;a.download=currentWebsiteName+'.html';
   document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
 }
+function showPublishHelp(){
+  addAIMsg('🚀 <b>So bringst du deine Website online — in 3 Schritten:</b><br><br>'+
+    '<b>1.</b> Klick auf <b>Download</b> (oder rechts auf "Herunterladen"). Du bekommst eine Datei, die auf <code>.html</code> endet.<br><br>'+
+    '<b>2.</b> Geh auf <b>app.netlify.com/drop</b> — das ist kostenlos und du brauchst keinen Account zum Testen.<br><br>'+
+    '<b>3.</b> Zieh die heruntergeladene Datei einfach mit der Maus in das Feld auf der Seite. Nach ein paar Sekunden bekommst du eine fertige <b>Internet-Adresse (Link)</b>, den du teilen kannst — z.B. an Kunden oder auf Instagram.<br><br>'+
+    '<span style="font-size:12px;color:var(--tm)">Möchtest du später eine eigene Adresse wie <b>deinname.de</b>? Die kaufst du z.B. bei Namecheap oder Strato und verbindest sie mit der Seite. Sag einfach Bescheid, dann erkläre ich dir das Schritt für Schritt.</span>');
+}
 
 // ═══════════════════════════════════════
 // WEBSITE DETECTION & EXTRACTION
@@ -874,15 +881,20 @@ function openChat(chat){
   const _l=document.getElementById('landing');if(_l)_l.style.display='none';
   document.getElementById('chat-title').textContent=chat.title||'Chat';
   document.getElementById('fi').innerHTML='';conversationHistory=[];
+  // Website dieses Chats wiederherstellen (oder zurücksetzen)
+  if(chat.websiteHtml){currentWebsiteHtml=chat.websiteHtml;currentWebsiteName=chat.websiteName||'website';}
+  else{currentWebsiteHtml='';currentWebsiteName='website';closePreview();}
   (chat.messages||[]).forEach(msg=>{const content=typeof msg.content==='string'?msg.content:(Array.isArray(msg.content)?(msg.content.find(b=>b.type==='text')||{}).text||'':msg.content||'');if(msg.role==='user')addUserMsg(content);else if(msg.role==='assistant')addAIMsg(renderMD(content));});
   conversationHistory=cleanMessages(chat.messages||[]);loadChats();closeSb();
+  // Vorschau automatisch öffnen wenn dieser Chat eine Website hat
+  if(chat.websiteHtml){openPreview(chat.websiteHtml,chat.websiteName||'Website');}
 }
 async function saveChat(title,messages){
   const clean=cleanMessages(messages);
   if(!state.activeChatId)state.activeChatId='chat_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
   const chats=getLocalChats();const idx=chats.findIndex(c=>c.id===state.activeChatId);
-  if(idx>=0){chats[idx].messages=clean;chats[idx].title=title;chats[idx].updated=Date.now();}
-  else{chats.unshift({id:state.activeChatId,title,messages:clean,updated:Date.now()});}
+  if(idx>=0){chats[idx].messages=clean;chats[idx].title=title;chats[idx].updated=Date.now();if(currentWebsiteHtml){chats[idx].websiteHtml=currentWebsiteHtml;chats[idx].websiteName=currentWebsiteName;}}
+  else{const nc={id:state.activeChatId,title,messages:clean,updated:Date.now()};if(currentWebsiteHtml){nc.websiteHtml=currentWebsiteHtml;nc.websiteName=currentWebsiteName;}chats.unshift(nc);}
   if(chats.length>100)chats.splice(100);setLocalChats(chats);loadChats();
   if(authToken){try{if(isSupabaseId(state.activeChatId)){await fetch('/api/chats',{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({id:state.activeChatId,title,messages:clean})});}else{const r=await fetch('/api/chats',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({title,messages:clean})});const data=await r.json();if(data.id){const lc=getLocalChats();const li=lc.findIndex(c=>c.id===state.activeChatId);if(li>=0)lc[li].id=data.id;state.activeChatId=data.id;setLocalChats(lc);loadChats();}}}catch(e){}}
 }
@@ -1173,8 +1185,8 @@ Das HTML MUSS mind. 5KB sein (echte Inhalte + Animationen).
     conversationHistory.push({role:'assistant',content:'[Animierte Website generiert]'});
     saveChat(document.getElementById('chat-title').textContent,conversationHistory);
     
-    var _previewBtn='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button onclick="openPreview(currentWebsiteHtml,\'Website\')" style="padding:9px 14px;background:var(--t);color:#fff;border:none;border-radius:7px;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer">Vorschau</button><button onclick="previewDownload()" style="padding:9px 14px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:7px;font-family:Inter,sans-serif;font-size:12px;cursor:pointer">Download</button></div>';
-    addAIMsg('🎬 <b>Deine animierte Website ist fertig!</b> Schau rechts die Vorschau.<br><br>'+_previewBtn+'<br><span style="font-size:12px;color:var(--tm)">Gefällt dir nicht? Schreib z.B. "Mache es bunter" oder "Weniger Animation"</span>');
+    var _previewBtn='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button onclick="openPreview(currentWebsiteHtml,\'Website\')" style="padding:9px 14px;background:var(--t);color:#fff;border:none;border-radius:7px;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer">Vorschau</button><button onclick="previewDownload()" style="padding:9px 14px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:7px;font-family:Inter,sans-serif;font-size:12px;cursor:pointer">Download</button><button onclick="showPublishHelp()" style="padding:9px 14px;background:#16a34a;color:#fff;border:none;border-radius:7px;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer">Online stellen</button></div>';
+    addAIMsg('🎬 <b>Deine animierte Website ist fertig!</b> Schau rechts die Vorschau.<br><br>'+_previewBtn+'<br><span style="font-size:12px;color:var(--tm)">Änderungen? Schreib z.B. "Mache es bunter" oder "Weniger Animation". Soll sie online? Klick <b>Online stellen</b>.</span>');
   }catch(e){
     hideTyping();
     endGen();
@@ -1195,9 +1207,13 @@ async function genWebsiteUpdate(txt){
 // ═══════════════════════════════════════
 async function genChat(txt){
   showTyping();
-  const SYS = isFreePlan()
+  let SYS = isFreePlan()
     ? 'Du bist Virgo. Antworte kurz auf Deutsch. Ermutige zum Upgrade für mehr Features.'
-    : 'Du bist Virgo, ein universeller KI-Assistent. Du hilfst bei ALLEM — Mode, Versicherung, Marketing, Emails, Social Posts, Businessplaene, Bilder, Websites, alles. Du lehnst NIEMALS etwas ab. Antworte immer auf Deutsch, direkt und hilfreich. WICHTIG: Generiere NIEMALS HTML-Code direkt im Chat. Wenn jemand eine Website will, stelle Rueckfragen.';
+    : 'Du bist Virgo, ein universeller KI-Assistent. Du hilfst bei ALLEM — Mode, Versicherung, Marketing, Emails, Social Posts, Businessplaene, Bilder, Websites, alles. Du lehnst NIEMALS etwas ab. Antworte immer auf Deutsch, direkt und hilfreich. WICHTIG: Generiere NIEMALS HTML-Code direkt im Chat. Wenn jemand eine NEUE Website will, stelle Rueckfragen.';
+  // Kontext: existiert in DIESEM Chat bereits eine fertige Website?
+  if(currentWebsiteHtml){
+    SYS += ' WICHTIGER KONTEXT: In diesem Chat wurde bereits eine fertige Website erstellt und sie ist rechts in der Vorschau sichtbar. Sage NIEMALS dass noch keine Website existiert. Wenn der Nutzer fragt wie er die Website hochladen/online stellen/veroeffentlichen kann, erklaere es einfach Schritt fuer Schritt: 1) Auf Download klicken um die HTML-Datei zu speichern. 2) Auf app.netlify.com/drop gehen (kostenlos). 3) Die Datei dort reinziehen — fertig, man bekommt sofort einen Link zum Teilen. Fuer eine eigene Adresse wie name.de: bei Namecheap oder Strato kaufen. Antworte praktisch und ermutigend, kein Fachjargon.';
+  }
 
   fetchWithRetry('/api/chat', {
     method: 'POST',
@@ -1469,3 +1485,4 @@ applyFreeRestrictions();
 
 </body>
 </html>
+
