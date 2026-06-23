@@ -420,6 +420,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
     <input class="minp" type="email" id="auth-email" placeholder="E-Mail" autocomplete="email">
     <input class="minp" type="password" id="auth-password" placeholder="Passwort (min. 6 Zeichen)" autocomplete="current-password">
     <button class="mbtn" id="auth-submit" onclick="doAuth()">Anmelden</button>
+    <div class="mlink" style="margin-top:12px"><a onclick="doPasswordReset()" style="color:var(--tm);font-weight:400">Passwort vergessen?</a></div>
     <div class="mlink">Noch kein Konto? <a onclick="switchTab('register',document.querySelectorAll('.tab')[1])">Registrieren</a></div>
   </div>
 </div>
@@ -758,12 +759,24 @@ async function doAuth(){
     if(d.error){setAuthMsg(d.error,'alert');btn.disabled=false;btn.textContent=curTab==='login'?'Anmelden':'Konto erstellen';return;}
     authToken=d.session&&d.session.access_token;currentUser=d.user;credits=d.credits||(curTab==='register'?10:3);
     localStorage.setItem('virgo_token',authToken);localStorage.setItem('virgo_user',JSON.stringify(currentUser));localStorage.setItem('virgo_credits',credits);localStorage.setItem('virgo_plan',d.plan||'free');
+    if(d.session&&d.session.refresh_token)localStorage.setItem('virgo_refresh',d.session.refresh_token);
     updateUI();closeM('modal-login');loadChats();
     if(curTab==='register')addAIMsg('Willkommen bei Virgo! Du hast 10 Start-Credits. 🎉');
   }catch(e){setAuthMsg('Verbindungsfehler.','alert');}
   btn.disabled=false;btn.textContent=curTab==='login'?'Anmelden':'Konto erstellen';
 }
-function logout(){authToken=null;currentUser=null;credits=3;localStorage.removeItem('virgo_token');localStorage.removeItem('virgo_user');localStorage.removeItem('virgo_credits');localStorage.removeItem('virgo_plan');updateUI();loadChats();}
+async function doPasswordReset(){
+  const email=document.getElementById('auth-email').value.trim();
+  if(!email){setAuthMsg('Bitte zuerst deine E-Mail oben eingeben.','alert');return;}
+  setAuthMsg('Sende Reset-Link...','');
+  try{
+    const r=await fetch('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'reset',email})});
+    const d=await r.json();
+    if(d.error){setAuthMsg(d.error,'alert');return;}
+    setAuthMsg('Reset-Link gesendet! Schau in dein Postfach.','');
+  }catch(e){setAuthMsg('Verbindungsfehler.','alert');}
+}
+function logout(){authToken=null;currentUser=null;credits=3;localStorage.removeItem('virgo_token');localStorage.removeItem('virgo_user');localStorage.removeItem('virgo_credits');localStorage.removeItem('virgo_plan');localStorage.removeItem('virgo_refresh');updateUI();loadChats();}
 
 // ═══════════════════════════════════════
 // CREDITS
@@ -980,10 +993,20 @@ async function send(){
 }
 
 function startWebsiteFlow(txt,imgs){
-  WEB.active=true;WEB.collecting=true;WEB.step=0;WEB.data={_request:txt};
+  WEB.active=true;WEB.step=0;WEB.data={_request:txt};
   WEB.imgBase64=imgs&&imgs.length?imgs[0].b64:null;
   WEB.imgMime=imgs&&imgs.length?imgs[0].mime:null;
-  addAIMsg('🎬 <b>Animierte Website bauen!</b> Ich stelle dir 5 Fragen.<br><br>'+WEB_Q[0].q);
+  // Detaillierter Prompt (>15 Wörter) ODER Bild vorhanden → direkt bauen, Fragen überspringen
+  const wordCount=txt.trim().split(/\s+/).filter(Boolean).length;
+  const hasDetail=wordCount>15||(imgs&&imgs.length>0);
+  if(hasDetail){
+    WEB.collecting=false;
+    addAIMsg('🔥 Alles klar — ich baue direkt aus deinem Briefing'+(imgs&&imgs.length?' + deinem Bild':'')+'...');
+    buildWebsite(false,'');
+  } else {
+    WEB.collecting=true;
+    addAIMsg('🎬 <b>Animierte Website bauen!</b> Ich stelle dir 5 Fragen.<br><br>'+WEB_Q[0].q);
+  }
 }
 
 async function handleWebsiteQA(answer){
@@ -1014,6 +1037,33 @@ async function buildWebsite(isUpdate,updateRequest){
   let prompt;
   if(isUpdate){
     prompt='Ich habe diese Website:\n\n'+currentWebsiteHtml.substring(0,3000)+'\n\n[ÄNDERUNG]: '+updateRequest+'\n\nGib mir die komplette aktualisierte Website mit allen Animationen. Nur HTML, beginne mit <!DOCTYPE html>.';
+  } else if(WEB.collecting===false && d._request && (d._request.trim().split(/\s+/).filter(Boolean).length>15 || WEB.imgBase64)){
+    // ── DIREKT-MODUS: ausführlicher Prompt und/oder Bild vorhanden ──
+    prompt=`Du bist ein Motion Design Expert. Erstelle eine WUNDERSCHÖNE, professionelle, voll animierte Website basierend auf diesem Briefing:
+
+BRIEFING DES KUNDEN:
+${d._request}
+${WEB.imgBase64?'\nHINWEIS: Der Kunde hat ein Referenzbild hochgeladen (siehe Bild). Orientiere dich am Stil, den Farben, dem Logo und der Stimmung des Bildes. Baue das Look & Feel des Bildes in die Website ein.':''}
+
+ANIMATIONEN - PFLICHT (das Briefing kann zusätzliche nennen):
+✓ SVG/CSS Animated Hero: Bewegte Shapes/Wellen/Gradients
+✓ CSS @keyframes überall: fade-in, slide-up, float, pulse, glow
+✓ Scroll-Reveal Animationen (IntersectionObserver): Elemente faden/sliden rein wenn sichtbar
+✓ Hover-Effekte: Buttons glow, Cards lift up + scale, Text color change
+✓ Smooth Transitions: alle 0.3-0.5s ease
+✓ Keine statischen Seiten — ALLES soll sich bewegen
+
+TECHNISCH:
+- KEIN jQuery, Bootstrap, React, Vue — NUR Vanilla JS + CSS
+- Google Fonts @import in <style>
+- KEINE externen <script src>
+- KEINE externen Bilder (nur CSS/SVG/Emojis)
+- Alles inline, vollständig responsive (clamp, media queries)
+- IntersectionObserver für Scroll-Effekte
+
+OUTPUT:
+NUR HTML. Direkt mit <!DOCTYPE html> beginnen. KEIN Text davor/danach. KEINE Backticks.
+Das HTML MUSS mind. 5KB sein (echte Inhalte + Animationen).`;
   } else {
     prompt=`Du bist ein Motion Design Expert. Erstelle eine WUNDERSCHÖNE, professionelle Website mit echten Animationen.
 
@@ -1076,8 +1126,19 @@ Das HTML MUSS mind. 5KB sein (echte Inhalte + Animationen).
 
   const sys='Du bist ein Motion Design & Web Animation Expert. Generiere WUNDERSCHÖNES, modernes HTML mit echten CSS/SVG Animationen. Antworte NUR mit vollständigem HTML-Code. Beginne direkt mit <!DOCTYPE html>. KEIN Text davor/danach, KEINE Backticks, KEIN Markdown. Das HTML muss atemberaubend schön sein mit Bewegungen überall.';
 
+  // ── Message-Content bauen: Bild mitschicken wenn vorhanden ──
+  let userContent;
+  if(WEB.imgBase64 && !isUpdate){
+    userContent=[
+      {type:'image',source:{type:'base64',media_type:WEB.imgMime||'image/jpeg',data:WEB.imgBase64}},
+      {type:'text',text:prompt}
+    ];
+  } else {
+    userContent=prompt;
+  }
+
   try{
-    const r=await fetchWithRetry('/api/business',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'website-html',messages:[{role:'user',content:prompt}],systemOverride:sys})});
+    const r=await fetchWithRetry('/api/business',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'website-html',messages:[{role:'user',content:userContent}],systemOverride:sys})});
     const resp=await r.json();
     hideTyping();endGen();
     let html=(resp.content&&resp.content[0]&&resp.content[0].text)||'';
@@ -1104,7 +1165,7 @@ Das HTML MUSS mind. 5KB sein (echte Inhalte + Animationen).
     
     currentWebsiteHtml=html;
     currentWebsiteName=(d.name||'website').toLowerCase().replace(/[^a-z0-9]/g,'-').replace(/-+/g,'-')||'website';
-    WEB.active=false;
+    WEB.active=false;WEB.imgBase64=null;WEB.imgMime=null;
     
     // Open preview
     openPreview(html,d.name||'Website');
@@ -1352,6 +1413,7 @@ function newChat(){
   document.getElementById('chat-title').textContent='Neuer Chat';
   document.getElementById('prompt').value='';
   conversationHistory=[];clearRef();closePreview();
+  WEB.active=false;WEB.collecting=false;WEB.step=0;WEB.data={};WEB.imgBase64=null;WEB.imgMime=null;
   document.getElementById('fi').innerHTML=landingHTML();closeSb();
   loadChats();
 }
