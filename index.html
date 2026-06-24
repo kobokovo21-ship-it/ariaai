@@ -598,7 +598,7 @@ let currentUser=JSON.parse(localStorage.getItem('virgo_user')||'null');
 let credits=parseInt(localStorage.getItem('virgo_credits')||'3');
 let curTab='login',genTimer=null,refImages=[],conversationHistory=[],lastUserMsg='';
 let maklerAdData=null,maklerPlatform='google';
-let currentWebsiteHtml='',currentWebsiteName='website';
+let currentWebsiteHtml='',currentWebsiteName='website',currentIsSocial=false,lastSocialRequest='';
 window.virgoStructured={};
 
 // ═══════════════════════════════════════
@@ -922,6 +922,22 @@ const IMAGE_GEN_INTENT = /\b(erstell|mach|generier|erzeug|zeichn|create|make|dra
 const WEBSITE_UPDATE_INTENT = /\b(änder|update|aktualisier|passe an|ersetze|füge.{0,10}ein|bearbeite|überarbeite)\b.{0,40}\b(website|webseite|seite|design|farbe|text|layout)\b/i;
 
 function detectIntent(txt){
+  var loS=txt.toLowerCase();
+  // ── SOCIAL POST / GRAFIKVIDEO zuerst (echte Plattform: Instagram, TikTok, Reel, Story, Post) ──
+  var socialVerb=/\b(mach|mache|erstell|erstelle|generier|generiere|bau|baue|design|designe|gestalte|will|brauche|möchte|hätte|gib|create|make)\b/i.test(loS);
+  var socialPlatform=/(instagram|insta\b|tiktok|tik\s?tok|reel|reels|story|stories|storie|\bpost\b|\bposts\b|beitrag|\bsocial\b|\bfeed\b)/i.test(loS);
+  var socialContent=/(video|reel|story|stories|\bpost\b|grafik|grid|content|beitrag|motion|sprüche|spruch)/i.test(loS);
+  var hasWebWord=/(websit|webseit|homepag|landingpag|landing|onlinesho|firmenseite|\bseite\b|\bshop\b)/i.test(loS);
+  // Wenn schon ein Social-Post offen ist: jede Änderung neu generieren
+  if(currentIsSocial && currentWebsiteHtml){
+    var sIsHelp=/(online\s*stell|hochlad|veröffentlich|download|herunterlad|wie\s+(geht|poste|lade))/i.test(loS);
+    if(!sIsHelp) return 'social';
+  }
+  // Social nur wenn echte Plattform genannt ist UND es nicht klar um eine Website geht
+  if(socialPlatform && !hasWebWord){
+    if(socialVerb || socialContent) return 'social';
+  }
+
   // ── Wenn in DIESEM Chat schon eine Website offen ist: Änderungswünsche direkt umbauen ──
   if(currentWebsiteHtml){
     var wantsNew=/\b(neue|komplett neue|von vorne|ganz andere|noch eine)\b.{0,25}\b(website|webseite|seite|homepage|shop|landingpage)\b/i.test(txt);
@@ -1005,6 +1021,8 @@ async function send(){
     startWebsiteFlow(txt,capturedImgs);
   } else if(intent==='website_update'){
     genWebsiteUpdate(txt,capturedImgs);
+  } else if(intent==='social'){
+    genSocialPost(txt,capturedImgs);
   } else {
     genChat(txt);
   }
@@ -1245,6 +1263,7 @@ Das HTML MUSS mind. 6KB sein (echte Inhalte + Animationen + Grafikvideo-Optik).
     
     currentWebsiteHtml=html;
     currentWebsiteName=(d.name||'website').toLowerCase().replace(/[^a-z0-9]/g,'-').replace(/-+/g,'-')||'website';
+    currentIsSocial=false;
     WEB.active=false;WEB.imgBase64=null;WEB.imgMime=null;WEB.imgs=[];
     
     // Open preview
@@ -1274,13 +1293,102 @@ async function genWebsiteUpdate(txt,imgs){
 }
 
 // ═══════════════════════════════════════
+// SOCIAL POST / GRAFIKVIDEO — sofort fertiger animierter Post
+// ═══════════════════════════════════════
+async function genSocialPost(txt,imgs){
+  imgs=imgs||[];
+  const isEdit=currentIsSocial && currentWebsiteHtml;
+  // Format bestimmen
+  const lo=txt.toLowerCase();
+  let ratio='9 / 16', label='TikTok / Reel / Story (Hochformat)';
+  if(/(quadrat|square|1:1|feed|karussell|carousel)/i.test(lo)){ ratio='1 / 1'; label='Instagram Feed (Quadrat)'; }
+  else if(/(post|beitrag)/i.test(lo) && !/(reel|story|tiktok|hochkant|vertikal)/i.test(lo)){ ratio='1 / 1'; label='Instagram Feed (Quadrat)'; }
+
+  // Anfrage zusammenbauen (bei Edit: alte Anfrage + Änderung)
+  const fullRequest = isEdit ? (lastSocialRequest+'\n\nÄNDERUNG: '+txt) : txt;
+  lastSocialRequest = fullRequest;
+
+  startGen(isEdit?'Post wird angepasst...':'Animierter Post wird gebaut...');showTyping();
+
+  // Bilder hochladen (echte URLs für Hintergrund/Produkt)
+  let urls=[];
+  for(let i=0;i<imgs.length;i++){
+    try{
+      document.getElementById('gl').textContent='Bild '+(i+1)+'/'+imgs.length+' wird hochgeladen...';
+      const ur=await fetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image_base64:imgs[i].b64,mime:imgs[i].mime||'image/jpeg'})});
+      const ud=await ur.json(); if(ud&&ud.url)urls.push(ud.url);
+    }catch(e){}
+  }
+  document.getElementById('gl').textContent='Animierter Post wird gebaut...';
+
+  let imgInstruction='';
+  if(urls.length){
+    imgInstruction='\nECHTE BILDER (Pflicht einbauen, GENAU diese URLs via <img> oder als CSS background-image):\n'+urls.map((u,i)=>(i+1)+'. '+u).join('\n')+'\nSetze sie prominent ein (z.B. als formatfüllendes Hintergrundbild mit dunklem Overlay für Lesbarkeit, oder als rundes Profilbild). Zeichne KEINE eigenen Produkte/Personen nach.';
+  }
+
+  const prompt=`Du bist ein Senior Motion-Designer für virale Social-Media-Grafikvideos (Instagram/TikTok). Erstelle einen FERTIGEN, sofort postbaren animierten Social-Media-Post als EINE HTML-Datei.
+
+AUFTRAG DES KUNDEN:
+${fullRequest}
+${imgInstruction}
+
+FORMAT — SEHR WICHTIG:
+- Der Post ist ein zentrierter "Stage"-Container mit aspect-ratio: ${ratio}; (${label}).
+- Container: max-height:100vh; max-width:100vw; margin:auto; overflow:hidden; position:relative; border-radius:18px.
+- Body: margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center; background:#0a0a0a (neutrale Bühne).
+- ALLES im Post skaliert mit % / clamp(), damit es in jeder Größe perfekt sitzt.
+
+INHALT:
+- Schreibe SELBST den fertigen, starken Text (Headline, kurze Kernaussage, evtl. 2-3 Bulletpoints, klarer CTA wie "Link in Bio" / "Jetzt Termin"). KEINE Platzhalter, echte verkaufsstarke Copy passend zum Auftrag.
+- Wähle eine zur Marke/Branche passende, edle Farbwelt (falls eine Farbe genannt wurde, nimm sie). Kräftiger Kontrast, große fette Typo (Google Font @import, z.B. Montserrat/Inter/Anton).
+
+GRAFIKVIDEO-BEWEGUNG — PFLICHT (rein CSS, läuft in Endlosschleife, wirkt wie ein echtes bewegtes Video):
+✓ Animierter Gradient-Mesh-Hintergrund der langsam wandert
+✓ 2-4 weichgezeichnete, schwebende Farb-Orbs (filter:blur, @keyframes)
+✓ Headline-Reveal: Wörter/Zeilen gestaffelt eingeblendet, dann sanft pulsierend/schwebend
+✓ CTA-Button mit durchlaufendem Shimmer + pulsierendem Glow
+✓ Alle Animationen LOOPEN unendlich (animation-iteration-count:infinite), damit man es als Video aufnehmen kann
+✓ Weiche, kinoreife Bewegungen (ease-in-out, 0.6-1.4s)
+
+TECHNISCH:
+- NUR Vanilla CSS/JS, alles inline. KEIN externes JS, KEINE Frameworks.
+- Vollständig autark. Direkt mit <!DOCTYPE html> beginnen.
+
+OUTPUT: NUR der HTML-Code. KEIN Text davor/danach, KEINE Backticks. Mindestens 4KB.`;
+
+  const sys='Du bist ein Motion-Design-Experte für virale animierte Social-Media-Posts (Grafikvideos). Antworte NUR mit vollständigem, autarkem HTML eines fertigen, postbaren animierten Posts im geforderten Format. Beginne direkt mit <!DOCTYPE html>. KEIN Text, KEINE Backticks, KEINE Anleitung, KEINE Verweise auf Canva/Fremdtools. Das Ergebnis muss sofort verwendbar und atemberaubend animiert sein.'+(urls.length?' Wenn echte Bild-URLs genannt sind, baue GENAU diese per <img>/background-image ein und zeichne nichts nach.':'');
+
+  let userContent;
+  if(imgs.length){
+    userContent=[...imgs.map(im=>({type:'image',source:{type:'base64',media_type:im.mime||'image/jpeg',data:im.b64}})),{type:'text',text:prompt}];
+  } else { userContent=prompt; }
+
+  try{
+    const r=await fetchWithRetry('/api/business',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'website-html',messages:[{role:'user',content:userContent}],systemOverride:sys})});
+    const resp=await r.json();
+    hideTyping();endGen();
+    let html=(resp.content&&resp.content[0]&&resp.content[0].text)||'';
+    html=extractHtml(html);
+    if(!html||html.length<200){addAIMsg('❌ Konnte den Post nicht bauen. Schreib "nochmal".');return;}
+    currentWebsiteHtml=html;
+    currentWebsiteName='social-post';
+    currentIsSocial=true;
+    openPreview(html,'Social Post');
+    conversationHistory.push({role:'assistant',content:'[Animierter Social-Post generiert]'});
+    saveChat(document.getElementById('chat-title').textContent,conversationHistory);
+    var _btns='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button onclick="openPreview(currentWebsiteHtml,\'Social Post\')" style="padding:9px 14px;background:var(--t);color:#fff;border:none;border-radius:7px;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer">Vorschau</button><button onclick="previewDownload()" style="padding:9px 14px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:7px;font-family:Inter,sans-serif;font-size:12px;cursor:pointer">Download</button></div>';
+    addAIMsg('🎬 <b>Dein animierter Post ist fertig!</b> Läuft rechts in der Vorschau.<br><br>'+_btns+'<br><span style="font-size:12px;color:var(--tm)">Andere Farbe? Schreib z.B. „mach es gold" oder „mehr Bewegung". Zum Posten als Video: Vorschau im Vollbild öffnen und Bildschirm aufnehmen.</span>');
+  }catch(e){hideTyping();endGen();addAIMsg('❌ '+e.message);}
+}
+
+// ═══════════════════════════════════════
 // CHAT — UNIVERSELLER AGENT
 // ═══════════════════════════════════════
 async function genChat(txt){
   showTyping();
   let SYS = isFreePlan()
     ? 'Du bist Virgo. Antworte kurz auf Deutsch. Ermutige zum Upgrade für mehr Features.'
-    : 'Du bist Virgo, ein universeller KI-Assistent. Du hilfst bei ALLEM — Mode, Versicherung, Marketing, Emails, Social Posts, Businessplaene, Bilder, Websites, alles. Du lehnst NIEMALS etwas ab. Antworte immer auf Deutsch, direkt und hilfreich. WICHTIG: Generiere NIEMALS HTML-Code direkt im Chat. Wenn jemand eine NEUE Website will, stelle Rueckfragen.';
+    : 'Du bist Virgo, ein universeller KI-Assistent. Du hilfst bei ALLEM — Mode, Versicherung, Marketing, Emails, Social Posts, Businessplaene, Bilder, Websites, alles. Du lehnst NIEMALS etwas ab. Antworte immer auf Deutsch, direkt und hilfreich. WICHTIG: Generiere NIEMALS HTML-Code direkt im Chat. Wenn jemand eine NEUE Website will, stelle Rueckfragen. ABSOLUT VERBOTEN: Sage NIEMALS dass du keine Bilder, Posts oder Grafiken erstellen kannst. Verweise NIEMALS auf Canva, Fiverr, CapCut, Midjourney oder andere Fremd-Tools und gib KEINE Schritt-fuer-Schritt-Anleitungen fuer solche Tools. Virgo erstellt Bilder und animierte Social-Media-Posts SELBST. Wenn jemand einen Instagram-/TikTok-Post, ein Grafikvideo, eine Grafik oder ein Bild will, sage einfach kurz dass du es direkt baust und fordere ihn auf, es so zu formulieren: z.B. "Mach mir einen Instagram-Post ueber [Thema]" oder "Mach mir ein Bild von [Motiv]" — dann wird es sofort erstellt. Male KEINE ASCII-Kaesten und liefere KEINE Design-Anleitungen zum Selbermachen.';
   // Kontext: existiert in DIESEM Chat bereits eine fertige Website?
   if(currentWebsiteHtml){
     SYS += ' WICHTIGER KONTEXT: In diesem Chat wurde bereits eine fertige Website erstellt und sie ist rechts in der Vorschau sichtbar. Sage NIEMALS dass noch keine Website existiert. Wenn der Nutzer fragt wie er die Website hochladen/online stellen/veroeffentlichen kann, erklaere es einfach Schritt fuer Schritt: 1) Auf Download klicken um die HTML-Datei zu speichern. 2) Auf app.netlify.com/drop gehen (kostenlos). 3) Die Datei dort reinziehen — fertig, man bekommt sofort einen Link zum Teilen. Fuer eine eigene Adresse wie name.de: bei Namecheap oder Strato kaufen. Antworte praktisch und ermutigend, kein Fachjargon.';
@@ -1512,6 +1620,7 @@ function newChat(){
   document.getElementById('chat-title').textContent='Neuer Chat';
   document.getElementById('prompt').value='';
   conversationHistory=[];clearRef();closePreview();
+  currentWebsiteHtml='';currentIsSocial=false;lastSocialRequest='';
   WEB.active=false;WEB.collecting=false;WEB.step=0;WEB.data={};WEB.imgBase64=null;WEB.imgMime=null;WEB.imgs=[];
   document.getElementById('fi').innerHTML=landingHTML();closeSb();
   loadChats();
