@@ -542,30 +542,20 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
 <div class="modal" id="modal-upgrade">
   <div class="mb2 wide">
     <button class="mclose" onclick="closeM('modal-upgrade')">×</button>
-    <h2 id="up-title">Virgo Pläne für Versicherungsmakler</h2>
-    <p>Mehr Leads. Weniger Aufwand. Kein Vertrag, jederzeit kündbar.</p>
-    <div class="ci2" id="up-summary"><strong>Was du bekommst:</strong> Google &amp; Meta Ads · Landing Pages · Leads Dashboard · KI-Chat · Bilder · Emails · Rechnungen</div>
-    <div class="pg" id="up-makler">
+    <h2 id="up-title">Virgo für Versicherungsmakler</h2>
+    <p id="up-sub">Mehr Leads. Weniger Aufwand. Kein Vertrag, jederzeit kündbar.</p>
+    <div class="ci2" id="up-summary"><strong>Was du bekommst:</strong> Eigene Landingpage · Google &amp; Meta Ads · Leads Dashboard · KI-Chat · Bilder · Emails · Rechnungen</div>
+    <div class="pg" id="up-makler" style="grid-template-columns:1fr">
       <div class="pc">
-        <div class="pct">Makler Pro</div><div class="pcp">149 €</div><div class="pcc">/Monat</div>
-        <div class="pcf">PKV Landing Page<br>Unbegrenzte Leads<br>Google &amp; Meta Ads<br>Alle KI-Tools</div>
+        <div class="pct">Makler Komplett</div><div class="pcp">149 €</div><div class="pcc">/Monat · jederzeit kündbar</div>
+        <div class="pcf">Eigene PKV / Versicherungs-Landingpage<br>Unbegrenzte Leads im Dashboard<br>Google &amp; Meta Ads selbst schalten<br>Alle KI-Tools, Bilder, Emails &amp; Rechnungen</div>
         <div class="pbs"><button class="pbtn" onclick="window.location.href='/checkout.html?plan=makler-pro'">Jetzt buchen</button></div>
       </div>
-      <div class="pc feat">
-        <div class="pct">Makler Business</div><div class="pcp">249 €</div><div class="pcc">/Monat</div>
-        <div class="pcf">Alle Versicherungsarten<br>Unbegrenzte Landing Pages<br>Priority Support<br>White-Label</div>
-        <div class="pbs"><button class="pbtn" onclick="window.location.href='/checkout.html?plan=makler-business'">Jetzt buchen</button></div>
-      </div>
     </div>
-    <div class="pg" id="up-business" style="display:none">
+    <div class="pg" id="up-business" style="display:none;grid-template-columns:1fr">
       <div class="pc">
-        <div class="pct">Virgo Pro</div><div class="pcp">19,99 €</div><div class="pcc">/Monat</div>
-        <div class="pcf">Unbegrenzter Chat<br>Alle Tools<br>30 Bilder/Monat</div>
-        <div class="pbs"><button class="pbtn" onclick="window.location.href='https://buy.stripe.com/fZu28sfaZb3I6rc0BCbjW0d'">Jetzt buchen</button></div>
-      </div>
-      <div class="pc feat">
-        <div class="pct">Virgo Premium</div><div class="pcp">49,99 €</div><div class="pcc">/Monat</div>
-        <div class="pcf">Alles aus Pro<br>100 Bilder/Monat<br>Priority Support</div>
+        <div class="pct">Virgo Business</div><div class="pcp">49,99 €</div><div class="pcc">/Monat · jederzeit kündbar</div>
+        <div class="pcf">Webseiten &amp; Landingpages bauen<br>Fotos &amp; Bilder generieren<br>Grafikvideos für TikTok &amp; Instagram<br>Pitch Decks, Social Posts, Texte &amp; Emails<br>Businesspläne &amp; Rechnungen<br>Unbegrenzter KI-Chat &amp; alle Tools</div>
         <div class="pbs"><button class="pbtn" onclick="window.location.href='https://buy.stripe.com/3cI9AUgf3go25n8bggbjW0e'">Jetzt buchen</button></div>
       </div>
     </div>
@@ -932,10 +922,22 @@ const IMAGE_GEN_INTENT = /\b(erstell|mach|generier|erzeug|zeichn|create|make|dra
 const WEBSITE_UPDATE_INTENT = /\b(änder|update|aktualisier|passe an|ersetze|füge.{0,10}ein|bearbeite|überarbeite)\b.{0,40}\b(website|webseite|seite|design|farbe|text|layout)\b/i;
 
 function detectIntent(txt){
+  // ── Wenn in DIESEM Chat schon eine Website offen ist: Änderungswünsche direkt umbauen ──
+  if(currentWebsiteHtml){
+    var wantsNew=/\b(neue|komplett neue|von vorne|ganz andere|noch eine)\b.{0,25}\b(website|webseite|seite|homepage|shop|landingpage)\b/i.test(txt);
+    var isHelp=/(online\s*stell|hochlad|veröffentlich|publish|netlify|domain|hosting|impressum|datenschutz|was kostet|preis|wie\s+(geht|funktioniert|stelle|lade|mache ich das online))/i.test(txt);
+    var editVerb=/\b(änder|ändre|ändere|mach|mache|füg|füge|setz|setze|ersetz|ersetze|tausch|tausche|entfern|lösch|lösche|größer|grösser|kleiner|mehr|weniger|bunter|dunkler|heller|verschieb|anpass|update|aktualisier|pack|nimm|gib|bau)\b/i.test(txt);
+    var editNoun=/(farbe|hintergrund|background|button|cta|text|überschrift|headline|titel|bild|foto|logo|animation|grafikvideo|grafik|video|hero|section|abschnitt|footer|menü|navigation|schrift|font|abstand|grün|rot|blau|schwarz|weiß|gelb|lila|orange|größer|kleiner|bunter)/i.test(txt);
+    if(wantsNew) return 'website';
+    if(!isHelp && (editVerb||editNoun)) return 'website_update';
+  }
   if(WEBSITE_UPDATE_INTENT.test(txt) && currentWebsiteHtml) return 'website_update';
-  // ROBUST: Bau-Verb IRGENDWO + Website-Wort IRGENDWO (egal wie weit auseinander)
-  var webVerb=/\b(bau|baue|erstell|erstelle|mach|mache|generier|generiere|design|designe|entwickl|gestalte|build|create)\b/i.test(txt);
-  var webNoun=/\b(website|webseite|web-?site|homepage|landingpage|landing\s*page|onlineshop|online-?shop|firmenwebsite|webshop|landing)\b/i.test(txt);
+  // ROBUST + TIPPFEHLER-TOLERANT: Bau-Verb + Website-Wort (Stämme, verträgt Voice-to-Text-Fehler)
+  var lo=txt.toLowerCase();
+  var webVerb=/\b(bau|baue|erstell|erstelle|mach|mache|generier|generiere|design|designe|entwickl|gestalte|build|create|brauche|möchte|will)\b/i.test(lo);
+  var webNoun=/(websit|webseit|webside|web-?sit|web\s?seite|homepag|home-?pag|landing|landig|onlinesho|online-?sho|websho|firmenseite|firmenwebsite)/i.test(lo)
+           || /\bseite\b/i.test(lo)
+           || /\bshop\b/i.test(lo);
   if(webVerb && webNoun) return 'website';
   if(WEBSITE_INTENT.test(txt)) return 'website';
   if(IMAGE_GEN_INTENT.test(txt)) return 'image';
@@ -1002,7 +1004,7 @@ async function send(){
   } else if(intent==='website'){
     startWebsiteFlow(txt,capturedImgs);
   } else if(intent==='website_update'){
-    genWebsiteUpdate(txt);
+    genWebsiteUpdate(txt,capturedImgs);
   } else {
     genChat(txt);
   }
@@ -1090,11 +1092,11 @@ async function buildWebsite(isUpdate,updateRequest){
   startGen(isUpdate?'Website wird aktualisiert...':'Website wird gebaut...');showTyping();
   const d=WEB.data;
 
-  // ── Alle Bilder zu Supabase Storage hochladen, echte URLs holen (nur Neubau) ──
+  // ── Alle Bilder zu Supabase Storage hochladen, echte URLs holen (Neubau UND Update) ──
   let uploadedImageUrl='';
   let uploadedUrls=[];
   const imgList=(WEB.imgs&&WEB.imgs.length)?WEB.imgs:(WEB.imgBase64?[{b64:WEB.imgBase64,mime:WEB.imgMime}]:[]);
-  if(imgList.length && !isUpdate){
+  if(imgList.length){
     for(let i=0;i<imgList.length;i++){
       try{
         document.getElementById('gl').textContent='Bild '+(i+1)+'/'+imgList.length+' wird hochgeladen...';
@@ -1129,7 +1131,7 @@ GRAFIKVIDEO-OPTIK — PFLICHT (lässt die Seite aussehen wie ein bewegtes Studio
 
   let prompt;
   if(isUpdate){
-    prompt='Ich habe diese Website:\n\n'+currentWebsiteHtml.substring(0,3000)+'\n\n[ÄNDERUNG]: '+updateRequest+'\n\nGib mir die komplette aktualisierte Website mit allen Animationen. Nur HTML, beginne mit <!DOCTYPE html>.';
+    prompt='Hier ist die AKTUELLE Website (vollständiges HTML):\n\n'+currentWebsiteHtml+'\n\n[GEWÜNSCHTE ÄNDERUNG]: '+updateRequest+imgBlock+'\n\nGib mir die KOMPLETTE aktualisierte Website zurück. Behalte ALLES bei was nicht geändert werden soll — inklusive aller bestehenden Texte, Bilder, Farben und Animationen. Ändere nur das Gewünschte. Nur HTML, beginne direkt mit <!DOCTYPE html>, KEINE Erklärung, KEINE Backticks.';
   } else if(WEB.collecting===false && d._request){
     // ── DIREKT-MODUS: ausführlicher Prompt, erweitertes Briefing und/oder Bild vorhanden ──
     prompt=`Du bist ein Motion Design Expert. Erstelle eine WUNDERSCHÖNE, professionelle, voll animierte Website im Stil einer 10.000-Dollar-Agentur-Seite, basierend auf diesem Briefing:
@@ -1204,9 +1206,9 @@ Das HTML MUSS mind. 6KB sein (echte Inhalte + Animationen + Grafikvideo-Optik).
 
   const sys='Du bist ein Motion Design & Web Animation Expert für High-End-Agentur-Websites. Generiere WUNDERSCHÖNES, modernes HTML mit echten CSS/SVG Animationen und kinoreifer Grafikvideo-Optik (bewegte Gradient-Meshes, schwebende Blur-Orbs, Glassmorphism, Glow). Antworte NUR mit vollständigem HTML-Code. Beginne direkt mit <!DOCTYPE html>. KEIN Text davor/danach, KEINE Backticks, KEIN Markdown. Das HTML muss atemberaubend schön sein mit Bewegungen überall, als hätte es eine teure Agentur gebaut.'+(uploadedImageUrl?' WICHTIG: Wenn im Briefing eine echte Bild-URL genannt wird, baue dieses Bild per <img src="..."> ein und zeichne es NICHT nach.':'');
 
-  // ── Message-Content bauen: alle Bilder mitschicken wenn vorhanden ──
+  // ── Message-Content bauen: alle Bilder mitschicken wenn vorhanden (Neubau + Update) ──
   let userContent;
-  if(WEB.imgs && WEB.imgs.length && !isUpdate){
+  if(WEB.imgs && WEB.imgs.length){
     userContent=[
       ...WEB.imgs.map(im=>({type:'image',source:{type:'base64',media_type:im.mime||'image/jpeg',data:im.b64}})),
       {type:'text',text:prompt}
@@ -1262,8 +1264,11 @@ Das HTML MUSS mind. 6KB sein (echte Inhalte + Animationen + Grafikvideo-Optik).
   }
 }
 
-async function genWebsiteUpdate(txt){
+async function genWebsiteUpdate(txt,imgs){
   WEB.data={name:currentWebsiteName||'Website'};
+  WEB.imgs=imgs&&imgs.length?imgs.slice(0,4):[];
+  WEB.imgBase64=WEB.imgs.length?WEB.imgs[0].b64:null;
+  WEB.imgMime=WEB.imgs.length?WEB.imgs[0].mime:null;
   addAIMsg('Einen Moment — ich passe die Website an...');
   await buildWebsite(true,txt);
 }
@@ -1458,6 +1463,18 @@ function openUpgrade(){
   const ws=localStorage.getItem('virgo_workspace')||'makler';
   document.getElementById('up-makler').style.display=ws==='makler'?'':'none';
   document.getElementById('up-business').style.display=ws==='business'?'':'none';
+  const title=document.getElementById('up-title');
+  const sub=document.getElementById('up-sub');
+  const sum=document.getElementById('up-summary');
+  if(ws==='business'){
+    title.textContent='Virgo Business';
+    sub.textContent='Ein Plan, alles drin. Kein Vertrag, jederzeit kündbar.';
+    sum.innerHTML='<strong>Was du bekommst:</strong> Webseiten bauen · Fotos &amp; Bilder · Grafikvideos (TikTok/Instagram) · Pitch Decks · Social Posts · Texte &amp; Emails · Businesspläne · Rechnungen';
+  } else {
+    title.textContent='Virgo für Versicherungsmakler';
+    sub.textContent='Mehr Leads. Weniger Aufwand. Kein Vertrag, jederzeit kündbar.';
+    sum.innerHTML='<strong>Was du bekommst:</strong> Eigene Landingpage · Google &amp; Meta Ads · Leads Dashboard · KI-Chat · Bilder · Emails · Rechnungen';
+  }
   showM('modal-upgrade');
 }
 function openHelp(){showM('modal-help');document.getElementById('help-inp').focus();}
@@ -1551,4 +1568,3 @@ applyFreeRestrictions();
 
 </body>
 </html>
-
