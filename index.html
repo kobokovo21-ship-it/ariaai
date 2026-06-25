@@ -855,7 +855,18 @@ function isSupabaseId(id){return id&&!String(id).startsWith('chat_');}
 function cleanMessages(messages){return messages.map(msg=>{if(Array.isArray(msg.content)){const txt=msg.content.find(b=>b.type==='text');return{role:msg.role,content:txt?txt.text:''};}return msg;});}
 async function loadChats(){
   renderChatHistory(getLocalChats());
-  if(authToken){try{const r=await fetch('/api/chats',{headers:{'Authorization':'Bearer '+authToken}});if(r.ok){const data=await r.json();if(Array.isArray(data)&&data.length){const local=getLocalChats().filter(c=>!isSupabaseId(c.id));renderChatHistory([...data,...local]);}}}catch(e){}}
+  if(authToken){try{const r=await fetch('/api/chats',{headers:{'Authorization':'Bearer '+authToken}});if(r.ok){const data=await r.json();if(Array.isArray(data)&&data.length){
+    const localAll=getLocalChats();
+    // Server-Chats mit Website anreichern: lokal (gleicher Browser) hat Vorrang, sonst vom Server (geräteübergreifend)
+    const merged=data.map(sc=>{
+      const lc=localAll.find(c=>c.id===sc.id);
+      if(lc&&lc.websiteHtml){return Object.assign({},sc,{websiteHtml:lc.websiteHtml,websiteName:lc.websiteName,isSocial:lc.isSocial});}
+      if(sc.website_html){return Object.assign({},sc,{websiteHtml:sc.website_html,websiteName:sc.website_name||'website',isSocial:!!sc.is_social});}
+      return sc;
+    });
+    const localOnly=localAll.filter(c=>!isSupabaseId(c.id));
+    renderChatHistory([...merged,...localOnly]);
+  }}}catch(e){}}
 }
 function renderChatHistory(chats){
   const hist=document.getElementById('hist');const empty=document.getElementById('hist-empty');
@@ -871,9 +882,9 @@ function openChat(chat){
   const _l=document.getElementById('landing');if(_l)_l.style.display='none';
   document.getElementById('chat-title').textContent=chat.title||'Chat';
   document.getElementById('fi').innerHTML='';conversationHistory=[];
-  // Website dieses Chats wiederherstellen (oder zurücksetzen)
-  if(chat.websiteHtml){currentWebsiteHtml=chat.websiteHtml;currentWebsiteName=chat.websiteName||'website';}
-  else{currentWebsiteHtml='';currentWebsiteName='website';closePreview();}
+  // Website/Post dieses Chats wiederherstellen (oder zurücksetzen)
+  if(chat.websiteHtml){currentWebsiteHtml=chat.websiteHtml;currentWebsiteName=chat.websiteName||'website';currentIsSocial=!!chat.isSocial;}
+  else{currentWebsiteHtml='';currentWebsiteName='website';currentIsSocial=false;closePreview();}
   (chat.messages||[]).forEach(msg=>{const content=typeof msg.content==='string'?msg.content:(Array.isArray(msg.content)?(msg.content.find(b=>b.type==='text')||{}).text||'':msg.content||'');if(msg.role==='user')addUserMsg(content);else if(msg.role==='assistant')addAIMsg(renderMD(content));});
   conversationHistory=cleanMessages(chat.messages||[]);loadChats();closeSb();
   // Vorschau automatisch öffnen wenn dieser Chat eine Website hat
@@ -883,10 +894,10 @@ async function saveChat(title,messages){
   const clean=cleanMessages(messages);
   if(!state.activeChatId)state.activeChatId='chat_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
   const chats=getLocalChats();const idx=chats.findIndex(c=>c.id===state.activeChatId);
-  if(idx>=0){chats[idx].messages=clean;chats[idx].title=title;chats[idx].updated=Date.now();if(currentWebsiteHtml){chats[idx].websiteHtml=currentWebsiteHtml;chats[idx].websiteName=currentWebsiteName;}}
-  else{const nc={id:state.activeChatId,title,messages:clean,updated:Date.now()};if(currentWebsiteHtml){nc.websiteHtml=currentWebsiteHtml;nc.websiteName=currentWebsiteName;}chats.unshift(nc);}
+  if(idx>=0){chats[idx].messages=clean;chats[idx].title=title;chats[idx].updated=Date.now();if(currentWebsiteHtml){chats[idx].websiteHtml=currentWebsiteHtml;chats[idx].websiteName=currentWebsiteName;chats[idx].isSocial=currentIsSocial;}}
+  else{const nc={id:state.activeChatId,title,messages:clean,updated:Date.now()};if(currentWebsiteHtml){nc.websiteHtml=currentWebsiteHtml;nc.websiteName=currentWebsiteName;nc.isSocial=currentIsSocial;}chats.unshift(nc);}
   if(chats.length>100)chats.splice(100);setLocalChats(chats);loadChats();
-  if(authToken){try{if(isSupabaseId(state.activeChatId)){await fetch('/api/chats',{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({id:state.activeChatId,title,messages:clean})});}else{const r=await fetch('/api/chats',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({title,messages:clean})});const data=await r.json();if(data.id){const lc=getLocalChats();const li=lc.findIndex(c=>c.id===state.activeChatId);if(li>=0)lc[li].id=data.id;state.activeChatId=data.id;setLocalChats(lc);loadChats();}}}catch(e){}}
+  if(authToken){try{if(isSupabaseId(state.activeChatId)){await fetch('/api/chats',{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({id:state.activeChatId,title,messages:clean,website_html:currentWebsiteHtml||null,website_name:currentWebsiteName||null,is_social:!!currentIsSocial})});}else{const r=await fetch('/api/chats',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({title,messages:clean,website_html:currentWebsiteHtml||null,website_name:currentWebsiteName||null,is_social:!!currentIsSocial})});const data=await r.json();if(data.id){const lc=getLocalChats();const li=lc.findIndex(c=>c.id===state.activeChatId);if(li>=0)lc[li].id=data.id;state.activeChatId=data.id;setLocalChats(lc);loadChats();}}}catch(e){}}
 }
 
 // ═══════════════════════════════════════
@@ -1681,4 +1692,3 @@ applyFreeRestrictions();
 
 </body>
 </html>
-
