@@ -1719,8 +1719,114 @@ applyFreeRestrictions();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('/sw.js').catch(()=>{});});}</script>
 <script src="/makler-setup.js"></script>
-<script src="/business-extras.js"></script> 
+<script src="/business-extras.js"></script>
+<script>
+/* ════════════════════════════════════════════════════════════
+   VIRGO · MP4-EXPORT (Remotion Render-Service)
+   Fügt einen "🎬 Als MP4" Button in die Post-Vorschau ein (nur bei Social-Posts).
+   Schickt den fertigen animierten Post an deinen Remotion-Render-Service,
+   der ein echtes MP4 zurückgibt — überall nutzbar: Instagram, TikTok, Safari/Mac, Web.
+   Greift NICHT in den bestehenden Code ein, patcht nur openPreview.
+   ════════════════════════════════════════════════════════════ */
+(function(){
+  'use strict';
+
+  /* ▼▼▼ HIER nach dem Deploy deine Render-Service-Adresse eintragen ▼▼▼ */
+  var RENDER_SERVICE_URL = 'https://DEIN-RENDER-SERVICE.vercel.app';
+  /* ▲▲▲ z.B. https://virgo-render.vercel.app — sonst zeigt der Knopf nur einen Hinweis ▲▲▲ */
+
+  function getHtml(){ try{ return (typeof currentWebsiteHtml!=='undefined'&&currentWebsiteHtml)?currentWebsiteHtml:''; }catch(e){ return ''; } }
+  function getIsSocial(){ try{ return (typeof currentIsSocial!=='undefined')?!!currentIsSocial:false; }catch(e){ return false; } }
+  function isSocialActive(){ return !!(getHtml()&&getIsSocial()); }
+  function aspect(){ return /aspect-ratio\s*:\s*1\s*\/\s*1/i.test(getHtml())?'1/1':'9/16'; }
+
+  function injectButton(){
+    var actions=document.querySelector('.preview-actions');
+    if(actions&&!document.getElementById('preview-mp4-btn')){
+      var b=document.createElement('button');
+      b.id='preview-mp4-btn'; b.className='prev-btn'; b.textContent='🎬 Als MP4';
+      b.style.display='none'; b.onclick=exportMp4;
+      actions.insertBefore(b, actions.firstChild);
+    }
+  }
+  function toggleButton(){ var b=document.getElementById('preview-mp4-btn'); if(b) b.style.display=isSocialActive()?'':'none'; }
+
+  function patchOpenPreview(){
+    if(typeof openPreview!=='function') return false;
+    if(window.__mp4Patched) return true;
+    var orig=openPreview;
+    openPreview=function(){ var r=orig.apply(this,arguments); try{injectButton();toggleButton();}catch(e){} return r; };
+    window.__mp4Patched=true; return true;
+  }
+
+  var pill=null;
+  function showPill(txt){
+    if(!pill){ pill=document.createElement('div'); pill.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:100000;background:#111;color:#fff;padding:12px 18px;border-radius:999px;font-family:Inter,sans-serif;font-size:13px;font-weight:600;box-shadow:0 8px 30px rgba(0,0,0,.3)'; document.body.appendChild(pill); }
+    pill.textContent=txt;
+  }
+  function hidePill(){ if(pill){ pill.remove(); pill=null; } }
+
+  async function exportMp4(){
+    if(!isSocialActive()){ alert('Bitte zuerst einen Social-Post erstellen.'); return; }
+    if(RENDER_SERVICE_URL.indexOf('DEIN-RENDER-SERVICE')!==-1){
+      if(typeof addAIMsg==='function'){
+        addAIMsg('⚙️ <b>Fast fertig — eine Sache fehlt noch.</b><br>Der MP4-Export braucht deinen Render-Service. Sobald du ihn bei Vercel deployt hast, trag seine Adresse oben in der Datei bei <code>RENDER_SERVICE_URL</code> ein — danach erzeugt dieser Knopf echte MP4s.');
+      } else {
+        alert('Bitte zuerst RENDER_SERVICE_URL eintragen (Render-Service deployen).');
+      }
+      return;
+    }
+
+    var html=getHtml(), ar=aspect(), base=RENDER_SERVICE_URL.replace(/\/+$/,'');
+    showPill('🎬 MP4 wird gerendert… 0%');
+    try{
+      var startRes=await fetch(base+'/api/render',{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ html:html, aspect:ar, durationInSeconds:6 })
+      });
+      if(!startRes.ok) throw new Error('Render-Start fehlgeschlagen ('+startRes.status+')');
+      var data=await startRes.json();
+      var mp4Url = data.url || data.outputUrl || null;
+
+      if(!mp4Url && (data.jobId || data.sandboxId || data.cmdId || data.id)){
+        var id=data.jobId||data.id||'', sb=data.sandboxId||'', cmd=data.cmdId||'';
+        var deadline=Date.now()+10*60*1000;
+        while(Date.now()<deadline && !mp4Url){
+          await new Promise(function(r){setTimeout(r,2000);});
+          var q='/api/render/status?'+(id?('id='+encodeURIComponent(id)):('sandboxId='+encodeURIComponent(sb)+'&cmdId='+encodeURIComponent(cmd)));
+          var pr=await fetch(base+q);
+          if(!pr.ok) continue;
+          var p=await pr.json();
+          var pct=Math.round((p.overallProgress||p.progress||0)*100);
+          showPill('🎬 MP4 wird gerendert… '+pct+'%');
+          if(p.error||p.fatalErrorEncountered) throw new Error(p.error||'Render-Fehler');
+          mp4Url = p.url || p.outputUrl || p.outputFile || null;
+          if(p.done && !mp4Url) throw new Error('Render fertig, aber keine URL');
+        }
+      }
+      hidePill();
+      if(!mp4Url) throw new Error('Zeitüberschreitung beim Rendern');
+
+      if(typeof addAIMsg==='function'){
+        addAIMsg('🎬 <b>Dein MP4 ist fertig!</b><br>'+
+          '<video src="'+mp4Url+'" controls playsinline style="max-width:240px;border-radius:10px;margin-top:8px;display:block"></video>'+
+          '<a href="'+mp4Url+'" download="virgo-post.mp4" style="display:inline-block;margin-top:8px;padding:9px 14px;background:var(--t);color:#fff;border-radius:7px;font-size:12px;font-weight:600;text-decoration:none">⬇ MP4 herunterladen</a>'+
+          '<div style="font-size:11px;color:var(--tm);margin-top:6px">Direkt hochladbar auf Instagram, TikTok oder in deine Website.</div>');
+      } else { window.open(mp4Url,'_blank'); }
+    }catch(e){
+      hidePill();
+      if(typeof addAIMsg==='function') addAIMsg('❌ MP4-Export fehlgeschlagen: '+e.message);
+      else alert('MP4-Export fehlgeschlagen: '+e.message);
+    }
+  }
+
+  function init(){
+    var n=0, iv=setInterval(function(){ n++; if(patchOpenPreview()){injectButton();toggleButton();clearInterval(iv);} else if(n>50)clearInterval(iv); },150);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
+})();
+</script>
+
 
 </body>
 </html>
-  
