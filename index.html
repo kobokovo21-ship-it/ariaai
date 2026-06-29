@@ -1023,7 +1023,20 @@ async function send(){
   lastUserMsg=txt;
   saveChat(document.getElementById('chat-title').textContent,conversationHistory);
 
-  const intent=detectIntent(txt);
+  let intent=detectIntent(txt);
+
+  // Bestätigung mitten im Website-Gespräch ("baue mir einfach eine", "ja mach", "leg los")
+  // → echten Bau-Weg starten, mit Kontext aus dem Gespräch (Name/Korrekturen)
+  if(intent==='chat' && !currentWebsiteHtml && lastAIMentionedWebsite()){
+    const t=txt.trim().toLowerCase();
+    const wordCount=t.split(/\s+/).filter(Boolean).length;
+    const isBuildConfirm=wordCount<=7 && /\b(bau|baue|mach|machs|mache|leg los|los|ja|jo|jap|jup|ok|okay|klar|egal|du entscheidest|entscheide|passt|bitte|einfach|gerne|jetzt)\b/i.test(t);
+    if(isBuildConfirm){
+      const ctx=recentUserContext(8);
+      startWebsiteFlow(ctx, capturedImgs);
+      return;
+    }
+  }
 
   if(intent==='image'){
     if(!(await useCredits('img')))return;
@@ -1037,6 +1050,22 @@ async function send(){
   } else {
     genChat(txt);
   }
+}
+
+// Letzte KI-Nachricht handelte von einer Website? (für Bau-Bestätigung)
+function lastAIMentionedWebsite(){
+  for(let i=conversationHistory.length-1;i>=0;i--){
+    if(conversationHistory[i].role==='assistant'){
+      const c=typeof conversationHistory[i].content==='string'?conversationHistory[i].content:'';
+      return /(website|webseite|landingpage|homepage|seite)/i.test(c);
+    }
+  }
+  return false;
+}
+// Letzte N Nutzer-Nachrichten als Kontext (enthält Name + Korrekturen)
+function recentUserContext(n){
+  const us=conversationHistory.filter(m=>m.role==='user').map(m=>typeof m.content==='string'?m.content:(Array.isArray(m.content)?((m.content.find(b=>b.type==='text')||{}).text||''):'')).filter(Boolean);
+  return us.slice(-n).join('. ');
 }
 
 // ═══════════════════════════════════════
@@ -1078,12 +1107,14 @@ async function startWebsiteFlow(txt,imgs){
 async function expandBriefing(shortText){
   const sys='Du bist ein Web-Briefing-Experte. Der Nutzer beschreibt in wenigen Worten, welche Website er will. '
     +'Mache daraus ein vollständiges, konkretes Briefing auf Deutsch für einen Website-Generator. '
+    +'SEHR WICHTIG: Übernimm Namen, Marken und Begriffe EXAKT so wie der Nutzer sie zuletzt geschrieben hat. '
+    +'Wenn der Nutzer einen Namen korrigiert (z.B. "ich meinte X" oder "war ein Schreibfehler"), nutze IMMER die letzte/korrigierte Version. Erfinde oder verändere KEINE Markennamen. '
     +'Lege fest: Firmenname/Marke (falls genannt, sonst sinnvoll annehmen), Branche, Angebot/Leistungen (3-5 konkrete), '
     +'Zielgruppe, passende Hauptfarbe (Hex), Tonalität, sowie welche Sektionen die Seite haben soll '
     +'(Hero mit Überschrift-Vorschlag, Leistungen, Über-uns, Testimonials, Kontakt/CTA, Footer). '
     +'Schreibe konkrete Beispieltexte (echte Headline, echte Sub-Headline, echte Button-Texte) — KEINE Platzhalter. '
     +'Antworte als kompaktes Briefing in Stichpunkten, max. 200 Wörter, NUR das Briefing, kein Vorwort.';
-  const user='Kurzbeschreibung des Nutzers: "'+shortText+'"\n\nErstelle daraus das vollständige Briefing.';
+  const user='Beschreibung/Gespräch des Nutzers: "'+shortText+'"\n\nErstelle daraus das vollständige Briefing. Nutze exakt den zuletzt genannten Firmen-/Markennamen.';
   try{
     const r=await fetchWithRetry('/api/business',{
       method:'POST',
@@ -1692,3 +1723,4 @@ applyFreeRestrictions();
 
 </body>
 </html>
+  
