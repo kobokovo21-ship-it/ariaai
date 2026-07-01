@@ -687,6 +687,23 @@ function extractHtml(raw){
   }
   return /<html[\s>]/i.test(s) ? s : '<!DOCTYPE html><html><body>'+s+'</body></html>';
 }
+// ── QUALITÄTS-CHECK: erkennt abgeschnittene/leere KI-Antworten (Ursache für "schwarze" Seiten) ──
+function htmlWasTruncated(raw){
+  // Die Original-Antwort MUSS ein </html> enthalten — sonst wurde sie mittendrin abgeschnitten
+  return !/<\/html>/i.test(String(raw||''));
+}
+function htmlHasVisibleContent(html){
+  // Es muss einen <body> mit echtem sichtbarem Inhalt geben (nicht nur CSS/Script)
+  const m=String(html||'').match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+  if(!m) return false;
+  const visible=m[1]
+    .replace(/<script[\s\S]*?<\/script>/gi,'')
+    .replace(/<style[\s\S]*?<\/style>/gi,'')
+    .replace(/<[^>]+>/g,'')
+    .replace(/\s+/g,' ')
+    .trim();
+  return visible.length>=60; // echte Texte vorhanden, nicht nur leere Hülle
+}
 // ═══════════════════════════════════════
 // SIDEBAR
 // ═══════════════════════════════════════
@@ -1191,7 +1208,7 @@ GRAFIKVIDEO-OPTIK — PFLICHT (lässt die Seite aussehen wie ein bewegtes Studio
 
   let prompt;
   if(isUpdate){
-    prompt='Hier ist die AKTUELLE Website (vollständiges HTML):\n\n'+currentWebsiteHtml+'\n\n[GEWÜNSCHTE ÄNDERUNG]: '+updateRequest+imgBlock+'\n\nGib mir die KOMPLETTE aktualisierte Website zurück. Behalte ALLES bei was nicht geändert werden soll — inklusive aller bestehenden Texte, Bilder, Farben und Animationen. Ändere nur das Gewünschte. Nur HTML, beginne direkt mit <!DOCTYPE html>, KEINE Erklärung, KEINE Backticks.';
+    prompt='Hier ist die AKTUELLE Website (vollständiges HTML):\n\n'+currentWebsiteHtml+'\n\n[GEWÜNSCHTE ÄNDERUNG]: '+updateRequest+imgBlock+'\n\nGib mir die KOMPLETTE aktualisierte Website zurück. Behalte ALLES bei was nicht geändert werden soll — inklusive aller bestehenden Texte, Bilder, Farben und Animationen. Ändere nur das Gewünschte. WICHTIG: Bleibe unter 50.000 Zeichen und stelle sicher, dass deine Antwort VOLLSTÄNDIG ist und mit </html> endet — eine abgeschnittene Antwort ist unbrauchbar. Nur HTML, beginne direkt mit <!DOCTYPE html>, KEINE Erklärung, KEINE Backticks.';
   } else if(WEB.collecting===false && d._request){
     // ── DIREKT-MODUS: ausführlicher Prompt, erweitertes Briefing und/oder Bild vorhanden ──
     prompt=`Du bist ein Motion Design Expert. Erstelle eine WUNDERSCHÖNE, professionelle, voll animierte Website im Stil einer 10.000-Dollar-Agentur-Seite, basierend auf diesem Briefing:
@@ -1278,23 +1295,30 @@ Das HTML MUSS mind. 6KB sein (echte Inhalte + Animationen + Grafikvideo-Optik).
   }
 
   try{
-    const r=await fetchWithRetry('/api/business',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'website-html',messages:[{role:'user',content:userContent}],systemOverride:sys})});
-    const resp=await r.json();
-    hideTyping();endGen();
-    let html=(resp.content&&resp.content[0]&&resp.content[0].text)||'';
-    
-    // Extract & validate
-    html=extractHtml(html);
-    if(!html||html.length<200){
-      console.error('❌ HTML zu kurz:',html?.length);
-      addAIMsg('❌ Fehler beim Generieren. Schreib "nochmal" um es erneut zu versuchen.');
-      WEB.active=false;
-      return;
+    // ── Bis zu 2 Versuche: abgeschnittene Antworten werden erkannt und automatisch neu angefordert ──
+    let html='', rawText='', attempt=0, truncated=false;
+    while(attempt<2){
+      attempt++;
+      const compactHint=attempt>1?'\n\nWICHTIG: Deine letzte Antwort wurde ABGESCHNITTEN und war unbrauchbar. Antworte diesmal DEUTLICH KOMPAKTER (weniger CSS, weniger Sektionen, unter 45.000 Zeichen), aber vollständig — die Antwort MUSS mit </html> enden.':'';
+      let attemptContent;
+      if(typeof userContent==='string'){ attemptContent=userContent+compactHint; }
+      else { attemptContent=userContent.map(b=>b.type==='text'?{type:'text',text:b.text+compactHint}:b); }
+      const r=await fetchWithRetry('/api/business',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'website-html',messages:[{role:'user',content:attemptContent}],systemOverride:sys})});
+      const resp=await r.json();
+      rawText=(resp.content&&resp.content[0]&&resp.content[0].text)||'';
+      truncated=htmlWasTruncated(rawText);
+      html=extractHtml(rawText);
+      const usable=!truncated && html && html.length>=200 && /<body[\s>]/i.test(html) && /<\/body>/i.test(html) && htmlHasVisibleContent(html);
+      if(usable) break;
+      console.warn('⚠️ Versuch '+attempt+' unbrauchbar (truncated:'+truncated+', len:'+(html?html.length:0)+') — '+(attempt<2?'starte automatisch neu...':'gebe auf.'));
+      if(attempt<2){ document.getElementById('gl').textContent='Antwort war unvollständig — zweiter Versuch...'; }
     }
-    
-    if(!/<body[\s>]/i.test(html)||!/<\/body>/i.test(html)){
-      console.error('❌ HTML hat keinen body');
-      addAIMsg('❌ Generierte Website ist ungültig. Versuche es erneut.');
+    hideTyping();endGen();
+
+    // Finale Prüfung: NIEMALS eine leere/abgeschnittene Seite anzeigen
+    if(truncated || !html || html.length<200 || !/<body[\s>]/i.test(html) || !/<\/body>/i.test(html) || !htmlHasVisibleContent(html)){
+      console.error('❌ HTML unbrauchbar nach 2 Versuchen. truncated:',truncated,'len:',html?html.length:0);
+      addAIMsg('❌ <b>Die Generierung wurde zweimal abgeschnitten</b> — das passiert bei sehr großen Seiten.<br>Tipp: Formuliere die Änderung kleiner (eine Sache pro Nachricht) oder schreib <b>"nochmal"</b>. Deine bisherige Website ist unverändert erhalten.');
       WEB.active=false;
       return;
     }
@@ -1410,12 +1434,29 @@ OUTPUT: NUR der HTML-Code. KEIN Text davor/danach, KEINE Backticks. Mindestens 5
   } else { userContent=prompt; }
 
   try{
-    const r=await fetchWithRetry('/api/business',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'website-html',messages:[{role:'user',content:userContent}],systemOverride:sys})});
-    const resp=await r.json();
+    // ── Bis zu 2 Versuche: abgeschnittene Antworten erkennen und automatisch neu anfordern ──
+    let html='', rawText='', attempt=0, truncated=false;
+    while(attempt<2){
+      attempt++;
+      const compactHint=attempt>1?'\n\nWICHTIG: Deine letzte Antwort wurde ABGESCHNITTEN und war unbrauchbar. Antworte diesmal KOMPAKTER (unter 40.000 Zeichen), aber vollständig — die Antwort MUSS mit </html> enden.':'';
+      let attemptContent;
+      if(typeof userContent==='string'){ attemptContent=userContent+compactHint; }
+      else { attemptContent=userContent.map(b=>b.type==='text'?{type:'text',text:b.text+compactHint}:b); }
+      const r=await fetchWithRetry('/api/business',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'website-html',messages:[{role:'user',content:attemptContent}],systemOverride:sys})});
+      const resp=await r.json();
+      rawText=(resp.content&&resp.content[0]&&resp.content[0].text)||'';
+      truncated=htmlWasTruncated(rawText);
+      html=extractHtml(rawText);
+      const usable=!truncated && html && html.length>=200 && htmlHasVisibleContent(html);
+      if(usable) break;
+      console.warn('⚠️ Post-Versuch '+attempt+' unbrauchbar (truncated:'+truncated+') — '+(attempt<2?'starte neu...':'gebe auf.'));
+      if(attempt<2){ document.getElementById('gl').textContent='Antwort war unvollständig — zweiter Versuch...'; }
+    }
     hideTyping();endGen();
-    let html=(resp.content&&resp.content[0]&&resp.content[0].text)||'';
-    html=extractHtml(html);
-    if(!html||html.length<200){addAIMsg('❌ Konnte den Post nicht bauen. Schreib "nochmal".');return;}
+    if(truncated || !html || html.length<200 || !htmlHasVisibleContent(html)){
+      addAIMsg('❌ <b>Die Generierung wurde zweimal abgeschnitten.</b> Schreib <b>"nochmal"</b> oder formuliere den Post etwas einfacher. '+(isEdit?'Dein bisheriger Post ist unverändert erhalten.':''));
+      return;
+    }
     currentWebsiteHtml=html;
     currentWebsiteName='social-post';
     currentIsSocial=true;
