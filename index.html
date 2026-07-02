@@ -1220,6 +1220,19 @@ async function buildWebsite(isUpdate,updateRequest){
     document.getElementById('gl').textContent='Website wird gebaut...';
   }
 
+  // ── AUTO-HERO-BILD: Neubau ohne hochgeladene Fotos → filmisches Hero-Foto generieren ──
+  if(!isUpdate && !uploadedUrls.length){
+    try{
+      document.getElementById('gl').textContent='Hero-Foto wird generiert...';
+      const wsSubject=(d._request||[d.name,d.branche,d.angebot].filter(Boolean).join(', ')||'modern business').slice(0,280);
+      const wsPr='cinematic wide hero photograph for a premium website about: '+wsSubject+'. editorial photography, soft cinematic light, atmospheric, photorealistic, no text, no letters, no logos, no watermark';
+      const ir=await fetch('/api/generate-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:wsPr,model:'nano'})});
+      const idt=await ir.json();
+      if(idt&&idt.imageUrl){uploadedUrls.push(idt.imageUrl);uploadedImageUrl=idt.imageUrl;console.log('✓ Hero-Bild generiert:',idt.imageUrl);}
+    }catch(e){console.warn('⚠️ Hero-Bild fehlgeschlagen:',e.message);}
+    document.getElementById('gl').textContent='Website wird gebaut...';
+  }
+
   // Bild-Anweisung für den Prompt (alle echten URLs)
   let imgBlock='';
   if(uploadedUrls.length){
@@ -1237,6 +1250,9 @@ GRAFIKVIDEO-OPTIK — PFLICHT (lässt die Seite aussehen wie ein bewegtes Studio
 ✓ GLASSMORPHISM: Cards & Nav halbtransparent mit backdrop-filter:blur(14px) und feiner Border rgba(255,255,255,.15)
 ✓ SHIMMER/GLOW auf CTA-Buttons: animierter Lichtstreif der durchläuft + pulsierender Glow (box-shadow @keyframes)
 ✓ SCROLL-PARALLAX & REVEAL: IntersectionObserver, Layer bewegen sich unterschiedlich schnell, alles fadet/slidet weich rein
+✓ HERO WIE EIN FILMVORSPANN: Der Hero ist Vollbild (100vh) und startet mit einer inszenierten Intro-Sequenz (0-3s): Hintergrund mit langsamer Kamerafahrt (Zoom auf Bild/Gradient), Titel erscheint als Titel-Sequenz Wort für Wort mit Blur-to-Sharp, danach setzt dauerhafte ruhige Bewegung ein. Falls ein echtes Foto vorhanden ist: als <img> formatfüllend mit Ken-Burns + filmischer Vignette + onerror="this.style.display='none'" — dahinter IMMER ein eigener animierter Gradient als Sicherheitsebene.
+✓ SCROLL-STORY: Jede Sektion ist eine inszenierte Szene — Parallax-Ebenen mit unterschiedlicher Geschwindigkeit, Zahlen die beim Reinscrollen hochzählen, Bilder/Flächen mit eigener Kamerabewegung. KEINE statischen aufgereihten Cards.
+✓ TIEFE: mindestens 3 Ebenen pro Hauptsektion, die sich unterschiedlich schnell bewegen — es soll sich anfühlen wie ein Film, durch den man scrollt.
 ✓ Sehr weiche, langsame, kinoreife Bewegungen (ease-in-out, 0.6-1.2s) — wirkt teuer und ruhig, nie hektisch`;
 
   let prompt;
@@ -1426,21 +1442,26 @@ async function genSocialPost(txt,imgs){
   }
   document.getElementById('gl').textContent='Animierter Post wird gebaut...';
 
-  // ── AUTO-BILD: kein Foto hochgeladen → passendes Foto automatisch generieren (nur bei Neubau) ──
+  // ── AUTO-BILD: kein Foto hochgeladen → ZWEI passende Fotos generieren (Totale + Nahaufnahme = Filmmaterial) ──
   if(!urls.length && !isEdit && !/ohne\s+(bild|foto)/i.test(fullRequest)){
-    try{
-      document.getElementById('gl').textContent='Passendes Foto wird generiert...';
-      const stylePhoto=/skims|skimss|nude|clean|minimal|editorial|beige/i.test(fullRequest)
-        ? 'warm nude and beige tones, minimal editorial studio setting'
-        : (/luxus|luxuri|gold|edel|premium|exklusiv/i.test(fullRequest)
-          ? 'black and champagne gold palette, dramatic elegant lighting'
-          : 'natural premium color palette');
-      const ipr='cinematic professional photograph for a high-end social media campaign about: '+fullRequest.slice(0,300)+'. '+stylePhoto+', editorial photography, soft cinematic light, shallow depth of field, photorealistic, no text, no letters, no logos, no watermark';
-      const ir=await fetch('/api/generate-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:ipr,model:'nano'})});
-      const idt=await ir.json();
-      if(idt&&idt.imageUrl){urls.push(idt.imageUrl);console.log('✓ Auto-Bild generiert:',idt.imageUrl);}
-      else{console.warn('⚠️ Auto-Bild ohne URL:',idt&&idt.error);}
-    }catch(e){console.warn('⚠️ Auto-Bild fehlgeschlagen:',e.message);}
+    const stylePhoto=/skims|skimss|nude|clean|minimal|editorial|beige/i.test(fullRequest)
+      ? 'warm nude and beige tones, minimal editorial studio setting'
+      : (/luxus|luxuri|gold|edel|premium|exklusiv/i.test(fullRequest)
+        ? 'black and champagne gold palette, dramatic elegant lighting'
+        : 'natural premium color palette');
+    const shots=[
+      'cinematic wide establishing shot, professional photograph for a high-end social media campaign about: '+fullRequest.slice(0,280)+'. '+stylePhoto+', editorial photography, soft cinematic light, photorealistic, no text, no letters, no logos, no watermark',
+      'cinematic close-up detail shot with shallow depth of field, same campaign about: '+fullRequest.slice(0,280)+'. '+stylePhoto+', macro editorial photography, soft cinematic light, photorealistic, no text, no letters, no logos, no watermark'
+    ];
+    for(let s=0;s<shots.length;s++){
+      try{
+        document.getElementById('gl').textContent='Filmmaterial wird generiert ('+(s+1)+'/2)...';
+        const ir=await fetch('/api/generate-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:shots[s],model:'nano'})});
+        const idt=await ir.json();
+        if(idt&&idt.imageUrl){urls.push(idt.imageUrl);console.log('✓ Auto-Bild '+(s+1)+' generiert:',idt.imageUrl);}
+        else{console.warn('⚠️ Auto-Bild '+(s+1)+' ohne URL:',idt&&idt.error);}
+      }catch(e){console.warn('⚠️ Auto-Bild '+(s+1)+' fehlgeschlagen:',e.message);}
+    }
     document.getElementById('gl').textContent='Animierter Post wird gebaut...';
   }
 
@@ -1475,15 +1496,22 @@ BEWEGUNG (Intensität richtet sich STRIKT nach der STIL-VORGABE oben — filmisc
 ✓ SIGNAL-CTA: großer Button mit durchlaufendem Shimmer, pulsierendem Glow und leichtem Wackeln/Scale-Pulse — unübersehbar
 ✓ MICRO-MOTION überall: nichts steht still, alles atmet/floatet/pulst leicht
 ✓ Schnelle, knackige Easings mit Overshoot (nicht nur sanftes ease-in-out) — es soll lebendig und energiegeladen wirken, NICHT träge
-✓ Alle Animationen LOOPEN unendlich (animation-iteration-count:infinite), 4-7s Gesamtloop, damit man es als Video aufnehmen kann
+✓ Alle Animationen LOOPEN unendlich (animation-iteration-count:infinite), Gesamtloop 14-18s passend zur Szenen-Architektur, damit man es als Video aufnehmen kann
 
 AUFBAU — FILM, KEIN FLYER (WICHTIGSTE REGEL):
 - Denke wie ein REGISSEUR, nicht wie ein Plakatgestalter. Der Post ist ein kurzer, atmosphärischer FILM in Szenen — keine vollgepackte Anzeige.
-- SZENEN-DRAMATURGIE (über CSS animation-delays, Gesamtloop 6-10s): Szene 1 — Bild/Stimmung baut sich langsam auf. Szene 2 — wenige große Worte erscheinen NACHEINANDER wie Filmtitel (je 1 Wort oder kurze Zeile). Szene 3 — Marke + EIN dezenter CTA.
-- WENIG TEXT: maximal 8-12 Worte im GESAMTEN Post. Keine Aufzählungen, keine Häkchen-Listen, keine Info-Blöcke, keine Preistabellen — AUSSER der Kunde verlangt ausdrücklich Preise/Details/Angebot.
+- ECHTER FILM MIT SCHNITTEN — PFLICHT-ARCHITEKTUR: Baue MINDESTENS 4 VOLLBILD-SZENEN als eigene Container (.scene1 bis .scene4, jeweils position:absolute; inset:0), die nacheinander per CSS-Keyframes ein-/ausgeblendet werden (opacity + leichtes scale, filmischer Crossfade 0.4-0.6s). GESAMTLOOP 14-18 Sekunden, dann nahtlos von vorn. Ablauf:
+  · Szene 1 (ca. 0-3s) HOOK: Bild formatfüllend mit langsamer Kamerafahrt + 1-3 packende Worte
+  · Szene 2 (ca. 3-7s) STORY: ANDERER Bildausschnitt (anderes object-position/scale!) oder edle Farbfläche + der emotionale Kernsatz
+  · Szene 3 (ca. 7-11s) WOW: Detail-Ausschnitt (starker Zoom) mit Akzent-Element — hier dürfen bei Bedarf 2-3 Kurzinfos elegant erscheinen
+  · Szene 4 (ca. 11-15s) ABSCHLUSS: Marke groß + EIN CTA, ruhig und selbstbewusst
+- KAMERA-ARBEIT: JEDE Szene hat ihre EIGENE Kamerabewegung (rein-zoomen, raus-zoomen, seitliches Ziehen — via transform/object-position, je 4-6s). EIN Foto wird wie von einem Cutter in MEHREREN Einstellungen verwendet (pro Szene ein anderer Ausschnitt desselben Bildes). NIE zweimal dasselbe statische Framing.
+- TIEFE PRO SZENE: Licht-Sweeps, feines Film-Grain, Parallax (Vordergrund-Element bewegt sich minimal anders als Hintergrund).
+- WENIG TEXT: 1-6 Worte pro Szene, gesamt maximal ~20 Worte. Keine Aufzählungen, keine Häkchen-Listen, keine Preistabellen — AUSSER der Kunde verlangt ausdrücklich Preise/Details/Angebot.
 - STRENG VERBOTEN (Billigwerbung-Signale), außer ausdrücklich gewünscht: Rabatt-/„NEW DROP"-/„SALE"-Badges, durchgestrichene Preise, Checkmark-Bulletlisten, mehrere CTAs, Sticker-Optik, Discount-Rot.
 - Falls ECHTE BILDER vorhanden: Das Bild IST der Star. Formatfüllend (position:absolute; inset:0; object-fit:cover), langsamer Ken-Burns-Zoom (scale 1→1.08 über 8-10s, alternate), filmische Vignette/dunkler Verlauf für Lesbarkeit, ein weicher Lichtstreif der langsam durchs Bild wandert. Der Text liegt IN der Szene wie bei einem Kino-Trailer — nicht als Kasten daneben.
-- BILD-AIRBAG (PFLICHT): HINTER jedem Bild liegt IMMER ein eigenständiger, zur Farbwelt passender animierter Gradient-Hintergrund als eigene Ebene, und ALLE Texte/Elemente liegen auf eigenen Ebenen ÜBER dem Bild. Der Post muss auch dann vollständig, lesbar und schön aussehen, wenn ein Bild NICHT lädt. Gib jedem <img> zusätzlich onerror="this.style.display='none'". NIEMALS ist reines Schwarz die einzige Ebene.
+- BILD-AIRBAG (PFLICHT): Baue Fotos IMMER als <img>-Element ein (position:absolute; inset:0; width:100%; height:100%; object-fit:cover) — NIEMALS als CSS background-image, denn nur <img> kann Ladefehler abfangen. Gib jedem <img> onerror="this.style.display='none'". HINTER jedem Bild liegt IMMER ein eigenständiger, zur Farbwelt passender animierter Gradient-Hintergrund als eigene Ebene, und ALLE Texte/Elemente liegen auf eigenen Ebenen ÜBER dem Bild. Der Post muss auch dann vollständig, lesbar und schön aussehen, wenn ein Bild NICHT lädt. NIEMALS ist reines Schwarz die einzige Ebene.
+- EINSTIEG: Ein Eröffnungs-Fade (dunkle Deckebene) darf MAXIMAL 0,8s dauern — spätestens ab Sekunde 1 muss sichtbar etwas Schönes auf dem Bildschirm sein. Erste Textzeile spätestens bei 1,2s.
 - Typografie: EINE charakterstarke Display-Font (Google Font @import, passend zur STIL-VORGABE), riesig und ruhig gesetzt. Farbwelt folgt der STIL-VORGABE bzw. der Marke.
 - Qualitätsmaßstab: Es soll aussehen wie ein Kampagnen-Clip von Apple, SKIMS oder einem Hochglanz-Modehaus — man bleibt hängen, weil es EDEL und filmisch ist, nicht weil es schreit.
 
