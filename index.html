@@ -1426,6 +1426,24 @@ async function genSocialPost(txt,imgs){
   }
   document.getElementById('gl').textContent='Animierter Post wird gebaut...';
 
+  // ── AUTO-BILD: kein Foto hochgeladen → passendes Foto automatisch generieren (nur bei Neubau) ──
+  if(!urls.length && !isEdit && !/ohne\s+(bild|foto)/i.test(fullRequest)){
+    try{
+      document.getElementById('gl').textContent='Passendes Foto wird generiert...';
+      const stylePhoto=/skims|skimss|nude|clean|minimal|editorial|beige/i.test(fullRequest)
+        ? 'warm nude and beige tones, minimal editorial studio setting'
+        : (/luxus|luxuri|gold|edel|premium|exklusiv/i.test(fullRequest)
+          ? 'black and champagne gold palette, dramatic elegant lighting'
+          : 'natural premium color palette');
+      const ipr='cinematic professional photograph for a high-end social media campaign about: '+fullRequest.slice(0,300)+'. '+stylePhoto+', editorial photography, soft cinematic light, shallow depth of field, photorealistic, no text, no letters, no logos, no watermark';
+      const ir=await fetch('/api/generate-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:ipr,model:'nano'})});
+      const idt=await ir.json();
+      if(idt&&idt.imageUrl){urls.push(idt.imageUrl);console.log('✓ Auto-Bild generiert:',idt.imageUrl);}
+      else{console.warn('⚠️ Auto-Bild ohne URL:',idt&&idt.error);}
+    }catch(e){console.warn('⚠️ Auto-Bild fehlgeschlagen:',e.message);}
+    document.getElementById('gl').textContent='Animierter Post wird gebaut...';
+  }
+
   let imgInstruction='';
   if(urls.length){
     imgInstruction='\nECHTE BILDER (Pflicht einbauen, GENAU diese URLs via <img> oder als CSS background-image):\n'+urls.map((u,i)=>(i+1)+'. '+u).join('\n')+'\nSetze sie prominent ein (z.B. als formatfüllendes Hintergrundbild mit dunklem Overlay für Lesbarkeit, oder als rundes Profilbild). Zeichne KEINE eigenen Produkte/Personen nach.';
@@ -1449,7 +1467,7 @@ FORMAT & CONTAINMENT — ABSOLUT KRITISCH (häufigster Fehler: Text läuft aus d
 - Headlines: width:100%; word-break:break-word; overflow-wrap:anywhere; hyphens:auto; line-height:0.95; font-size mit clamp() das GARANTIERT passt (lieber etwas kleiner als abgeschnitten). Teste gedanklich: das längste Wort muss komplett sichtbar sein.
 - KEIN horizontales Overflow, KEINE abgeschnittenen Buchstaben. Wenn ein Wort zu breit wäre → kleiner skalieren oder umbrechen.
 
-ENERGIE & BEWEGUNG — DAS MUSS RICHTIG KNALLEN (rein CSS, Endlosschleife):
+BEWEGUNG (Intensität richtet sich STRIKT nach der STIL-VORGABE oben — filmisch-hochwertig ist der Standard; die volle Energie-Liste unten gilt NUR wenn der Stil "Bold & Laut" gewählt wurde):
 ✓ KINETISCHE TYPO: Headline-Wörter knallen einzeln rein (scale von 1.4→1 mit Overshoot via cubic-bezier(.2,1.4,.3,1)), leichtes Wackeln/Pop, Akzentwort in Signalfarbe das blitzt/pulst
 ✓ HARTE SCHNITTE & BEATS: Elemente erscheinen rhythmisch nacheinander (staggered delays 0.1-0.2s), als wäre es auf einen Beat geschnitten
 ✓ DYNAMISCHER HINTERGRUND: bewegter Gradient-Mesh + 3-5 schwebende Blur-Orbs + diagonale Lichtstreifen/Shapes die durchs Bild wandern
@@ -1459,10 +1477,14 @@ ENERGIE & BEWEGUNG — DAS MUSS RICHTIG KNALLEN (rein CSS, Endlosschleife):
 ✓ Schnelle, knackige Easings mit Overshoot (nicht nur sanftes ease-in-out) — es soll lebendig und energiegeladen wirken, NICHT träge
 ✓ Alle Animationen LOOPEN unendlich (animation-iteration-count:infinite), 4-7s Gesamtloop, damit man es als Video aufnehmen kann
 
-DESIGN:
-- Schreibe SELBST starke, knackige Copy: kurze schlagkräftige Headline (max 4-5 Wörter pro Zeile), eine Kernaussage, 2-3 Bulletpoints mit Häkchen/Icons, klarer CTA ("Jetzt Termin sichern", "Link in Bio").
-- Mutige, kontrastreiche Farbwelt (falls Farbe/Marke genannt → nutzen). Riesige fette Display-Typo (Google Font @import: Anton, Montserrat 900, Archivo Black o.ä.). Eine knallige Signalfarbe als Akzent.
-- Premium-Look wie eine teure Agentur — aber laut und aufmerksamkeitsstark, nicht steril.
+AUFBAU — FILM, KEIN FLYER (WICHTIGSTE REGEL):
+- Denke wie ein REGISSEUR, nicht wie ein Plakatgestalter. Der Post ist ein kurzer, atmosphärischer FILM in Szenen — keine vollgepackte Anzeige.
+- SZENEN-DRAMATURGIE (über CSS animation-delays, Gesamtloop 6-10s): Szene 1 — Bild/Stimmung baut sich langsam auf. Szene 2 — wenige große Worte erscheinen NACHEINANDER wie Filmtitel (je 1 Wort oder kurze Zeile). Szene 3 — Marke + EIN dezenter CTA.
+- WENIG TEXT: maximal 8-12 Worte im GESAMTEN Post. Keine Aufzählungen, keine Häkchen-Listen, keine Info-Blöcke, keine Preistabellen — AUSSER der Kunde verlangt ausdrücklich Preise/Details/Angebot.
+- STRENG VERBOTEN (Billigwerbung-Signale), außer ausdrücklich gewünscht: Rabatt-/„NEW DROP"-/„SALE"-Badges, durchgestrichene Preise, Checkmark-Bulletlisten, mehrere CTAs, Sticker-Optik, Discount-Rot.
+- Falls ECHTE BILDER vorhanden: Das Bild IST der Star. Formatfüllend (position:absolute; inset:0; object-fit:cover), langsamer Ken-Burns-Zoom (scale 1→1.08 über 8-10s, alternate), filmische Vignette/dunkler Verlauf für Lesbarkeit, ein weicher Lichtstreif der langsam durchs Bild wandert. Der Text liegt IN der Szene wie bei einem Kino-Trailer — nicht als Kasten daneben.
+- Typografie: EINE charakterstarke Display-Font (Google Font @import, passend zur STIL-VORGABE), riesig und ruhig gesetzt. Farbwelt folgt der STIL-VORGABE bzw. der Marke.
+- Qualitätsmaßstab: Es soll aussehen wie ein Kampagnen-Clip von Apple, SKIMS oder einem Hochglanz-Modehaus — man bleibt hängen, weil es EDEL und filmisch ist, nicht weil es schreit.
 
 TECHNISCH:
 - NUR Vanilla CSS/JS, alles inline. KEIN externes JS, KEINE Frameworks.
