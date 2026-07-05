@@ -1714,19 +1714,24 @@ function copyMaklerAdText(){
 // ═══════════════════════════════════════
 function openInvoiceModal(){document.getElementById('inv-datum').value=new Date().toISOString().split('T')[0];showM('modal-invoice');}
 async function createInvoice(){
-  const kunde=document.getElementById('inv-kunde').value.trim();const leistung=document.getElementById('inv-leistung').value.trim();const betrag=document.getElementById('inv-betrag').value;const msg=document.getElementById('inv-msg');
-  if(!kunde||!leistung||!betrag){msg.textContent='Bitte Kundenname, Leistung und Betrag ausfüllen.';msg.style.display='block';return;}
+  const kunde=document.getElementById('inv-kunde').value.trim();const leistung=document.getElementById('inv-leistung').value.trim();const betrag=document.getElementById('inv-betrag').value;const absName=document.getElementById('inv-absender-name').value.trim();const msg=document.getElementById('inv-msg');
+  if(!kunde||!leistung||!betrag||!absName){msg.textContent='Bitte Kundenname, Leistung, Betrag und deinen Firmennamen (Absender) ausfüllen — der Firmenname erscheint oben auf der Rechnung.';msg.style.display='block';return;}
   msg.style.display='none';
-  try{const r=await fetch('/api/invoice',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({invoice_nr:document.getElementById('inv-nr').value||'INV-'+Date.now(),kunde,kunde_adresse:document.getElementById('inv-kunde-adresse').value,leistung,betrag,mwst:parseInt(document.getElementById('inv-mwst').value)||19,datum:document.getElementById('inv-datum').value,absender_name:document.getElementById('inv-absender-name').value||'Virgo AI',absender_adresse:document.getElementById('inv-absender-adresse').value,absender_email:document.getElementById('inv-absender-email').value,absender_steuer:document.getElementById('inv-steuer').value})});const d=await r.json();
+  try{const r=await fetch('/api/invoice',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({invoice_nr:document.getElementById('inv-nr').value||'INV-'+Date.now(),kunde,kunde_adresse:document.getElementById('inv-kunde-adresse').value,leistung,betrag,mwst:parseInt(document.getElementById('inv-mwst').value)||19,datum:document.getElementById('inv-datum').value,absender_name:absName,absender_adresse:document.getElementById('inv-absender-adresse').value,absender_email:document.getElementById('inv-absender-email').value,absender_steuer:document.getElementById('inv-steuer').value})});const d=await r.json();
     if(d.error){msg.textContent=d.error;msg.style.display='block';return;}
+    // Virgo-Branding aus der Rechnung entfernen — oben steht IMMER die Firma des Nutzers
+    if(d.html){d.html=String(d.html).replace(/virgo\s*ai/gi,function(){return absName;});}
     const invId='inv_'+Date.now();window[invId]=d.html;
+    // Rechnung sofort rechts in der Vorschau zeigen
+    openPreview(d.html,'Rechnung '+d.invoice_nr);
     const msgEl=document.createElement('div');msgEl.className='mw ai';
     const b=document.createElement('div');b.className='bb';b.style.maxWidth='460px';
     b.innerHTML='<div style="font-size:12px;font-weight:600;margin-bottom:5px">🧾 Rechnung '+escHtml(d.invoice_nr)+'</div><div style="font-size:18px;font-weight:700;margin-bottom:11px">'+escHtml(d.brutto)+' Euro</div>';
     const btns=document.createElement('div');btns.style.cssText='display:flex;gap:7px;flex-wrap:wrap';
-    const b1=document.createElement('button');b1.textContent='Drucken / Als PDF';b1.style.cssText='padding:7px 13px;background:var(--t);color:#fff;border:none;border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer';b1.onclick=function(){const w=window.open('','_blank');w.document.write(window[invId]);w.document.close();setTimeout(()=>w.print(),500);};
+    const b0=document.createElement('button');b0.textContent='Vorschau';b0.style.cssText='padding:7px 13px;background:var(--t);color:#fff;border:none;border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer';b0.onclick=function(){openPreview(window[invId],'Rechnung '+d.invoice_nr);};
+    const b1=document.createElement('button');b1.textContent='Drucken / Als PDF';b1.style.cssText='padding:7px 13px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer';b1.onclick=function(){const w=window.open('','_blank');w.document.write(window[invId]);w.document.close();setTimeout(()=>w.print(),500);};
     const b2=document.createElement('button');b2.textContent='Datei speichern';b2.style.cssText='padding:7px 13px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer';b2.onclick=function(){const blob=new Blob([window[invId]],{type:'text/html'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='Rechnung-'+d.invoice_nr+'.html';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);};
-    btns.appendChild(b1);btns.appendChild(b2);b.appendChild(btns);
+    btns.appendChild(b0);btns.appendChild(b1);btns.appendChild(b2);b.appendChild(btns);
     const inner=document.createElement('div');inner.innerHTML='<div class="aav">V</div>';inner.appendChild(b);inner.appendChild(Object.assign(document.createElement('div'),{className:'mt2',textContent:now()}));
     msgEl.appendChild(inner);document.getElementById('fi').appendChild(msgEl);scrollFeed();
     closeM('modal-invoice');
