@@ -15,6 +15,9 @@ export default async function handler(req, res) {
     if (!kunde || !leistung || !betrag) {
       return res.status(400).json({ error: 'Pflichtfelder fehlen: Kunde, Leistung, Betrag' });
     }
+    if (!absender_name) {
+      return res.status(400).json({ error: 'Absender (Firmenname) fehlt — er erscheint oben auf der Rechnung.' });
+    }
 
     const netto = parseFloat(betrag);
     const mwstBetrag = (netto * mwst / 100).toFixed(2);
@@ -30,7 +33,7 @@ export default async function handler(req, res) {
 <style>
   body{font-family:Arial,sans-serif;max-width:800px;margin:0 auto;padding:40px;color:#111}
   .header{display:flex;justify-content:space-between;margin-bottom:40px}
-  .logo{font-size:24px;font-weight:200;letter-spacing:8px}
+  .logo{font-size:24px;font-weight:200;letter-spacing:8px;text-transform:uppercase}
   .title{font-size:32px;font-weight:700;color:#111;margin-bottom:4px}
   .nr{font-size:14px;color:#888}
   .addresses{display:flex;justify-content:space-between;margin-bottom:40px}
@@ -48,7 +51,7 @@ export default async function handler(req, res) {
 </head>
 <body>
   <div class="header">
-    <div class="logo">VIRGO AI</div>
+    <div class="logo">${absender_name}</div>
     <div>
       <div class="title">RECHNUNG</div>
       <div class="nr">${rNr}</div>
@@ -58,8 +61,8 @@ export default async function handler(req, res) {
   <div class="addresses">
     <div class="addr">
       <h3>Von</h3>
-      <p><strong>${absender_name || 'Virgo AI'}</strong><br>
-      ${absender_adresse || 'virgoio.com'}<br>
+      <p><strong>${absender_name}</strong><br>
+      ${absender_adresse || ''}<br>
       ${absender_email || ''}<br>
       ${absender_steuer ? 'StNr: ' + absender_steuer : ''}</p>
     </div>
@@ -88,7 +91,7 @@ export default async function handler(req, res) {
   </div>
 
   <div class="footer">
-    Vielen Dank für Ihr Vertrauen · ${absender_name || 'Virgo AI'} · ${absender_email || 'virgoio.com'}
+    Vielen Dank für Ihr Vertrauen · ${absender_name}${absender_email ? ' · ' + absender_email : ''}
   </div>
 </body>
 </html>`;
