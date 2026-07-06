@@ -822,77 +822,128 @@ async function doPasswordReset(){
   }catch(e){setAuthMsg('Verbindungsfehler.','alert');}
 }
 function logout(){authToken=null;currentUser=null;credits=3;localStorage.removeItem('virgo_token');localStorage.removeItem('virgo_user');localStorage.removeItem('virgo_credits');localStorage.removeItem('virgo_plan');localStorage.removeItem('virgo_refresh');updateUI();loadChats();}
-// ── SESSION-REFRESH: verlängert die Anmeldung automatisch — kein Rauswurf mehr nach 1 Stunde ──
-async function refreshSession(){
-  const rt=localStorage.getItem('virgo_refresh');
-  if(!rt||!authToken)return;
-  try{
-    const r=await fetch('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'refresh',refresh_token:rt})});
-    const d=await r.json();
-    if(d&&d.success&&d.session&&d.session.access_token){
-      authToken=d.session.access_token;
-      localStorage.setItem('virgo_token',authToken);
-      if(d.session.refresh_token)localStorage.setItem('virgo_refresh',d.session.refresh_token);
-      console.log('✓ Sitzung automatisch verlängert');
-    }
-  }catch(e){}
-}
-refreshSession();setInterval(refreshSession,40*60*1000);
 
 // ═══════════════════════════════════════
 // CREDITS
-@@ -898,7 +914,7 @@
+// ═══════════════════════════════════════
+async function useCredits(type){
+  if(isAdmin())return true;const cost=COST[type]||1;if(credits<cost){openUpgrade();return false;}
+  if(authToken){try{const r=await fetch('/api/credits',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({amount:cost})});const d=await r.json();if(d.error){openUpgrade();return false;}credits=d.credits;localStorage.setItem('virgo_credits',credits);}catch(e){credits-=cost;localStorage.setItem('virgo_credits',credits);}}
+  else{credits-=cost;localStorage.setItem('virgo_credits',credits);}
+  document.getElementById('cr-display').textContent=isAdmin()?'Credits':credits+' Credits';
+  document.getElementById('cdot').className='cdot'+((!isAdmin()&&credits<10)?' low':'');
+  return true;
+}
+
+// ═══════════════════════════════════════
+// UPLOAD
+// ═══════════════════════════════════════
+function compressImg(file,maxW=1280){
+  return new Promise((res,rej)=>{
+    const img=new Image();const url=URL.createObjectURL(file);
+    img.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('Bild konnte nicht geladen werden'));};
+    img.onload=()=>{
+      const scale=Math.min(1,maxW/Math.max(img.width,img.height));
+      const c=document.createElement('canvas');c.width=img.width*scale;c.height=img.height*scale;
+      const ctx=c.getContext('2d');if(!ctx){URL.revokeObjectURL(url);rej(new Error('Canvas nicht verfügbar'));return;}
+      ctx.drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);
+      c.toBlob(blob=>{if(!blob){rej(new Error('toBlob fehlgeschlagen'));return;}
+        const rd=new FileReader();rd.onload=e=>res({b64:e.target.result.split(',')[1],mime:'image/jpeg',url:e.target.result,name:file.name});
+        rd.readAsDataURL(blob);},'image/jpeg',.86);
+    };img.src=url;
+  });
+}
+function uploadRef(){document.getElementById('file-input-permanent').value='';document.getElementById('file-input-permanent').click();}
+async function handleFileInput(inp){
+  if(!inp.files||!inp.files.length)return;
+  const files=Array.from(inp.files).slice(0,4-refImages.length);
+  for(const f of files){try{const c=await compressImg(f);refImages.push(c);}catch(e){console.error(e);}}
+  renderRefZone();inp.value='';
+}
+function renderRefZone(){
+  const zone=document.getElementById('rz');const container=document.getElementById('ref-imgs');const btn=document.getElementById('img-btn');
+  if(!refImages.length){zone.classList.remove('vis');btn.classList.remove('has');btn.textContent='📎';if(container)container.innerHTML='';return;}
+  zone.classList.add('vis');btn.classList.add('has');btn.textContent='📎'+refImages.length;
+  container.innerHTML=refImages.map((img,i)=>`<div style="position:relative;display:inline-block"><img src="${img.url}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;border:1px solid var(--bd)"><button onclick="removeRef(${i})" style="position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:var(--t);color:#fff;border:none;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center">×</button></div>`).join('');
+}
+function removeRef(i){refImages.splice(i,1);renderRefZone();}
+function clearRef(){refImages=[];renderRefZone();}
+
+// drag & drop
+document.getElementById('feed').addEventListener('dragover',e=>e.preventDefault());
+document.getElementById('feed').addEventListener('drop',async e=>{e.preventDefault();const files=Array.from(e.dataTransfer.files).filter(f=>f.type.startsWith('image/'));for(const f of files.slice(0,4-refImages.length)){try{const c=await compressImg(f);refImages.push(c);}catch(e){}}renderRefZone();});
+document.addEventListener('paste',async e=>{const items=Array.from(e.clipboardData.items).filter(i=>i.type.startsWith('image/'));for(const item of items.slice(0,4-refImages.length)){const f=item.getAsFile();if(!f)continue;try{const c=await compressImg(f);refImages.push(c);}catch(e){}}renderRefZone();});
+
+// ═══════════════════════════════════════
+// MARKDOWN
+// ═══════════════════════════════════════
+function renderMD(t){
+  if(!t)return'';const codeBlocks=[];
+  t=t.replace(/```([\w]*)?\n?([\s\S]*?)```/g,(match,lang,code)=>{const id='cb'+codeBlocks.length;codeBlocks.push({id,lang:lang||'code',code:code.trim()});return'%%%CB_'+id+'%%%';});
+  t=t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  t=t.replace(/^### (.+)$/gm,'<b style="display:block;margin:7px 0 3px;font-size:13px">$1</b>');
+  t=t.replace(/^## (.+)$/gm,'<b style="display:block;margin:9px 0 3px;font-size:14px">$1</b>');
+  t=t.replace(/^# (.+)$/gm,'<b style="display:block;margin:10px 0 4px;font-size:15px">$1</b>');
+  t=t.replace(/\*\*([^*\n]+)\*\*/g,'<b>$1</b>');
+  t=t.replace(/\*([^*\n]+)\*/g,'<i>$1</i>');
+  t=t.replace(/^[-*] (.+)$/gm,'<div style="margin:2px 0 2px 12px">· $1</div>');
+  t=t.replace(/`([^`]+)`/g,'<code style="background:var(--sf2);padding:1px 4px;border-radius:3px;font-size:11px;font-family:monospace">$1</code>');
+  t=t.replace(/\n\n/g,'<br>').replace(/\n/g,' ');
+  codeBlocks.forEach(({id,lang,code})=>{const esc=code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');const html=`<div class="code-block"><div class="code-header"><span class="code-lang">${lang}</span><button class="code-copy" onclick="copyCode(this,'${id}')">Kopieren</button></div><pre id="${id}"><code>${esc}</code></pre></div>`;t=t.replace('%%%CB_'+id+'%%%',html);});
+  return t;
+}
+function copyCode(btn,id){const el=document.getElementById(id);if(!el)return;navigator.clipboard.writeText(el.innerText).then(()=>{btn.textContent='Kopiert';setTimeout(()=>btn.textContent='Kopieren',2000);});}
+
+// ═══════════════════════════════════════
 // CHAT STORAGE
 // ═══════════════════════════════════════
 function getLocalChats(){return JSON.parse(localStorage.getItem('virgo_chats_v2')||'[]');}
 function setLocalChats(chats){localStorage.setItem('virgo_chats_v2',JSON.stringify(chats));}
-function setLocalChats(chats){try{localStorage.setItem('virgo_chats_v2',JSON.stringify(chats));}catch(e){try{chats.forEach(c=>{if(c.works&&c.works.length>1)c.works=[c.works[c.works.length-1]];});localStorage.setItem('virgo_chats_v2',JSON.stringify(chats.slice(0,40)));}catch(e2){}}}
 function isSupabaseId(id){return id&&!String(id).startsWith('chat_');}
 function cleanMessages(messages){return messages.map(msg=>{if(Array.isArray(msg.content)){const txt=msg.content.find(b=>b.type==='text');return{role:msg.role,content:txt?txt.text:''};}return msg;});}
 async function loadChats(){
-@@ -908,7 +924,7 @@
+  renderChatHistory(getLocalChats());
+  if(authToken){try{const r=await fetch('/api/chats',{headers:{'Authorization':'Bearer '+authToken}});if(r.ok){const data=await r.json();if(Array.isArray(data)&&data.length){
+    const localAll=getLocalChats();
     // Server-Chats mit Website anreichern: lokal (gleicher Browser) hat Vorrang, sonst vom Server (geräteübergreifend)
     const merged=data.map(sc=>{
       const lc=localAll.find(c=>c.id===sc.id);
       if(lc&&lc.websiteHtml){return Object.assign({},sc,{websiteHtml:lc.websiteHtml,websiteName:lc.websiteName,isSocial:lc.isSocial});}
-      if(lc&&lc.websiteHtml){return Object.assign({},sc,{websiteHtml:lc.websiteHtml,websiteName:lc.websiteName,isSocial:lc.isSocial,works:lc.works||null});}
       if(sc.website_html){return Object.assign({},sc,{websiteHtml:sc.website_html,websiteName:sc.website_name||'website',isSocial:!!sc.is_social});}
       return sc;
     });
-@@ -925,6 +941,7 @@
+    const localOnly=localAll.filter(c=>!isSupabaseId(c.id));
+    renderChatHistory([...merged,...localOnly]);
+  }}}catch(e){}}
+}
+function renderChatHistory(chats){
+  const hist=document.getElementById('hist');const empty=document.getElementById('hist-empty');
+  hist.querySelectorAll('.hi,.hl,.clear-btn').forEach(el=>el.remove());
+  if(!chats.length){if(empty)empty.style.display='block';return;}if(empty)empty.style.display='none';
+  const lbl=document.createElement('span');lbl.className='hl';lbl.textContent='Chats';hist.appendChild(lbl);
+  chats.forEach(chat=>{const d=document.createElement('div');d.className='hi'+(chat.id===state.activeChatId?' on':'');d.innerHTML='<span class="hi-title">'+escHtml(chat.title||'Chat')+'</span><button class="hi-del" onclick="event.stopPropagation();deleteChat(\''+chat.id+'\')">×</button>';d.querySelector('.hi-title').addEventListener('click',()=>openChat(chat));hist.appendChild(d);});
   if(!authToken){const cb=document.createElement('button');cb.className='clear-btn';cb.style.cssText='display:block;width:calc(100% - 16px);margin:6px 8px;padding:7px;border:1px solid var(--bd);border-radius:7px;background:transparent;font-family:Inter,sans-serif;font-size:11px;color:var(--td);cursor:pointer';cb.textContent='Alle löschen';cb.onclick=()=>{setLocalChats([]);loadChats();};hist.appendChild(cb);}
 }
 async function deleteChat(id){setLocalChats(getLocalChats().filter(c=>c.id!==id));if(authToken&&isSupabaseId(id)){try{await fetch('/api/chats',{method:'DELETE',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({id})});}catch(e){}}if(state.activeChatId===id)newChat();else loadChats();}
-function openWorkFromChat(chatId,idx){const c=getLocalChats().find(x=>x.id===chatId);if(!c||!c.works||!c.works[idx])return;const w=c.works[idx];currentWebsiteHtml=w.html;currentWebsiteName=w.name||'website';currentIsSocial=!!w.isSocial;openPreview(w.html,w.isSocial?'Social Post':(w.name||'Website'));}
 function openChat(chat){
   state.chatStarted=true;state.activeChatId=chat.id;
   const _l=document.getElementById('landing');if(_l)_l.style.display='none';
-@@ -933,7 +950,16 @@
+  document.getElementById('chat-title').textContent=chat.title||'Chat';
+  document.getElementById('fi').innerHTML='';conversationHistory=[];
   // Website/Post dieses Chats wiederherstellen (oder zurücksetzen)
   if(chat.websiteHtml){currentWebsiteHtml=chat.websiteHtml;currentWebsiteName=chat.websiteName||'website';currentIsSocial=!!chat.isSocial;}
   else{currentWebsiteHtml='';currentWebsiteName='website';currentIsSocial=false;closePreview();}
   (chat.messages||[]).forEach(msg=>{const content=typeof msg.content==='string'?msg.content:(Array.isArray(msg.content)?(msg.content.find(b=>b.type==='text')||{}).text||'':msg.content||'');if(msg.role==='user')addUserMsg(content);else if(msg.role==='assistant')addAIMsg(renderMD(content));});
-  let _workIdx=0;
-  (chat.messages||[]).forEach(msg=>{const content=typeof msg.content==='string'?msg.content:(Array.isArray(msg.content)?(msg.content.find(b=>b.type==='text')||{}).text||'':msg.content||'');if(msg.role==='user')addUserMsg(content);else if(msg.role==='assistant'){
-    if(/^\[Animierte/i.test(content)&&chat.works&&chat.works[_workIdx]){
-      const w=chat.works[_workIdx];const wi=_workIdx;
-      const lbl=w.isSocial?'Dein animierter Post':'Deine animierte Website';
-      const btns='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button onclick="openWorkFromChat(\''+chat.id+'\','+wi+')" style="padding:9px 14px;background:var(--t);color:#fff;border:none;border-radius:7px;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer">Vorschau</button><button onclick="openWorkFromChat(\''+chat.id+'\','+wi+');previewDownload()" style="padding:9px 14px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:7px;font-family:Inter,sans-serif;font-size:12px;cursor:pointer">Download</button></div>';
-      addAIMsg('🎬 <b>'+lbl+'</b>'+btns);
-      _workIdx++;
-    } else addAIMsg(renderMD(content));
-  }});
   conversationHistory=cleanMessages(chat.messages||[]);loadChats();closeSb();
   // Vorschau automatisch öffnen wenn dieser Chat eine Website hat
   if(chat.websiteHtml){openPreview(chat.websiteHtml,chat.websiteName||'Website');}
-@@ -942,1041 +968,1041 @@
+}
+async function saveChat(title,messages){
   const clean=cleanMessages(messages);
   if(!state.activeChatId)state.activeChatId='chat_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
   const chats=getLocalChats();const idx=chats.findIndex(c=>c.id===state.activeChatId);
   if(idx>=0){chats[idx].messages=clean;chats[idx].title=title;chats[idx].updated=Date.now();if(currentWebsiteHtml){chats[idx].websiteHtml=currentWebsiteHtml;chats[idx].websiteName=currentWebsiteName;chats[idx].isSocial=currentIsSocial;}}
   else{const nc={id:state.activeChatId,title,messages:clean,updated:Date.now()};if(currentWebsiteHtml){nc.websiteHtml=currentWebsiteHtml;nc.websiteName=currentWebsiteName;nc.isSocial=currentIsSocial;}chats.unshift(nc);}
-  if(idx>=0){chats[idx].messages=clean;chats[idx].title=title;chats[idx].updated=Date.now();if(currentWebsiteHtml){chats[idx].websiteHtml=currentWebsiteHtml;chats[idx].websiteName=currentWebsiteName;chats[idx].isSocial=currentIsSocial;const w=chats[idx].works=chats[idx].works||[];if(!w.length||w[w.length-1].html!==currentWebsiteHtml){w.push({html:currentWebsiteHtml,name:currentWebsiteName,isSocial:currentIsSocial});if(w.length>6)w.shift();}}}
-  else{const nc={id:state.activeChatId,title,messages:clean,updated:Date.now()};if(currentWebsiteHtml){nc.websiteHtml=currentWebsiteHtml;nc.websiteName=currentWebsiteName;nc.isSocial=currentIsSocial;nc.works=[{html:currentWebsiteHtml,name:currentWebsiteName,isSocial:currentIsSocial}];}chats.unshift(nc);}
   if(chats.length>100)chats.splice(100);setLocalChats(chats);loadChats();
   if(authToken){try{if(isSupabaseId(state.activeChatId)){await fetch('/api/chats',{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({id:state.activeChatId,title,messages:clean,website_html:currentWebsiteHtml||null,website_name:currentWebsiteName||null,is_social:!!currentIsSocial})});}else{const r=await fetch('/api/chats',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({title,messages:clean,website_html:currentWebsiteHtml||null,website_name:currentWebsiteName||null,is_social:!!currentIsSocial})});const data=await r.json();if(data.id){const lc=getLocalChats();const li=lc.findIndex(c=>c.id===state.activeChatId);if(li>=0)lc[li].id=data.id;state.activeChatId=data.id;setLocalChats(lc);loadChats();}}}catch(e){}}
 }
@@ -1663,9 +1714,12 @@ function copyMaklerAdText(){
 // ═══════════════════════════════════════
 function openInvoiceModal(){document.getElementById('inv-datum').value=new Date().toISOString().split('T')[0];showM('modal-invoice');}
 async function createInvoice(){
+  const kunde=document.getElementById('inv-kunde').value.trim();const leistung=document.getElementById('inv-leistung').value.trim();const betrag=document.getElementById('inv-betrag').value;const msg=document.getElementById('inv-msg');
+  if(!kunde||!leistung||!betrag){msg.textContent='Bitte Kundenname, Leistung und Betrag ausfüllen.';msg.style.display='block';return;}
   const kunde=document.getElementById('inv-kunde').value.trim();const leistung=document.getElementById('inv-leistung').value.trim();const betrag=document.getElementById('inv-betrag').value;const absName=document.getElementById('inv-absender-name').value.trim();const msg=document.getElementById('inv-msg');
   if(!kunde||!leistung||!betrag||!absName){msg.textContent='Bitte Kundenname, Leistung, Betrag und deinen Firmennamen (Absender) ausfüllen — der Firmenname erscheint oben auf der Rechnung.';msg.style.display='block';return;}
   msg.style.display='none';
+  try{const r=await fetch('/api/invoice',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({invoice_nr:document.getElementById('inv-nr').value||'INV-'+Date.now(),kunde,kunde_adresse:document.getElementById('inv-kunde-adresse').value,leistung,betrag,mwst:parseInt(document.getElementById('inv-mwst').value)||19,datum:document.getElementById('inv-datum').value,absender_name:document.getElementById('inv-absender-name').value||'Virgo AI',absender_adresse:document.getElementById('inv-absender-adresse').value,absender_email:document.getElementById('inv-absender-email').value,absender_steuer:document.getElementById('inv-steuer').value})});const d=await r.json();
   try{const r=await fetch('/api/invoice',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({invoice_nr:document.getElementById('inv-nr').value||'INV-'+Date.now(),kunde,kunde_adresse:document.getElementById('inv-kunde-adresse').value,leistung,betrag,mwst:parseInt(document.getElementById('inv-mwst').value)||19,datum:document.getElementById('inv-datum').value,absender_name:absName,absender_adresse:document.getElementById('inv-absender-adresse').value,absender_email:document.getElementById('inv-absender-email').value,absender_steuer:document.getElementById('inv-steuer').value})});const d=await r.json();
     if(d.error){msg.textContent=d.error;msg.style.display='block';return;}
     // Virgo-Branding aus der Rechnung entfernen — oben steht IMMER die Firma des Nutzers
@@ -1677,9 +1731,11 @@ async function createInvoice(){
     const b=document.createElement('div');b.className='bb';b.style.maxWidth='460px';
     b.innerHTML='<div style="font-size:12px;font-weight:600;margin-bottom:5px">🧾 Rechnung '+escHtml(d.invoice_nr)+'</div><div style="font-size:18px;font-weight:700;margin-bottom:11px">'+escHtml(d.brutto)+' Euro</div>';
     const btns=document.createElement('div');btns.style.cssText='display:flex;gap:7px;flex-wrap:wrap';
+    const b1=document.createElement('button');b1.textContent='Drucken / Als PDF';b1.style.cssText='padding:7px 13px;background:var(--t);color:#fff;border:none;border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer';b1.onclick=function(){const w=window.open('','_blank');w.document.write(window[invId]);w.document.close();setTimeout(()=>w.print(),500);};
     const b0=document.createElement('button');b0.textContent='Vorschau';b0.style.cssText='padding:7px 13px;background:var(--t);color:#fff;border:none;border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer';b0.onclick=function(){openPreview(window[invId],'Rechnung '+d.invoice_nr);};
     const b1=document.createElement('button');b1.textContent='Drucken / Als PDF';b1.style.cssText='padding:7px 13px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer';b1.onclick=function(){const w=window.open('','_blank');w.document.write(window[invId]);w.document.close();setTimeout(()=>w.print(),500);};
     const b2=document.createElement('button');b2.textContent='Datei speichern';b2.style.cssText='padding:7px 13px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer';b2.onclick=function(){const blob=new Blob([window[invId]],{type:'text/html'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='Rechnung-'+d.invoice_nr+'.html';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);};
+    btns.appendChild(b1);btns.appendChild(b2);b.appendChild(btns);
     btns.appendChild(b0);btns.appendChild(b1);btns.appendChild(b2);b.appendChild(btns);
     const inner=document.createElement('div');inner.innerHTML='<div class="aav">V</div>';inner.appendChild(b);inner.appendChild(Object.assign(document.createElement('div'),{className:'mt2',textContent:now()}));
     msgEl.appendChild(inner);document.getElementById('fi').appendChild(msgEl);scrollFeed();
