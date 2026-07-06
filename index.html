@@ -1246,6 +1246,19 @@ async function buildWebsite(isUpdate,updateRequest){
     document.getElementById('gl').textContent='Website wird gebaut...';
   }
 
+  // ── AUTO-HERO-BILD: Neubau ohne hochgeladene Fotos → Foto mit Menschen generieren (Hero) ──
+  if(!isUpdate && !uploadedUrls.length){
+    try{
+      document.getElementById('gl').textContent='Hero-Foto wird generiert...';
+      const wsSubject=(d._request||[d.name,d.branche,d.angebot].filter(Boolean).join(', ')||'modern business').slice(0,280);
+      const wsPr='cinematic wide hero photograph with real people for a premium website about: '+wsSubject+'. professional friendly people, editorial photography, soft cinematic light, atmospheric, photorealistic, no text, no letters, no logos, no watermark';
+      const ir=await fetch('/api/generate-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:wsPr,model:'nano'})});
+      const idt=await ir.json();
+      if(idt&&idt.imageUrl){uploadedUrls.push(idt.imageUrl);uploadedImageUrl=idt.imageUrl;console.log('✓ Hero-Bild generiert:',idt.imageUrl);}
+    }catch(e){console.warn('⚠️ Hero-Bild fehlgeschlagen:',e.message);}
+    document.getElementById('gl').textContent='Website wird gebaut...';
+  }
+
   // Bild-Anweisung für den Prompt (alle echten URLs)
   let imgBlock='';
   if(uploadedUrls.length){
