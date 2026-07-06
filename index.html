@@ -611,17 +611,17 @@ function openPreview(html,title){
   document.getElementById('preview-title').textContent=title||'Vorschau';
   const panel=document.getElementById('preview-panel');
   const frame=document.getElementById('preview-frame');
-  
+
   // Clear old
   if(window._prevBlobUrl){URL.revokeObjectURL(window._prevBlobUrl);}
   frame.removeAttribute('srcdoc');
   frame.removeAttribute('src');
-  
+
   // Blob URL (works with CSP, no sandbox issues)
   const blob=new Blob([html],{type:'text/html;charset=utf-8'});
   window._prevBlobUrl=URL.createObjectURL(blob);
   frame.src=window._prevBlobUrl;
-  
+
   console.log('✓ Preview loaded via Blob URL, size:',html.length+'B');
   panel.classList.add('open');
 }
@@ -703,6 +703,37 @@ function htmlHasVisibleContent(html){
     .replace(/\s+/g,' ')
     .trim();
   return visible.length>=60; // echte Texte vorhanden, nicht nur leere Hülle
+}
+// ── STIL-BIBLIOTHEK: versteht Kurzbefehle wie "skims style", "luxus", "neon" — macht jeden Output hochwertig ──
+function detectVirgoStyle(text, withDefault){
+  const t=String(text||'').toLowerCase();
+  const S=[
+    {match:/(skims|skimss|skim s|clean girl|editorial|ästhetisch|aesthetic|nude|beige|creme|minimal|dezent)/,
+     block:`STIL-VORGABE: SKIMS / CLEAN PREMIUM EDITORIAL — diese Vorgabe ÜBERSCHREIBT alle anderen Stil- und Energie-Anweisungen in diesem Prompt:
+- Farbwelt: warme Nude-/Creme-/Sand-/Taupe-Töne (#f4ede6, #e8dcd0, #d9c7b8, #b39d8c), Text in tiefem Warm-Schwarz (#1a1614). Maximal EIN dezenter Akzent. STRENG VERBOTEN: Neon, grelle Farben, bunte Regenbogen-Gradients, Emoji-Dekoration.
+- Typografie: riesige, enge, selbstbewusste Sans-Serif (Google Font 'Archivo' 800/900 oder 'Inter' 800, letter-spacing:-0.03em). Headlines groß und ruhig, viel Weißraum, Layout wie ein Hochglanz-Magazin-Cover.
+- Bewegung: LANGSAM und teuer — sanfte Fades, weiches Ken-Burns-Zoomen auf Flächen, atmende Nude-Gradients, subtile Parallax. KEIN Blitzen, KEINE reinknallenden Shapes, KEIN Wackeln. Ruhe = Luxus.
+- Stimmung: SKIMS-Kampagne — monochrom, warm, selbstsicher, reduziert, High Fashion.`},
+    {match:/(luxus|luxuri|gold|schwarz.?gold|nobel|exklusiv|high.?end|edel|premium)/,
+     block:`STIL-VORGABE: LUXUS SCHWARZ/GOLD — überschreibt andere Stil-Anweisungen:
+- Farbwelt: tiefes Schwarz (#0d0b09) + Champagner-Gold (#c9a96e, #e8d5b0) + Creme für Text. KEIN Neon.
+- Typografie: elegante Serif für Headlines (Google Font 'Playfair Display' oder 'Cormorant Garamond' 600, groß; Uppercase-Labels mit weitem letter-spacing), cleane Sans für Fließtext.
+- Bewegung: langsamer Gold-Shimmer auf Linien und Buttons, sanfte Fades, dezente schwebende Lichtpartikel. Würdevoll, nie schrill.
+- Stimmung: Fünf-Sterne-Hotel, Privatbank, Haute Couture.`},
+    {match:/(neon|knall|bold|laut|crazy|verrückt|auffällig|grell|hype|street|urban)/,
+     block:`STIL-VORGABE: BOLD & LAUT (vom Kunden bewusst gewählt):
+- Volle Energie: kinetische Typo mit Overshoot, Neon-Akzente, harte Beats, reinfliegende Shapes, pulsierende CTAs — aber sauber im Raster, alles lesbar, nichts überlappt.`},
+    {match:/(verspielt|bunt|pastell|süß|niedlich|cute|kawaii|candy)/,
+     block:`STIL-VORGABE: VERSPIELT & PASTELL:
+- Weiche Pastelltöne (Rosé, Mint, Flieder, Vanille), runde Formen, freundliche fette Sans (Google Font 'Baloo 2' oder 'Quicksand' 700), sanft federnde Animationen, verspielte Elemente sparsam und hochwertig.`}
+  ];
+  for(const s of S){ if(s.match.test(t)) return s.block; }
+  if(!withDefault) return '';
+  // Kein Stil genannt → Premium-Grundniveau erzwingen (nie wieder "billig")
+  return `STIL-GRUNDNIVEAU (kein expliziter Stil genannt — dann gilt IMMER dieses Premium-Level):
+- Gestalte wie eine teure Design-Agentur: EINE kuratierte Farbpalette (2-3 harmonische Farben + genau 1 Akzent), große saubere Typografie mit Charakter (Google Font), großzügiger Weißraum, klares Raster.
+- STRENG VERBOTEN: wahllose Neonfarben, mehrere konkurrierende Akzentfarben, Emoji-Dekospam, überladene Effekte. Lieber weniger Elemente — dafür perfekt ausgeführt.
+- Bewegung: hochwertig und smooth (weiche Fades, sanftes Floaten, EIN eleganter Shimmer auf dem CTA) statt hektischem Geblinke. Das Ergebnis muss aussehen, als hätte eine Agentur 10.000 € dafür bekommen.`;
 }
 // ═══════════════════════════════════════
 // SIDEBAR
@@ -791,128 +822,77 @@ async function doPasswordReset(){
   }catch(e){setAuthMsg('Verbindungsfehler.','alert');}
 }
 function logout(){authToken=null;currentUser=null;credits=3;localStorage.removeItem('virgo_token');localStorage.removeItem('virgo_user');localStorage.removeItem('virgo_credits');localStorage.removeItem('virgo_plan');localStorage.removeItem('virgo_refresh');updateUI();loadChats();}
+// ── SESSION-REFRESH: verlängert die Anmeldung automatisch — kein Rauswurf mehr nach 1 Stunde ──
+async function refreshSession(){
+  const rt=localStorage.getItem('virgo_refresh');
+  if(!rt||!authToken)return;
+  try{
+    const r=await fetch('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'refresh',refresh_token:rt})});
+    const d=await r.json();
+    if(d&&d.success&&d.session&&d.session.access_token){
+      authToken=d.session.access_token;
+      localStorage.setItem('virgo_token',authToken);
+      if(d.session.refresh_token)localStorage.setItem('virgo_refresh',d.session.refresh_token);
+      console.log('✓ Sitzung automatisch verlängert');
+    }
+  }catch(e){}
+}
+refreshSession();setInterval(refreshSession,40*60*1000);
 
 // ═══════════════════════════════════════
 // CREDITS
-// ═══════════════════════════════════════
-async function useCredits(type){
-  if(isAdmin())return true;const cost=COST[type]||1;if(credits<cost){openUpgrade();return false;}
-  if(authToken){try{const r=await fetch('/api/credits',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({amount:cost})});const d=await r.json();if(d.error){openUpgrade();return false;}credits=d.credits;localStorage.setItem('virgo_credits',credits);}catch(e){credits-=cost;localStorage.setItem('virgo_credits',credits);}}
-  else{credits-=cost;localStorage.setItem('virgo_credits',credits);}
-  document.getElementById('cr-display').textContent=isAdmin()?'Credits':credits+' Credits';
-  document.getElementById('cdot').className='cdot'+((!isAdmin()&&credits<10)?' low':'');
-  return true;
-}
-
-// ═══════════════════════════════════════
-// UPLOAD
-// ═══════════════════════════════════════
-function compressImg(file,maxW=1280){
-  return new Promise((res,rej)=>{
-    const img=new Image();const url=URL.createObjectURL(file);
-    img.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('Bild konnte nicht geladen werden'));};
-    img.onload=()=>{
-      const scale=Math.min(1,maxW/Math.max(img.width,img.height));
-      const c=document.createElement('canvas');c.width=img.width*scale;c.height=img.height*scale;
-      const ctx=c.getContext('2d');if(!ctx){URL.revokeObjectURL(url);rej(new Error('Canvas nicht verfügbar'));return;}
-      ctx.drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);
-      c.toBlob(blob=>{if(!blob){rej(new Error('toBlob fehlgeschlagen'));return;}
-        const rd=new FileReader();rd.onload=e=>res({b64:e.target.result.split(',')[1],mime:'image/jpeg',url:e.target.result,name:file.name});
-        rd.readAsDataURL(blob);},'image/jpeg',.86);
-    };img.src=url;
-  });
-}
-function uploadRef(){document.getElementById('file-input-permanent').value='';document.getElementById('file-input-permanent').click();}
-async function handleFileInput(inp){
-  if(!inp.files||!inp.files.length)return;
-  const files=Array.from(inp.files).slice(0,4-refImages.length);
-  for(const f of files){try{const c=await compressImg(f);refImages.push(c);}catch(e){console.error(e);}}
-  renderRefZone();inp.value='';
-}
-function renderRefZone(){
-  const zone=document.getElementById('rz');const container=document.getElementById('ref-imgs');const btn=document.getElementById('img-btn');
-  if(!refImages.length){zone.classList.remove('vis');btn.classList.remove('has');btn.textContent='📎';if(container)container.innerHTML='';return;}
-  zone.classList.add('vis');btn.classList.add('has');btn.textContent='📎'+refImages.length;
-  container.innerHTML=refImages.map((img,i)=>`<div style="position:relative;display:inline-block"><img src="${img.url}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;border:1px solid var(--bd)"><button onclick="removeRef(${i})" style="position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:var(--t);color:#fff;border:none;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center">×</button></div>`).join('');
-}
-function removeRef(i){refImages.splice(i,1);renderRefZone();}
-function clearRef(){refImages=[];renderRefZone();}
-
-// drag & drop
-document.getElementById('feed').addEventListener('dragover',e=>e.preventDefault());
-document.getElementById('feed').addEventListener('drop',async e=>{e.preventDefault();const files=Array.from(e.dataTransfer.files).filter(f=>f.type.startsWith('image/'));for(const f of files.slice(0,4-refImages.length)){try{const c=await compressImg(f);refImages.push(c);}catch(e){}}renderRefZone();});
-document.addEventListener('paste',async e=>{const items=Array.from(e.clipboardData.items).filter(i=>i.type.startsWith('image/'));for(const item of items.slice(0,4-refImages.length)){const f=item.getAsFile();if(!f)continue;try{const c=await compressImg(f);refImages.push(c);}catch(e){}}renderRefZone();});
-
-// ═══════════════════════════════════════
-// MARKDOWN
-// ═══════════════════════════════════════
-function renderMD(t){
-  if(!t)return'';const codeBlocks=[];
-  t=t.replace(/```([\w]*)?\n?([\s\S]*?)```/g,(match,lang,code)=>{const id='cb'+codeBlocks.length;codeBlocks.push({id,lang:lang||'code',code:code.trim()});return'%%%CB_'+id+'%%%';});
-  t=t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  t=t.replace(/^### (.+)$/gm,'<b style="display:block;margin:7px 0 3px;font-size:13px">$1</b>');
-  t=t.replace(/^## (.+)$/gm,'<b style="display:block;margin:9px 0 3px;font-size:14px">$1</b>');
-  t=t.replace(/^# (.+)$/gm,'<b style="display:block;margin:10px 0 4px;font-size:15px">$1</b>');
-  t=t.replace(/\*\*([^*\n]+)\*\*/g,'<b>$1</b>');
-  t=t.replace(/\*([^*\n]+)\*/g,'<i>$1</i>');
-  t=t.replace(/^[-*] (.+)$/gm,'<div style="margin:2px 0 2px 12px">· $1</div>');
-  t=t.replace(/`([^`]+)`/g,'<code style="background:var(--sf2);padding:1px 4px;border-radius:3px;font-size:11px;font-family:monospace">$1</code>');
-  t=t.replace(/\n\n/g,'<br>').replace(/\n/g,' ');
-  codeBlocks.forEach(({id,lang,code})=>{const esc=code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');const html=`<div class="code-block"><div class="code-header"><span class="code-lang">${lang}</span><button class="code-copy" onclick="copyCode(this,'${id}')">Kopieren</button></div><pre id="${id}"><code>${esc}</code></pre></div>`;t=t.replace('%%%CB_'+id+'%%%',html);});
-  return t;
-}
-function copyCode(btn,id){const el=document.getElementById(id);if(!el)return;navigator.clipboard.writeText(el.innerText).then(()=>{btn.textContent='Kopiert';setTimeout(()=>btn.textContent='Kopieren',2000);});}
-
-// ═══════════════════════════════════════
+@@ -898,7 +914,7 @@
 // CHAT STORAGE
 // ═══════════════════════════════════════
 function getLocalChats(){return JSON.parse(localStorage.getItem('virgo_chats_v2')||'[]');}
 function setLocalChats(chats){localStorage.setItem('virgo_chats_v2',JSON.stringify(chats));}
+function setLocalChats(chats){try{localStorage.setItem('virgo_chats_v2',JSON.stringify(chats));}catch(e){try{chats.forEach(c=>{if(c.works&&c.works.length>1)c.works=[c.works[c.works.length-1]];});localStorage.setItem('virgo_chats_v2',JSON.stringify(chats.slice(0,40)));}catch(e2){}}}
 function isSupabaseId(id){return id&&!String(id).startsWith('chat_');}
 function cleanMessages(messages){return messages.map(msg=>{if(Array.isArray(msg.content)){const txt=msg.content.find(b=>b.type==='text');return{role:msg.role,content:txt?txt.text:''};}return msg;});}
 async function loadChats(){
-  renderChatHistory(getLocalChats());
-  if(authToken){try{const r=await fetch('/api/chats',{headers:{'Authorization':'Bearer '+authToken}});if(r.ok){const data=await r.json();if(Array.isArray(data)&&data.length){
-    const localAll=getLocalChats();
+@@ -908,7 +924,7 @@
     // Server-Chats mit Website anreichern: lokal (gleicher Browser) hat Vorrang, sonst vom Server (geräteübergreifend)
     const merged=data.map(sc=>{
       const lc=localAll.find(c=>c.id===sc.id);
       if(lc&&lc.websiteHtml){return Object.assign({},sc,{websiteHtml:lc.websiteHtml,websiteName:lc.websiteName,isSocial:lc.isSocial});}
+      if(lc&&lc.websiteHtml){return Object.assign({},sc,{websiteHtml:lc.websiteHtml,websiteName:lc.websiteName,isSocial:lc.isSocial,works:lc.works||null});}
       if(sc.website_html){return Object.assign({},sc,{websiteHtml:sc.website_html,websiteName:sc.website_name||'website',isSocial:!!sc.is_social});}
       return sc;
     });
-    const localOnly=localAll.filter(c=>!isSupabaseId(c.id));
-    renderChatHistory([...merged,...localOnly]);
-  }}}catch(e){}}
-}
-function renderChatHistory(chats){
-  const hist=document.getElementById('hist');const empty=document.getElementById('hist-empty');
-  hist.querySelectorAll('.hi,.hl,.clear-btn').forEach(el=>el.remove());
-  if(!chats.length){if(empty)empty.style.display='block';return;}if(empty)empty.style.display='none';
-  const lbl=document.createElement('span');lbl.className='hl';lbl.textContent='Chats';hist.appendChild(lbl);
-  chats.forEach(chat=>{const d=document.createElement('div');d.className='hi'+(chat.id===state.activeChatId?' on':'');d.innerHTML='<span class="hi-title">'+escHtml(chat.title||'Chat')+'</span><button class="hi-del" onclick="event.stopPropagation();deleteChat(\''+chat.id+'\')">×</button>';d.querySelector('.hi-title').addEventListener('click',()=>openChat(chat));hist.appendChild(d);});
+@@ -925,6 +941,7 @@
   if(!authToken){const cb=document.createElement('button');cb.className='clear-btn';cb.style.cssText='display:block;width:calc(100% - 16px);margin:6px 8px;padding:7px;border:1px solid var(--bd);border-radius:7px;background:transparent;font-family:Inter,sans-serif;font-size:11px;color:var(--td);cursor:pointer';cb.textContent='Alle löschen';cb.onclick=()=>{setLocalChats([]);loadChats();};hist.appendChild(cb);}
 }
 async function deleteChat(id){setLocalChats(getLocalChats().filter(c=>c.id!==id));if(authToken&&isSupabaseId(id)){try{await fetch('/api/chats',{method:'DELETE',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({id})});}catch(e){}}if(state.activeChatId===id)newChat();else loadChats();}
+function openWorkFromChat(chatId,idx){const c=getLocalChats().find(x=>x.id===chatId);if(!c||!c.works||!c.works[idx])return;const w=c.works[idx];currentWebsiteHtml=w.html;currentWebsiteName=w.name||'website';currentIsSocial=!!w.isSocial;openPreview(w.html,w.isSocial?'Social Post':(w.name||'Website'));}
 function openChat(chat){
   state.chatStarted=true;state.activeChatId=chat.id;
   const _l=document.getElementById('landing');if(_l)_l.style.display='none';
-  document.getElementById('chat-title').textContent=chat.title||'Chat';
-  document.getElementById('fi').innerHTML='';conversationHistory=[];
+@@ -933,7 +950,16 @@
   // Website/Post dieses Chats wiederherstellen (oder zurücksetzen)
   if(chat.websiteHtml){currentWebsiteHtml=chat.websiteHtml;currentWebsiteName=chat.websiteName||'website';currentIsSocial=!!chat.isSocial;}
   else{currentWebsiteHtml='';currentWebsiteName='website';currentIsSocial=false;closePreview();}
   (chat.messages||[]).forEach(msg=>{const content=typeof msg.content==='string'?msg.content:(Array.isArray(msg.content)?(msg.content.find(b=>b.type==='text')||{}).text||'':msg.content||'');if(msg.role==='user')addUserMsg(content);else if(msg.role==='assistant')addAIMsg(renderMD(content));});
+  let _workIdx=0;
+  (chat.messages||[]).forEach(msg=>{const content=typeof msg.content==='string'?msg.content:(Array.isArray(msg.content)?(msg.content.find(b=>b.type==='text')||{}).text||'':msg.content||'');if(msg.role==='user')addUserMsg(content);else if(msg.role==='assistant'){
+    if(/^\[Animierte/i.test(content)&&chat.works&&chat.works[_workIdx]){
+      const w=chat.works[_workIdx];const wi=_workIdx;
+      const lbl=w.isSocial?'Dein animierter Post':'Deine animierte Website';
+      const btns='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button onclick="openWorkFromChat(\''+chat.id+'\','+wi+')" style="padding:9px 14px;background:var(--t);color:#fff;border:none;border-radius:7px;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer">Vorschau</button><button onclick="openWorkFromChat(\''+chat.id+'\','+wi+');previewDownload()" style="padding:9px 14px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:7px;font-family:Inter,sans-serif;font-size:12px;cursor:pointer">Download</button></div>';
+      addAIMsg('🎬 <b>'+lbl+'</b>'+btns);
+      _workIdx++;
+    } else addAIMsg(renderMD(content));
+  }});
   conversationHistory=cleanMessages(chat.messages||[]);loadChats();closeSb();
   // Vorschau automatisch öffnen wenn dieser Chat eine Website hat
   if(chat.websiteHtml){openPreview(chat.websiteHtml,chat.websiteName||'Website');}
-}
-async function saveChat(title,messages){
+@@ -942,1041 +968,1041 @@
   const clean=cleanMessages(messages);
   if(!state.activeChatId)state.activeChatId='chat_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
   const chats=getLocalChats();const idx=chats.findIndex(c=>c.id===state.activeChatId);
   if(idx>=0){chats[idx].messages=clean;chats[idx].title=title;chats[idx].updated=Date.now();if(currentWebsiteHtml){chats[idx].websiteHtml=currentWebsiteHtml;chats[idx].websiteName=currentWebsiteName;chats[idx].isSocial=currentIsSocial;}}
   else{const nc={id:state.activeChatId,title,messages:clean,updated:Date.now()};if(currentWebsiteHtml){nc.websiteHtml=currentWebsiteHtml;nc.websiteName=currentWebsiteName;nc.isSocial=currentIsSocial;}chats.unshift(nc);}
+  if(idx>=0){chats[idx].messages=clean;chats[idx].title=title;chats[idx].updated=Date.now();if(currentWebsiteHtml){chats[idx].websiteHtml=currentWebsiteHtml;chats[idx].websiteName=currentWebsiteName;chats[idx].isSocial=currentIsSocial;const w=chats[idx].works=chats[idx].works||[];if(!w.length||w[w.length-1].html!==currentWebsiteHtml){w.push({html:currentWebsiteHtml,name:currentWebsiteName,isSocial:currentIsSocial});if(w.length>6)w.shift();}}}
+  else{const nc={id:state.activeChatId,title,messages:clean,updated:Date.now()};if(currentWebsiteHtml){nc.websiteHtml=currentWebsiteHtml;nc.websiteName=currentWebsiteName;nc.isSocial=currentIsSocial;nc.works=[{html:currentWebsiteHtml,name:currentWebsiteName,isSocial:currentIsSocial}];}chats.unshift(nc);}
   if(chats.length>100)chats.splice(100);setLocalChats(chats);loadChats();
   if(authToken){try{if(isSupabaseId(state.activeChatId)){await fetch('/api/chats',{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({id:state.activeChatId,title,messages:clean,website_html:currentWebsiteHtml||null,website_name:currentWebsiteName||null,is_social:!!currentIsSocial})});}else{const r=await fetch('/api/chats',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({title,messages:clean,website_html:currentWebsiteHtml||null,website_name:currentWebsiteName||null,is_social:!!currentIsSocial})});const data=await r.json();if(data.id){const lc=getLocalChats();const li=lc.findIndex(c=>c.id===state.activeChatId);if(li>=0)lc[li].id=data.id;state.activeChatId=data.id;setLocalChats(lc);loadChats();}}}catch(e){}}
 }
@@ -1168,6 +1148,8 @@ async function handleWebsiteQA(answer){
 async function buildWebsite(isUpdate,updateRequest){
   startGen(isUpdate?'Website wird aktualisiert...':'Website wird gebaut...');showTyping();
   const d=WEB.data;
+  // Stil-Erkennung: bei Neubau immer (mit Premium-Default), bei Updates nur wenn explizit ein Stil genannt wird
+  const styleBlock=detectVirgoStyle([d._request,d.stil,d.branche,updateRequest].filter(Boolean).join(' '), !isUpdate);
 
   // ── Alle Bilder zu Supabase Storage hochladen, echte URLs holen (Neubau UND Update) ──
   let uploadedImageUrl='';
@@ -1184,6 +1166,19 @@ async function buildWebsite(isUpdate,updateRequest){
       }catch(e){console.warn('⚠️ Bild '+(i+1)+' Upload fehlgeschlagen:',e.message);}
     }
     uploadedImageUrl=uploadedUrls[0]||'';
+    document.getElementById('gl').textContent='Website wird gebaut...';
+  }
+
+  // ── AUTO-HERO-BILD: Neubau ohne hochgeladene Fotos → filmisches Hero-Foto generieren ──
+  if(!isUpdate && !uploadedUrls.length){
+    try{
+      document.getElementById('gl').textContent='Hero-Foto wird generiert...';
+      const wsSubject=(d._request||[d.name,d.branche,d.angebot].filter(Boolean).join(', ')||'modern business').slice(0,280);
+      const wsPr='cinematic wide hero photograph for a premium website about: '+wsSubject+'. editorial photography, soft cinematic light, atmospheric, photorealistic, no text, no letters, no logos, no watermark';
+      const ir=await fetch('/api/generate-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:wsPr,model:'nano'})});
+      const idt=await ir.json();
+      if(idt&&idt.imageUrl){uploadedUrls.push(idt.imageUrl);uploadedImageUrl=idt.imageUrl;console.log('✓ Hero-Bild generiert:',idt.imageUrl);}
+    }catch(e){console.warn('⚠️ Hero-Bild fehlgeschlagen:',e.message);}
     document.getElementById('gl').textContent='Website wird gebaut...';
   }
 
@@ -1204,11 +1199,14 @@ GRAFIKVIDEO-OPTIK — PFLICHT (lässt die Seite aussehen wie ein bewegtes Studio
 ✓ GLASSMORPHISM: Cards & Nav halbtransparent mit backdrop-filter:blur(14px) und feiner Border rgba(255,255,255,.15)
 ✓ SHIMMER/GLOW auf CTA-Buttons: animierter Lichtstreif der durchläuft + pulsierender Glow (box-shadow @keyframes)
 ✓ SCROLL-PARALLAX & REVEAL: IntersectionObserver, Layer bewegen sich unterschiedlich schnell, alles fadet/slidet weich rein
+✓ HERO WIE EIN FILMVORSPANN: Der Hero ist Vollbild (100vh) und startet mit einer inszenierten Intro-Sequenz (0-3s): Hintergrund mit langsamer Kamerafahrt (Zoom auf Bild/Gradient), Titel erscheint als Titel-Sequenz Wort für Wort mit Blur-to-Sharp, danach setzt dauerhafte ruhige Bewegung ein. Falls ein echtes Foto vorhanden ist: als <img> formatfüllend mit Ken-Burns + filmischer Vignette + onerror="this.style.display='none'" — dahinter IMMER ein eigener animierter Gradient als Sicherheitsebene.
+✓ SCROLL-STORY: Jede Sektion ist eine inszenierte Szene — Parallax-Ebenen mit unterschiedlicher Geschwindigkeit, Zahlen die beim Reinscrollen hochzählen, Bilder/Flächen mit eigener Kamerabewegung. KEINE statischen aufgereihten Cards.
+✓ TIEFE: mindestens 3 Ebenen pro Hauptsektion, die sich unterschiedlich schnell bewegen — es soll sich anfühlen wie ein Film, durch den man scrollt.
 ✓ Sehr weiche, langsame, kinoreife Bewegungen (ease-in-out, 0.6-1.2s) — wirkt teuer und ruhig, nie hektisch`;
 
   let prompt;
   if(isUpdate){
-    prompt='Hier ist die AKTUELLE Website (vollständiges HTML):\n\n'+currentWebsiteHtml+'\n\n[GEWÜNSCHTE ÄNDERUNG]: '+updateRequest+imgBlock+'\n\nGib mir die KOMPLETTE aktualisierte Website zurück. Behalte ALLES bei was nicht geändert werden soll — inklusive aller bestehenden Texte, Bilder, Farben und Animationen. Ändere nur das Gewünschte. WICHTIG: Bleibe unter 50.000 Zeichen und stelle sicher, dass deine Antwort VOLLSTÄNDIG ist und mit </html> endet — eine abgeschnittene Antwort ist unbrauchbar. Nur HTML, beginne direkt mit <!DOCTYPE html>, KEINE Erklärung, KEINE Backticks.';
+    prompt='Hier ist die AKTUELLE Website (vollständiges HTML):\n\n'+currentWebsiteHtml+'\n\n[GEWÜNSCHTE ÄNDERUNG]: '+updateRequest+imgBlock+(styleBlock?'\n\n'+styleBlock:'')+'\n\nGib mir die KOMPLETTE aktualisierte Website zurück. Behalte ALLES bei was nicht geändert werden soll — inklusive aller bestehenden Texte, Bilder, Farben und Animationen. Ändere nur das Gewünschte. WICHTIG: Bleibe unter 50.000 Zeichen und stelle sicher, dass deine Antwort VOLLSTÄNDIG ist und mit </html> endet — eine abgeschnittene Antwort ist unbrauchbar. Nur HTML, beginne direkt mit <!DOCTYPE html>, KEINE Erklärung, KEINE Backticks.';
   } else if(WEB.collecting===false && d._request){
     // ── DIREKT-MODUS: ausführlicher Prompt, erweitertes Briefing und/oder Bild vorhanden ──
     prompt=`Du bist ein Motion Design Expert. Erstelle eine WUNDERSCHÖNE, professionelle, voll animierte Website im Stil einer 10.000-Dollar-Agentur-Seite, basierend auf diesem Briefing:
@@ -1216,6 +1214,9 @@ GRAFIKVIDEO-OPTIK — PFLICHT (lässt die Seite aussehen wie ein bewegtes Studio
 BRIEFING DES KUNDEN:
 ${d._request}
 ${imgBlock}
+
+${styleBlock}
+(Die STIL-VORGABE hat Vorrang: Farbwelt, Typografie und Bewegungsenergie richten sich nach ihr — auch gegenüber der Grafikvideo-Optik unten.)
 ${GRAFIKVIDEO}
 
 ANIMATIONEN - PFLICHT (zusätzlich zur Grafikvideo-Optik):
@@ -1244,6 +1245,9 @@ BRANCHE: ${d.branche||''}
 ANGEBOT: ${d.angebot||''}
 ZIELGRUPPE: ${d.zielgruppe||''}
 HAUPTFARBE: ${d.farbe||'#111111'}
+
+${styleBlock}
+(Die STIL-VORGABE hat Vorrang: Farbwelt, Typografie und Bewegungsenergie richten sich nach ihr — auch gegenüber der Grafikvideo-Optik unten. Die HAUPTFARBE fügt sich in die Stil-Palette ein.)
 ${GRAFIKVIDEO}
 
 STRUKTUR (PFLICHT):
@@ -1322,22 +1326,22 @@ Das HTML MUSS mind. 6KB sein (echte Inhalte + Animationen + Grafikvideo-Optik).
       WEB.active=false;
       return;
     }
-    
+
     // Check for animation keywords
     const hasAnimations=/@keyframes|animation:|transition:|transform:|IntersectionObserver|scroll/i.test(html);
     console.log('✓ HTML valid, size:',html.length+'B, has animations:',hasAnimations);
-    
+
     currentWebsiteHtml=html;
     currentWebsiteName=(d.name||'website').toLowerCase().replace(/[^a-z0-9]/g,'-').replace(/-+/g,'-')||'website';
     currentIsSocial=false;
     WEB.active=false;WEB.imgBase64=null;WEB.imgMime=null;WEB.imgs=[];
-    
+
     // Open preview
     openPreview(html,d.name||'Website');
-    
+
     conversationHistory.push({role:'assistant',content:'[Animierte Website generiert]'});
     saveChat(document.getElementById('chat-title').textContent,conversationHistory);
-    
+
     var _previewBtn='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button onclick="openPreview(currentWebsiteHtml,\'Website\')" style="padding:9px 14px;background:var(--t);color:#fff;border:none;border-radius:7px;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer">Vorschau</button><button onclick="previewDownload()" style="padding:9px 14px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:7px;font-family:Inter,sans-serif;font-size:12px;cursor:pointer">Download</button><button onclick="showPublishHelp()" style="padding:9px 14px;background:#16a34a;color:#fff;border:none;border-radius:7px;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer">Online stellen</button></div>';
     addAIMsg('🎬 <b>Deine animierte Website ist fertig!</b> Schau rechts die Vorschau.<br><br>'+_previewBtn+'<br><span style="font-size:12px;color:var(--tm)">Änderungen? Schreib z.B. "Mache es bunter" oder "Weniger Animation". Soll sie online? Klick <b>Online stellen</b>.</span>');
   }catch(e){
@@ -1369,6 +1373,8 @@ async function genSocialPost(txt,imgs){
   let ratio='9 / 16', label='TikTok / Reel / Story (Hochformat)';
   if(/(quadrat|square|1:1|feed|karussell|carousel)/i.test(lo)){ ratio='1 / 1'; label='Instagram Feed (Quadrat)'; }
   else if(/(post|beitrag)/i.test(lo) && !/(reel|story|tiktok|hochkant|vertikal)/i.test(lo)){ ratio='1 / 1'; label='Instagram Feed (Quadrat)'; }
+  // Konkrete Breite je Format — verhindert 0×0-Kollaps der Stage (Ursache der schwarzen Posts)
+  const stageW = ratio==='1 / 1' ? 'min(100vw, 100vh)' : 'min(100vw, 56.25vh)';
 
   // Anfrage zusammenbauen (bei Edit: alte Anfrage + Änderung)
   const fullRequest = isEdit ? (lastSocialRequest+'\n\nÄNDERUNG: '+txt) : txt;
@@ -1387,25 +1393,53 @@ async function genSocialPost(txt,imgs){
   }
   document.getElementById('gl').textContent='Animierter Post wird gebaut...';
 
+  // ── AUTO-BILD: kein Foto hochgeladen → ZWEI passende Fotos generieren (Totale + Nahaufnahme = Filmmaterial) ──
+  if(!urls.length && !isEdit && !/ohne\s+(bild|foto)/i.test(fullRequest)){
+    const stylePhoto=/skims|skimss|nude|clean|minimal|editorial|beige/i.test(fullRequest)
+      ? 'warm nude and beige tones, minimal editorial studio setting'
+      : (/luxus|luxuri|gold|edel|premium|exklusiv/i.test(fullRequest)
+        ? 'black and champagne gold palette, dramatic elegant lighting'
+        : 'natural premium color palette');
+    const shots=[
+      'cinematic wide establishing shot, professional photograph for a high-end social media campaign about: '+fullRequest.slice(0,280)+'. '+stylePhoto+', editorial photography, soft cinematic light, photorealistic, no text, no letters, no logos, no watermark',
+      'cinematic close-up detail shot with shallow depth of field, same campaign about: '+fullRequest.slice(0,280)+'. '+stylePhoto+', macro editorial photography, soft cinematic light, photorealistic, no text, no letters, no logos, no watermark'
+    ];
+    for(let s=0;s<shots.length;s++){
+      try{
+        document.getElementById('gl').textContent='Filmmaterial wird generiert ('+(s+1)+'/2)...';
+        const ir=await fetch('/api/generate-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:shots[s],model:'nano'})});
+        const idt=await ir.json();
+        if(idt&&idt.imageUrl){urls.push(idt.imageUrl);console.log('✓ Auto-Bild '+(s+1)+' generiert:',idt.imageUrl);}
+        else{console.warn('⚠️ Auto-Bild '+(s+1)+' ohne URL:',idt&&idt.error);}
+      }catch(e){console.warn('⚠️ Auto-Bild '+(s+1)+' fehlgeschlagen:',e.message);}
+    }
+    document.getElementById('gl').textContent='Animierter Post wird gebaut...';
+  }
+
   let imgInstruction='';
   if(urls.length){
     imgInstruction='\nECHTE BILDER (Pflicht einbauen, GENAU diese URLs via <img> oder als CSS background-image):\n'+urls.map((u,i)=>(i+1)+'. '+u).join('\n')+'\nSetze sie prominent ein (z.B. als formatfüllendes Hintergrundbild mit dunklem Overlay für Lesbarkeit, oder als rundes Profilbild). Zeichne KEINE eigenen Produkte/Personen nach.';
   }
 
-  const prompt=`Du bist ein preisgekrönter Motion-Designer für VIRALE, scroll-stoppende Social-Media-Grafikvideos (Instagram Reels / TikTok). Erstelle einen FERTIGEN, sofort postbaren, HOCH-ENERGETISCHEN animierten Post als EINE HTML-Datei. Das Ding muss KNALLEN — nicht brav, nicht langweilig, sondern aufmerksamkeitsstark wie ein Top-Werbeclip.
+  const styleBlock=detectVirgoStyle(fullRequest,true);
+
+  const prompt=`Du bist ein preisgekrönter Motion-Designer für VIRALE, scroll-stoppende Social-Media-Grafikvideos (Instagram Reels / TikTok). Erstelle einen FERTIGEN, sofort postbaren animierten Post als EINE HTML-Datei.
 
 AUFTRAG DES KUNDEN:
 ${fullRequest}
 ${imgInstruction}
 
+${styleBlock}
+(Die STIL-VORGABE oben hat VORRANG: wo sie ruhige/elegante Bewegung verlangt, gelten die "Energie"-Regeln unten NICHT.)
+
 FORMAT & CONTAINMENT — ABSOLUT KRITISCH (häufigster Fehler: Text läuft aus dem Rahmen / wird abgeschnitten):
-- Stage-Container: aspect-ratio: ${ratio}; (${label}); max-height:100vh; max-width:100vw; margin:auto; position:relative; overflow:hidden; border-radius:18px.
+- Stage-Container PFLICHT-CSS, EXAKT SO (${label}): width: ${stageW}; aspect-ratio: ${ratio}; position:relative; overflow:hidden; border-radius:18px; margin:auto. Die width-Angabe ist NICHT VERHANDELBAR — NIEMALS nur aspect-ratio mit max-height/max-width verwenden, denn wenn alle Kinder position:absolute sind, kollabiert die Stage sonst auf 0×0 Pixel und der ganze Post ist unsichtbar (schwarzer Bildschirm).
 - Body: margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center; background:#0a0a0a.
 - Der GESAMTE Inhalt liegt in einem Innen-Container mit box-sizing:border-box und großzügigem padding (mind. 6% rundum). NICHTS darf den Rand berühren oder rausragen.
 - Headlines: width:100%; word-break:break-word; overflow-wrap:anywhere; hyphens:auto; line-height:0.95; font-size mit clamp() das GARANTIERT passt (lieber etwas kleiner als abgeschnitten). Teste gedanklich: das längste Wort muss komplett sichtbar sein.
 - KEIN horizontales Overflow, KEINE abgeschnittenen Buchstaben. Wenn ein Wort zu breit wäre → kleiner skalieren oder umbrechen.
 
-ENERGIE & BEWEGUNG — DAS MUSS RICHTIG KNALLEN (rein CSS, Endlosschleife):
+BEWEGUNG (Intensität richtet sich STRIKT nach der STIL-VORGABE oben — filmisch-hochwertig ist der Standard; die volle Energie-Liste unten gilt NUR wenn der Stil "Bold & Laut" gewählt wurde):
 ✓ KINETISCHE TYPO: Headline-Wörter knallen einzeln rein (scale von 1.4→1 mit Overshoot via cubic-bezier(.2,1.4,.3,1)), leichtes Wackeln/Pop, Akzentwort in Signalfarbe das blitzt/pulst
 ✓ HARTE SCHNITTE & BEATS: Elemente erscheinen rhythmisch nacheinander (staggered delays 0.1-0.2s), als wäre es auf einen Beat geschnitten
 ✓ DYNAMISCHER HINTERGRUND: bewegter Gradient-Mesh + 3-5 schwebende Blur-Orbs + diagonale Lichtstreifen/Shapes die durchs Bild wandern
@@ -1413,12 +1447,25 @@ ENERGIE & BEWEGUNG — DAS MUSS RICHTIG KNALLEN (rein CSS, Endlosschleife):
 ✓ SIGNAL-CTA: großer Button mit durchlaufendem Shimmer, pulsierendem Glow und leichtem Wackeln/Scale-Pulse — unübersehbar
 ✓ MICRO-MOTION überall: nichts steht still, alles atmet/floatet/pulst leicht
 ✓ Schnelle, knackige Easings mit Overshoot (nicht nur sanftes ease-in-out) — es soll lebendig und energiegeladen wirken, NICHT träge
-✓ Alle Animationen LOOPEN unendlich (animation-iteration-count:infinite), 4-7s Gesamtloop, damit man es als Video aufnehmen kann
+✓ Alle Animationen LOOPEN unendlich (animation-iteration-count:infinite), Gesamtloop 14-18s passend zur Szenen-Architektur, damit man es als Video aufnehmen kann
 
-DESIGN:
-- Schreibe SELBST starke, knackige Copy: kurze schlagkräftige Headline (max 4-5 Wörter pro Zeile), eine Kernaussage, 2-3 Bulletpoints mit Häkchen/Icons, klarer CTA ("Jetzt Termin sichern", "Link in Bio").
-- Mutige, kontrastreiche Farbwelt (falls Farbe/Marke genannt → nutzen). Riesige fette Display-Typo (Google Font @import: Anton, Montserrat 900, Archivo Black o.ä.). Eine knallige Signalfarbe als Akzent.
-- Premium-Look wie eine teure Agentur — aber laut und aufmerksamkeitsstark, nicht steril.
+AUFBAU — FILM, KEIN FLYER (WICHTIGSTE REGEL):
+- Denke wie ein REGISSEUR, nicht wie ein Plakatgestalter. Der Post ist ein kurzer, atmosphärischer FILM in Szenen — keine vollgepackte Anzeige.
+- ECHTER FILM MIT SCHNITTEN — PFLICHT-ARCHITEKTUR: Baue MINDESTENS 4 VOLLBILD-SZENEN als eigene Container (.scene1 bis .scene4, jeweils position:absolute; inset:0), die nacheinander per CSS-Keyframes ein-/ausgeblendet werden (opacity + leichtes scale, filmischer Crossfade 0.4-0.6s). GESAMTLOOP 14-18 Sekunden, dann nahtlos von vorn. Ablauf:
+  · Szene 1 (ca. 0-3s) HOOK: Bild formatfüllend mit langsamer Kamerafahrt + 1-3 packende Worte
+  · Szene 2 (ca. 3-7s) STORY: ANDERER Bildausschnitt (anderes object-position/scale!) oder edle Farbfläche + der emotionale Kernsatz
+  · Szene 3 (ca. 7-11s) WOW: Detail-Ausschnitt (starker Zoom) mit Akzent-Element — hier dürfen bei Bedarf 2-3 Kurzinfos elegant erscheinen
+  · Szene 4 (ca. 11-15s) ABSCHLUSS: Marke groß + EIN CTA, ruhig und selbstbewusst
+- KAMERA-ARBEIT: JEDE Szene hat ihre EIGENE Kamerabewegung (rein-zoomen, raus-zoomen, seitliches Ziehen — via transform/object-position, je 4-6s). EIN Foto wird wie von einem Cutter in MEHREREN Einstellungen verwendet (pro Szene ein anderer Ausschnitt desselben Bildes). NIE zweimal dasselbe statische Framing.
+- TIEFE PRO SZENE: Licht-Sweeps, feines Film-Grain, Parallax (Vordergrund-Element bewegt sich minimal anders als Hintergrund).
+- WENIG TEXT: 1-6 Worte pro Szene, gesamt maximal ~20 Worte. Keine Aufzählungen, keine Häkchen-Listen, keine Preistabellen — AUSSER der Kunde verlangt ausdrücklich Preise/Details/Angebot.
+- STRENG VERBOTEN (Billigwerbung-Signale), außer ausdrücklich gewünscht: Rabatt-/„NEW DROP"-/„SALE"-Badges, durchgestrichene Preise, Checkmark-Bulletlisten, mehrere CTAs, Sticker-Optik, Discount-Rot.
+- Falls ECHTE BILDER vorhanden: Das Bild IST der Star. Formatfüllend (position:absolute; inset:0; object-fit:cover), langsamer Ken-Burns-Zoom (scale 1→1.08 über 8-10s, alternate), filmische Vignette/dunkler Verlauf für Lesbarkeit, ein weicher Lichtstreif der langsam durchs Bild wandert. Der Text liegt IN der Szene wie bei einem Kino-Trailer — nicht als Kasten daneben.
+- BILD-AIRBAG (PFLICHT): Baue Fotos IMMER als <img>-Element ein (position:absolute; inset:0; width:100%; height:100%; object-fit:cover) — NIEMALS als CSS background-image, denn nur <img> kann Ladefehler abfangen. Gib jedem <img> onerror="this.style.display='none'". HINTER jedem Bild liegt IMMER ein eigenständiger, zur Farbwelt passender animierter Gradient-Hintergrund als eigene Ebene, und ALLE Texte/Elemente liegen auf eigenen Ebenen ÜBER dem Bild. Der Post muss auch dann vollständig, lesbar und schön aussehen, wenn ein Bild NICHT lädt. NIEMALS ist reines Schwarz die einzige Ebene.
+- PRODUKTFOTOS MIT WEISSEM HINTERGRUND (Flaschen, Verpackungen, Freisteller): NIEMALS in weiße Kästen/Rahmen setzen. Stattdessen optisch freistellen: helle Bühne (Creme/Pastell/Nude) wählen und dem Produkt-img mix-blend-mode:multiply geben — der weiße Fotohintergrund verschwindet damit komplett. Produkt-Container mit fester Größe (height: 50-70% der Stage-Höhe), img darin mit width:100%; height:100%; object-fit:contain; und weichem Schatten (filter:drop-shadow(0 24px 30px rgba(0,0,0,0.22))). Das Produkt ist der HELD: vollständig sichtbar, groß, edel von Weißraum umgeben. Ausnahme: nur wenn ausdrücklich eine dunkle Bühne verlangt wird, Produkt stattdessen in einen weich auslaufenden hellen Spot (radial-gradient) setzen.
+- EINSTIEG: Ein Eröffnungs-Fade (dunkle Deckebene) darf MAXIMAL 0,8s dauern — spätestens ab Sekunde 1 muss sichtbar etwas Schönes auf dem Bildschirm sein. Erste Textzeile spätestens bei 1,2s.
+- Typografie: EINE charakterstarke Display-Font (Google Font @import, passend zur STIL-VORGABE), riesig und ruhig gesetzt. Farbwelt folgt der STIL-VORGABE bzw. der Marke.
+- Qualitätsmaßstab: Es soll aussehen wie ein Kampagnen-Clip von Apple, SKIMS oder einem Hochglanz-Modehaus — man bleibt hängen, weil es EDEL und filmisch ist, nicht weil es schreit.
 
 TECHNISCH:
 - NUR Vanilla CSS/JS, alles inline. KEIN externes JS, KEINE Frameworks.
@@ -1426,7 +1473,7 @@ TECHNISCH:
 
 OUTPUT: NUR der HTML-Code. KEIN Text davor/danach, KEINE Backticks. Mindestens 5KB.`;
 
-  const sys='Du bist ein preisgekrönter Motion-Designer für virale, scroll-stoppende Social-Media-Posts. Antworte NUR mit vollständigem, autarkem HTML eines fertigen, HOCH-ENERGETISCHEN animierten Posts. Beginne direkt mit <!DOCTYPE html>. KEIN Text, KEINE Backticks, KEINE Anleitung, KEINE Verweise auf Canva/Fremdtools. Das Ergebnis muss richtig knallen (kinetische Typo, blitzende Akzente, dynamische Bewegung) UND sauber im Rahmen bleiben — niemals Text abschneiden oder über den Rand laufen lassen.'+(urls.length?' Wenn echte Bild-URLs genannt sind, baue GENAU diese per <img>/background-image ein und zeichne nichts nach.':'');
+  const sys='Du bist ein preisgekrönter Motion-Designer für Social-Media-Posts auf dem Niveau einer teuren Agentur. Antworte NUR mit vollständigem, autarkem HTML eines fertigen animierten Posts. Beginne direkt mit <!DOCTYPE html>. KEIN Text, KEINE Backticks, KEINE Anleitung, KEINE Verweise auf Canva/Fremdtools. Halte dich STRIKT an die STIL-VORGABE im Prompt — sie bestimmt Farbwelt, Typografie und Bewegungsenergie und hat Vorrang vor allem anderen. Der Post muss hochwertig aussehen UND sauber im Rahmen bleiben — niemals Text abschneiden oder über den Rand laufen lassen.'+(urls.length?' Wenn echte Bild-URLs genannt sind, baue GENAU diese per <img>/background-image ein und zeichne nichts nach.':'');
 
   let userContent;
   if(imgs.length){
@@ -1457,6 +1504,12 @@ OUTPUT: NUR der HTML-Code. KEIN Text davor/danach, KEINE Backticks. Mindestens 5
       addAIMsg('❌ <b>Die Generierung wurde zweimal abgeschnitten.</b> Schreib <b>"nochmal"</b> oder formuliere den Post etwas einfacher. '+(isEdit?'Dein bisheriger Post ist unverändert erhalten.':''));
       return;
     }
+    // ── GRÖSSEN-FAILSAFE: verhindert 0×0-Kollaps der Stage (Ursache der schwarzen Posts), falls die KI die width vergisst ──
+    try{
+      const fsW = ratio==='1 / 1' ? 'min(96vw,96vh)' : 'min(96vw,54vh)';
+      const fsH = ratio==='1 / 1' ? 'min(96vw,96vh)' : 'min(170vw,96vh)';
+      html=html.replace(/<\/head>/i,'<style>body>div{min-width:'+fsW+';min-height:'+fsH+'}</style></head>');
+    }catch(e){}
     currentWebsiteHtml=html;
     currentWebsiteName='social-post';
     currentIsSocial=true;
@@ -1610,19 +1663,24 @@ function copyMaklerAdText(){
 // ═══════════════════════════════════════
 function openInvoiceModal(){document.getElementById('inv-datum').value=new Date().toISOString().split('T')[0];showM('modal-invoice');}
 async function createInvoice(){
-  const kunde=document.getElementById('inv-kunde').value.trim();const leistung=document.getElementById('inv-leistung').value.trim();const betrag=document.getElementById('inv-betrag').value;const msg=document.getElementById('inv-msg');
-  if(!kunde||!leistung||!betrag){msg.textContent='Bitte Kundenname, Leistung und Betrag ausfüllen.';msg.style.display='block';return;}
+  const kunde=document.getElementById('inv-kunde').value.trim();const leistung=document.getElementById('inv-leistung').value.trim();const betrag=document.getElementById('inv-betrag').value;const absName=document.getElementById('inv-absender-name').value.trim();const msg=document.getElementById('inv-msg');
+  if(!kunde||!leistung||!betrag||!absName){msg.textContent='Bitte Kundenname, Leistung, Betrag und deinen Firmennamen (Absender) ausfüllen — der Firmenname erscheint oben auf der Rechnung.';msg.style.display='block';return;}
   msg.style.display='none';
-  try{const r=await fetch('/api/invoice',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({invoice_nr:document.getElementById('inv-nr').value||'INV-'+Date.now(),kunde,kunde_adresse:document.getElementById('inv-kunde-adresse').value,leistung,betrag,mwst:parseInt(document.getElementById('inv-mwst').value)||19,datum:document.getElementById('inv-datum').value,absender_name:document.getElementById('inv-absender-name').value||'Virgo AI',absender_adresse:document.getElementById('inv-absender-adresse').value,absender_email:document.getElementById('inv-absender-email').value,absender_steuer:document.getElementById('inv-steuer').value})});const d=await r.json();
+  try{const r=await fetch('/api/invoice',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({invoice_nr:document.getElementById('inv-nr').value||'INV-'+Date.now(),kunde,kunde_adresse:document.getElementById('inv-kunde-adresse').value,leistung,betrag,mwst:parseInt(document.getElementById('inv-mwst').value)||19,datum:document.getElementById('inv-datum').value,absender_name:absName,absender_adresse:document.getElementById('inv-absender-adresse').value,absender_email:document.getElementById('inv-absender-email').value,absender_steuer:document.getElementById('inv-steuer').value})});const d=await r.json();
     if(d.error){msg.textContent=d.error;msg.style.display='block';return;}
+    // Virgo-Branding aus der Rechnung entfernen — oben steht IMMER die Firma des Nutzers
+    if(d.html){d.html=String(d.html).replace(/virgo\s*ai/gi,function(){return absName;});}
     const invId='inv_'+Date.now();window[invId]=d.html;
+    // Rechnung sofort rechts in der Vorschau zeigen
+    openPreview(d.html,'Rechnung '+d.invoice_nr);
     const msgEl=document.createElement('div');msgEl.className='mw ai';
     const b=document.createElement('div');b.className='bb';b.style.maxWidth='460px';
     b.innerHTML='<div style="font-size:12px;font-weight:600;margin-bottom:5px">🧾 Rechnung '+escHtml(d.invoice_nr)+'</div><div style="font-size:18px;font-weight:700;margin-bottom:11px">'+escHtml(d.brutto)+' Euro</div>';
     const btns=document.createElement('div');btns.style.cssText='display:flex;gap:7px;flex-wrap:wrap';
-    const b1=document.createElement('button');b1.textContent='Drucken / Als PDF';b1.style.cssText='padding:7px 13px;background:var(--t);color:#fff;border:none;border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer';b1.onclick=function(){const w=window.open('','_blank');w.document.write(window[invId]);w.document.close();setTimeout(()=>w.print(),500);};
+    const b0=document.createElement('button');b0.textContent='Vorschau';b0.style.cssText='padding:7px 13px;background:var(--t);color:#fff;border:none;border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer';b0.onclick=function(){openPreview(window[invId],'Rechnung '+d.invoice_nr);};
+    const b1=document.createElement('button');b1.textContent='Drucken / Als PDF';b1.style.cssText='padding:7px 13px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer';b1.onclick=function(){const w=window.open('','_blank');w.document.write(window[invId]);w.document.close();setTimeout(()=>w.print(),500);};
     const b2=document.createElement('button');b2.textContent='Datei speichern';b2.style.cssText='padding:7px 13px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer';b2.onclick=function(){const blob=new Blob([window[invId]],{type:'text/html'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='Rechnung-'+d.invoice_nr+'.html';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);};
-    btns.appendChild(b1);btns.appendChild(b2);b.appendChild(btns);
+    btns.appendChild(b0);btns.appendChild(b1);btns.appendChild(b2);b.appendChild(btns);
     const inner=document.createElement('div');inner.innerHTML='<div class="aav">V</div>';inner.appendChild(b);inner.appendChild(Object.assign(document.createElement('div'),{className:'mt2',textContent:now()}));
     msgEl.appendChild(inner);document.getElementById('fi').appendChild(msgEl);scrollFeed();
     closeM('modal-invoice');
@@ -1871,4 +1929,3 @@ applyFreeRestrictions();
 
 </body>
 </html>
-
