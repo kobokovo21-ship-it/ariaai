@@ -611,17 +611,17 @@ function openPreview(html,title){
   document.getElementById('preview-title').textContent=title||'Vorschau';
   const panel=document.getElementById('preview-panel');
   const frame=document.getElementById('preview-frame');
-
+  
   // Clear old
   if(window._prevBlobUrl){URL.revokeObjectURL(window._prevBlobUrl);}
   frame.removeAttribute('srcdoc');
   frame.removeAttribute('src');
-
+  
   // Blob URL (works with CSP, no sandbox issues)
   const blob=new Blob([html],{type:'text/html;charset=utf-8'});
   window._prevBlobUrl=URL.createObjectURL(blob);
   frame.src=window._prevBlobUrl;
-
+  
   console.log('✓ Preview loaded via Blob URL, size:',html.length+'B');
   panel.classList.add('open');
 }
@@ -822,6 +822,22 @@ async function doPasswordReset(){
   }catch(e){setAuthMsg('Verbindungsfehler.','alert');}
 }
 function logout(){authToken=null;currentUser=null;credits=3;localStorage.removeItem('virgo_token');localStorage.removeItem('virgo_user');localStorage.removeItem('virgo_credits');localStorage.removeItem('virgo_plan');localStorage.removeItem('virgo_refresh');updateUI();loadChats();}
+// ── SESSION-REFRESH: verlängert die Anmeldung automatisch — kein Rauswurf mehr nach 1 Stunde ──
+async function refreshSession(){
+  const rt=localStorage.getItem('virgo_refresh');
+  if(!rt||!authToken)return;
+  try{
+    const r=await fetch('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'refresh',refresh_token:rt})});
+    const d=await r.json();
+    if(d&&d.success&&d.session&&d.session.access_token){
+      authToken=d.session.access_token;
+      localStorage.setItem('virgo_token',authToken);
+      if(d.session.refresh_token)localStorage.setItem('virgo_refresh',d.session.refresh_token);
+      console.log('✓ Sitzung automatisch verlängert');
+    }
+  }catch(e){}
+}
+refreshSession();setInterval(refreshSession,40*60*1000);
 
 // ═══════════════════════════════════════
 // CREDITS
@@ -898,7 +914,7 @@ function copyCode(btn,id){const el=document.getElementById(id);if(!el)return;nav
 // CHAT STORAGE
 // ═══════════════════════════════════════
 function getLocalChats(){return JSON.parse(localStorage.getItem('virgo_chats_v2')||'[]');}
-function setLocalChats(chats){localStorage.setItem('virgo_chats_v2',JSON.stringify(chats));}
+function setLocalChats(chats){try{localStorage.setItem('virgo_chats_v2',JSON.stringify(chats));}catch(e){try{chats.forEach(c=>{if(c.works&&c.works.length>1)c.works=[c.works[c.works.length-1]];});localStorage.setItem('virgo_chats_v2',JSON.stringify(chats.slice(0,40)));}catch(e2){}}}
 function isSupabaseId(id){return id&&!String(id).startsWith('chat_');}
 function cleanMessages(messages){return messages.map(msg=>{if(Array.isArray(msg.content)){const txt=msg.content.find(b=>b.type==='text');return{role:msg.role,content:txt?txt.text:''};}return msg;});}
 async function loadChats(){
@@ -908,7 +924,7 @@ async function loadChats(){
     // Server-Chats mit Website anreichern: lokal (gleicher Browser) hat Vorrang, sonst vom Server (geräteübergreifend)
     const merged=data.map(sc=>{
       const lc=localAll.find(c=>c.id===sc.id);
-      if(lc&&lc.websiteHtml){return Object.assign({},sc,{websiteHtml:lc.websiteHtml,websiteName:lc.websiteName,isSocial:lc.isSocial});}
+      if(lc&&lc.websiteHtml){return Object.assign({},sc,{websiteHtml:lc.websiteHtml,websiteName:lc.websiteName,isSocial:lc.isSocial,works:lc.works||null});}
       if(sc.website_html){return Object.assign({},sc,{websiteHtml:sc.website_html,websiteName:sc.website_name||'website',isSocial:!!sc.is_social});}
       return sc;
     });
@@ -925,6 +941,7 @@ function renderChatHistory(chats){
   if(!authToken){const cb=document.createElement('button');cb.className='clear-btn';cb.style.cssText='display:block;width:calc(100% - 16px);margin:6px 8px;padding:7px;border:1px solid var(--bd);border-radius:7px;background:transparent;font-family:Inter,sans-serif;font-size:11px;color:var(--td);cursor:pointer';cb.textContent='Alle löschen';cb.onclick=()=>{setLocalChats([]);loadChats();};hist.appendChild(cb);}
 }
 async function deleteChat(id){setLocalChats(getLocalChats().filter(c=>c.id!==id));if(authToken&&isSupabaseId(id)){try{await fetch('/api/chats',{method:'DELETE',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({id})});}catch(e){}}if(state.activeChatId===id)newChat();else loadChats();}
+function openWorkFromChat(chatId,idx){const c=getLocalChats().find(x=>x.id===chatId);if(!c||!c.works||!c.works[idx])return;const w=c.works[idx];currentWebsiteHtml=w.html;currentWebsiteName=w.name||'website';currentIsSocial=!!w.isSocial;openPreview(w.html,w.isSocial?'Social Post':(w.name||'Website'));}
 function openChat(chat){
   state.chatStarted=true;state.activeChatId=chat.id;
   const _l=document.getElementById('landing');if(_l)_l.style.display='none';
@@ -933,7 +950,16 @@ function openChat(chat){
   // Website/Post dieses Chats wiederherstellen (oder zurücksetzen)
   if(chat.websiteHtml){currentWebsiteHtml=chat.websiteHtml;currentWebsiteName=chat.websiteName||'website';currentIsSocial=!!chat.isSocial;}
   else{currentWebsiteHtml='';currentWebsiteName='website';currentIsSocial=false;closePreview();}
-  (chat.messages||[]).forEach(msg=>{const content=typeof msg.content==='string'?msg.content:(Array.isArray(msg.content)?(msg.content.find(b=>b.type==='text')||{}).text||'':msg.content||'');if(msg.role==='user')addUserMsg(content);else if(msg.role==='assistant')addAIMsg(renderMD(content));});
+  let _workIdx=0;
+  (chat.messages||[]).forEach(msg=>{const content=typeof msg.content==='string'?msg.content:(Array.isArray(msg.content)?(msg.content.find(b=>b.type==='text')||{}).text||'':msg.content||'');if(msg.role==='user')addUserMsg(content);else if(msg.role==='assistant'){
+    if(/^\[Animierte/i.test(content)&&chat.works&&chat.works[_workIdx]){
+      const w=chat.works[_workIdx];const wi=_workIdx;
+      const lbl=w.isSocial?'Dein animierter Post':'Deine animierte Website';
+      const btns='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button onclick="openWorkFromChat(\''+chat.id+'\','+wi+')" style="padding:9px 14px;background:var(--t);color:#fff;border:none;border-radius:7px;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer">Vorschau</button><button onclick="openWorkFromChat(\''+chat.id+'\','+wi+');previewDownload()" style="padding:9px 14px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:7px;font-family:Inter,sans-serif;font-size:12px;cursor:pointer">Download</button></div>';
+      addAIMsg('🎬 <b>'+lbl+'</b>'+btns);
+      _workIdx++;
+    } else addAIMsg(renderMD(content));
+  }});
   conversationHistory=cleanMessages(chat.messages||[]);loadChats();closeSb();
   // Vorschau automatisch öffnen wenn dieser Chat eine Website hat
   if(chat.websiteHtml){openPreview(chat.websiteHtml,chat.websiteName||'Website');}
@@ -942,8 +968,8 @@ async function saveChat(title,messages){
   const clean=cleanMessages(messages);
   if(!state.activeChatId)state.activeChatId='chat_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
   const chats=getLocalChats();const idx=chats.findIndex(c=>c.id===state.activeChatId);
-  if(idx>=0){chats[idx].messages=clean;chats[idx].title=title;chats[idx].updated=Date.now();if(currentWebsiteHtml){chats[idx].websiteHtml=currentWebsiteHtml;chats[idx].websiteName=currentWebsiteName;chats[idx].isSocial=currentIsSocial;}}
-  else{const nc={id:state.activeChatId,title,messages:clean,updated:Date.now()};if(currentWebsiteHtml){nc.websiteHtml=currentWebsiteHtml;nc.websiteName=currentWebsiteName;nc.isSocial=currentIsSocial;}chats.unshift(nc);}
+  if(idx>=0){chats[idx].messages=clean;chats[idx].title=title;chats[idx].updated=Date.now();if(currentWebsiteHtml){chats[idx].websiteHtml=currentWebsiteHtml;chats[idx].websiteName=currentWebsiteName;chats[idx].isSocial=currentIsSocial;const w=chats[idx].works=chats[idx].works||[];if(!w.length||w[w.length-1].html!==currentWebsiteHtml){w.push({html:currentWebsiteHtml,name:currentWebsiteName,isSocial:currentIsSocial});if(w.length>6)w.shift();}}}
+  else{const nc={id:state.activeChatId,title,messages:clean,updated:Date.now()};if(currentWebsiteHtml){nc.websiteHtml=currentWebsiteHtml;nc.websiteName=currentWebsiteName;nc.isSocial=currentIsSocial;nc.works=[{html:currentWebsiteHtml,name:currentWebsiteName,isSocial:currentIsSocial}];}chats.unshift(nc);}
   if(chats.length>100)chats.splice(100);setLocalChats(chats);loadChats();
   if(authToken){try{if(isSupabaseId(state.activeChatId)){await fetch('/api/chats',{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({id:state.activeChatId,title,messages:clean,website_html:currentWebsiteHtml||null,website_name:currentWebsiteName||null,is_social:!!currentIsSocial})});}else{const r=await fetch('/api/chats',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({title,messages:clean,website_html:currentWebsiteHtml||null,website_name:currentWebsiteName||null,is_social:!!currentIsSocial})});const data=await r.json();if(data.id){const lc=getLocalChats();const li=lc.findIndex(c=>c.id===state.activeChatId);if(li>=0)lc[li].id=data.id;state.activeChatId=data.id;setLocalChats(lc);loadChats();}}}catch(e){}}
 }
@@ -1199,8 +1225,8 @@ async function handleWebsiteQA(answer){
 async function buildWebsite(isUpdate,updateRequest){
   startGen(isUpdate?'Website wird aktualisiert...':'Website wird gebaut...');showTyping();
   const d=WEB.data;
-  // Stil-Erkennung: bei Neubau immer (mit Premium-Default), bei Updates nur wenn explizit ein Stil genannt wird
-  const styleBlock=detectVirgoStyle([d._request,d.stil,d.branche,updateRequest].filter(Boolean).join(' '), !isUpdate);
+  // Stil-Erkennung NUR bei ausdrücklich genanntem Stil (skims/luxus/bold/verspielt) — sonst gilt voll der GRAFIKVIDEO-Look
+  const styleBlock=detectVirgoStyle([d._request,d.stil,d.branche,updateRequest].filter(Boolean).join(' '), false);
 
   // ── Alle Bilder zu Supabase Storage hochladen, echte URLs holen (Neubau UND Update) ──
   let uploadedImageUrl='';
@@ -1217,19 +1243,6 @@ async function buildWebsite(isUpdate,updateRequest){
       }catch(e){console.warn('⚠️ Bild '+(i+1)+' Upload fehlgeschlagen:',e.message);}
     }
     uploadedImageUrl=uploadedUrls[0]||'';
-    document.getElementById('gl').textContent='Website wird gebaut...';
-  }
-
-  // ── AUTO-HERO-BILD: Neubau ohne hochgeladene Fotos → filmisches Hero-Foto generieren ──
-  if(!isUpdate && !uploadedUrls.length){
-    try{
-      document.getElementById('gl').textContent='Hero-Foto wird generiert...';
-      const wsSubject=(d._request||[d.name,d.branche,d.angebot].filter(Boolean).join(', ')||'modern business').slice(0,280);
-      const wsPr='cinematic wide hero photograph for a premium website about: '+wsSubject+'. editorial photography, soft cinematic light, atmospheric, photorealistic, no text, no letters, no logos, no watermark';
-      const ir=await fetch('/api/generate-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:wsPr,model:'nano'})});
-      const idt=await ir.json();
-      if(idt&&idt.imageUrl){uploadedUrls.push(idt.imageUrl);uploadedImageUrl=idt.imageUrl;console.log('✓ Hero-Bild generiert:',idt.imageUrl);}
-    }catch(e){console.warn('⚠️ Hero-Bild fehlgeschlagen:',e.message);}
     document.getElementById('gl').textContent='Website wird gebaut...';
   }
 
@@ -1250,9 +1263,7 @@ GRAFIKVIDEO-OPTIK — PFLICHT (lässt die Seite aussehen wie ein bewegtes Studio
 ✓ GLASSMORPHISM: Cards & Nav halbtransparent mit backdrop-filter:blur(14px) und feiner Border rgba(255,255,255,.15)
 ✓ SHIMMER/GLOW auf CTA-Buttons: animierter Lichtstreif der durchläuft + pulsierender Glow (box-shadow @keyframes)
 ✓ SCROLL-PARALLAX & REVEAL: IntersectionObserver, Layer bewegen sich unterschiedlich schnell, alles fadet/slidet weich rein
-✓ HERO WIE EIN FILMVORSPANN: Der Hero ist Vollbild (100vh) und startet mit einer inszenierten Intro-Sequenz (0-3s): Hintergrund mit langsamer Kamerafahrt (Zoom auf Bild/Gradient), Titel erscheint als Titel-Sequenz Wort für Wort mit Blur-to-Sharp, danach setzt dauerhafte ruhige Bewegung ein. Falls ein echtes Foto vorhanden ist: als <img> formatfüllend mit Ken-Burns + filmischer Vignette + onerror="this.style.display='none'" — dahinter IMMER ein eigener animierter Gradient als Sicherheitsebene.
-✓ SCROLL-STORY: Jede Sektion ist eine inszenierte Szene — Parallax-Ebenen mit unterschiedlicher Geschwindigkeit, Zahlen die beim Reinscrollen hochzählen, Bilder/Flächen mit eigener Kamerabewegung. KEINE statischen aufgereihten Cards.
-✓ TIEFE: mindestens 3 Ebenen pro Hauptsektion, die sich unterschiedlich schnell bewegen — es soll sich anfühlen wie ein Film, durch den man scrollt.
+✓ TEXT-LESBARKEIT: Wenn Text auf einem FOTO liegt, immer heller Text auf weichem dunklem Verlauf (Scrim) — dunkler Text direkt auf Fotos ist verboten.
 ✓ Sehr weiche, langsame, kinoreife Bewegungen (ease-in-out, 0.6-1.2s) — wirkt teuer und ruhig, nie hektisch`;
 
   let prompt;
@@ -1266,8 +1277,7 @@ BRIEFING DES KUNDEN:
 ${d._request}
 ${imgBlock}
 
-${styleBlock}
-(Die STIL-VORGABE hat Vorrang: Farbwelt, Typografie und Bewegungsenergie richten sich nach ihr — auch gegenüber der Grafikvideo-Optik unten.)
+${styleBlock?styleBlock+'\n(Die STIL-VORGABE hat Vorrang: Farbwelt, Typografie und Bewegungsenergie richten sich nach ihr — auch gegenüber der Grafikvideo-Optik unten.)':''}
 ${GRAFIKVIDEO}
 
 ANIMATIONEN - PFLICHT (zusätzlich zur Grafikvideo-Optik):
@@ -1297,8 +1307,7 @@ ANGEBOT: ${d.angebot||''}
 ZIELGRUPPE: ${d.zielgruppe||''}
 HAUPTFARBE: ${d.farbe||'#111111'}
 
-${styleBlock}
-(Die STIL-VORGABE hat Vorrang: Farbwelt, Typografie und Bewegungsenergie richten sich nach ihr — auch gegenüber der Grafikvideo-Optik unten. Die HAUPTFARBE fügt sich in die Stil-Palette ein.)
+${styleBlock?styleBlock+'\n(Die STIL-VORGABE hat Vorrang: Farbwelt, Typografie und Bewegungsenergie richten sich nach ihr — auch gegenüber der Grafikvideo-Optik unten. Die HAUPTFARBE fügt sich in die Stil-Palette ein.)':''}
 ${GRAFIKVIDEO}
 
 STRUKTUR (PFLICHT):
@@ -1377,22 +1386,22 @@ Das HTML MUSS mind. 6KB sein (echte Inhalte + Animationen + Grafikvideo-Optik).
       WEB.active=false;
       return;
     }
-
+    
     // Check for animation keywords
     const hasAnimations=/@keyframes|animation:|transition:|transform:|IntersectionObserver|scroll/i.test(html);
     console.log('✓ HTML valid, size:',html.length+'B, has animations:',hasAnimations);
-
+    
     currentWebsiteHtml=html;
     currentWebsiteName=(d.name||'website').toLowerCase().replace(/[^a-z0-9]/g,'-').replace(/-+/g,'-')||'website';
     currentIsSocial=false;
     WEB.active=false;WEB.imgBase64=null;WEB.imgMime=null;WEB.imgs=[];
-
+    
     // Open preview
     openPreview(html,d.name||'Website');
-
+    
     conversationHistory.push({role:'assistant',content:'[Animierte Website generiert]'});
     saveChat(document.getElementById('chat-title').textContent,conversationHistory);
-
+    
     var _previewBtn='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button onclick="openPreview(currentWebsiteHtml,\'Website\')" style="padding:9px 14px;background:var(--t);color:#fff;border:none;border-radius:7px;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer">Vorschau</button><button onclick="previewDownload()" style="padding:9px 14px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:7px;font-family:Inter,sans-serif;font-size:12px;cursor:pointer">Download</button><button onclick="showPublishHelp()" style="padding:9px 14px;background:#16a34a;color:#fff;border:none;border-radius:7px;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer">Online stellen</button></div>';
     addAIMsg('🎬 <b>Deine animierte Website ist fertig!</b> Schau rechts die Vorschau.<br><br>'+_previewBtn+'<br><span style="font-size:12px;color:var(--tm)">Änderungen? Schreib z.B. "Mache es bunter" oder "Weniger Animation". Soll sie online? Klick <b>Online stellen</b>.</span>');
   }catch(e){
@@ -1714,12 +1723,9 @@ function copyMaklerAdText(){
 // ═══════════════════════════════════════
 function openInvoiceModal(){document.getElementById('inv-datum').value=new Date().toISOString().split('T')[0];showM('modal-invoice');}
 async function createInvoice(){
-  const kunde=document.getElementById('inv-kunde').value.trim();const leistung=document.getElementById('inv-leistung').value.trim();const betrag=document.getElementById('inv-betrag').value;const msg=document.getElementById('inv-msg');
-  if(!kunde||!leistung||!betrag){msg.textContent='Bitte Kundenname, Leistung und Betrag ausfüllen.';msg.style.display='block';return;}
   const kunde=document.getElementById('inv-kunde').value.trim();const leistung=document.getElementById('inv-leistung').value.trim();const betrag=document.getElementById('inv-betrag').value;const absName=document.getElementById('inv-absender-name').value.trim();const msg=document.getElementById('inv-msg');
   if(!kunde||!leistung||!betrag||!absName){msg.textContent='Bitte Kundenname, Leistung, Betrag und deinen Firmennamen (Absender) ausfüllen — der Firmenname erscheint oben auf der Rechnung.';msg.style.display='block';return;}
   msg.style.display='none';
-  try{const r=await fetch('/api/invoice',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({invoice_nr:document.getElementById('inv-nr').value||'INV-'+Date.now(),kunde,kunde_adresse:document.getElementById('inv-kunde-adresse').value,leistung,betrag,mwst:parseInt(document.getElementById('inv-mwst').value)||19,datum:document.getElementById('inv-datum').value,absender_name:document.getElementById('inv-absender-name').value||'Virgo AI',absender_adresse:document.getElementById('inv-absender-adresse').value,absender_email:document.getElementById('inv-absender-email').value,absender_steuer:document.getElementById('inv-steuer').value})});const d=await r.json();
   try{const r=await fetch('/api/invoice',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({invoice_nr:document.getElementById('inv-nr').value||'INV-'+Date.now(),kunde,kunde_adresse:document.getElementById('inv-kunde-adresse').value,leistung,betrag,mwst:parseInt(document.getElementById('inv-mwst').value)||19,datum:document.getElementById('inv-datum').value,absender_name:absName,absender_adresse:document.getElementById('inv-absender-adresse').value,absender_email:document.getElementById('inv-absender-email').value,absender_steuer:document.getElementById('inv-steuer').value})});const d=await r.json();
     if(d.error){msg.textContent=d.error;msg.style.display='block';return;}
     // Virgo-Branding aus der Rechnung entfernen — oben steht IMMER die Firma des Nutzers
@@ -1731,11 +1737,9 @@ async function createInvoice(){
     const b=document.createElement('div');b.className='bb';b.style.maxWidth='460px';
     b.innerHTML='<div style="font-size:12px;font-weight:600;margin-bottom:5px">🧾 Rechnung '+escHtml(d.invoice_nr)+'</div><div style="font-size:18px;font-weight:700;margin-bottom:11px">'+escHtml(d.brutto)+' Euro</div>';
     const btns=document.createElement('div');btns.style.cssText='display:flex;gap:7px;flex-wrap:wrap';
-    const b1=document.createElement('button');b1.textContent='Drucken / Als PDF';b1.style.cssText='padding:7px 13px;background:var(--t);color:#fff;border:none;border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer';b1.onclick=function(){const w=window.open('','_blank');w.document.write(window[invId]);w.document.close();setTimeout(()=>w.print(),500);};
     const b0=document.createElement('button');b0.textContent='Vorschau';b0.style.cssText='padding:7px 13px;background:var(--t);color:#fff;border:none;border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer';b0.onclick=function(){openPreview(window[invId],'Rechnung '+d.invoice_nr);};
     const b1=document.createElement('button');b1.textContent='Drucken / Als PDF';b1.style.cssText='padding:7px 13px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer';b1.onclick=function(){const w=window.open('','_blank');w.document.write(window[invId]);w.document.close();setTimeout(()=>w.print(),500);};
     const b2=document.createElement('button');b2.textContent='Datei speichern';b2.style.cssText='padding:7px 13px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:6px;font-family:Inter,sans-serif;font-size:11px;cursor:pointer';b2.onclick=function(){const blob=new Blob([window[invId]],{type:'text/html'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='Rechnung-'+d.invoice_nr+'.html';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);};
-    btns.appendChild(b1);btns.appendChild(b2);b.appendChild(btns);
     btns.appendChild(b0);btns.appendChild(b1);btns.appendChild(b2);b.appendChild(btns);
     const inner=document.createElement('div');inner.innerHTML='<div class="aav">V</div>';inner.appendChild(b);inner.appendChild(Object.assign(document.createElement('div'),{className:'mt2',textContent:now()}));
     msgEl.appendChild(inner);document.getElementById('fi').appendChild(msgEl);scrollFeed();
