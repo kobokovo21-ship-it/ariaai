@@ -1225,8 +1225,8 @@ async function handleWebsiteQA(answer){
 async function buildWebsite(isUpdate,updateRequest){
   startGen(isUpdate?'Website wird aktualisiert...':'Website wird gebaut...');showTyping();
   const d=WEB.data;
-  // Stil-Erkennung: bei Neubau immer (mit Premium-Default), bei Updates nur wenn explizit ein Stil genannt wird
-  const styleBlock=detectVirgoStyle([d._request,d.stil,d.branche,updateRequest].filter(Boolean).join(' '), !isUpdate);
+  // Stil-Erkennung NUR bei ausdrücklich genanntem Stil (skims/luxus/bold/verspielt) — sonst gilt voll der GRAFIKVIDEO-Look
+  const styleBlock=detectVirgoStyle([d._request,d.stil,d.branche,updateRequest].filter(Boolean).join(' '), false);
 
   // ── Alle Bilder zu Supabase Storage hochladen, echte URLs holen (Neubau UND Update) ──
   let uploadedImageUrl='';
@@ -1276,6 +1276,7 @@ GRAFIKVIDEO-OPTIK — PFLICHT (lässt die Seite aussehen wie ein bewegtes Studio
 ✓ GLASSMORPHISM: Cards & Nav halbtransparent mit backdrop-filter:blur(14px) und feiner Border rgba(255,255,255,.15)
 ✓ SHIMMER/GLOW auf CTA-Buttons: animierter Lichtstreif der durchläuft + pulsierender Glow (box-shadow @keyframes)
 ✓ SCROLL-PARALLAX & REVEAL: IntersectionObserver, Layer bewegen sich unterschiedlich schnell, alles fadet/slidet weich rein
+✓ TEXT-LESBARKEIT (PFLICHT, NICHT VERHANDELBAR): Überschriften stehen NIEMALS direkt auf einem Foto ohne Kontrast-Ebene. Hinter jeder Headline auf einem Bild liegt IMMER ein weicher dunkler Verlauf (Scrim, z.B. linear-gradient(180deg, rgba(10,10,10,0) 0%, rgba(10,10,10,0.6) 100%) oder ein radialer dunkler Spot hinter dem Textbereich), und die Headline ist HELL (Weiß/Creme) mit dezentem text-shadow (0 2px 24px rgba(0,0,0,0.45)). Alternativ steht die Headline auf einer eigenen Farbfläche unter/neben dem Bild. Faustregel: Jeder Buchstabe muss auf JEDEM Pixel des Hintergrunds mühelos lesbar sein — dunkler Text auf Fotos ist VERBOTEN.
 ✓ HERO WIE EIN FILMVORSPANN: Der Hero ist Vollbild (100vh) und startet mit einer inszenierten Intro-Sequenz (0-3s): Hintergrund mit langsamer Kamerafahrt (Zoom auf Bild/Gradient), Titel erscheint als Titel-Sequenz Wort für Wort mit Blur-to-Sharp, danach setzt dauerhafte ruhige Bewegung ein. Falls ein echtes Foto vorhanden ist: als <img> formatfüllend mit Ken-Burns + filmischer Vignette + onerror="this.style.display='none'" — dahinter IMMER ein eigener animierter Gradient als Sicherheitsebene.
 ✓ SCROLL-STORY: Jede Sektion ist eine inszenierte Szene — Parallax-Ebenen mit unterschiedlicher Geschwindigkeit, Zahlen die beim Reinscrollen hochzählen, Bilder/Flächen mit eigener Kamerabewegung. KEINE statischen aufgereihten Cards.
 ✓ TIEFE: mindestens 3 Ebenen pro Hauptsektion, die sich unterschiedlich schnell bewegen — es soll sich anfühlen wie ein Film, durch den man scrollt.
@@ -1292,8 +1293,7 @@ BRIEFING DES KUNDEN:
 ${d._request}
 ${imgBlock}
 
-${styleBlock}
-(Die STIL-VORGABE hat Vorrang: Farbwelt, Typografie und Bewegungsenergie richten sich nach ihr — auch gegenüber der Grafikvideo-Optik unten.)
+${styleBlock?styleBlock+'\n(Die STIL-VORGABE hat Vorrang: Farbwelt, Typografie und Bewegungsenergie richten sich nach ihr — auch gegenüber der Grafikvideo-Optik unten.)':''}
 ${GRAFIKVIDEO}
 
 ANIMATIONEN - PFLICHT (zusätzlich zur Grafikvideo-Optik):
@@ -1323,8 +1323,7 @@ ANGEBOT: ${d.angebot||''}
 ZIELGRUPPE: ${d.zielgruppe||''}
 HAUPTFARBE: ${d.farbe||'#111111'}
 
-${styleBlock}
-(Die STIL-VORGABE hat Vorrang: Farbwelt, Typografie und Bewegungsenergie richten sich nach ihr — auch gegenüber der Grafikvideo-Optik unten. Die HAUPTFARBE fügt sich in die Stil-Palette ein.)
+${styleBlock?styleBlock+'\n(Die STIL-VORGABE hat Vorrang: Farbwelt, Typografie und Bewegungsenergie richten sich nach ihr — auch gegenüber der Grafikvideo-Optik unten. Die HAUPTFARBE fügt sich in die Stil-Palette ein.)':''}
 ${GRAFIKVIDEO}
 
 STRUKTUR (PFLICHT):
