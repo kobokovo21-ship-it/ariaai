@@ -822,6 +822,22 @@ async function doPasswordReset(){
   }catch(e){setAuthMsg('Verbindungsfehler.','alert');}
 }
 function logout(){authToken=null;currentUser=null;credits=3;localStorage.removeItem('virgo_token');localStorage.removeItem('virgo_user');localStorage.removeItem('virgo_credits');localStorage.removeItem('virgo_plan');localStorage.removeItem('virgo_refresh');updateUI();loadChats();}
+// ── SESSION-REFRESH: verlängert die Anmeldung automatisch — kein Rauswurf mehr nach 1 Stunde ──
+async function refreshSession(){
+  const rt=localStorage.getItem('virgo_refresh');
+  if(!rt||!authToken)return;
+  try{
+    const r=await fetch('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'refresh',refresh_token:rt})});
+    const d=await r.json();
+    if(d&&d.success&&d.session&&d.session.access_token){
+      authToken=d.session.access_token;
+      localStorage.setItem('virgo_token',authToken);
+      if(d.session.refresh_token)localStorage.setItem('virgo_refresh',d.session.refresh_token);
+      console.log('✓ Sitzung automatisch verlängert');
+    }
+  }catch(e){}
+}
+refreshSession();setInterval(refreshSession,40*60*1000);
 
 // ═══════════════════════════════════════
 // CREDITS
@@ -898,7 +914,7 @@ function copyCode(btn,id){const el=document.getElementById(id);if(!el)return;nav
 // CHAT STORAGE
 // ═══════════════════════════════════════
 function getLocalChats(){return JSON.parse(localStorage.getItem('virgo_chats_v2')||'[]');}
-function setLocalChats(chats){localStorage.setItem('virgo_chats_v2',JSON.stringify(chats));}
+function setLocalChats(chats){try{localStorage.setItem('virgo_chats_v2',JSON.stringify(chats));}catch(e){try{chats.forEach(c=>{if(c.works&&c.works.length>1)c.works=[c.works[c.works.length-1]];});localStorage.setItem('virgo_chats_v2',JSON.stringify(chats.slice(0,40)));}catch(e2){}}}
 function isSupabaseId(id){return id&&!String(id).startsWith('chat_');}
 function cleanMessages(messages){return messages.map(msg=>{if(Array.isArray(msg.content)){const txt=msg.content.find(b=>b.type==='text');return{role:msg.role,content:txt?txt.text:''};}return msg;});}
 async function loadChats(){
@@ -908,7 +924,7 @@ async function loadChats(){
     // Server-Chats mit Website anreichern: lokal (gleicher Browser) hat Vorrang, sonst vom Server (geräteübergreifend)
     const merged=data.map(sc=>{
       const lc=localAll.find(c=>c.id===sc.id);
-      if(lc&&lc.websiteHtml){return Object.assign({},sc,{websiteHtml:lc.websiteHtml,websiteName:lc.websiteName,isSocial:lc.isSocial});}
+      if(lc&&lc.websiteHtml){return Object.assign({},sc,{websiteHtml:lc.websiteHtml,websiteName:lc.websiteName,isSocial:lc.isSocial,works:lc.works||null});}
       if(sc.website_html){return Object.assign({},sc,{websiteHtml:sc.website_html,websiteName:sc.website_name||'website',isSocial:!!sc.is_social});}
       return sc;
     });
@@ -925,6 +941,7 @@ function renderChatHistory(chats){
   if(!authToken){const cb=document.createElement('button');cb.className='clear-btn';cb.style.cssText='display:block;width:calc(100% - 16px);margin:6px 8px;padding:7px;border:1px solid var(--bd);border-radius:7px;background:transparent;font-family:Inter,sans-serif;font-size:11px;color:var(--td);cursor:pointer';cb.textContent='Alle löschen';cb.onclick=()=>{setLocalChats([]);loadChats();};hist.appendChild(cb);}
 }
 async function deleteChat(id){setLocalChats(getLocalChats().filter(c=>c.id!==id));if(authToken&&isSupabaseId(id)){try{await fetch('/api/chats',{method:'DELETE',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({id})});}catch(e){}}if(state.activeChatId===id)newChat();else loadChats();}
+function openWorkFromChat(chatId,idx){const c=getLocalChats().find(x=>x.id===chatId);if(!c||!c.works||!c.works[idx])return;const w=c.works[idx];currentWebsiteHtml=w.html;currentWebsiteName=w.name||'website';currentIsSocial=!!w.isSocial;openPreview(w.html,w.isSocial?'Social Post':(w.name||'Website'));}
 function openChat(chat){
   state.chatStarted=true;state.activeChatId=chat.id;
   const _l=document.getElementById('landing');if(_l)_l.style.display='none';
@@ -933,7 +950,16 @@ function openChat(chat){
   // Website/Post dieses Chats wiederherstellen (oder zurücksetzen)
   if(chat.websiteHtml){currentWebsiteHtml=chat.websiteHtml;currentWebsiteName=chat.websiteName||'website';currentIsSocial=!!chat.isSocial;}
   else{currentWebsiteHtml='';currentWebsiteName='website';currentIsSocial=false;closePreview();}
-  (chat.messages||[]).forEach(msg=>{const content=typeof msg.content==='string'?msg.content:(Array.isArray(msg.content)?(msg.content.find(b=>b.type==='text')||{}).text||'':msg.content||'');if(msg.role==='user')addUserMsg(content);else if(msg.role==='assistant')addAIMsg(renderMD(content));});
+  let _workIdx=0;
+  (chat.messages||[]).forEach(msg=>{const content=typeof msg.content==='string'?msg.content:(Array.isArray(msg.content)?(msg.content.find(b=>b.type==='text')||{}).text||'':msg.content||'');if(msg.role==='user')addUserMsg(content);else if(msg.role==='assistant'){
+    if(/^\[Animierte/i.test(content)&&chat.works&&chat.works[_workIdx]){
+      const w=chat.works[_workIdx];const wi=_workIdx;
+      const lbl=w.isSocial?'Dein animierter Post':'Deine animierte Website';
+      const btns='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button onclick="openWorkFromChat(\''+chat.id+'\','+wi+')" style="padding:9px 14px;background:var(--t);color:#fff;border:none;border-radius:7px;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer">Vorschau</button><button onclick="openWorkFromChat(\''+chat.id+'\','+wi+');previewDownload()" style="padding:9px 14px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:7px;font-family:Inter,sans-serif;font-size:12px;cursor:pointer">Download</button></div>';
+      addAIMsg('🎬 <b>'+lbl+'</b>'+btns);
+      _workIdx++;
+    } else addAIMsg(renderMD(content));
+  }});
   conversationHistory=cleanMessages(chat.messages||[]);loadChats();closeSb();
   // Vorschau automatisch öffnen wenn dieser Chat eine Website hat
   if(chat.websiteHtml){openPreview(chat.websiteHtml,chat.websiteName||'Website');}
@@ -942,8 +968,8 @@ async function saveChat(title,messages){
   const clean=cleanMessages(messages);
   if(!state.activeChatId)state.activeChatId='chat_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
   const chats=getLocalChats();const idx=chats.findIndex(c=>c.id===state.activeChatId);
-  if(idx>=0){chats[idx].messages=clean;chats[idx].title=title;chats[idx].updated=Date.now();if(currentWebsiteHtml){chats[idx].websiteHtml=currentWebsiteHtml;chats[idx].websiteName=currentWebsiteName;chats[idx].isSocial=currentIsSocial;}}
-  else{const nc={id:state.activeChatId,title,messages:clean,updated:Date.now()};if(currentWebsiteHtml){nc.websiteHtml=currentWebsiteHtml;nc.websiteName=currentWebsiteName;nc.isSocial=currentIsSocial;}chats.unshift(nc);}
+  if(idx>=0){chats[idx].messages=clean;chats[idx].title=title;chats[idx].updated=Date.now();if(currentWebsiteHtml){chats[idx].websiteHtml=currentWebsiteHtml;chats[idx].websiteName=currentWebsiteName;chats[idx].isSocial=currentIsSocial;const w=chats[idx].works=chats[idx].works||[];if(!w.length||w[w.length-1].html!==currentWebsiteHtml){w.push({html:currentWebsiteHtml,name:currentWebsiteName,isSocial:currentIsSocial});if(w.length>6)w.shift();}}}
+  else{const nc={id:state.activeChatId,title,messages:clean,updated:Date.now()};if(currentWebsiteHtml){nc.websiteHtml=currentWebsiteHtml;nc.websiteName=currentWebsiteName;nc.isSocial=currentIsSocial;nc.works=[{html:currentWebsiteHtml,name:currentWebsiteName,isSocial:currentIsSocial}];}chats.unshift(nc);}
   if(chats.length>100)chats.splice(100);setLocalChats(chats);loadChats();
   if(authToken){try{if(isSupabaseId(state.activeChatId)){await fetch('/api/chats',{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({id:state.activeChatId,title,messages:clean,website_html:currentWebsiteHtml||null,website_name:currentWebsiteName||null,is_social:!!currentIsSocial})});}else{const r=await fetch('/api/chats',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({title,messages:clean,website_html:currentWebsiteHtml||null,website_name:currentWebsiteName||null,is_social:!!currentIsSocial})});const data=await r.json();if(data.id){const lc=getLocalChats();const li=lc.findIndex(c=>c.id===state.activeChatId);if(li>=0)lc[li].id=data.id;state.activeChatId=data.id;setLocalChats(lc);loadChats();}}}catch(e){}}
 }
