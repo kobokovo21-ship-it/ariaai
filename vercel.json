@@ -10,17 +10,21 @@
       ]
     }
   ],
-  "rewrites": [
+  "redirects": [
     {
       "source": "/",
       "has": [{ "type": "host", "value": "versicherungenpruefen.de" }],
-      "destination": "/pkv-check.html"
+      "destination": "/pkv-check.html",
+      "permanent": false
     },
     {
       "source": "/",
       "has": [{ "type": "host", "value": "www.versicherungenpruefen.de" }],
-      "destination": "/pkv-check.html"
-    },
+      "destination": "/pkv-check.html",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
     { "source": "/makler/:slug", "destination": "/makler/index.html" },
     { "source": "/makler/:slug/", "destination": "/makler/index.html" }
   ]
