@@ -11,6 +11,16 @@
     }
   ],
   "rewrites": [
+    {
+      "source": "/",
+      "has": [{ "type": "host", "value": "versicherungenpruefen.de" }],
+      "destination": "/pkv-check.html"
+    },
+    {
+      "source": "/",
+      "has": [{ "type": "host", "value": "www.versicherungenpruefen.de" }],
+      "destination": "/pkv-check.html"
+    },
     { "source": "/makler/:slug", "destination": "/makler/index.html" },
     { "source": "/makler/:slug/", "destination": "/makler/index.html" }
   ]
