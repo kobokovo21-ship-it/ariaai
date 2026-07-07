@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Private Krankenversicherung prüfen – kostenlos & unverbindlich (PKV-Check 2026)</title>
+<meta name="description" content="Private Krankenversicherung kostenlos prüfen lassen: In 60 Sekunden eintragen, ein unabhängiger Versicherungsmakler meldet sich – 100 % kostenlos und unverbindlich.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0E2A32;        /* Tiefes Petrol – Vertrauen ohne Allianz-Blau */
+  --ink-soft:#3D5A63;
+  --paper:#F7F5F0;      /* Warmes Papierweiß */
+  --card:#FFFFFF;
+  --mint:#DCEDE6;       /* Ruhige Sektionsfläche */
+  --accent:#E8A33D;     /* Bernstein-CTA – hebt sich von jeder Versicherer-Farbe ab */
+  --accent-dark:#C9861F;
+  --line:#D8D3C8;
+  --ok:#1F7A5C;
+  --err:#B3402E;
+  --radius:14px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--paper);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:'Bricolage Grotesque',sans-serif;line-height:1.12;letter-spacing:-0.01em}
+img{max-width:100%}
+a{color:inherit}
+.wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+
+/* ---------- Urgency-Banner ---------- */
+.urgency{background:linear-gradient(90deg,#0E2A32,#16404C);color:#fff;padding:11px 0;font-size:.86rem}
+.urgency .wrap{display:flex;align-items:center;justify-content:center;gap:10px;text-align:center;flex-wrap:wrap}
+.urgency strong{color:var(--accent)}
+.urgency .pulse{width:9px;height:9px;border-radius:50%;background:var(--accent);flex-shrink:0;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(232,163,61,.5)}50%{box-shadow:0 0 0 6px rgba(232,163,61,0)}}
+
+/* ---------- Hero-Atmosphäre ---------- */
+.hero{background:
+  radial-gradient(ellipse 60% 50% at 85% 0%, rgba(232,163,61,.10), transparent),
+  radial-gradient(ellipse 50% 60% at 0% 100%, rgba(220,237,230,.7), transparent)}
+.stat-card{display:flex;gap:14px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin-top:24px;max-width:440px;box-shadow:0 8px 24px -14px rgba(14,42,50,.2)}
+.stat-card .big{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.5rem;color:var(--ink);white-space:nowrap}
+.stat-card .big small{display:block;font-family:'Inter',sans-serif;font-weight:500;font-size:.68rem;color:var(--ink-soft);letter-spacing:.02em}
+.stat-card p{font-size:.8rem;color:var(--ink-soft);line-height:1.45}
+
+/* ---------- Warum-jetzt-Sektion ---------- */
+.why{padding:80px 0;background:linear-gradient(180deg,var(--paper),#FDFCF9)}
+.why h2{font-size:clamp(1.7rem,3vw,2.4rem);font-weight:800;margin-bottom:10px}
+.why .sub{color:var(--ink-soft);margin-bottom:44px;max-width:56ch}
+.why-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.why-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:28px;position:relative;overflow:hidden}
+.why-card::after{content:"";position:absolute;top:-40px;right:-40px;width:110px;height:110px;border-radius:50%;background:var(--mint);opacity:.5}
+.why-card .icon{width:46px;height:46px;border-radius:12px;background:var(--mint);display:flex;align-items:center;justify-content:center;margin-bottom:16px;position:relative;z-index:1}
+.why-card h3{font-size:1.05rem;font-weight:600;margin-bottom:8px;position:relative;z-index:1}
+.why-card p{font-size:.9rem;color:var(--ink-soft);position:relative;z-index:1}
+.why-card .highlight{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.6rem;color:var(--accent-dark);display:block;margin-bottom:4px;position:relative;z-index:1}
+@media(max-width:900px){.why-grid{grid-template-columns:1fr}}
+
+/* ---------- Header ---------- */
+header{padding:20px 0;border-bottom:1px solid var(--line);background:var(--paper);position:sticky;top:0;z-index:50}
+.header-inner{display:flex;align-items:center;justify-content:space-between}
+.logo{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.25rem;letter-spacing:-0.02em}
+.logo span{color:var(--accent-dark)}
+.header-badge{font-size:.8rem;font-weight:600;color:var(--ink-soft);display:flex;align-items:center;gap:8px}
+.header-badge::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--ok);display:inline-block}
+
+/* ---------- Hero ---------- */
+.hero{padding:64px 0 72px}
+.hero-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px 56px;align-items:start;grid-template-areas:"intro wizard" "extras wizard"}
+.hero-intro{grid-area:intro}
+.hero-extras{grid-area:extras}
+.hero-grid .wizard{grid-area:wizard}
+.eyebrow{display:inline-block;font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--accent-dark);background:#FBEED8;padding:6px 12px;border-radius:100px;margin-bottom:18px}
+.hero h1{font-size:clamp(2rem,4.4vw,3.3rem);font-weight:800;margin-bottom:18px}
+.hero h1 em{font-style:normal;color:var(--accent-dark)}
+.hero p.lead{font-size:1.08rem;color:var(--ink-soft);max-width:46ch;margin-bottom:28px}
+.trust-list{list-style:none;display:flex;flex-direction:column;gap:12px;margin-bottom:32px}
+.trust-list li{display:flex;gap:12px;align-items:flex-start;font-size:.98rem;font-weight:500}
+.trust-list li svg{flex-shrink:0;margin-top:3px}
+.social-row{display:flex;align-items:center;gap:14px;font-size:.85rem;color:var(--ink-soft)}
+.stars{color:var(--accent);letter-spacing:2px;font-size:1rem}
+
+/* ---------- Wizard (Signature-Element) ---------- */
+.wizard{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 18px 50px -20px rgba(14,42,50,.25);overflow:hidden}
+.wizard-head{background:var(--ink);color:#fff;padding:20px 28px}
+.wizard-head h3{font-size:1.15rem;font-weight:600;color:#fff}
+.wizard-head p{font-size:.82rem;color:#B8CCD2;margin-top:2px}
+.progress{display:flex;gap:6px;padding:16px 28px 0}
+.progress span{flex:1;height:5px;border-radius:100px;background:#E7E2D8;transition:background .3s}
+.progress span.active{background:var(--accent)}
+.wizard-body{padding:22px 28px 28px}
+.step{display:none;animation:fadeIn .35s ease}
+.step.visible{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.step-label{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-soft);margin-bottom:6px}
+.step h4{font-family:'Bricolage Grotesque',sans-serif;font-size:1.3rem;font-weight:600;margin-bottom:18px}
+.choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.choice{border:1.5px solid var(--line);border-radius:12px;padding:16px 14px;cursor:pointer;text-align:center;font-weight:600;font-size:.95rem;background:#fff;transition:all .15s;user-select:none}
+.choice:hover{border-color:var(--ink)}
+.choice.selected{border-color:var(--accent-dark);background:#FBEED8;box-shadow:inset 0 0 0 1px var(--accent-dark)}
+.choice small{display:block;font-weight:400;font-size:.78rem;color:var(--ink-soft);margin-top:3px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:.85rem;font-weight:600;margin-bottom:6px}
+.field input{width:100%;padding:13px 14px;border:1.5px solid var(--line);border-radius:10px;font-size:1rem;font-family:inherit;background:#fff;transition:border .15s}
+.field input:focus{outline:none;border-color:var(--ink)}
+.field input.invalid{border-color:var(--err)}
+.consent{display:flex;gap:10px;align-items:flex-start;font-size:.78rem;color:var(--ink-soft);margin:16px 0 18px;line-height:1.5}
+.consent input{margin-top:3px;width:16px;height:16px;flex-shrink:0;accent-color:var(--ink)}
+.btn-row{display:flex;gap:10px;margin-top:20px}
+.btn{flex:1;padding:15px 18px;border-radius:10px;font-size:1rem;font-weight:700;font-family:inherit;cursor:pointer;border:none;transition:all .15s}
+.btn-primary{background:var(--accent);color:var(--ink)}
+.btn-primary:hover{background:var(--accent-dark);color:#fff}
+.btn-ghost{background:transparent;border:1.5px solid var(--line);color:var(--ink-soft);flex:0 0 auto;padding-left:22px;padding-right:22px}
+.btn-ghost:hover{border-color:var(--ink);color:var(--ink)}
+.wizard-note{text-align:center;font-size:.75rem;color:var(--ink-soft);margin-top:14px;display:flex;justify-content:center;gap:6px;align-items:center}
+.err-msg{color:var(--err);font-size:.82rem;margin-top:8px;display:none}
+.success{text-align:center;padding:26px 10px}
+.success .check-circle{width:64px;height:64px;border-radius:50%;background:var(--mint);display:flex;align-items:center;justify-content:center;margin:0 auto 18px}
+.success h4{font-size:1.35rem;margin-bottom:10px}
+.success p{color:var(--ink-soft);font-size:.95rem}
+
+/* ---------- Versicherer-Strip ---------- */
+.insurers{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:#fff;padding:26px 0;overflow:hidden}
+.insurers p.strip-label{text-align:center;font-size:.75rem;text-transform:uppercase;letter-spacing:.12em;font-weight:700;color:var(--ink-soft);margin-bottom:14px}
+.marquee{display:flex;gap:0;width:max-content;animation:scroll 32s linear infinite}
+.marquee:hover{animation-play-state:paused}
+.marquee-track{display:flex;align-items:center;gap:48px;padding-right:48px}
+.ins-name{font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:1.05rem;color:#9AA8AC;white-space:nowrap}
+@keyframes scroll{to{transform:translateX(-50%)}}
+.insurers .disclaimer{text-align:center;font-size:.7rem;color:#9AA8AC;margin-top:14px;padding:0 24px}
+
+/* ---------- Ablauf ---------- */
+.how{padding:80px 0;background:var(--mint)}
+.how h2{font-size:clamp(1.7rem,3vw,2.4rem);font-weight:800;margin-bottom:10px}
+.how .sub{color:var(--ink-soft);margin-bottom:44px;max-width:52ch}
+.steps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.step-card{background:#fff;border-radius:var(--radius);padding:28px;border:1px solid rgba(14,42,50,.08)}
+.step-card .num{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:2rem;color:var(--accent-dark);margin-bottom:12px}
+.step-card h3{font-size:1.1rem;font-weight:600;margin-bottom:8px}
+.step-card p{font-size:.92rem;color:var(--ink-soft)}
+
+/* ---------- Für wen ---------- */
+.who{padding:80px 0}
+.who h2{font-size:clamp(1.7rem,3vw,2.4rem);font-weight:800;margin-bottom:44px}
+.who-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.who-card{border:1px solid var(--line);border-radius:var(--radius);padding:28px;background:#fff}
+.who-card h3{font-size:1.05rem;font-weight:600;margin-bottom:8px}
+.who-card p{font-size:.9rem;color:var(--ink-soft)}
+.who-card .tag{display:inline-block;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;background:var(--mint);color:var(--ok);padding:4px 10px;border-radius:100px;margin-bottom:14px}
+
+/* ---------- FAQ ---------- */
+.faq{padding:0 0 80px}
+.faq h2{font-size:clamp(1.7rem,3vw,2.4rem);font-weight:800;margin-bottom:36px}
+details{border:1px solid var(--line);border-radius:12px;background:#fff;margin-bottom:12px;overflow:hidden}
+summary{padding:18px 22px;font-weight:600;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;font-size:.98rem}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";font-family:'Bricolage Grotesque',sans-serif;font-size:1.4rem;color:var(--accent-dark);transition:transform .2s}
+details[open] summary::after{transform:rotate(45deg)}
+details p{padding:0 22px 18px;font-size:.92rem;color:var(--ink-soft)}
+
+/* ---------- CTA-Band ---------- */
+.cta-band{background:var(--ink);color:#fff;padding:64px 0;text-align:center}
+.cta-band h2{font-size:clamp(1.6rem,3vw,2.3rem);font-weight:800;color:#fff;margin-bottom:12px}
+.cta-band p{color:#B8CCD2;margin-bottom:28px}
+.cta-band .btn-primary{flex:none;display:inline-block;padding:16px 38px;text-decoration:none;border-radius:10px}
+
+/* ---------- Footer ---------- */
+footer{padding:36px 0;font-size:.78rem;color:var(--ink-soft)}
+footer .foot-grid{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap}
+footer nav{display:flex;gap:18px}
+footer a{text-decoration:none}
+footer a:hover{text-decoration:underline}
+footer .legal{margin-top:18px;max-width:80ch;font-size:.72rem;color:#9AA8AC}
+
+/* ---------- Responsive ---------- */
+@media(max-width:900px){
+  .hero-grid{grid-template-columns:1fr;gap:28px;grid-template-areas:"intro" "wizard" "extras"}
+  .steps-grid,.who-grid{grid-template-columns:1fr}
+  .hero{padding:40px 0 56px}
+}
+@media(prefers-reduced-motion:reduce){
+  .marquee{animation:none}
+  .step{animation:none}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap header-inner">
+    <div class="logo">PKV<span>Check</span></div>
+    <div class="header-badge">100&nbsp;% kostenlos &amp; unverbindlich</div>
+  </div>
+</header>
+
+<!-- ============ DRINGLICHKEIT ============ -->
+<div class="urgency">
+  <div class="wrap">
+    <span class="pulse" aria-hidden="true"></span>
+    <span>Die Einkommensgrenze für den Wechsel steigt 2027 voraussichtlich auf rund <strong>84.500&nbsp;€</strong> – für viele Angestellte ist <strong>2026 das letzte Jahr</strong>, in dem der Wechsel noch möglich ist.</span>
+  </div>
+</div>
+
+<!-- ============ HERO + WIZARD ============ -->
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div class="hero-intro">
+      <span class="eyebrow">Kostenloser Versicherungs-Check 2026</span>
+      <h1>Private Kranken&shy;versicherung: Zahlst du zu viel? <em>Finde es heraus.</em></h1>
+      <p class="lead">Trag dich in 60 Sekunden ein – ein unabhängiger Versicherungsmakler mit Zulassung nach §34d GewO prüft deine private Krankenversicherung (PKV) oder deinen möglichen Wechsel und ruft dich zurück. Kostenlos, unverbindlich, ohne Kleingedrucktes.</p>
+    </div>
+    <div class="hero-extras">
+      <ul class="trust-list">
+        <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="11" fill="#1F7A5C"/><path d="M7 12.5l3.2 3.2L17 9" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Beratung durch unabhängige Makler – keine Vertreter einer einzelnen Versicherung</li>
+        <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="11" fill="#1F7A5C"/><path d="M7 12.5l3.2 3.2L17 9" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Tarife der großen Versicherer im Blick – Wechsel nur, wenn es sich für dich lohnt</li>
+        <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="11" fill="#1F7A5C"/><path d="M7 12.5l3.2 3.2L17 9" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Deine Daten werden ausschließlich an den beratenden Makler weitergegeben</li>
+      </ul>
+      <div class="social-row">
+        <span class="stars">★★★★★</span>
+        <span>Geprüfte Makler aus dem Virgo-Netzwerk</span>
+      </div>
+      <div class="stat-card">
+        <div class="big">1.261&nbsp;€<small>pro Monat</small></div>
+        <p>So hoch ist 2026 der Höchstbeitrag in der gesetzlichen Krankenversicherung für Gutverdiener ohne Kinder – Jahr für Jahr steigend. Ob du günstiger fahren kannst, zeigt der Check.</p>
+      </div>
+    </div>
+
+    <!-- Wizard -->
+    <div class="wizard" id="wizard">
+      <div class="wizard-head">
+        <h3>Private Krankenversicherung – kostenloser Check</h3>
+        <p>Dauert weniger als 60 Sekunden</p>
+      </div>
+      <div class="progress" id="progress">
+        <span class="active"></span><span></span><span></span>
+      </div>
+      <div class="wizard-body">
+
+        <!-- Schritt 1 -->
+        <div class="step visible" data-step="1">
+          <div class="step-label">Schritt 1 von 3</div>
+          <h4>Was beschreibt dich am besten?</h4>
+          <div class="choice-grid" data-field="berufsstatus">
+            <div class="choice" data-value="angestellt">Angestellt<small>sozialversicherungspflichtig</small></div>
+            <div class="choice" data-value="selbststaendig">Selbstständig<small>oder Freiberufler:in</small></div>
+            <div class="choice" data-value="beamter">Beamt:in<small>oder Anwärter:in</small></div>
+            <div class="choice" data-value="student">Student:in<small>oder in Ausbildung</small></div>
+          </div>
+          <p class="err-msg" id="err-1">Bitte wähle eine Option aus.</p>
+        </div>
+
+        <!-- Schritt 2 -->
+        <div class="step" data-step="2">
+          <div class="step-label">Schritt 2 von 3</div>
+          <h4>Wie bist du aktuell versichert?</h4>
+          <div class="choice-grid" data-field="aktuellVersichert">
+            <div class="choice" data-value="gkv">Gesetzlich (GKV)<small>z.&nbsp;B. TK, AOK, Barmer</small></div>
+            <div class="choice" data-value="pkv">Privat (PKV)<small>Tarif-Check gewünscht</small></div>
+          </div>
+          <div style="margin-top:18px" id="einkommen-block">
+            <h4 style="font-size:1.05rem">Liegt dein Bruttoeinkommen über 77.400&nbsp;€ im Jahr?</h4>
+            <div class="choice-grid" data-field="einkommenUeberGrenze">
+              <div class="choice" data-value="ja">Ja<small>über der Grenze</small></div>
+              <div class="choice" data-value="nein">Nein / unsicher<small>Makler klärt das</small></div>
+            </div>
+          </div>
+          <p class="err-msg" id="err-2">Bitte beantworte die Fragen.</p>
+          <div class="btn-row">
+            <button class="btn btn-ghost" onclick="goStep(1)">Zurück</button>
+            <button class="btn btn-primary" onclick="validateStep2()">Weiter</button>
+          </div>
+        </div>
+
+        <!-- Schritt 3 -->
+        <div class="step" data-step="3">
+          <div class="step-label">Schritt 3 von 3</div>
+          <h4>Wohin dürfen wir dein Ergebnis schicken?</h4>
+          <!-- Honeypot: für Menschen unsichtbar, Bots füllen es aus -->
+          <div style="position:absolute;left:-9999px;opacity:0;height:0;overflow:hidden" aria-hidden="true">
+            <label for="f-website">Website</label>
+            <input id="f-website" type="text" tabindex="-1" autocomplete="off">
+          </div>
+          <div class="field">
+            <label for="f-name">Vor- und Nachname</label>
+            <input id="f-name" type="text" autocomplete="name" placeholder="Max Mustermann">
+          </div>
+          <div class="field">
+            <label for="f-tel">Telefonnummer (für den Rückruf)</label>
+            <input id="f-tel" type="tel" autocomplete="tel" placeholder="+49 151 12345678">
+          </div>
+          <div class="field">
+            <label for="f-mail">E-Mail-Adresse</label>
+            <input id="f-mail" type="email" autocomplete="email" placeholder="max@beispiel.de">
+          </div>
+          <label class="consent">
+            <input type="checkbox" id="f-consent">
+            <span>Ich willige ein, dass meine Angaben zum Zweck der Beratung an einen unabhängigen Versicherungsmakler mit Erlaubnis nach §34d GewO weitergegeben werden und dieser mich telefonisch oder per E-Mail kontaktieren darf. Die Einwilligung kann ich jederzeit widerrufen. Details in der <a href="/datenschutz" target="_blank">Datenschutzerklärung</a>.</span>
+          </label>
+          <p class="err-msg" id="err-3">Bitte fülle alle Felder aus und bestätige die Einwilligung.</p>
+          <div class="btn-row">
+            <button class="btn btn-ghost" onclick="goStep(2)">Zurück</button>
+            <button class="btn btn-primary" id="submit-btn" onclick="submitLead()">Kostenlosen Rückruf anfordern</button>
+          </div>
+          <div class="wizard-note">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="4" y="10" width="16" height="11" rx="2" stroke="#3D5A63" stroke-width="2"/><path d="M8 10V7a4 4 0 118 0v3" stroke="#3D5A63" stroke-width="2"/></svg>
+            SSL-verschlüsselt · Keine Werbung Dritter · Jederzeit widerrufbar
+          </div>
+        </div>
+
+        <!-- Erfolg -->
+        <div class="step" data-step="4">
+          <div class="success">
+            <div class="check-circle">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.2 4.2L19 7.5" stroke="#1F7A5C" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <h4>Geschafft – dein PKV-Check ist unterwegs.</h4>
+            <p>Ein unabhängiger Versicherungsmakler meldet sich innerhalb von 24&nbsp;Stunden bei dir. Halte gern deine aktuellen Versicherungsunterlagen bereit – ist aber kein Muss.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ VERSICHERER-STRIP (nur Textnennung, abmahnsicher) ============ -->
+<section class="insurers">
+  <p class="strip-label">Unsere Makler kennen die Tarife u.&nbsp;a. von</p>
+  <div class="marquee">
+    <div class="marquee-track">
+      <span class="ins-name">Allianz</span><span class="ins-name">AXA</span><span class="ins-name">Debeka</span><span class="ins-name">HanseMerkur</span><span class="ins-name">Barmenia</span><span class="ins-name">Signal Iduna</span><span class="ins-name">Hallesche</span><span class="ins-name">Continentale</span><span class="ins-name">Gothaer</span><span class="ins-name">ARAG</span><span class="ins-name">DKV</span><span class="ins-name">Universa</span>
+    </div>
+    <div class="marquee-track" aria-hidden="true">
+      <span class="ins-name">Allianz</span><span class="ins-name">AXA</span><span class="ins-name">Debeka</span><span class="ins-name">HanseMerkur</span><span class="ins-name">Barmenia</span><span class="ins-name">Signal Iduna</span><span class="ins-name">Hallesche</span><span class="ins-name">Continentale</span><span class="ins-name">Gothaer</span><span class="ins-name">ARAG</span><span class="ins-name">DKV</span><span class="ins-name">Universa</span>
+    </div>
+  </div>
+  <p class="disclaimer">Genannte Marken dienen ausschließlich der Information über das Beratungsspektrum. Es besteht keine Partnerschaft oder Kooperation mit den genannten Unternehmen.</p>
+</section>
+
+<!-- ============ WARUM JETZT ============ -->
+<section class="why">
+  <div class="wrap">
+    <h2>Warum sich der Blick gerade jetzt lohnt</h2>
+    <p class="sub">Drei Zahlen, die 2026 zu einem besonderen Jahr für deine Krankenversicherung machen.</p>
+    <div class="why-grid">
+      <div class="why-card">
+        <div class="icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 3v18M5 10l7-7 7 7" stroke="#1F7A5C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <span class="highlight">+9&nbsp;%</span>
+        <h3>Die Wechselgrenze springt 2027</h3>
+        <p>Die Einkommensgrenze steigt 2027 voraussichtlich außerordentlich auf rund 84.500&nbsp;€. Wer heute knapp über 77.400&nbsp;€ verdient, verliert die Wahlfreiheit womöglich zum Jahreswechsel.</p>
+      </div>
+      <div class="why-card">
+        <div class="icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#1F7A5C" stroke-width="2.2"/><path d="M12 7v5l3 3" stroke="#1F7A5C" stroke-width="2.2" stroke-linecap="round"/></svg>
+        </div>
+        <span class="highlight">1.261&nbsp;€/Monat</span>
+        <h3>GKV-Höchstbeitrag steigt weiter</h3>
+        <p>Gutverdiener zahlen 2026 in der gesetzlichen Kasse mehr denn je – und die Beitragsbemessungsgrenze wird auch 2027 wieder angehoben. Abwarten wird nicht billiger.</p>
+      </div>
+      <div class="why-card">
+        <div class="icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" stroke="#1F7A5C" stroke-width="2.2" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke="#1F7A5C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <span class="highlight">§204 VVG</span>
+        <h3>Auch PKV-Kunden können sparen</h3>
+        <p>Wer schon privat versichert ist, hat das Recht auf einen internen Tarifwechsel beim eigenen Versicherer – oft ohne neue Gesundheitsprüfung, mit spürbar niedrigerem Beitrag.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ABLAUF ============ -->
+<section class="how">
+  <div class="wrap">
+    <h2>So einfach läuft dein PKV-Check</h2>
+    <p class="sub">Kein Callcenter, keine Warteschleife, kein Verkaufsdruck. Du bekommst genau eine:n Ansprechpartner:in.</p>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="num">1</div>
+        <h3>Eintragen</h3>
+        <p>Beantworte drei kurze Fragen zu deiner Situation. Dauert unter einer Minute – ohne Unterlagen, ohne Vertragsnummern.</p>
+      </div>
+      <div class="step-card">
+        <div class="num">2</div>
+        <h3>Rückruf erhalten</h3>
+        <p>Ein unabhängiger Versicherungsmakler mit §34d-Zulassung ruft dich innerhalb von 24 Stunden zurück und prüft deine Optionen.</p>
+      </div>
+      <div class="step-card">
+        <div class="num">3</div>
+        <h3>Frei entscheiden</h3>
+        <p>Du bekommst eine ehrliche Einschätzung. Lohnt sich nichts, sagt dir der Makler das auch. Du entscheidest – oder eben nicht.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FÜR WEN ============ -->
+<section class="who">
+  <div class="wrap">
+    <h2>Für wen lohnt sich der Check besonders?</h2>
+    <div class="who-grid">
+      <div class="who-card">
+        <span class="tag">Angestellte</span>
+        <h3>Gutverdiener über der Versicherungspflichtgrenze</h3>
+        <p>Ab 77.400&nbsp;€ Bruttojahresgehalt (Stand 2026) kannst du in die PKV wechseln – oft mit besseren Leistungen bei vergleichbarem Beitrag.</p>
+      </div>
+      <div class="who-card">
+        <span class="tag">Selbstständige</span>
+        <h3>Freiberufler &amp; Unternehmer:innen</h3>
+        <p>Du kannst unabhängig vom Einkommen wählen. Gerade zu Beginn der Selbstständigkeit lässt sich hier viel Geld falsch ausgeben – oder sparen.</p>
+      </div>
+      <div class="who-card">
+        <span class="tag">PKV-Versicherte</span>
+        <h3>Bestandskunden mit steigenden Beiträgen</h3>
+        <p>Beitrag zuletzt deutlich gestiegen? Ein interner Tarifwechsel nach §204 VVG kann sparen – ohne Gesundheitsprüfung, beim selben Versicherer.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FAQ ============ -->
+<section class="faq">
+  <div class="wrap">
+    <h2>Häufige Fragen</h2>
+    <details>
+      <summary>Was kostet mich der PKV-Check?</summary>
+      <p>Nichts. Die Beratung ist für dich vollständig kostenlos. Versicherungsmakler werden – wie in Deutschland üblich – im Fall eines Abschlusses vom Versicherer vergütet. Du zahlst zu keinem Zeitpunkt etwas für den Check oder die Beratung.</p>
+    </details>
+    <details>
+      <summary>Wer ruft mich an?</summary>
+      <p>Ein unabhängiger Versicherungsmakler mit behördlicher Erlaubnis nach §34d Abs. 1 GewO, eingetragen im Vermittlerregister der IHK. Kein Callcenter, kein Vertreter einer einzelnen Versicherung.</p>
+    </details>
+    <details>
+      <summary>Muss ich danach etwas abschließen?</summary>
+      <p>Nein. Der Check ist zu 100&nbsp;% unverbindlich. Wenn deine aktuelle Versicherung gut aufgestellt ist, sagt dir der Makler genau das – und du bleibst, wo du bist.</p>
+    </details>
+    <details>
+      <summary>Was passiert mit meinen Daten?</summary>
+      <p>Deine Angaben werden ausschließlich an den einen Makler weitergegeben, der deine Beratung übernimmt. Kein Verkauf an Dritte, keine Werbe-Newsletter. Du kannst deine Einwilligung jederzeit widerrufen – dann werden deine Daten gelöscht.</p>
+    </details>
+    <details>
+      <summary>Stimmt es, dass die Einkommensgrenze 2027 stark steigt?</summary>
+      <p>Ja. Die Bundesregierung hat eine außerordentliche Erhöhung beschlossen: Die Versicherungspflichtgrenze steigt 2027 voraussichtlich auf rund 84.500&nbsp;€ Bruttojahresgehalt (2026: 77.400&nbsp;€). Wer die Grenze 2026 überschreitet, aber 2027 voraussichtlich darunter liegt, verliert die Wechselmöglichkeit. Genau deshalb lohnt sich der Check jetzt – der Makler prüft deine individuelle Situation kostenlos.</p>
+    </details>
+    <details>
+      <summary>Ich bin gesetzlich versichert und unter der Einkommensgrenze – bringt mir der Check etwas?</summary>
+      <p>Möglicherweise ja: Auch Zusatzversicherungen (Zahn, Krankenhaus, Krankentagegeld) können sich lohnen. Der Makler sagt dir ehrlich, ob es in deiner Situation sinnvolle Optionen gibt.</p>
+    </details>
+  </div>
+</section>
+
+<!-- ============ CTA ============ -->
+<section class="cta-band">
+  <div class="wrap">
+    <h2>60 Sekunden. Kostenlos. Vielleicht mehrere hundert Euro im Jahr gespart.</h2>
+    <p>Der PKV-Check verpflichtet dich zu nichts – aber er zeigt dir, wo du stehst.</p>
+    <a href="#wizard" class="btn btn-primary">Jetzt kostenlos prüfen lassen</a>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>© 2026 PKV-Check · Ein Service von Virgo</div>
+      <nav>
+        <a href="/impressum">Impressum</a>
+        <a href="/datenschutz">Datenschutz</a>
+        <a href="/widerruf">Einwilligung widerrufen</a>
+      </nav>
+    </div>
+    <p class="legal">Diese Seite vermittelt keine Versicherungen und erbringt keine Versicherungsberatung. Sie stellt den Kontakt zu unabhängigen Versicherungsmaklern mit Erlaubnis nach §34d Abs. 1 GewO her, die im Vermittlerregister (www.vermittlerregister.info) eingetragen sind. Alle genannten Marken sind Eigentum ihrer jeweiligen Inhaber.</p>
+  </div>
+</footer>
+
+<script>
+/* ================= Wizard-Logik ================= */
+const leadData = {
+  berufsstatus: null,
+  aktuellVersichert: null,
+  einkommenUeberGrenze: null,
+  quelle: 'pkv-check-landingpage',
+  utm: window.location.search || null
+};
+
+/* Zeitfalle: Bots schicken Formulare in Sekunden ab, Menschen nicht */
+const formStartedAt = Date.now();
+
+let currentStep = 1;
+
+/* Auswahl-Buttons */
+document.querySelectorAll('.choice-grid').forEach(grid => {
+  const field = grid.dataset.field;
+  grid.querySelectorAll('.choice').forEach(choice => {
+    choice.addEventListener('click', () => {
+      grid.querySelectorAll('.choice').forEach(c => c.classList.remove('selected'));
+      choice.classList.add('selected');
+      leadData[field] = choice.dataset.value;
+
+      /* Schritt 1: nach Auswahl automatisch weiter */
+      if (field === 'berufsstatus') {
+        /* Einkommensfrage nur für Angestellte relevant */
+        document.getElementById('einkommen-block').style.display =
+          (choice.dataset.value === 'angestellt') ? 'block' : 'none';
+        if (choice.dataset.value !== 'angestellt') leadData.einkommenUeberGrenze = 'nicht-relevant';
+        setTimeout(() => goStep(2), 250);
+      }
+    });
+  });
+});
+
+function goStep(n) {
+  currentStep = n;
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('visible'));
+  document.querySelector(`.step[data-step="${n}"]`).classList.add('visible');
+  document.querySelectorAll('#progress span').forEach((bar, i) => {
+    bar.classList.toggle('active', i < Math.min(n, 3));
+  });
+  document.querySelectorAll('.err-msg').forEach(e => e.style.display = 'none');
+}
+
+function validateStep2() {
+  const needsIncome = leadData.berufsstatus === 'angestellt';
+  const ok = leadData.aktuellVersichert && (!needsIncome || leadData.einkommenUeberGrenze);
+  if (!ok) { document.getElementById('err-2').style.display = 'block'; return; }
+  goStep(3);
+}
+
+async function submitLead() {
+  const name = document.getElementById('f-name');
+  const tel = document.getElementById('f-tel');
+  const mail = document.getElementById('f-mail');
+  const consent = document.getElementById('f-consent');
+  const err = document.getElementById('err-3');
+
+  [name, tel, mail].forEach(f => f.classList.remove('invalid'));
+  let valid = true;
+  if (!name.value.trim()) { name.classList.add('invalid'); valid = false; }
+  if (!/^[+0-9 ()/-]{6,}$/.test(tel.value.trim())) { tel.classList.add('invalid'); valid = false; }
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail.value.trim())) { mail.classList.add('invalid'); valid = false; }
+  if (!consent.checked) valid = false;
+  if (!valid) { err.style.display = 'block'; return; }
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Wird gesendet…';
+
+  const payload = {
+    ...leadData,
+    name: name.value.trim(),
+    telefon: tel.value.trim(),
+    email: mail.value.trim(),
+    consent: true,
+    consentText: 'Einwilligung Datenweitergabe an §34d-Makler, Kontakt per Telefon/E-Mail',
+    timestamp: new Date().toISOString(),
+    website: document.getElementById('f-website').value, // Honeypot – bleibt bei Menschen leer
+    formStartedAt: formStartedAt                          // Zeitfalle
+  };
+
+  /* Öffentlicher Endpoint (kein Login nötig) – Datei: /api/public-lead.js
+     Schreibt in die leads-Tabelle mit makler_id = null (Pool).
+     Liegt die Seite NICHT auf virgoio.com, absolute URL eintragen:
+     'https://virgoio.com/api/public-lead' */
+  const LEAD_ENDPOINT = '/api/public-lead';
+
+  try {
+    const res = await fetch(LEAD_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('Server-Fehler');
+    goStep(4);
+  } catch (e) {
+    /* Fallback: Lead nicht verlieren – im localStorage puffern und Erfolg zeigen,
+       damit der Nutzer nicht abspringt. Gepufferte Leads beim nächsten Laden erneut senden. */
+    try {
+      const buffered = JSON.parse(localStorage.getItem('pkv_leads_buffer') || '[]');
+      buffered.push(payload);
+      localStorage.setItem('pkv_leads_buffer', JSON.stringify(buffered));
+    } catch (_) {}
+    goStep(4);
+  }
+}
+
+/* Gepufferte Leads nachsenden */
+(async function flushBuffer() {
+  try {
+    const buffered = JSON.parse(localStorage.getItem('pkv_leads_buffer') || '[]');
+    if (!buffered.length) return;
+    const remaining = [];
+    for (const lead of buffered) {
+      try {
+        const r = await fetch('/api/public-lead', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(lead)
+        });
+        if (!r.ok) remaining.push(lead);
+      } catch (_) { remaining.push(lead); }
+    }
+    localStorage.setItem('pkv_leads_buffer', JSON.stringify(remaining));
+  } catch (_) {}
+})();
+</script>
+
+</body>
+</html>
