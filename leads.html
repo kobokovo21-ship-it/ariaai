@@ -225,7 +225,7 @@ function renderTable(leads) {
     const tel = escHtml(l.telefon || '');
     const waNum = (l.telefon || '').replace(/\s+/g,'').replace(/^00/,'+');
     const waLink = 'https://wa.me/' + encodeURIComponent(waNum);
-    const date = l.created_at ? new Date(l.created_at).toLocaleDateString('de') : '—';
+    const date = l.created_at ? new Date(l.created_at).toLocaleDateString('de') + '<br><span style="font-size:11px;color:#8a94a6">' + new Date(l.created_at).toLocaleTimeString('de',{hour:'2-digit',minute:'2-digit'}) + ' Uhr</span>' : '—';
     return '<tr>' +
       '<td><strong>' + escHtml(l.name) + '</strong></td>' +
       '<td>' + escHtml(l.versicherung) + '</td>' +
