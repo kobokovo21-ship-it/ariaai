@@ -1,8 +1,29 @@
 export const config = { maxDuration: 60 };
 
+const ALLOWED_ORIGINS = ['https://virgoio.com', 'https://www.virgoio.com'];
+
+function guard(req, res) {
+  const origin = req.headers.origin || '';
+  const referer = req.headers.referer || '';
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Vary', 'Origin');
+  if (req.method === 'OPTIONS') { res.status(200).end(); return false; }
+  if (req.method !== 'POST') { res.status(405).end(); return false; }
+  const ok = ALLOWED_ORIGINS.includes(origin) || ALLOWED_ORIGINS.some(o => referer.startsWith(o));
+  if (!ok) {
+    console.warn('⛔ Blocked chat. origin=' + origin + ' referer=' + referer);
+    res.status(403).json({ error: 'Forbidden' });
+    return false;
+  }
+  return true;
+}
+
 function isImageRequest(text) {
   const t = (text || '').toLowerCase();
-  // Einfacher: enthält der Text ein Bild-Verb UND ein Bild-Wort, egal in welcher Reihenfolge
   const hasVerb = /erstell|mach|generier|erzeug|kreier|zeichn|design|create|generate|make|draw/.test(t);
   const hasNoun = /\bbild\b|foto|grafik|illustration|\bimage\b|visual|motiv|hero.?bild|headerbild|werbebild|produktbild/.test(t);
   const directPatterns = /ein bild von|ein foto von|bild für|foto für|bild zu|foto zu|bild für meine|bild von/.test(t);
@@ -10,11 +31,7 @@ function isImageRequest(text) {
 }
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).end();
+  if (!guard(req, res)) return;
 
   try {
     const { messages = [], codeMode = false, systemOverride = null } = req.body;
@@ -47,7 +64,11 @@ export default async function handler(req, res) {
         const proto = host && host.includes('localhost') ? 'http' : 'https';
         const imgRes = await fetch(`${proto}://${host}/api/generate-image`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            // WICHTIG: interner Aufruf muss sich als eigene Domain ausweisen
+            'origin': 'https://virgoio.com'
+          },
           body: JSON.stringify({ prompt: lastText })
         });
         const imgData = await imgRes.json();
