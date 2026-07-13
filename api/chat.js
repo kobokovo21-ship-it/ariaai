@@ -2,6 +2,16 @@ export const config = { maxDuration: 60 };
 
 const ALLOWED_ORIGINS = ['https://virgoio.com', 'https://www.virgoio.com'];
 
+// === MODELL-STEUERUNG ===
+// Beide über Vercel-Env-Variablen änderbar, ohne Code anzufassen.
+// ANTHROPIC_MODEL_PAID  = Modell für angemeldete User (Standard: Fable 5)
+// ANTHROPIC_MODEL_FREE  = Modell für unangemeldete User (Standard: Opus 4.8)
+const MODEL_PAID = process.env.ANTHROPIC_MODEL_PAID || 'claude-fable-5';
+const MODEL_FREE = process.env.ANTHROPIC_MODEL_FREE || 'claude-opus-4-8';
+// Wenn Fable eine Anfrage ablehnt (stop_reason "refusal"), wird automatisch
+// derselbe Request einmal mit diesem Modell wiederholt:
+const MODEL_REFUSAL_FALLBACK = 'claude-opus-4-8';
+
 function guard(req, res) {
   const origin = req.headers.origin || '';
   const referer = req.headers.referer || '';
@@ -22,12 +32,56 @@ function guard(req, res) {
   return true;
 }
 
+// Prüft über Supabase, ob ein gültiger, eingeloggter User dahintersteckt.
+// Erwartet den Supabase Access Token im Authorization-Header (Bearer ...).
+// Gibt bei jedem Problem einfach null zurück → User wird als "Free" behandelt.
+async function getLoggedInUser(req) {
+  try {
+    const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim();
+    if (!token || !process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) return null;
+    const r = await fetch(process.env.SUPABASE_URL + '/auth/v1/user', {
+      headers: {
+        'apikey': process.env.SUPABASE_ANON_KEY,
+        'Authorization': 'Bearer ' + token
+      }
+    });
+    if (!r.ok) return null;
+    const user = await r.json();
+    return (user && user.id) ? user : null;
+  } catch (e) {
+    console.warn('Supabase Auth-Check fehlgeschlagen:', e.message);
+    return null;
+  }
+}
+
 function isImageRequest(text) {
   const t = (text || '').toLowerCase();
   const hasVerb = /erstell|mach|generier|erzeug|kreier|zeichn|design|create|generate|make|draw/.test(t);
   const hasNoun = /\bbild\b|foto|grafik|illustration|\bimage\b|visual|motiv|hero.?bild|headerbild|werbebild|produktbild/.test(t);
   const directPatterns = /ein bild von|ein foto von|bild für|foto für|bild zu|foto zu|bild für meine|bild von/.test(t);
   return (hasVerb && hasNoun) || directPatterns;
+}
+
+// Ein einzelner Anthropic-Call. Wirft bei Überlastung/Fehlern, damit die
+// bestehende Fallback-Kette (Gemini → OpenAI) greift.
+async function callAnthropic(model, maxTokens, systemPrompt, messages) {
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': process.env.ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01'
+    },
+    body: JSON.stringify({ model, max_tokens: maxTokens, system: systemPrompt, messages })
+  });
+  if (r.status === 529 || r.status === 500 || r.status === 503 || r.status === 502 || r.status === 429) {
+    throw new Error('Anthropic overloaded: ' + r.status);
+  }
+  const data = await r.json();
+  if (data.type === 'error' || !data.content) {
+    throw new Error('Anthropic error: ' + (data.error?.message || 'no content'));
+  }
+  return data;
 }
 
 export default async function handler(req, res) {
@@ -107,24 +161,40 @@ REGELN: Antworte auf Deutsch. Kurz, direkt, konkret. Maximal 1 Emoji. Du heißt 
 
 VERBOTE: Erwähne niemals Claude, ARIA, Gemini, ChatGPT, OpenAI, Anthropic. Keine Rechtsberatung, keine konkreten Tarifempfehlungen.`);
 
-    const maxTokens = codeMode ? 4096 : 1024;
+    // Fable 5 denkt intern mit — diese Denk-Tokens zählen ins max_tokens-Budget.
+    // Deshalb höhere Limits als vorher, sonst werden Antworten abgeschnitten.
+    const maxTokens = codeMode ? 8192 : 2048;
+
+    // === MODELLWAHL: angemeldet = PAID-Modell, unangemeldet = FREE-Modell ===
+    const user = await getLoggedInUser(req);
+    const chosenModel = user ? MODEL_PAID : MODEL_FREE;
 
     try {
-      const r = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': process.env.ANTHROPIC_API_KEY,
-          'anthropic-version': '2023-06-01'
-        },
-        body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: maxTokens, system: systemPrompt, messages })
-      });
-      if (r.status === 529 || r.status === 500 || r.status === 503 || r.status === 502 || r.status === 429) {
-        throw new Error('Anthropic overloaded: ' + r.status);
+      let data = await callAnthropic(chosenModel, maxTokens, systemPrompt, messages);
+      let usedModel = chosenModel;
+
+      // === REFUSAL-FALLBACK ===
+      // Fable 5 kann Anfragen ablehnen (HTTP 200 mit stop_reason "refusal").
+      // Dann denselben Request einmal mit Opus wiederholen — der User merkt nichts.
+      if (data.stop_reason === 'refusal' && chosenModel !== MODEL_REFUSAL_FALLBACK) {
+        console.warn('Refusal von ' + chosenModel + ' → Retry mit ' + MODEL_REFUSAL_FALLBACK);
+        data = await callAnthropic(MODEL_REFUSAL_FALLBACK, maxTokens, systemPrompt, messages);
+        usedModel = MODEL_REFUSAL_FALLBACK;
       }
-      const data = await r.json();
-      if (data.type === 'error' || !data.content) throw new Error('Anthropic error: ' + (data.error?.message || 'no content'));
-      return res.status(200).json(data);
+
+      // Falls auch das abgelehnt wird (sehr selten): freundliche Antwort statt leerem Chat
+      const textBlocks = (data.content || []).filter(b => b.type === 'text' && b.text);
+      if (data.stop_reason === 'refusal' || textBlocks.length === 0) {
+        return res.status(200).json({
+          content: [{ type: 'text', text: 'Bei dieser Anfrage kann ich nicht helfen. Formuliere sie bitte etwas anders — ich unterstütze dich gerne bei Leads, Marketing, Ads, Texten und Bildern.' }],
+          _model: usedModel,
+          _refusal: true
+        });
+      }
+
+      // Nur Text-Blöcke zurückgeben — Fable liefert zusätzlich interne
+      // Denk-Blöcke mit, die das Frontend nicht anzeigen soll.
+      return res.status(200).json({ ...data, content: textBlocks, _model: usedModel });
     } catch (anthropicErr) {
       console.warn('Anthropic failed → Gemini:', anthropicErr.message);
     }
