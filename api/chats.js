@@ -4,10 +4,19 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY
 );
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const ALLOWED_ORIGINS = ['https://virgoio.com', 'https://www.virgoio.com'];
+  const origin = req.headers.origin || '';
+  const referer = req.headers.referer || '';
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Vary', 'Origin');
   if (req.method === 'OPTIONS') return res.status(200).end();
+  if (!ALLOWED_ORIGINS.includes(origin) && !ALLOWED_ORIGINS.some(o => referer.startsWith(o))) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
   const token = req.headers.authorization?.replace('Bearer ', '');
 
   // Ohne Token — lokale Chats, kein Supabase
