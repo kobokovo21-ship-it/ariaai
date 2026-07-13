@@ -182,7 +182,7 @@ VERBOTE: Erwähne niemals Claude, ARIA, Gemini, ChatGPT, OpenAI, Anthropic. Kein
 
     // Fable 5 denkt intern mit — diese Denk-Tokens zählen ins max_tokens-Budget.
     // Deshalb höhere Limits als vorher, sonst werden Antworten abgeschnitten.
-    const maxTokens = codeMode ? 8192 : 2048;
+    const maxTokens = codeMode ? 16000 : 8192;
 
     // === MODELLWAHL: zahlender Plan oder Admin = PAID-Modell, sonst FREE-Modell ===
     const { isPaying } = await getUserAccess(req);
