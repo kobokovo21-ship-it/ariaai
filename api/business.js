@@ -5,6 +5,74 @@ const ALLOWED_ORIGINS = [
   'https://www.virgoio.com'
 ];
 
+// === MODELL-STEUERUNG ===
+// ANTHROPIC_MODEL_PAID = Modell für zahlende Kunden + Admin (Standard: Fable 5)
+// ANTHROPIC_MODEL_FREE = Modell für alle anderen (Standard: Opus 4.8)
+const MODEL_PAID = process.env.ANTHROPIC_MODEL_PAID || 'claude-fable-5';
+const MODEL_FREE = process.env.ANTHROPIC_MODEL_FREE || 'claude-opus-4-8';
+const MODEL_REFUSAL_FALLBACK = 'claude-opus-4-8';
+
+// Pläne, die als "zahlend" gelten (gleiche Liste wie in tools.js)
+const ACTIVE_PLANS = ['makler-starter', 'makler-pro', 'makler-business'];
+
+// Prüft Token + Plan des Users über Supabase.
+// Zahlender Kunde (aktiver Makler-Plan) oder Admin → isPaying = true.
+async function getUserAccess(req) {
+  try {
+    const BASE = process.env.SUPABASE_URL;
+    const SVC = process.env.SUPABASE_SERVICE_KEY;
+    const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim();
+    if (!token || !BASE || !SVC) return { user: null, isPaying: false };
+
+    const r = await fetch(`${BASE}/auth/v1/user`, {
+      headers: { 'apikey': SVC, 'Authorization': 'Bearer ' + token }
+    });
+    if (!r.ok) return { user: null, isPaying: false };
+    const user = await r.json();
+    if (!user || !user.id) return { user: null, isPaying: false };
+
+    const ADMIN = process.env.ADMIN_EMAIL || 'holyencore@gmail.com';
+    if (user.email === ADMIN) return { user, isPaying: true };
+
+    let isPaying = false;
+    try {
+      const planR = await fetch(`${BASE}/rest/v1/users?id=eq.${user.id}&select=plan&limit=1`, {
+        headers: { 'apikey': SVC, 'Authorization': `Bearer ${SVC}` }
+      });
+      if (planR.ok) {
+        const planData = await planR.json();
+        if (Array.isArray(planData) && planData.length > 0) {
+          isPaying = ACTIVE_PLANS.includes(planData[0].plan);
+        }
+      }
+    } catch (e) {}
+    return { user, isPaying };
+  } catch (e) {
+    console.warn('Auth-Check fehlgeschlagen:', e.message);
+    return { user: null, isPaying: false };
+  }
+}
+
+// Ein einzelner Anthropic-Call. Wirft bei Überlastung/Fehlern,
+// damit die Fallback-Kette (Gemini → OpenAI) greift.
+async function callAnthropic(model, maxTokens, systemPrompt, messages) {
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': process.env.ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01'
+    },
+    body: JSON.stringify({ model, max_tokens: maxTokens, system: systemPrompt, messages })
+  });
+  if (r.status === 529 || r.status === 500 || r.status === 503 || r.status === 502 || r.status === 429) {
+    throw new Error('Anthropic overloaded: ' + r.status);
+  }
+  const data = await r.json();
+  if (data.type === 'error' || !data.content) throw new Error('Anthropic error');
+  return data;
+}
+
 async function handler(req, res) {
   const origin = req.headers.origin || '';
   const referer = req.headers.referer || '';
@@ -14,7 +82,7 @@ async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', origin);
   }
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.setHeader('Vary', 'Origin');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -46,7 +114,8 @@ async function handler(req, res) {
       defaultSystems[type] ||
       'Du bist Virgo Business AI — erstelle professionelle Business-Inhalte auf Deutsch. Antworte vollständig und direkt verwendbar.';
 
-    const maxTokens = type === 'website-html' ? 16000 : 4096;
+    // Fable 5 denkt intern mit — diese Denk-Tokens zählen ins max_tokens-Budget.
+    const maxTokens = type === 'website-html' ? 16000 : 8192;
 
     const extractText = (msg) => {
       if (!msg) return '';
@@ -55,35 +124,36 @@ async function handler(req, res) {
         : (msg.content || '');
     };
 
-    // Anthropic API - OPUS 4.8 für Website, Sonnet 4.6 für Rest
+    // === MODELLWAHL: zahlender Plan oder Admin = PAID-Modell, sonst FREE-Modell ===
+    const { isPaying } = await getUserAccess(req);
+    const chosenModel = isPaying ? MODEL_PAID : MODEL_FREE;
+
+    // Anthropic API
     try {
-      const isWebsite = type === 'website-html';
-      const anthropicModel = process.env.ANTHROPIC_MODEL || (isWebsite ? 'claude-opus-4-8' : 'claude-sonnet-4-6');
+      let data = await callAnthropic(chosenModel, maxTokens, systemPrompt, messages);
+      let usedModel = chosenModel;
 
-      const r = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': process.env.ANTHROPIC_API_KEY,
-          'anthropic-version': '2023-06-01'
-        },
-        body: JSON.stringify({
-          model: anthropicModel,
-          max_tokens: maxTokens,
-          system: systemPrompt,
-          messages
-        })
-      });
-
-      if (r.status === 529 || r.status === 500 || r.status === 503 || r.status === 502 || r.status === 429) {
-        throw new Error('Anthropic overloaded: ' + r.status);
+      // === REFUSAL-FALLBACK ===
+      // Fable 5 kann Anfragen ablehnen (HTTP 200 mit stop_reason "refusal").
+      // Dann denselben Request einmal mit Opus wiederholen.
+      if (data.stop_reason === 'refusal' && chosenModel !== MODEL_REFUSAL_FALLBACK) {
+        console.warn('Refusal von ' + chosenModel + ' → Retry mit ' + MODEL_REFUSAL_FALLBACK);
+        data = await callAnthropic(MODEL_REFUSAL_FALLBACK, maxTokens, systemPrompt, messages);
+        usedModel = MODEL_REFUSAL_FALLBACK;
       }
 
-      const data = await r.json();
-      if (data.type === 'error' || !data.content) throw new Error('Anthropic error');
+      const textBlocks = (data.content || []).filter(b => b.type === 'text' && b.text);
+      if (data.stop_reason === 'refusal' || textBlocks.length === 0) {
+        return res.status(200).json({
+          content: [{ type: 'text', text: 'Bei dieser Anfrage kann ich nicht helfen. Formuliere sie bitte etwas anders.' }],
+          _model: usedModel,
+          _refusal: true
+        });
+      }
 
-      console.log(`✓ Anthropic (${anthropicModel}) erfolgreich`);
-      return res.status(200).json(data);
+      console.log(`✓ Anthropic (${usedModel}) erfolgreich`);
+      // Nur Text-Blöcke zurückgeben — Fable liefert zusätzlich interne Denk-Blöcke mit.
+      return res.status(200).json({ ...data, content: textBlocks, _model: usedModel });
     } catch (anthropicErr) {
       console.warn('⚠️ Anthropic failed → Gemini:', anthropicErr.message);
     }
