@@ -1,12 +1,32 @@
 const config = { maxDuration: 300 };
 
+const ALLOWED_ORIGINS = [
+  'https://virgoio.com',
+  'https://www.virgoio.com'
+];
+
 async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const origin = req.headers.origin || '';
+  const referer = req.headers.referer || '';
+
+  // Nur eigene Domains dürfen CORS-Header bekommen
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Vary', 'Origin');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).end();
+
+  // Harte Sperre: Anfrage muss von eigener Domain kommen
+  const originOk = ALLOWED_ORIGINS.includes(origin);
+  const refererOk = ALLOWED_ORIGINS.some(o => referer.startsWith(o));
+  if (!originOk && !refererOk) {
+    console.warn('⛔ Blocked request. origin=' + origin + ' referer=' + referer);
+    return res.status(403).json({ error: 'Forbidden' });
+  }
 
   try {
     const { type, messages = [], systemOverride } = req.body || {};
