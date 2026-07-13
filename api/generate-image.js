@@ -1,6 +1,7 @@
 export const config = { maxDuration: 60 };
 
-// === PROMPT-ENHANCEMENT: Claude macht aus dem User-Wunsch einen echten Bild-Prompt ===
+const ALLOWED_ORIGINS = ['https://virgoio.com', 'https://www.virgoio.com'];
+
 async function enhanceImagePrompt(userPrompt) {
   const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
   if (!ANTHROPIC_KEY) return null;
@@ -38,29 +39,42 @@ STRICT RULES:
 }
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const origin = req.headers.origin || '';
+  const referer = req.headers.referer || '';
+
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Vary', 'Origin');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).end();
+
+  const ok = ALLOWED_ORIGINS.includes(origin) || ALLOWED_ORIGINS.some(o => referer.startsWith(o));
+  if (!ok) {
+    console.warn('⛔ Blocked generate-image. origin=' + origin + ' referer=' + referer);
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+
   try {
     const { prompt, model = 'nano', negative_prompt = '', ref_images = [] } = req.body;
     if (!prompt) return res.status(400).json({ error: 'Kein Prompt' });
+    if (typeof prompt !== 'string' || prompt.length > 2000) {
+      return res.status(400).json({ error: 'Prompt zu lang' });
+    }
     const PIAPI_KEY = process.env.PIAPI_KEY;
     if (!PIAPI_KEY) return res.status(500).json({ error: 'Kein PiAPI Key' });
 
-    // === Prompt verbessern (Fallback: Original-Prompt + Sicherheits-Zusatz) ===
     const enhanced = await enhanceImagePrompt(prompt);
     const finalPrompt = enhanced
       || (prompt + ', professional commercial photography, photorealistic, no text, no letters, no logos, no UI elements');
 
-    // === Harte Negative gegen Fake-Webseiten & Kauderwelsch-Text ===
     const hardNegatives = 'text, letters, words, typography, writing, captions, ui, user interface, website, webpage, screenshot, browser window, buttons, logo, watermark, signature, blurry, bad quality, distorted';
     const finalNegative = negative_prompt
       ? negative_prompt + ', ' + hardNegatives
       : hardNegatives;
 
-    // Modell auswählen — flux1-schnell ist schnell (3-6s) und bleibt sicher unter Vercel-Timeout
     const modelMap = {
       'nano': 'Qubico/flux1-schnell',
       'seed': 'Qubico/flux1-schnell',
@@ -68,7 +82,7 @@ export default async function handler(req, res) {
       'img-seed': 'Qubico/flux1-schnell'
     };
     const piModel = modelMap[model] || 'Qubico/flux1-schnell';
-    // Task erstellen
+
     const taskBody = {
       model: piModel,
       task_type: 'txt2img',
@@ -81,7 +95,6 @@ export default async function handler(req, res) {
         num_inference_steps: 4
       }
     };
-    // Ref-Bild falls vorhanden
     if (ref_images && ref_images.length > 0) {
       taskBody.task_type = 'img2img';
       taskBody.input.image_url = ref_images[0];
@@ -106,7 +119,7 @@ export default async function handler(req, res) {
       console.error('Kein Task ID:', JSON.stringify(createData));
       return res.status(500).json({ error: 'Kein Task ID von PiAPI' });
     }
-    // Polling bis fertig (max 25 x 2s = 50s, bleibt sicher unter maxDuration 60s)
+
     let imageUrl = null;
     for (let i = 0; i < 25; i++) {
       await new Promise(r => setTimeout(r, 2000));
