@@ -4,13 +4,14 @@ const ALLOWED_ORIGINS = ['https://virgoio.com', 'https://www.virgoio.com'];
 
 // === MODELL-STEUERUNG ===
 // Beide über Vercel-Env-Variablen änderbar, ohne Code anzufassen.
-// ANTHROPIC_MODEL_PAID  = Modell für angemeldete User (Standard: Fable 5)
-// ANTHROPIC_MODEL_FREE  = Modell für unangemeldete User (Standard: Opus 4.8)
+// ANTHROPIC_MODEL_PAID = Modell für zahlende Kunden + Admin (Standard: Fable 5)
+// ANTHROPIC_MODEL_FREE = Modell für alle anderen (Standard: Opus 4.8)
 const MODEL_PAID = process.env.ANTHROPIC_MODEL_PAID || 'claude-fable-5';
 const MODEL_FREE = process.env.ANTHROPIC_MODEL_FREE || 'claude-opus-4-8';
-// Wenn Fable eine Anfrage ablehnt (stop_reason "refusal"), wird automatisch
-// derselbe Request einmal mit diesem Modell wiederholt:
 const MODEL_REFUSAL_FALLBACK = 'claude-opus-4-8';
+
+// Pläne, die als "zahlend" gelten (gleiche Liste wie in tools.js)
+const ACTIVE_PLANS = ['makler-starter', 'makler-pro', 'makler-business'];
 
 function guard(req, res) {
   const origin = req.headers.origin || '';
@@ -32,25 +33,43 @@ function guard(req, res) {
   return true;
 }
 
-// Prüft über Supabase, ob ein gültiger, eingeloggter User dahintersteckt.
-// Erwartet den Supabase Access Token im Authorization-Header (Bearer ...).
-// Gibt bei jedem Problem einfach null zurück → User wird als "Free" behandelt.
-async function getLoggedInUser(req) {
+// Prüft Token + Plan des Users über Supabase.
+// Zahlender Kunde (aktiver Makler-Plan) oder Admin → isPaying = true.
+// Bei jedem Problem: isPaying = false → User bekommt das Free-Modell.
+async function getUserAccess(req) {
   try {
+    const BASE = process.env.SUPABASE_URL;
+    const SVC = process.env.SUPABASE_SERVICE_KEY;
     const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim();
-    if (!token || !process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) return null;
-    const r = await fetch(process.env.SUPABASE_URL + '/auth/v1/user', {
-      headers: {
-        'apikey': process.env.SUPABASE_ANON_KEY,
-        'Authorization': 'Bearer ' + token
-      }
+    if (!token || !BASE || !SVC) return { user: null, isPaying: false };
+
+    const r = await fetch(`${BASE}/auth/v1/user`, {
+      headers: { 'apikey': SVC, 'Authorization': 'Bearer ' + token }
     });
-    if (!r.ok) return null;
+    if (!r.ok) return { user: null, isPaying: false };
     const user = await r.json();
-    return (user && user.id) ? user : null;
+    if (!user || !user.id) return { user: null, isPaying: false };
+
+    // Admin bekommt immer das beste Modell
+    const ADMIN = process.env.ADMIN_EMAIL || 'holyencore@gmail.com';
+    if (user.email === ADMIN) return { user, isPaying: true };
+
+    let isPaying = false;
+    try {
+      const planR = await fetch(`${BASE}/rest/v1/users?id=eq.${user.id}&select=plan&limit=1`, {
+        headers: { 'apikey': SVC, 'Authorization': `Bearer ${SVC}` }
+      });
+      if (planR.ok) {
+        const planData = await planR.json();
+        if (Array.isArray(planData) && planData.length > 0) {
+          isPaying = ACTIVE_PLANS.includes(planData[0].plan);
+        }
+      }
+    } catch (e) {}
+    return { user, isPaying };
   } catch (e) {
-    console.warn('Supabase Auth-Check fehlgeschlagen:', e.message);
-    return null;
+    console.warn('Auth-Check fehlgeschlagen:', e.message);
+    return { user: null, isPaying: false };
   }
 }
 
@@ -62,8 +81,8 @@ function isImageRequest(text) {
   return (hasVerb && hasNoun) || directPatterns;
 }
 
-// Ein einzelner Anthropic-Call. Wirft bei Überlastung/Fehlern, damit die
-// bestehende Fallback-Kette (Gemini → OpenAI) greift.
+// Ein einzelner Anthropic-Call. Wirft bei Überlastung/Fehlern,
+// damit die Fallback-Kette (Gemini → OpenAI) greift.
 async function callAnthropic(model, maxTokens, systemPrompt, messages) {
   const r = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -165,9 +184,9 @@ VERBOTE: Erwähne niemals Claude, ARIA, Gemini, ChatGPT, OpenAI, Anthropic. Kein
     // Deshalb höhere Limits als vorher, sonst werden Antworten abgeschnitten.
     const maxTokens = codeMode ? 8192 : 2048;
 
-    // === MODELLWAHL: angemeldet = PAID-Modell, unangemeldet = FREE-Modell ===
-    const user = await getLoggedInUser(req);
-    const chosenModel = user ? MODEL_PAID : MODEL_FREE;
+    // === MODELLWAHL: zahlender Plan oder Admin = PAID-Modell, sonst FREE-Modell ===
+    const { isPaying } = await getUserAccess(req);
+    const chosenModel = isPaying ? MODEL_PAID : MODEL_FREE;
 
     try {
       let data = await callAnthropic(chosenModel, maxTokens, systemPrompt, messages);
