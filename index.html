@@ -502,6 +502,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
   </div>
 </div>
 
+
 <!-- ═══════════════ MODAL INVOICE ═══════════════ -->
 <div class="modal" id="modal-invoice">
   <div class="mb2 wide">
@@ -510,26 +511,35 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
     <div style="font-size:11px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px">Ihre Daten</div>
     <div class="inv-grid">
       <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:3px">Name / Firma *</label><input class="minp" id="inv-absender-name" placeholder="Max Mustermann GmbH"></div>
-      <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:3px">Steuernummer</label><input class="minp" id="inv-steuer" placeholder="123/456/78901"></div>
-      <div class="inv-full"><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:3px">Adresse</label><input class="minp" id="inv-absender-adresse" placeholder="Musterstraße 1, 40210 Düsseldorf"></div>
+      <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:3px">Steuernummer / USt-IdNr. *</label><input class="minp" id="inv-steuer" placeholder="123/456/78901"></div>
+      <div class="inv-full"><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:3px">Anschrift *</label><input class="minp" id="inv-absender-adresse" placeholder="Musterstraße 1, 40210 Düsseldorf"></div>
       <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:3px">Email</label><input class="minp" id="inv-absender-email" placeholder="max@firma.de"></div>
-      <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:3px">Website</label><input class="minp" id="inv-absender-web" placeholder="www.firma.de"></div>
+      <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:3px">Kleinunternehmer</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--tm);padding:10px 0;cursor:pointer"><input type="checkbox" id="inv-ku" onchange="toggleKleinunternehmer()" style="width:auto;margin:0;accent-color:#111">§ 19 UStG — keine MwSt.</label>
+      </div>
     </div>
     <div style="font-size:11px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px">Kundendaten</div>
     <div class="inv-grid">
-      <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:3px">Kundenname *</label><input class="minp" id="inv-kunde" placeholder="Max Mustermann"></div>
-      <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:3px">Kunden-Email</label><input class="minp" id="inv-kunde-email" placeholder="kunde@email.de"></div>
-      <div class="inv-full"><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:3px">Kundenadresse</label><input class="minp" id="inv-kunde-adresse" placeholder="Kundenstraße 1, Berlin"></div>
+      <div class="inv-full"><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:3px">Kundenname *</label><input class="minp" id="inv-kunde" placeholder="Max Mustermann"></div>
+      <div class="inv-full"><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:3px">Kundenadresse <span style="color:var(--td)">(ab 250 € Pflicht)</span></label><input class="minp" id="inv-kunde-adresse" placeholder="Kundenstraße 1, 10115 Berlin"></div>
     </div>
     <div style="font-size:11px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px">Rechnungsdetails</div>
     <div class="inv-grid">
       <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:3px">Rechnungsnummer</label><input class="minp" id="inv-nr" placeholder="INV-001"></div>
       <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:3px">Datum</label><input class="minp" id="inv-datum" type="date"></div>
-      <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:3px">Betrag (netto EUR) *</label><input class="minp" id="inv-betrag" type="number" placeholder="100"></div>
+      <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:3px">Leistungszeitraum</label><input class="minp" id="inv-zeitraum" placeholder="z.B. Juni 2026 (leer = Rechnungsdatum)"></div>
       <div><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:3px">MwSt. %</label><input class="minp" id="inv-mwst" type="number" placeholder="19" value="19"></div>
     </div>
-    <label style="font-size:11px;color:var(--tm);display:block;margin-bottom:3px">Leistungsbeschreibung *</label>
-    <textarea class="minp" id="inv-leistung" placeholder="KI-Beratung, 2 Stunden..." style="margin-bottom:7px;min-height:56px;resize:vertical"></textarea>
+    <div style="font-size:11px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px">Positionen *</div>
+    <div id="inv-pos-list"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px">
+      <button onclick="addInvPosition()" style="padding:7px 12px;background:transparent;border:1px solid var(--bd);border-radius:7px;font-family:Inter,sans-serif;font-size:11px;color:var(--tm);cursor:pointer">+ Position hinzufügen</button>
+      <span id="inv-totals" style="font-size:11px;color:var(--tm)"></span>
+    </div>
+    <div class="inv-grid">
+      <div class="inv-full"><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:3px">Freitext (optional)</label><textarea class="minp" id="inv-freitext" placeholder="z.B. Zahlbar innerhalb von 14 Tagen ohne Abzug. Vielen Dank!" style="min-height:44px;resize:vertical"></textarea></div>
+      <div class="inv-full"><label style="font-size:11px;color:var(--tm);display:block;margin-bottom:3px">Bankverbindung (optional)</label><textarea class="minp" id="inv-bank" placeholder="Max Mustermann · IBAN DE00 0000 0000 0000 0000 00 · Musterbank" style="min-height:44px;resize:vertical"></textarea></div>
+    </div>
     <div id="inv-msg" style="font-size:12px;color:var(--red);margin:7px 0;display:none"></div>
     <div style="display:flex;gap:7px;margin-top:10px">
       <button class="mbtn sec" onclick="closeM('modal-invoice')">Abbrechen</button>
@@ -1734,13 +1744,100 @@ function copyMaklerAdText(){
 // ═══════════════════════════════════════
 // INVOICE
 // ═══════════════════════════════════════
-function openInvoiceModal(){document.getElementById('inv-datum').value=new Date().toISOString().split('T')[0];showM('modal-invoice');}
+
+let invPos=[{beschreibung:'',menge:1,einzelpreis:''}];
+function openInvoiceModal(){
+  document.getElementById('inv-datum').value=new Date().toISOString().split('T')[0];
+  // Absenderdaten aus der letzten Rechnung vorausfüllen (spart Tipparbeit)
+  try{
+    const saved=JSON.parse(localStorage.getItem('virgo_invoice_absender')||'null');
+    if(saved){
+      [['inv-absender-name','name'],['inv-steuer','steuer'],['inv-absender-adresse','adresse'],['inv-absender-email','email'],['inv-bank','bank']].forEach(([id,key])=>{
+        const el=document.getElementById(id);
+        if(el&&saved[key]&&!el.value)el.value=saved[key];
+      });
+      if(typeof saved.ku==='boolean'){document.getElementById('inv-ku').checked=saved.ku;}
+    }
+  }catch(e){}
+  if(!invPos.length)invPos=[{beschreibung:'',menge:1,einzelpreis:''}];
+  renderInvPositions();toggleKleinunternehmer();showM('modal-invoice');
+}
+function addInvPosition(){invPos.push({beschreibung:'',menge:1,einzelpreis:''});renderInvPositions();}
+function removeInvPosition(i){invPos.splice(i,1);if(!invPos.length)invPos.push({beschreibung:'',menge:1,einzelpreis:''});renderInvPositions();updateInvTotals();}
+function renderInvPositions(){
+  const wrap=document.getElementById('inv-pos-list');if(!wrap)return;wrap.innerHTML='';
+  invPos.forEach((p,i)=>{
+    const row=document.createElement('div');
+    row.style.cssText='display:grid;grid-template-columns:1fr 60px 90px 30px;gap:6px;margin-bottom:6px;align-items:center';
+    const b=document.createElement('input');b.className='minp';b.style.marginBottom='0';b.placeholder='Beschreibung, z.B. Beratung PKV (2 Std.)';b.value=p.beschreibung;
+    b.oninput=function(){invPos[i].beschreibung=b.value;};
+    const m=document.createElement('input');m.className='minp';m.style.marginBottom='0';m.type='number';m.min='1';m.placeholder='1';m.value=p.menge;
+    m.oninput=function(){invPos[i].menge=m.value;updateInvTotals();};
+    const e=document.createElement('input');e.className='minp';e.style.marginBottom='0';e.type='number';e.step='0.01';e.placeholder='€ netto';e.value=p.einzelpreis;
+    e.oninput=function(){invPos[i].einzelpreis=e.value;updateInvTotals();};
+    const x=document.createElement('button');x.textContent='×';x.title='Position entfernen';
+    x.style.cssText='background:transparent;border:1px solid var(--bd);border-radius:6px;color:var(--td);cursor:pointer;height:34px;font-size:15px';
+    x.onclick=function(){removeInvPosition(i);};
+    row.appendChild(b);row.appendChild(m);row.appendChild(e);row.appendChild(x);
+    wrap.appendChild(row);
+  });
+  updateInvTotals();
+}
+function toggleKleinunternehmer(){
+  const kuEl=document.getElementById('inv-ku');if(!kuEl)return;
+  const mw=document.getElementById('inv-mwst');
+  mw.disabled=kuEl.checked;mw.style.opacity=kuEl.checked?'.4':'1';
+  updateInvTotals();
+}
+function updateInvTotals(){
+  const kuEl=document.getElementById('inv-ku');
+  const satz=(kuEl&&kuEl.checked)?0:(parseFloat(document.getElementById('inv-mwst')?.value)||0);
+  let netto=0;
+  invPos.forEach(p=>{const m=parseFloat(p.menge)||1;const e=parseFloat(p.einzelpreis);if(!isNaN(e))netto+=m*e;});
+  const mwst=netto*satz/100;
+  const el=document.getElementById('inv-totals');
+  if(el)el.textContent=netto>0?('Netto '+netto.toFixed(2)+' € · MwSt. '+mwst.toFixed(2)+' € · Gesamt '+(netto+mwst).toFixed(2)+' €'):'';
+}
 async function createInvoice(){
-  const kunde=document.getElementById('inv-kunde').value.trim();const leistung=document.getElementById('inv-leistung').value.trim();const betrag=document.getElementById('inv-betrag').value;const absName=document.getElementById('inv-absender-name').value.trim();const msg=document.getElementById('inv-msg');
-  if(!kunde||!leistung||!betrag||!absName){msg.textContent='Bitte Kundenname, Leistung, Betrag und deinen Firmennamen (Absender) ausfüllen — der Firmenname erscheint oben auf der Rechnung.';msg.style.display='block';return;}
+  const kunde=document.getElementById('inv-kunde').value.trim();
+  const absName=document.getElementById('inv-absender-name').value.trim();
+  const absAdresse=document.getElementById('inv-absender-adresse').value.trim();
+  const absSteuer=document.getElementById('inv-steuer').value.trim();
+  const msg=document.getElementById('inv-msg');
+  const positionen=invPos
+    .filter(p=>p.beschreibung.trim()&&p.einzelpreis!==''&&!isNaN(parseFloat(p.einzelpreis)))
+    .map(p=>({beschreibung:p.beschreibung.trim(),menge:parseFloat(p.menge)||1,einzelpreis:parseFloat(p.einzelpreis)}));
+  if(!kunde||!absName||!absAdresse||!absSteuer){msg.textContent='Bitte Kundenname sowie deine Firmendaten (Name, Anschrift, Steuernummer) ausfüllen — ohne sie ist die Rechnung nicht gültig.';msg.style.display='block';return;}
+  if(!positionen.length){msg.textContent='Bitte mindestens eine Position mit Beschreibung und Betrag eintragen.';msg.style.display='block';return;}
   msg.style.display='none';
-  try{const r=await fetch('/api/invoice',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({invoice_nr:document.getElementById('inv-nr').value||'INV-'+Date.now(),kunde,kunde_adresse:document.getElementById('inv-kunde-adresse').value,leistung,betrag,mwst:parseInt(document.getElementById('inv-mwst').value)||19,datum:document.getElementById('inv-datum').value,absender_name:absName,absender_adresse:document.getElementById('inv-absender-adresse').value,absender_email:document.getElementById('inv-absender-email').value,absender_steuer:document.getElementById('inv-steuer').value})});const d=await r.json();
+  const datumRaw=document.getElementById('inv-datum').value;
+  const datumDE=datumRaw?new Date(datumRaw).toLocaleDateString('de-DE'):'';
+  try{
+    const r=await fetch('/api/invoice',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      invoice_nr:document.getElementById('inv-nr').value||'INV-'+Date.now(),
+      kunde,
+      kunde_adresse:document.getElementById('inv-kunde-adresse').value,
+      positionen,
+      mwst:parseFloat(document.getElementById('inv-mwst').value)||19,
+      kleinunternehmer:document.getElementById('inv-ku').checked,
+      leistungszeitraum:document.getElementById('inv-zeitraum').value.trim(),
+      freitext:document.getElementById('inv-freitext').value.trim(),
+      bankverbindung:document.getElementById('inv-bank').value.trim(),
+      datum:datumDE,
+      absender_name:absName,
+      absender_adresse:absAdresse,
+      absender_email:document.getElementById('inv-absender-email').value,
+      absender_steuer:absSteuer
+    })});
+    const d=await r.json();
     if(d.error){msg.textContent=d.error;msg.style.display='block';return;}
+    // Absenderdaten für die nächste Rechnung merken
+    try{localStorage.setItem('virgo_invoice_absender',JSON.stringify({
+      name:absName,steuer:absSteuer,adresse:absAdresse,
+      email:document.getElementById('inv-absender-email').value,
+      bank:document.getElementById('inv-bank').value,
+      ku:document.getElementById('inv-ku').checked
+    }));}catch(e){}
     // Virgo-Branding aus der Rechnung entfernen — oben steht IMMER die Firma des Nutzers
     if(d.html){d.html=String(d.html).replace(/virgo\s*ai/gi,function(){return absName;});}
     const invId='inv_'+Date.now();window[invId]=d.html;
