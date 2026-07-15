@@ -191,19 +191,9 @@ export default async function handler(req, res) {
   if (tool === 'makler-save') {
     try {
       const token = (req.headers.authorization || '').replace('Bearer ', '').trim();
-      let user = await validateToken(token);
-      if (!user) {
-        const ADMIN = process.env.ADMIN_EMAIL || 'holyencore@gmail.com';
-        try {
-          const parts = token.split('.');
-          if (parts.length === 3) {
-            let b64 = parts[1].replace(/-/g,'+').replace(/_/g,'/');
-            while (b64.length % 4) b64 += '=';
-            const payload = JSON.parse(Buffer.from(b64,'base64').toString('utf8'));
-            if (payload.email === ADMIN && payload.sub) user = { id: payload.sub, email: payload.email };
-          }
-        } catch(e) {}
-      }
+      // SICHERHEIT: Der frühere Admin-Bypass (JWT ohne Signaturprüfung dekodieren)
+      // wurde entfernt — er war fälschbar. Auch der Admin meldet sich normal an.
+      const user = await validateToken(token);
       if (!user) return res.status(401).json({ error: 'Token abgelaufen — bitte neu anmelden' });
       const { name, firma, telefon, email, beschreibung, headline, custom_sections, versicherungen, farbe, slug, header_image, alert_email, whatsapp_number } = body;
       if (!name || !slug) return res.status(400).json({ error: 'Name und Slug sind Pflichtfelder' });
