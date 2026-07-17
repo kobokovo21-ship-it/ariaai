@@ -2049,32 +2049,42 @@ applyFreeRestrictions();
     var html=getHtml(), ar=aspect(), base=RENDER_SERVICE_URL.replace(/\/+$/,'');
     showPill('🎬 MP4 wird gerendert… 0%');
     try{
-      var startRes=await fetch(base+'/api/render',{
+      /* /api/render-post streamt Server-Sent Events (kein JSON, kein Polling):
+         data: {"type":"phase"|"done"|"error", ...} */
+      var res=await fetch(base+'/api/render-post',{
         method:'POST', headers:{'Content-Type':'application/json'},
         body:JSON.stringify({ html:html, aspect:ar, durationInSeconds:6 })
       });
-      if(!startRes.ok) throw new Error('Render-Start fehlgeschlagen ('+startRes.status+')');
-      var data=await startRes.json();
-      var mp4Url = data.url || data.outputUrl || null;
+      if(!res.ok||!res.body){
+        var detail='';
+        try{ detail=(await res.json()).message||''; }catch(e){}
+        throw new Error('Render-Start fehlgeschlagen ('+res.status+(detail?': '+detail:'')+')');
+      }
 
-      if(!mp4Url && (data.jobId || data.sandboxId || data.cmdId || data.id)){
-        var id=data.jobId||data.id||'', sb=data.sandboxId||'', cmd=data.cmdId||'';
-        var deadline=Date.now()+10*60*1000;
-        while(Date.now()<deadline && !mp4Url){
-          await new Promise(function(r){setTimeout(r,2000);});
-          var q='/api/render/status?'+(id?('id='+encodeURIComponent(id)):('sandboxId='+encodeURIComponent(sb)+'&cmdId='+encodeURIComponent(cmd)));
-          var pr=await fetch(base+q);
-          if(!pr.ok) continue;
-          var p=await pr.json();
-          var pct=Math.round((p.overallProgress||p.progress||0)*100);
-          showPill('🎬 MP4 wird gerendert… '+pct+'%');
-          if(p.error||p.fatalErrorEncountered) throw new Error(p.error||'Render-Fehler');
-          mp4Url = p.url || p.outputUrl || p.outputFile || null;
-          if(p.done && !mp4Url) throw new Error('Render fertig, aber keine URL');
+      var reader=res.body.getReader(), dec=new TextDecoder(), buf='', mp4Url=null, errMsg=null;
+      while(true){
+        var chunk=await reader.read();
+        if(chunk.done) break;
+        buf+=dec.decode(chunk.value,{stream:true});
+        var frames=buf.split('\n\n');
+        buf=frames.pop()||'';
+        for(var i=0;i<frames.length;i++){
+          var line=frames[i];
+          if(line.indexOf('data: ')!==0) continue;
+          var msg;
+          try{ msg=JSON.parse(line.slice(6)); }catch(e){ continue; }
+          if(msg.type==='phase'){
+            showPill('🎬 MP4 wird gerendert… '+Math.round((msg.progress||0)*100)+'%');
+          } else if(msg.type==='done'){
+            mp4Url=msg.url;
+          } else if(msg.type==='error'){
+            errMsg=msg.message||'Render-Fehler';
+          }
         }
       }
       hidePill();
-      if(!mp4Url) throw new Error('Zeitüberschreitung beim Rendern');
+      if(errMsg) throw new Error(errMsg);
+      if(!mp4Url) throw new Error('Render beendet, aber keine URL erhalten');
 
       if(typeof addAIMsg==='function'){
         addAIMsg('🎬 <b>Dein MP4 ist fertig!</b><br>'+
