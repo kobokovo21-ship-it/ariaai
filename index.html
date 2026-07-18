@@ -672,6 +672,13 @@ function showWork(i){
   currentWebsiteHtml=w.html; currentWebsiteName=w.name||'website'; currentIsSocial=!!w.isSocial;
   openPreview(w.html, w.isSocial?'Social Post':(w.name||'Website'));
 }
+// Index of the just-saved output in the active chat (called right after saveChat,
+// so it's the last entry). Lets each generated message's buttons target THAT
+// output instead of the mutable currentWebsiteHtml.
+function currentWorkIndex(){
+  const chat=getLocalChats().find(c=>c.id===state.activeChatId);
+  return (((chat&&chat.works)||[]).length)-1;
+}
 function previewFullscreen(){
   if(!currentWebsiteHtml)return;
   var w=window.open('','_blank');
@@ -1518,7 +1525,8 @@ Das HTML MUSS mind. 6KB sein (echte Inhalte + Animationen + Grafikvideo-Optik).
     conversationHistory.push({role:'assistant',content:'[Animierte Website generiert]'});
     saveChat(document.getElementById('chat-title').textContent,conversationHistory);
     
-    var _previewBtn='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button onclick="openPreview(currentWebsiteHtml,\'Website\')" style="padding:9px 14px;background:var(--t);color:#fff;border:none;border-radius:7px;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer">Vorschau</button><button onclick="previewDownload()" style="padding:9px 14px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:7px;font-family:Inter,sans-serif;font-size:12px;cursor:pointer">Download</button><button onclick="showPublishHelp()" style="padding:9px 14px;background:#16a34a;color:#fff;border:none;border-radius:7px;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer">Online stellen</button></div>';
+    const _wi=currentWorkIndex();
+    var _previewBtn='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button onclick="showWork('+_wi+')" style="padding:9px 14px;background:var(--t);color:#fff;border:none;border-radius:7px;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer">Vorschau</button><button onclick="showWork('+_wi+');previewDownload()" style="padding:9px 14px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:7px;font-family:Inter,sans-serif;font-size:12px;cursor:pointer">Download</button><button onclick="showPublishHelp()" style="padding:9px 14px;background:#16a34a;color:#fff;border:none;border-radius:7px;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer">Online stellen</button></div>';
     addAIMsg('🎬 <b>Deine animierte Website ist fertig!</b> Schau rechts die Vorschau.<br><br>'+_previewBtn+'<br><span style="font-size:12px;color:var(--tm)">Änderungen? Schreib z.B. "Mache es bunter" oder "Weniger Animation". Soll sie online? Klick <b>Online stellen</b>.</span>');
   }catch(e){
     hideTyping();
@@ -1692,7 +1700,8 @@ OUTPUT: NUR der HTML-Code. KEIN Text davor/danach, KEINE Backticks. Mindestens 5
     openPreview(html,'Social Post');
     conversationHistory.push({role:'assistant',content:'[Animierter Social-Post generiert]'});
     saveChat(document.getElementById('chat-title').textContent,conversationHistory);
-    var _btns='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button onclick="openPreview(currentWebsiteHtml,\'Social Post\')" style="padding:9px 14px;background:var(--t);color:#fff;border:none;border-radius:7px;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer">Vorschau</button><button onclick="previewDownload()" style="padding:9px 14px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:7px;font-family:Inter,sans-serif;font-size:12px;cursor:pointer">Download</button></div>';
+    const _wi=currentWorkIndex();
+    var _btns='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button onclick="showWork('+_wi+')" style="padding:9px 14px;background:var(--t);color:#fff;border:none;border-radius:7px;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer">Vorschau</button><button onclick="showWork('+_wi+');previewDownload()" style="padding:9px 14px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:7px;font-family:Inter,sans-serif;font-size:12px;cursor:pointer">Download</button></div>';
     addAIMsg('🎬 <b>Dein animierter Post ist fertig!</b> Läuft rechts in der Vorschau.<br><br>'+_btns+'<br><span style="font-size:12px;color:var(--tm)">Andere Farbe? Schreib z.B. „mach es gold" oder „mehr Bewegung". Zum Posten als Video: Vorschau im Vollbild öffnen und Bildschirm aufnehmen.</span>');
   }catch(e){hideTyping();endGen();addAIMsg('❌ '+e.message);}
 }
@@ -1729,7 +1738,8 @@ async function genChat(txt){
         if (conversationHistory.length > 30) conversationHistory = conversationHistory.slice(-30);
         saveChat(document.getElementById('chat-title').textContent, conversationHistory);
 
-        addAIMsg('✅ <b>Website fertig!</b> Vorschau rechts geöffnet.<br><br><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button onclick="openPreview(currentWebsiteHtml,\'Website\')" style="padding:9px 14px;background:var(--t);color:#fff;border:none;border-radius:7px;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer">Vorschau</button><button onclick="previewDownload()" style="padding:9px 14px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:7px;font-family:Inter,sans-serif;font-size:12px;cursor:pointer">Download</button></div>');
+        const _wi=currentWorkIndex();
+        addAIMsg('✅ <b>Website fertig!</b> Vorschau rechts geöffnet.<br><br><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button onclick="showWork('+_wi+')" style="padding:9px 14px;background:var(--t);color:#fff;border:none;border-radius:7px;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer">Vorschau</button><button onclick="showWork('+_wi+');previewDownload()" style="padding:9px 14px;background:transparent;color:var(--t);border:1px solid var(--bd);border-radius:7px;font-family:Inter,sans-serif;font-size:12px;cursor:pointer">Download</button></div>');
         return;
       }
 
