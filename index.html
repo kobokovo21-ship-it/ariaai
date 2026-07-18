@@ -647,11 +647,74 @@ function previewFullscreen(){
   var w=window.open('','_blank');
   if(w){w.document.open();w.document.write(currentWebsiteHtml);w.document.close();}
 }
-function previewDownload(){
+// Collect every external (http/https) image URL referenced by the HTML:
+// <img>/<source> src, srcset candidates, and CSS url(...) in style="" and
+// <style> blocks. data:/blob:/relative refs are already offline-safe.
+function _extractImageUrls(html){
+  var urls=new Set();
+  var add=function(u){ u=(u||'').trim(); if(/^https?:\/\//i.test(u)) urls.add(u); };
+  var m,re;
+  re=/<(?:img|source)\b[^>]*?\ssrc\s*=\s*(["'])([\s\S]*?)\1/gi;
+  while((m=re.exec(html))) add(m[2]);
+  re=/\bsrcset\s*=\s*(["'])([\s\S]*?)\1/gi;
+  while((m=re.exec(html))){ m[2].split(',').forEach(function(part){ add(part.trim().split(/\s+/)[0]); }); }
+  re=/url\(\s*(['"]?)([^'")]+)\1\s*\)/gi;
+  while((m=re.exec(html))) add(m[2]);
+  return Array.from(urls);
+}
+
+// Replaces each external image URL with a Base64 data URI so the downloaded
+// file renders fully offline. Fetching happens server-side (/api/inline-image)
+// to sidestep image-host CORS restrictions the browser can't get past.
+async function inlineExternalImages(html){
+  var raw=_extractImageUrls(html);
+  if(!raw.length) return { html:html, total:0, inlined:0 };
+  // Attribute values may HTML-encode & as &amp;; decode for the real request.
+  var decoded=raw.map(function(u){ return u.replace(/&amp;/gi,'&'); });
+  var resp=await fetch('/api/inline-image',{
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({ urls:decoded })
+  });
+  if(!resp.ok) throw new Error('inline-image '+resp.status);
+  var map=(await resp.json()).map||{};
+  var pairs=[];
+  raw.forEach(function(r,i){ var d=map[decoded[i]]; if(d) pairs.push([r,d]); });
+  // Longest first: a URL that prefixes another (a.png vs a.png?v=2) must not
+  // be replaced first and corrupt the longer one.
+  pairs.sort(function(a,b){ return b[0].length-a[0].length; });
+  var out=html, inlined=0;
+  pairs.forEach(function(p){ if(out.indexOf(p[0])!==-1){ out=out.split(p[0]).join(p[1]); inlined++; } });
+  return { html:out, total:raw.length, inlined:inlined };
+}
+
+function _dlStatus(txt){
+  var p=document.getElementById('_dl-pill');
+  if(!txt){ if(p)p.remove(); return; }
+  if(!p){ p=document.createElement('div'); p.id='_dl-pill'; p.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:100000;background:#111;color:#fff;padding:12px 18px;border-radius:999px;font-family:Inter,sans-serif;font-size:13px;font-weight:600;box-shadow:0 8px 30px rgba(0,0,0,.3)'; document.body.appendChild(p); }
+  p.textContent=txt;
+}
+
+async function previewDownload(){
   if(!currentWebsiteHtml)return;
-  const blob=new Blob([currentWebsiteHtml],{type:'text/html'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');a.href=url;a.download=currentWebsiteName+'.html';
+  var htmlToSave=currentWebsiteHtml;
+  _dlStatus('🖼️ Bilder werden eingebettet…');
+  try{
+    var r=await inlineExternalImages(currentWebsiteHtml);
+    htmlToSave=r.html;
+    if(r.inlined<r.total){
+      _dlStatus('⚠️ '+r.inlined+'/'+r.total+' Bilder eingebettet — Rest extern');
+    } else {
+      _dlStatus(r.total?('✓ '+r.total+' Bild(er) eingebettet'):'');
+    }
+  }catch(e){
+    // Never block the download: fall back to the original HTML on failure.
+    console.error('Bild-Einbettung fehlgeschlagen, lade Original:',e);
+    _dlStatus('⚠️ Bilder nicht eingebettet — lade Original');
+  }
+  setTimeout(function(){ _dlStatus(''); }, 3000);
+  var blob=new Blob([htmlToSave],{type:'text/html;charset=utf-8'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');a.href=url;a.download=currentWebsiteName+'.html';
   document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
 }
 function showPublishHelp(){
