@@ -87,6 +87,11 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
 .prev-btn{flex:1;padding:8px;border-radius:7px;font-family:'Inter',sans-serif;font-size:11px;font-weight:500;cursor:pointer;border:1px solid var(--bd);background:transparent;color:var(--tm)}
 .prev-btn.primary{background:var(--t);color:#fff;border-color:var(--t)}
 .prev-btn:hover{opacity:.85}
+.preview-nav{padding:8px 12px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:6px;overflow-x:auto;flex-shrink:0;-webkit-overflow-scrolling:touch}
+.preview-nav .pv-nav-label{font-size:11px;color:var(--tm);white-space:nowrap;margin-right:2px;flex-shrink:0}
+.pv-nav-chip{flex-shrink:0;padding:5px 11px;border-radius:20px;border:1px solid var(--bd);background:transparent;color:var(--tm);font-family:'Inter',sans-serif;font-size:11px;font-weight:500;cursor:pointer;white-space:nowrap}
+.pv-nav-chip:hover{border-color:var(--t);color:var(--t)}
+.pv-nav-chip.active{background:var(--t);color:#fff;border-color:var(--t)}
 
 /* topbar */
 .topbar{height:50px;padding:0 14px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:8px;flex-shrink:0}
@@ -396,6 +401,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
         <span class="preview-header-title" id="preview-title">Vorschau</span>
         <button class="preview-close" onclick="closePreview()" title="Schließen">×</button>
       </div>
+      <div class="preview-nav" id="preview-nav" style="display:none"></div>
       <div class="preview-iframe-wrap">
         <iframe id="preview-frame" title="Website Vorschau" style="width:100%;height:100%;border:none;background:#fff"></iframe>
       </div>
@@ -634,6 +640,7 @@ function openPreview(html,title){
   
   console.log('✓ Preview loaded via Blob URL, size:',html.length+'B');
   panel.classList.add('open');
+  renderPreviewNav();
 }
 function closePreview(){
   document.getElementById('preview-panel').classList.remove('open');
@@ -641,6 +648,29 @@ function closePreview(){
   if(window._prevBlobUrl){URL.revokeObjectURL(window._prevBlobUrl);window._prevBlobUrl=null;}
   frame.removeAttribute('src');
   frame.removeAttribute('srcdoc');
+}
+// ── OUTPUT-HISTORIE: alle gespeicherten Werke (bis zu 6) dieses Chats als
+//    Umschalt-Leiste über der Vorschau. Liest works[] per Index — dadurch
+//    immun gegen das Überschreiben der globalen currentWebsiteHtml.
+function renderPreviewNav(){
+  const nav=document.getElementById('preview-nav');
+  if(!nav)return;
+  const chat=getLocalChats().find(c=>c.id===state.activeChatId);
+  const works=(chat&&chat.works)||[];
+  if(works.length<=1){ nav.style.display='none'; nav.innerHTML=''; return; }
+  const activeIdx=works.findIndex(w=>w.html===currentWebsiteHtml);
+  nav.style.display='flex';
+  nav.innerHTML='<span class="pv-nav-label">Generiert:</span>'+works.map((w,i)=>{
+    const label=(w.isSocial?'Video ':'Website ')+(i+1);
+    return '<button class="pv-nav-chip'+(i===activeIdx?' active':'')+'" onclick="showWork('+i+')">'+label+'</button>';
+  }).join('');
+}
+function showWork(i){
+  const chat=getLocalChats().find(c=>c.id===state.activeChatId);
+  const works=(chat&&chat.works)||[]; const w=works[i];
+  if(!w)return;
+  currentWebsiteHtml=w.html; currentWebsiteName=w.name||'website'; currentIsSocial=!!w.isSocial;
+  openPreview(w.html, w.isSocial?'Social Post':(w.name||'Website'));
 }
 function previewFullscreen(){
   if(!currentWebsiteHtml)return;
@@ -1043,7 +1073,7 @@ async function saveChat(title,messages){
   const chats=getLocalChats();const idx=chats.findIndex(c=>c.id===state.activeChatId);
   if(idx>=0){chats[idx].messages=clean;chats[idx].title=title;chats[idx].updated=Date.now();if(currentWebsiteHtml){chats[idx].websiteHtml=currentWebsiteHtml;chats[idx].websiteName=currentWebsiteName;chats[idx].isSocial=currentIsSocial;const w=chats[idx].works=chats[idx].works||[];if(!w.length||w[w.length-1].html!==currentWebsiteHtml){w.push({html:currentWebsiteHtml,name:currentWebsiteName,isSocial:currentIsSocial});if(w.length>6)w.shift();}}}
   else{const nc={id:state.activeChatId,title,messages:clean,updated:Date.now()};if(currentWebsiteHtml){nc.websiteHtml=currentWebsiteHtml;nc.websiteName=currentWebsiteName;nc.isSocial=currentIsSocial;nc.works=[{html:currentWebsiteHtml,name:currentWebsiteName,isSocial:currentIsSocial}];}chats.unshift(nc);}
-  if(chats.length>100)chats.splice(100);setLocalChats(chats);loadChats();
+  if(chats.length>100)chats.splice(100);setLocalChats(chats);loadChats();renderPreviewNav();
   if(authToken){try{if(isSupabaseId(state.activeChatId)){await fetch('/api/chats',{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({id:state.activeChatId,title,messages:clean,website_html:currentWebsiteHtml||null,website_name:currentWebsiteName||null,is_social:!!currentIsSocial})});}else{const r=await fetch('/api/chats',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({title,messages:clean,website_html:currentWebsiteHtml||null,website_name:currentWebsiteName||null,is_social:!!currentIsSocial})});const data=await r.json();if(data.id){const lc=getLocalChats();const li=lc.findIndex(c=>c.id===state.activeChatId);if(li>=0)lc[li].id=data.id;state.activeChatId=data.id;setLocalChats(lc);loadChats();}}}catch(e){}}
 }
 
