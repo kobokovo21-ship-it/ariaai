@@ -1332,11 +1332,86 @@ async function handleWebsiteQA(answer){
   }
 }
 
+// Erkennt einen ausdrücklichen Farbwunsch im Text (z.B. "in Blau", "Schwarz-Weiß",
+// "monochrom", Hex-Code). Gibt die erkannte Farbwelt als kurzen String zurück, sonst null.
+// Damit lässt sich die STANDARD-FARBWELT zuverlässig überschreiben.
+function detectUserColor(text){
+  const t=String(text||'').toLowerCase();
+  if(/(schwarz[-\s]?wei(ß|ss)|s\/w|monochrom|black[-\s]?(and|&|\s)[-\s]?white)/i.test(t)) return 'Schwarz-Weiß / monochrom';
+  const hex=t.match(/#[0-9a-f]{3,8}\b/i); if(hex) return hex[0];
+  const colors=t.match(/\b(schwarz|wei(?:ß|ss)|grau|anthrazit|graphit|silber|platin|blau|navy|petrol|türkis|tuerkis|mint|rot|bordeaux|weinrot|grün|gruen|oliv|gelb|gold|orange|kupfer|bronze|lila|violett|purpur|pink|rosa|magenta|braun|beige|creme|sand)\b/gi);
+  if(colors&&colors.length) return [...new Set(colors.map(c=>c.toLowerCase()))].join(', ');
+  return null;
+}
+// Deterministischer Farb-Neutralizer: garantiert die edel-neutrale Default-Palette,
+// indem CSS-Farben in Graustufen gewandelt werden. Das Prompt biast das Modell
+// neutral, aber Branchen-Klischees (Kanzlei→Navy-Gold, Café→Braun) gewinnen sonst.
+// Ehemals kräftige, helle Akzentfarben bekommen einen dezenten kühlen Platin-Ton.
+function _neutColor(r,g,b){
+  const L=Math.round(0.2126*r+0.7152*g+0.0722*b);
+  const sat=(Math.max(r,g,b)-Math.min(r,g,b))/255;
+  if(sat>0.20 && L>=110) return [Math.max(0,L-4), L, Math.min(255,L+9)]; // heller Akzent → kühles Platin
+  return [L,L,L]; // Graustufe: Basis, Text, dunkle Flächen
+}
+function _hx(n){return Math.max(0,Math.min(255,Math.round(n))).toString(16).padStart(2,'0');}
+function neutralizeColors(css){
+  css=css.replace(/#([0-9a-fA-F]{3,8})\b/g,function(m,h){
+    var r,g,b,a=null;
+    if(h.length===3){r=parseInt(h[0]+h[0],16);g=parseInt(h[1]+h[1],16);b=parseInt(h[2]+h[2],16);}
+    else if(h.length===4){r=parseInt(h[0]+h[0],16);g=parseInt(h[1]+h[1],16);b=parseInt(h[2]+h[2],16);a=h[3]+h[3];}
+    else if(h.length===6){r=parseInt(h.slice(0,2),16);g=parseInt(h.slice(2,4),16);b=parseInt(h.slice(4,6),16);}
+    else if(h.length===8){r=parseInt(h.slice(0,2),16);g=parseInt(h.slice(2,4),16);b=parseInt(h.slice(4,6),16);a=h.slice(6,8);}
+    else return m;
+    var c=_neutColor(r,g,b);
+    return '#'+_hx(c[0])+_hx(c[1])+_hx(c[2])+(a!==null?a:'');
+  });
+  css=css.replace(/rgba?\(([^)]+)\)/gi,function(m,inner){
+    var p=inner.split(/[,\s\/]+/).filter(Boolean);
+    if(p.length<3) return m;
+    var r=parseFloat(p[0]),g=parseFloat(p[1]),b=parseFloat(p[2]);
+    if(isNaN(r)||isNaN(g)||isNaN(b)) return m;
+    var c=_neutColor(r,g,b);
+    return p.length>=4?('rgba('+c[0]+', '+c[1]+', '+c[2]+', '+p[3]+')'):('rgb('+c[0]+', '+c[1]+', '+c[2]+')');
+  });
+  css=css.replace(/hsla?\(([^)]+)\)/gi,function(m,inner){
+    var p=inner.split(/[,\s\/]+/).filter(Boolean);
+    if(p.length<3) return m;
+    var s=parseFloat(p[1]),l=parseFloat(p[2]);
+    if(isNaN(l)) return m;
+    var accent=(!isNaN(s)&&s>25&&l>=42), nh=accent?218:0, ns=accent?12:0;
+    return p.length>=4?('hsla('+nh+', '+ns+'%, '+l+'%, '+p[3]+')'):('hsl('+nh+', '+ns+'%, '+l+'%)');
+  });
+  return css;
+}
+function neutralizeCss(html){
+  html=html.replace(/(<style[^>]*>)([\s\S]*?)(<\/style>)/gi,function(m,o,c,e){return o+neutralizeColors(c)+e;});
+  html=html.replace(/style="([^"]*)"/gi,function(m,c){return 'style="'+neutralizeColors(c)+'"';});
+  html=html.replace(/style='([^']*)'/gi,function(m,c){return "style='"+neutralizeColors(c)+"'";});
+  return html;
+}
 async function buildWebsite(isUpdate,updateRequest){
   startGen(isUpdate?'Website wird aktualisiert...':'Website wird gebaut...');showTyping();
   const d=WEB.data;
+  // NUR den URSPRÜNGLICHEN Kundenwunsch für Stil-/Farberkennung nutzen — das automatisch
+  // ausgearbeitete Briefing spendiert sonst Branchen-Klischees ("Akzent: Gold" triggert
+  // fälschlich das LUXUS-Preset, "Hauptfarbe #1B2A4A" einen falschen Farbwunsch) und
+  // blockiert damit die neutrale Default-Palette / den Neutralizer.
+  const _userWish=(d._request||'').split(/AUSGEARBEITETES BRIEFING/i)[0];
   // Stil-Erkennung NUR bei ausdrücklich genanntem Stil (skims/luxus/bold/verspielt) — sonst gilt voll der GRAFIKVIDEO-Look
-  const styleBlock=detectVirgoStyle([d._request,d.stil,d.branche,updateRequest].filter(Boolean).join(' '), false);
+  const styleBlock=detectVirgoStyle([_userWish,d.stil,updateRequest].filter(Boolean).join(' '), false);
+
+  // Ausdrücklicher Farbwunsch des Kunden (z.B. "in Blau", "Schwarz-Weiß") — ebenfalls nur
+  // aus dem ursprünglichen Wunsch (_userWish oben), nicht aus dem Auto-Briefing.
+  const colorWish=detectUserColor([_userWish,updateRequest,(d.farbe&&d.farbe!=='#111111')?d.farbe:''].filter(Boolean).join(' '));
+  // Empirisch: das Modell befolgt einen AUSDRÜCKLICHEN Farbwunsch zuverlässig, aber
+  // eine bloße "Standard-Farbwelt" überstimmt es mit Branchen-Klischees (Kanzlei→
+  // Navy-Gold). Deshalb wird die neutrale Default-Palette in dieselbe "ausdrücklicher
+  // Wunsch"-Form gebracht — sonst gilt sie nur als weiche, überschreibbare Vorgabe.
+  const NEUTRAL_DEFAULT='edel-neutral & STRENG MONOCHROM (Graustufen). Kopiere GENAU diese CSS-Variablen 1:1 in :root und nutze AUSSCHLIESSLICH sie für ALLE Farben: :root{--bg:#0a0b0d;--surface:#141518;--surface-2:#1d2025;--line:#2a2e35;--text:#f4f5f7;--muted:#9aa1ad;--accent:#c7ccd6}. Alle Flächen und Hintergründe sind reine Graustufen (Anthrazit/Graphit/Schwarz), Text Off-White; der EINE kühle Platin-Akzent (--accent) NUR für CTA, feine Hairlines, Glow, ein Akzentwort — nie als Fläche. KEIN Gold/Messing/Champagner, KEIN Navy/Blau als Fläche, nichts Warmes/Gesättigtes, kein Grün/Gelb/Violett/Pink';
+  const effectiveWish=colorWish||(styleBlock?'':NEUTRAL_DEFAULT);
+  const colorBlock=effectiveWish?`\nFARBWELT — ABSOLUTER VORRANG (der Kunde wünscht AUSDRÜCKLICH genau diese Farbwelt; überschreibt JEDES Branchen-Klischee wie „Kanzlei=Navy-Gold"): „${effectiveWish}". Setze die GESAMTE Seite konsequent in genau dieser Farbwelt um — Hintergrund, Gradient-Meshes, Orbs, Glasflächen, Text, Akzent und CTA. Die GRAFIKVIDEO-Bewegung (Meshes, Orbs, Glassmorphism, Glow) bleibt Pflicht.`:'';
+  // Dieselbe Regel zusätzlich im SYSTEM-Prompt (stärkster Hebel).
+  const paletteRule=effectiveWish?` FARB-REGEL (ABSOLUT, höchste Priorität, überschreibt JEDES Branchen-Klischee): Der Kunde wünscht ausdrücklich die Farbwelt „${effectiveWish}". Nutze GENAU diese und keine andere.`:'';
 
   // ── Alle Bilder zu Supabase Storage hochladen, echte URLs holen (Neubau UND Update) ──
   let uploadedImageUrl='';
@@ -1380,6 +1455,7 @@ async function buildWebsite(isUpdate,updateRequest){
   // GRAFIKVIDEO-OPTIK: dieser Block wird in den Bau-Prompt eingefügt (kinoreife CSS-Bewegung)
   const GRAFIKVIDEO=`
 GRAFIKVIDEO-OPTIK — PFLICHT (lässt die Seite aussehen wie ein bewegtes Studio-Video, rein CSS, KEINE Videodateien):
+✓ STANDARD-FARBWELT — HARTE PFLICHT (gilt IMMER und für JEDE Branche, außer der Kunde nennt selbst ausdrücklich eine Farbe oder es greift eine STIL-VORGABE): STRENG MONOCHROM / GRAUSTUFEN. Nur Schwarz, Anthrazit, Graphit und Grautöne als Flächen (#0a0b0d, #141518, #1d2025, #2a2e35); Text in Off-White (#f4f5f7) und kühlem Grau (#9aa1ad). ALS EINZIGER AKZENT ein KÜHLES, ENTSÄTTIGTES Platin/Silber (#c7ccd6) — NUR für kleine Elemente (CTA, feine Hairlines, Glow, ein Akzentwort), NIEMALS als Hintergrund oder große Fläche. Meshes/Orbs sind Schwarz-→-Graphit-Verläufe mit kühlem Silber-Schimmer, KEINE bunten Farbkreise. Hintergrund/Flächen bleiben reine GRAUSTUFEN (0 Sättigung), KEIN Navy/Blau als Fläche. ABSOLUT VERBOTEN — auch bei „Kanzlei", „Premium", „edel", „Immobilien", „Versicherung" o.ä.: Gold, Champagner, Messing, Bronze, Navy+Gold, Beige, Creme, Sand, JEDE warme oder gesättigte Farbe, Grün, Gelb, Violett/Pink, UND ein durchgehend blaues/navy Farbschema. Denke „monochromer High-End-Editorial-Look" (Apple-dunkel, Off-White-Label, Aesop) — NICHT „klassische Kanzlei in Navy-Gold", NICHT SaaS-Gradient, NICHT Luxus=Gold. (Eine ausdrücklich vom Kunden genannte Farbe oder eine STIL-VORGABE hat IMMER Vorrang vor dieser Standard-Farbwelt.)
 ✓ ANIMATED GRADIENT MESH: Hintergrund mit mehreren großen, weichen Farbverläufen die langsam wandern (background:linear/radial-gradient + @keyframes auf background-position, 12-20s ease-in-out infinite)
 ✓ FLOATING ORBS/BLOBS: 3-5 große weichgezeichnete Farbkreise (position:absolute; filter:blur(70-100px); opacity:.4-.7) die langsam schweben und pulsieren (@keyframes translate+scale, je 15-25s)
 ✓ HERO LETTER/WORD REVEAL: Überschrift erscheint gestaffelt (jedes Wort/Zeile mit animation-delay), Subline fade-up danach
@@ -1391,7 +1467,7 @@ GRAFIKVIDEO-OPTIK — PFLICHT (lässt die Seite aussehen wie ein bewegtes Studio
 
   let prompt;
   if(isUpdate){
-    prompt='Hier ist die AKTUELLE Website (vollständiges HTML):\n\n'+currentWebsiteHtml+'\n\n[GEWÜNSCHTE ÄNDERUNG]: '+updateRequest+imgBlock+(styleBlock?'\n\n'+styleBlock:'')+'\n\nGib mir die KOMPLETTE aktualisierte Website zurück. Behalte ALLES bei was nicht geändert werden soll — inklusive aller bestehenden Texte, Bilder, Farben und Animationen. Ändere nur das Gewünschte. WICHTIG: Bleibe unter 50.000 Zeichen und stelle sicher, dass deine Antwort VOLLSTÄNDIG ist und mit </html> endet — eine abgeschnittene Antwort ist unbrauchbar. Nur HTML, beginne direkt mit <!DOCTYPE html>, KEINE Erklärung, KEINE Backticks.';
+    prompt='Hier ist die AKTUELLE Website (vollständiges HTML):\n\n'+currentWebsiteHtml+'\n\n[GEWÜNSCHTE ÄNDERUNG]: '+updateRequest+imgBlock+(styleBlock?'\n\n'+styleBlock:'')+colorBlock+'\n\nGib mir die KOMPLETTE aktualisierte Website zurück. Behalte ALLES bei was nicht geändert werden soll — inklusive aller bestehenden Texte, Bilder, Farben und Animationen. Ändere nur das Gewünschte. WICHTIG: Bleibe unter 50.000 Zeichen und stelle sicher, dass deine Antwort VOLLSTÄNDIG ist und mit </html> endet — eine abgeschnittene Antwort ist unbrauchbar. Nur HTML, beginne direkt mit <!DOCTYPE html>, KEINE Erklärung, KEINE Backticks.';
   } else if(WEB.collecting===false && d._request){
     // ── DIREKT-MODUS: ausführlicher Prompt, erweitertes Briefing und/oder Bild vorhanden ──
     prompt=`Du bist ein Motion Design Expert. Erstelle eine WUNDERSCHÖNE, professionelle, voll animierte Website im Stil einer 10.000-Dollar-Agentur-Seite, basierend auf diesem Briefing:
@@ -1401,7 +1477,7 @@ ${d._request}
 ${imgBlock}
 
 ${styleBlock?styleBlock+'\n(Die STIL-VORGABE hat Vorrang: Farbwelt, Typografie und Bewegungsenergie richten sich nach ihr — auch gegenüber der Grafikvideo-Optik unten.)':''}
-${GRAFIKVIDEO}
+${GRAFIKVIDEO}${colorBlock}
 
 ANIMATIONEN - PFLICHT (zusätzlich zur Grafikvideo-Optik):
 ✓ CSS @keyframes überall: fade-in, slide-up, float, pulse, glow
@@ -1431,7 +1507,7 @@ ZIELGRUPPE: ${d.zielgruppe||''}
 HAUPTFARBE: ${d.farbe||'#111111'}
 
 ${styleBlock?styleBlock+'\n(Die STIL-VORGABE hat Vorrang: Farbwelt, Typografie und Bewegungsenergie richten sich nach ihr — auch gegenüber der Grafikvideo-Optik unten. Die HAUPTFARBE fügt sich in die Stil-Palette ein.)':''}
-${GRAFIKVIDEO}
+${GRAFIKVIDEO}${colorBlock}
 
 STRUKTUR (PFLICHT):
 1. Fixe Navigation: Logo links, Menu rechts (sticky, position:fixed), Glassmorphism
@@ -1468,7 +1544,7 @@ Das HTML MUSS mind. 6KB sein (echte Inhalte + Animationen + Grafikvideo-Optik).
 `;
   }
 
-  const sys='Du bist ein Motion Design & Web Animation Expert für High-End-Agentur-Websites. Generiere WUNDERSCHÖNES, modernes HTML mit echten CSS/SVG Animationen und kinoreifer Grafikvideo-Optik (bewegte Gradient-Meshes, schwebende Blur-Orbs, Glassmorphism, Glow). Antworte NUR mit vollständigem HTML-Code. Beginne direkt mit <!DOCTYPE html>. KEIN Text davor/danach, KEINE Backticks, KEIN Markdown. Das HTML muss atemberaubend schön sein mit Bewegungen überall, als hätte es eine teure Agentur gebaut.'+(uploadedImageUrl?' WICHTIG: Wenn im Briefing eine echte Bild-URL genannt wird, baue dieses Bild per <img src="..."> ein und zeichne es NICHT nach.':'');
+  const sys='Du bist ein Motion Design & Web Animation Expert für High-End-Agentur-Websites. Generiere WUNDERSCHÖNES, modernes HTML mit echten CSS/SVG Animationen und kinoreifer Grafikvideo-Optik (bewegte Gradient-Meshes, schwebende Blur-Orbs, Glassmorphism, Glow). Antworte NUR mit vollständigem HTML-Code. Beginne direkt mit <!DOCTYPE html>. KEIN Text davor/danach, KEINE Backticks, KEIN Markdown. Das HTML muss atemberaubend schön sein mit Bewegungen überall, als hätte es eine teure Agentur gebaut.'+(uploadedImageUrl?' WICHTIG: Wenn im Briefing eine echte Bild-URL genannt wird, baue dieses Bild per <img src="..."> ein und zeichne es NICHT nach.':'')+paletteRule;
 
   // ── Message-Content bauen: alle Bilder mitschicken wenn vorhanden (Neubau + Update) ──
   let userContent;
@@ -1513,7 +1589,11 @@ Das HTML MUSS mind. 6KB sein (echte Inhalte + Animationen + Grafikvideo-Optik).
     // Check for animation keywords
     const hasAnimations=/@keyframes|animation:|transition:|transform:|IntersectionObserver|scroll/i.test(html);
     console.log('✓ HTML valid, size:',html.length+'B, has animations:',hasAnimations);
-    
+
+    // GARANTIERTE Default-Palette: nur bei Neubau ohne ausdrücklichen Farbwunsch und
+    // ohne STIL-VORGABE — Branchen-Klischees (Navy-Gold, Braun) werden zu Graustufen.
+    if(!isUpdate && !colorWish && !styleBlock){ html=neutralizeCss(html); console.log('✓ Neutralizer angewendet (edel-neutrale Default-Palette)'); }
+
     currentWebsiteHtml=html;
     currentWebsiteName=(d.name||'website').toLowerCase().replace(/[^a-z0-9]/g,'-').replace(/-+/g,'-')||'website';
     currentIsSocial=false;
