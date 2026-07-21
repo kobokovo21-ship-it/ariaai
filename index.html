@@ -1413,6 +1413,19 @@ async function buildWebsite(isUpdate,updateRequest){
   // Dieselbe Regel zusätzlich im SYSTEM-Prompt (stärkster Hebel).
   const paletteRule=effectiveWish?` FARB-REGEL (ABSOLUT, höchste Priorität, überschreibt JEDES Branchen-Klischee): Der Kunde wünscht ausdrücklich die Farbwelt „${effectiveWish}". Nutze GENAU diese und keine andere.`:'';
 
+  // ── HERO-VIDEO (nur Bezahl-Plan, nur Neubau): echtes bewegtes Footage als kräftiger
+  //    Eröffnungsmoment. Stub-Clip aus localStorage (leer = aus → CSS-GRAFIKVIDEO als Fallback);
+  //    ersetzt später der Industrie-Clip-Pool. Host MUSS HTTP-Range unterstützen (<video>).
+  const _heroStub=localStorage.getItem('virgo_hero_video_url')||'';
+  const heroClip=(!isUpdate && isPaidPlan() && _heroStub)?_heroStub:'';
+  const heroVideoBlock=heroClip?`\nHERO-VIDEO — PFLICHT, kräftiger Auftakt (KEIN dezenter Hintergrund-Loop): Baue GANZ OBEN eine formatfüllende Hero-Sektion (min-height:88vh; position:relative; overflow:hidden), in der ein echtes Video den dominanten Eröffnungsmoment bildet. EXAKTE Ebenen-Architektur, von unten nach oben:
+1) FALLBACK/POSTER (sofort sichtbar): der animierte GRAFIKVIDEO-Mesh (Gradient-Mesh + schwebende Orbs) als eigene Ebene position:absolute;inset:0 — füllt den Hero und ist die Sofort-Anzeige, bis das Video lädt bzw. FALLS es nicht lädt.
+2) VIDEO: <video src="${heroClip}" autoplay muted loop playsinline preload="auto" onerror="this.style.display='none'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;animation:heroVidIn 1s ease .25s forwards"></video> plus @keyframes heroVidIn{to{opacity:1}} — das Video blendet sanft über den Mesh ein. KEINE controls.
+3) SCRIM: dunkler Verlauf (linear-gradient(180deg,rgba(0,0,0,.25),rgba(0,0,0,.72))) als Ebene ÜBER dem Video für Textkontrast.
+4) INHALT (oberste Ebene): riesige Headline (font-size:clamp(48px,9vw,112px), gestaffeltes Word-Reveal), Subline (fade-up) und ein Glow-CTA — hell und klar lesbar auf dem Scrim.
+Im <style> zwingend die nativen Steuerelemente verstecken: video::-webkit-media-controls,video::-webkit-media-controls-enclosure,video::-webkit-media-controls-panel{display:none!important;-webkit-appearance:none}
+Das Video muss den oberen Seitenbereich DOMINIEREN — großer, mutiger Auftritt, nicht als kleiner dezenter Loop.`:'';
+
   // ── Alle Bilder zu Supabase Storage hochladen, echte URLs holen (Neubau UND Update) ──
   let uploadedImageUrl='';
   let uploadedUrls=[];
@@ -1431,8 +1444,9 @@ async function buildWebsite(isUpdate,updateRequest){
     document.getElementById('gl').textContent='Website wird gebaut...';
   }
 
-  // ── AUTO-HERO-BILD: Neubau ohne hochgeladene Fotos → Foto mit Menschen generieren (Hero) ──
-  if(!isUpdate && !uploadedUrls.length){
+  // ── AUTO-HERO-BILD: Neubau ohne hochgeladene Fotos → Foto mit Menschen generieren (Hero).
+  //    Entfällt, wenn ein Hero-VIDEO den Auftakt bildet (Video ist der Hero-Visual).
+  if(!isUpdate && !uploadedUrls.length && !heroClip){
     try{
       document.getElementById('gl').textContent='Hero-Foto wird generiert...';
       const wsSubject=(d._request||[d.name,d.branche,d.angebot].filter(Boolean).join(', ')||'modern business').slice(0,280);
@@ -1477,7 +1491,7 @@ ${d._request}
 ${imgBlock}
 
 ${styleBlock?styleBlock+'\n(Die STIL-VORGABE hat Vorrang: Farbwelt, Typografie und Bewegungsenergie richten sich nach ihr — auch gegenüber der Grafikvideo-Optik unten.)':''}
-${GRAFIKVIDEO}${colorBlock}
+${GRAFIKVIDEO}${colorBlock}${heroVideoBlock}
 
 ANIMATIONEN - PFLICHT (zusätzlich zur Grafikvideo-Optik):
 ✓ CSS @keyframes überall: fade-in, slide-up, float, pulse, glow
@@ -1507,7 +1521,7 @@ ZIELGRUPPE: ${d.zielgruppe||''}
 HAUPTFARBE: ${d.farbe||'#111111'}
 
 ${styleBlock?styleBlock+'\n(Die STIL-VORGABE hat Vorrang: Farbwelt, Typografie und Bewegungsenergie richten sich nach ihr — auch gegenüber der Grafikvideo-Optik unten. Die HAUPTFARBE fügt sich in die Stil-Palette ein.)':''}
-${GRAFIKVIDEO}${colorBlock}
+${GRAFIKVIDEO}${colorBlock}${heroVideoBlock}
 
 STRUKTUR (PFLICHT):
 1. Fixe Navigation: Logo links, Menu rechts (sticky, position:fixed), Glassmorphism
