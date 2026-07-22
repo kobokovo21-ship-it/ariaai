@@ -92,6 +92,17 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
 .pv-nav-chip{flex-shrink:0;padding:5px 11px;border-radius:20px;border:1px solid var(--bd);background:transparent;color:var(--tm);font-family:'Inter',sans-serif;font-size:11px;font-weight:500;cursor:pointer;white-space:nowrap}
 .pv-nav-chip:hover{border-color:var(--t);color:var(--t)}
 .pv-nav-chip.active{background:var(--t);color:#fff;border-color:var(--t)}
+.admin-panel{margin:6px 8px 4px;padding:10px 12px;border:1px solid var(--bd);border-radius:10px}
+.ap-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ap-title{font-size:12px;font-weight:600;color:var(--t)}
+.ap-switch{position:relative;display:inline-block;width:38px;height:22px;flex-shrink:0}
+.ap-switch input{opacity:0;width:0;height:0}
+.ap-slider{position:absolute;cursor:pointer;inset:0;background:var(--bd);border-radius:22px;transition:.2s}
+.ap-slider:before{content:"";position:absolute;height:16px;width:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+.ap-switch input:checked+.ap-slider{background:var(--t)}
+.ap-switch input:checked+.ap-slider:before{transform:translateX(16px)}
+.ap-url{width:100%;margin-top:8px;padding:6px 8px;border:1px solid var(--bd);border-radius:7px;font-family:'Inter',sans-serif;font-size:11px;background:transparent;color:var(--t);box-sizing:border-box}
+.ap-hint{font-size:10px;color:var(--tm);margin-top:6px;line-height:1.4}
 
 /* topbar */
 .topbar{height:50px;padding:0 14px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:8px;flex-shrink:0}
@@ -315,6 +326,14 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
 
   <div class="hist" id="hist"><div class="hist-empty" id="hist-empty">Deine Chats erscheinen hier.</div></div>
 
+  <div class="admin-panel" id="admin-panel" style="display:none">
+    <div class="ap-head">
+      <span class="ap-title">Hero-Video Beta aktivieren</span>
+      <label class="ap-switch"><input type="checkbox" id="hv-toggle" onchange="applyHeroBeta()"><span class="ap-slider"></span></label>
+    </div>
+    <input class="ap-url" id="hv-url" type="text" placeholder="Test-Clip-URL (leer = Platzhalter-Clip)" oninput="applyHeroBeta()">
+    <div class="ap-hint" id="hv-hint"></div>
+  </div>
   <div class="ubar" id="ubar" onclick="showM('modal-login')">
     <div class="av" id="uav">?</div>
     <div style="flex:1;min-width:0"><div class="un" id="uname">Anmelden</div><div class="up" id="uplan">Kostenlos starten</div></div>
@@ -891,6 +910,33 @@ function setWorkspace(ws){_applyWorkspace(ws);applyFreeRestrictions();}
 // ═══════════════════════════════════════
 const ADMIN_EMAIL='holyencore@gmail.com';
 function isAdmin(){return currentUser&&currentUser.email===ADMIN_EMAIL;}
+// ── Admin-only Hero-Video Beta toggle (internal testing; NOT for paid users) ──
+const HERO_BETA_PLACEHOLDER='https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4';
+function renderAdminPanel(){
+  const p=document.getElementById('admin-panel');if(!p)return;
+  if(!isAdmin()){p.style.display='none';return;}
+  p.style.display='block';
+  document.getElementById('hv-toggle').checked=localStorage.getItem('virgo_hero_beta')==='1';
+  document.getElementById('hv-url').value=localStorage.getItem('virgo_hero_beta_url')||'';
+  applyHeroBeta(); // reconcile virgo_hero_video_url with saved toggle state on load
+}
+function updateHeroHint(){
+  const h=document.getElementById('hv-hint');if(!h)return;
+  const on=document.getElementById('hv-toggle').checked;
+  const active=localStorage.getItem('virgo_hero_video_url')||'';
+  if(!on){h.textContent='Aus — Websites werden ohne Hero-Video generiert.';return;}
+  h.textContent=(document.getElementById('hv-url').value.trim()?'An — deine Test-URL wird verwendet.':'An — Platzhalter-Clip wird verwendet.')+(active?' ✓ aktiv':'');
+}
+function applyHeroBeta(){
+  if(!isAdmin())return;
+  const on=document.getElementById('hv-toggle').checked;
+  const url=document.getElementById('hv-url').value.trim();
+  localStorage.setItem('virgo_hero_beta',on?'1':'0');
+  localStorage.setItem('virgo_hero_beta_url',url);
+  if(on){localStorage.setItem('virgo_hero_video_url',url||HERO_BETA_PLACEHOLDER);}
+  else{localStorage.removeItem('virgo_hero_video_url');}
+  updateHeroHint();
+}
 function updateUI(){
   const li=!!currentUser;const plan=localStorage.getItem('virgo_plan')||'free';
   document.getElementById('uav').textContent=li?(currentUser.email?.[0]?.toUpperCase()||'U'):'?';
@@ -900,6 +946,7 @@ function updateUI(){
   document.getElementById('auth-btn').onclick=li?logout:()=>showM('modal-login');
   if(isAdmin()){document.getElementById('cr-display').textContent='Credits';document.getElementById('cdot').className='cdot';}
   else{document.getElementById('cr-display').textContent=credits+' Credits';document.getElementById('cdot').className='cdot'+(credits<10?' low':'');}
+  renderAdminPanel();
   applyFreeRestrictions();
 }
 async function loadCredits(){if(!authToken)return;try{const r=await fetch('/api/credits',{headers:{'Authorization':'Bearer '+authToken}});const d=await r.json();if(d.credits!==undefined){credits=d.credits;localStorage.setItem('virgo_credits',credits);localStorage.setItem('virgo_plan',d.plan||'free');updateUI();}}catch(e){}}

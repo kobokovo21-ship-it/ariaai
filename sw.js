@@ -1,4 +1,4 @@
-const CACHE = 'virgo-v16';
+const CACHE = 'virgo-v17';
 const ASSETS = ['/', '/index.html'];
 
 self.addEventListener('install', e => {
