@@ -1436,7 +1436,44 @@ function neutralizeCss(html){
   html=html.replace(/style='([^']*)'/gi,function(m,c){return "style='"+neutralizeColors(c)+"'";});
   return html;
 }
+// GARANTIE: echte Fotos bleiben farbig — gilt in JEDER Palette (neutral, Nutzerfarbe, Stil).
+// Entfernt nur ENTSÄTTIGENDE CSS-Filter (grayscale/sepia/saturate<1) aus <style> und
+// Inline-Styles; Blur/Glow/Drop-Shadow der Orbs (filter:blur/brightness/drop-shadow…)
+// bleiben unangetastet. Läuft immer, auch bei Updates.
+function _unfilter(css){
+  return css.replace(/(-webkit-)?filter\s*:\s*([^;}'"]+)/gi,function(m,pfx,val){
+    if(!/grayscale|sepia|saturate/i.test(val)) return m; // nichts Entsättigendes → unverändert
+    var v=val
+      .replace(/\b(grayscale|sepia)\(\s*([\d.]+%?)?\s*\)/gi,function(mm,nm,arg){
+        if(arg==null) return ''; // grayscale()/sepia() ohne Wert = 100% → raus
+        var n=parseFloat(arg); return (isFinite(n)&&n>0)?'':mm; // >0 raus, 0 bleibt (neutral)
+      })
+      .replace(/\bsaturate\(\s*([\d.]+%?)\s*\)/gi,function(mm,arg){
+        var s=arg.slice(-1)==='%'?parseFloat(arg)/100:parseFloat(arg);
+        return (isFinite(s)&&s<1)?'':mm; // <1 entsättigt → raus, >=1 bleibt
+      })
+      .replace(/\s{2,}/g,' ').trim();
+    return (pfx||'')+'filter: '+(v||'none');
+  });
+}
+function unfilterImages(html){
+  html=html.replace(/(<style[^>]*>)([\s\S]*?)(<\/style>)/gi,function(m,o,c,e){return o+_unfilter(c)+e;});
+  html=html.replace(/style="([^"]*)"/gi,function(m,c){return 'style="'+_unfilter(c)+'"';});
+  html=html.replace(/style='([^']*)'/gi,function(m,c){return "style='"+_unfilter(c)+"'";});
+  return html;
+}
 async function buildWebsite(isUpdate,updateRequest){
+  // ═══ FARB-/STIL-REGELWERK (eine Quelle der Wahrheit) ══════════════════════
+  // Genau EINE Farbwelt gilt, nach Priorität:
+  //   1. colorWish  — Kunde nennt ausdrücklich eine Farbe ("in Lila") → gewinnt IMMER.
+  //   2. styleBlock — Kunde nennt einen Stil (Luxus/Skims/Bold/…) → dessen Palette.
+  //   3. sonst      — NEUTRAL_DEFAULT: edel/teuer wirkend, entsättigt-neutral (nicht bloß grau).
+  // Immer & unabhängig von der Palette:
+  //   • Fotos bleiben IMMER in voller Farbe (Prompt-Regel + deterministisch via unfilterImages()).
+  //   • GRAFIKVIDEO-Bewegung (Meshes/Orbs/Glass/Glow) ist PFLICHT; nur die Palette wechselt.
+  // Garantien am Ende: unfilterImages() (immer) schützt Fotos; neutralizeCss() (nur Fall 3)
+  // erzwingt die neutrale UI deterministisch gegen Branchen-Klischees.
+  // ══════════════════════════════════════════════════════════════════════════
   startGen(isUpdate?'Website wird aktualisiert...':'Website wird gebaut...');showTyping();
   const d=WEB.data;
   // NUR den URSPRÜNGLICHEN Kundenwunsch für Stil-/Farberkennung nutzen — das automatisch
@@ -1454,7 +1491,7 @@ async function buildWebsite(isUpdate,updateRequest){
   // eine bloße "Standard-Farbwelt" überstimmt es mit Branchen-Klischees (Kanzlei→
   // Navy-Gold). Deshalb wird die neutrale Default-Palette in dieselbe "ausdrücklicher
   // Wunsch"-Form gebracht — sonst gilt sie nur als weiche, überschreibbare Vorgabe.
-  const NEUTRAL_DEFAULT='edel-neutral & STRENG MONOCHROM (Graustufen). Kopiere GENAU diese CSS-Variablen 1:1 in :root und nutze AUSSCHLIESSLICH sie für ALLE Farben: :root{--bg:#0a0b0d;--surface:#141518;--surface-2:#1d2025;--line:#2a2e35;--text:#f4f5f7;--muted:#9aa1ad;--accent:#c7ccd6}. Alle Flächen und Hintergründe sind reine Graustufen (Anthrazit/Graphit/Schwarz), Text Off-White; der EINE kühle Platin-Akzent (--accent) NUR für CTA, feine Hairlines, Glow, ein Akzentwort — nie als Fläche. KEIN Gold/Messing/Champagner, KEIN Navy/Blau als Fläche, nichts Warmes/Gesättigtes, kein Grün/Gelb/Violett/Pink';
+  const NEUTRAL_DEFAULT='edel, teuer wirkend & entsättigt-neutral — der Look einer 10.000-€-Design-Agentur, NIEMALS billig, generisch oder bunt/laut. Ziel ist ausdrücklich „sieht teuer aus", nicht „ist einfach nur grau". Kopiere GENAU diese CSS-Variablen 1:1 in :root und nutze sie für ALLE UI-Farben (Hintergründe, Flächen, Buttons, Gradients, Text): :root{--bg:#0a0b0d;--surface:#141518;--surface-2:#1d2025;--line:#2a2e35;--text:#f4f5f7;--muted:#9aa1ad;--accent:#c7ccd6}. Flächen in tiefem Anthrazit/Graphit/Schwarz, Text Off-White; der EINE kühle Platin-Akzent (--accent) NUR für CTA, feine Hairlines, Glow, ein Akzentwort — nie als große Fläche. VERBOTEN als UI-Farbe: Gold/Messing/Champagner, Navy/Blau als Fläche, alles Warme/Gesättigte, Grün/Gelb/Violett/Pink. WICHTIG: Diese Palette gilt NUR für UI/CSS (Flächen, Buttons, Verläufe) — echte Fotos/Bilder bleiben IMMER in voller Farbe und werden NIE entsättigt.';
   const effectiveWish=colorWish||(styleBlock?'':NEUTRAL_DEFAULT);
   const colorBlock=effectiveWish?`\nFARBWELT — ABSOLUTER VORRANG (der Kunde wünscht AUSDRÜCKLICH genau diese Farbwelt; überschreibt JEDES Branchen-Klischee wie „Kanzlei=Navy-Gold"): „${effectiveWish}". Setze die GESAMTE Seite konsequent in genau dieser Farbwelt um — Hintergrund, Gradient-Meshes, Orbs, Glasflächen, Text, Akzent und CTA. Die GRAFIKVIDEO-Bewegung (Meshes, Orbs, Glassmorphism, Glow) bleibt Pflicht.`:'';
   // Dieselbe Regel zusätzlich im SYSTEM-Prompt (stärkster Hebel).
@@ -1516,7 +1553,8 @@ Das Video muss den oberen Seitenbereich DOMINIEREN — großer, mutiger Auftritt
   // GRAFIKVIDEO-OPTIK: dieser Block wird in den Bau-Prompt eingefügt (kinoreife CSS-Bewegung)
   const GRAFIKVIDEO=`
 GRAFIKVIDEO-OPTIK — PFLICHT (lässt die Seite aussehen wie ein bewegtes Studio-Video, rein CSS, KEINE Videodateien):
-✓ STANDARD-FARBWELT — HARTE PFLICHT (gilt IMMER und für JEDE Branche, außer der Kunde nennt selbst ausdrücklich eine Farbe oder es greift eine STIL-VORGABE): STRENG MONOCHROM / GRAUSTUFEN. Nur Schwarz, Anthrazit, Graphit und Grautöne als Flächen (#0a0b0d, #141518, #1d2025, #2a2e35); Text in Off-White (#f4f5f7) und kühlem Grau (#9aa1ad). ALS EINZIGER AKZENT ein KÜHLES, ENTSÄTTIGTES Platin/Silber (#c7ccd6) — NUR für kleine Elemente (CTA, feine Hairlines, Glow, ein Akzentwort), NIEMALS als Hintergrund oder große Fläche. Meshes/Orbs sind Schwarz-→-Graphit-Verläufe mit kühlem Silber-Schimmer, KEINE bunten Farbkreise. Hintergrund/Flächen bleiben reine GRAUSTUFEN (0 Sättigung), KEIN Navy/Blau als Fläche. ABSOLUT VERBOTEN — auch bei „Kanzlei", „Premium", „edel", „Immobilien", „Versicherung" o.ä.: Gold, Champagner, Messing, Bronze, Navy+Gold, Beige, Creme, Sand, JEDE warme oder gesättigte Farbe, Grün, Gelb, Violett/Pink, UND ein durchgehend blaues/navy Farbschema. Denke „monochromer High-End-Editorial-Look" (Apple-dunkel, Off-White-Label, Aesop) — NICHT „klassische Kanzlei in Navy-Gold", NICHT SaaS-Gradient, NICHT Luxus=Gold. (Eine ausdrücklich vom Kunden genannte Farbe oder eine STIL-VORGABE hat IMMER Vorrang vor dieser Standard-Farbwelt.)
+✓ FARBWELT: Übernimm die aktive Farbwelt (siehe FARBWELT-Block bzw. STIL-VORGABE weiter unten) konsequent für Meshes, Orbs, Glasflächen, Glow, Text und CTA — erfinde KEINE eigenen bunten Farbkreise, die Bewegung folgt exakt der vorgegebenen Palette.
+✓ FOTOS/BILDER — IMMER VOLLE FARBE: Echte Fotos (<img>, background-image) werden NIEMALS entsättigt — kein filter:grayscale/sepia/saturate(0), kein Schwarz-Weiß, auch NICHT wenn die UI-Palette neutral/monochrom ist. Nur die UI (Flächen, Buttons, Gradients) folgt der Farbwelt; die Fotos bleiben farbig. Ein dunkler Verlaufs-Scrim für Textkontrast ist erlaubt, eine Entsättigung des Fotos NICHT.
 ✓ ANIMATED GRADIENT MESH: Hintergrund mit mehreren großen, weichen Farbverläufen die langsam wandern (background:linear/radial-gradient + @keyframes auf background-position, 12-20s ease-in-out infinite)
 ✓ FLOATING ORBS/BLOBS: 3-5 große weichgezeichnete Farbkreise (position:absolute; filter:blur(70-100px); opacity:.4-.7) die langsam schweben und pulsieren (@keyframes translate+scale, je 15-25s)
 ✓ HERO LETTER/WORD REVEAL: Überschrift erscheint gestaffelt (jedes Wort/Zeile mit animation-delay), Subline fade-up danach
@@ -1528,7 +1566,7 @@ GRAFIKVIDEO-OPTIK — PFLICHT (lässt die Seite aussehen wie ein bewegtes Studio
 
   let prompt;
   if(isUpdate){
-    prompt='Hier ist die AKTUELLE Website (vollständiges HTML):\n\n'+currentWebsiteHtml+'\n\n[GEWÜNSCHTE ÄNDERUNG]: '+updateRequest+imgBlock+(styleBlock?'\n\n'+styleBlock:'')+colorBlock+'\n\nGib mir die KOMPLETTE aktualisierte Website zurück. Behalte ALLES bei was nicht geändert werden soll — inklusive aller bestehenden Texte, Bilder, Farben und Animationen. Ändere nur das Gewünschte. WICHTIG: Bleibe unter 50.000 Zeichen und stelle sicher, dass deine Antwort VOLLSTÄNDIG ist und mit </html> endet — eine abgeschnittene Antwort ist unbrauchbar. Nur HTML, beginne direkt mit <!DOCTYPE html>, KEINE Erklärung, KEINE Backticks.';
+    prompt='Hier ist die AKTUELLE Website (vollständiges HTML):\n\n'+currentWebsiteHtml+'\n\n[GEWÜNSCHTE ÄNDERUNG]: '+updateRequest+imgBlock+(styleBlock?'\n\n'+styleBlock:'')+colorBlock+'\nFOTOS: alle echten Fotos bleiben in voller Farbe — niemals entsättigen (kein filter:grayscale/sepia/saturate(0)), auch wenn die UI neutral ist.\n\nGib mir die KOMPLETTE aktualisierte Website zurück. Behalte ALLES bei was nicht geändert werden soll — inklusive aller bestehenden Texte, Bilder, Farben und Animationen. Ändere nur das Gewünschte. WICHTIG: Bleibe unter 50.000 Zeichen und stelle sicher, dass deine Antwort VOLLSTÄNDIG ist und mit </html> endet — eine abgeschnittene Antwort ist unbrauchbar. Nur HTML, beginne direkt mit <!DOCTYPE html>, KEINE Erklärung, KEINE Backticks.';
   } else if(WEB.collecting===false && d._request){
     // ── DIREKT-MODUS: ausführlicher Prompt, erweitertes Briefing und/oder Bild vorhanden ──
     prompt=`Du bist ein Motion Design Expert. Erstelle eine WUNDERSCHÖNE, professionelle, voll animierte Website im Stil einer 10.000-Dollar-Agentur-Seite, basierend auf diesem Briefing:
@@ -1651,8 +1689,11 @@ Das HTML MUSS mind. 6KB sein (echte Inhalte + Animationen + Grafikvideo-Optik).
     const hasAnimations=/@keyframes|animation:|transition:|transform:|IntersectionObserver|scroll/i.test(html);
     console.log('✓ HTML valid, size:',html.length+'B, has animations:',hasAnimations);
 
+    // FOTO-GARANTIE (immer, jede Palette): echte Fotos dürfen nie entsättigt werden.
+    html=unfilterImages(html);
     // GARANTIERTE Default-Palette: nur bei Neubau ohne ausdrücklichen Farbwunsch und
     // ohne STIL-VORGABE — Branchen-Klischees (Navy-Gold, Braun) werden zu Graustufen.
+    // Betrifft NUR CSS-Farbtoken (nicht Fotos, nicht die oben geschützten Filter).
     if(!isUpdate && !colorWish && !styleBlock){ html=neutralizeCss(html); console.log('✓ Neutralizer angewendet (edel-neutrale Default-Palette)'); }
 
     currentWebsiteHtml=html;
