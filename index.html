@@ -2342,10 +2342,27 @@ applyFreeRestrictions();
       /* /api/render-post streamt Server-Sent Events (kein JSON, kein Polling):
          data: {"type":"phase"|"done"|"error", ...} */
       var dur=Math.min(90,Math.max(1,Math.round(Number(MP4_DURATION_SECONDS)||6)));
+      // Fetch a short-lived render token (server holds the secret). If the
+      // secret isn't configured yet, /api/render-token returns {token:null} and
+      // we call the (still-open) render service without a key.
+      var renderKey='';
+      try{
+        if(authToken){
+          var tkR=await fetch('/api/render-token',{method:'POST',headers:{'Authorization':'Bearer '+authToken}});
+          if(tkR.ok){ var tkD=await tkR.json(); renderKey=tkD.token||''; }
+        }
+      }catch(e){}
+      var rHeaders={'Content-Type':'application/json'};
+      if(renderKey) rHeaders['x-api-key']=renderKey;
       var res=await fetch(base+'/api/render-post',{
-        method:'POST', headers:{'Content-Type':'application/json'},
+        method:'POST', headers:rHeaders,
         body:JSON.stringify({ html:html, aspect:ar, durationInSeconds:dur })
       });
+      if(res.status===401){
+        hidePill();
+        alert('Für den MP4-Export bitte einloggen.');
+        return;
+      }
       if(!res.ok||!res.body){
         var detail='';
         try{ detail=(await res.json()).message||''; }catch(e){}
