@@ -23,7 +23,16 @@
 
 export const config = { maxDuration: 300 };
 
+import { deductCredits } from '../lib/credits.js';
+import { enforceRateLimit } from '../lib/rate-limit.js';
+import { isAdminEmail } from '../lib/auth.js';
+
 const ALLOWED_ORIGINS = ['https://virgoio.com', 'https://www.virgoio.com'];
+
+// Credit-Kosten je Pipeline-Schritt. Auch Paying-Kunden haben Kontingente
+// (Makler-Business: 3000 Credits/Monat) — jede fal-/ElevenLabs-Anfrage kostet
+// echtes Geld und muss verbucht werden.
+const FILM_COSTS = { image: 5, video: 20, voice: 2, lipsync: 10 };
 
 // ── Modelle als Env-steuerbare Konstanten (austauschbar ohne Code-Änderung).
 // Falls fal.ai eine Modell-ID umbenennt, nur die Env-Variable anpassen.
@@ -150,12 +159,24 @@ export default async function handler(req, res) {
   if (!guard(req, res)) return;
 
   // Nur zahlende Kunden + Admin — jeder Aufruf kostet echtes Geld
-  const { isPaying } = await getUserAccess(req);
+  const { user, isPaying } = await getUserAccess(req);
+  if (!user) return res.status(401).json({ error: 'Nicht eingeloggt' });
   if (!isPaying) {
-    return res.status(401).json({ error: 'Die Film-Pipeline ist Teil der Bezahl-Pläne. Bitte einloggen und Plan buchen.' });
+    return res.status(403).json({ error: 'Die Film-Pipeline ist Teil der Bezahl-Pläne. Bitte Plan buchen.' });
   }
 
+  if (!(await enforceRateLimit(req, res, { name: 'film:' + user.id, windowSec: 60, max: 12 }))) return;
+
   const { step } = req.body || {};
+
+  // Credit-Abzug PRO SCHRITT — Admin ausgenommen. Verbucht bevor die teuren
+  // fal.ai-/ElevenLabs-Aufrufe rausgehen, damit ein Angreifer nicht kostenlos
+  // die Pipeline vollständig laufen lassen kann.
+  const cost = FILM_COSTS[step];
+  if (cost && !isAdminEmail(user.email)) {
+    const charge = await deductCredits(user.id, cost);
+    if (!charge.success) return res.status(402).json({ error: 'Nicht genug Credits', credits: charge.credits });
+  }
 
   try {
     // ─────────────────────────────────────────────

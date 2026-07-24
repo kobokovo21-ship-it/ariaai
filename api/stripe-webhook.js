@@ -5,6 +5,41 @@ export const config = {
   api: { bodyParser: false }
 };
 
+// Idempotenz: Wenn Stripe dasselbe Event mehrfach schickt (z.B. weil unser
+// Handler bei einem transienten Fehler 5xx zurückgab), sollen Credits/Pläne
+// NICHT doppelt gutgeschrieben werden.
+//
+// Wir versuchen `event.id` atomar in webhook_events einzufügen. Nur wenn der
+// INSERT gelingt, verarbeiten wir das Event. Bei Konflikt (already inserted)
+// → sofort 200 zurück, damit Stripe nicht erneut retryt.
+async function claimEventId(BASE, SVC, eventId, eventType) {
+  if (!eventId) return true; // ohne id nicht dedupbar → verarbeiten
+  try {
+    const r = await fetch(`${BASE}/rest/v1/webhook_events`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SVC,
+        'Authorization': `Bearer ${SVC}`,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ event_id: eventId, type: eventType || null })
+    });
+    // 201 Created → wir dürfen verarbeiten.
+    // 409 Conflict (unique_violation) → Event bereits verarbeitet.
+    if (r.status === 201 || r.status === 204) return true;
+    if (r.status === 409) return false;
+    // Andere Status: konservativ verarbeiten, um kein Event zu verlieren,
+    // aber loggen.
+    const t = await r.text().catch(() => '');
+    console.warn('webhook_events insert unexpected status', r.status, t.slice(0, 200));
+    return true;
+  } catch (e) {
+    console.warn('webhook_events insert error:', e.message);
+    return true;
+  }
+}
+
 function getRawBody(req) {
   return new Promise((resolve, reject) => {
     let data = '';
@@ -90,6 +125,13 @@ export default async function handler(req, res) {
     let event;
     try { event = JSON.parse(rawBody); }
     catch { return res.status(400).json({ error: 'Ungültiger JSON-Body' }); }
+
+    // ── IDEMPOTENZ: Event nur einmal verarbeiten ──
+    const claimed = await claimEventId(BASE, SVC, event.id, event.type);
+    if (!claimed) {
+      console.log('⏩ Duplicate Stripe event, skipping:', event.id, event.type);
+      return res.status(200).json({ received: true, duplicate: true });
+    }
 
     // ════════════════════════════════════════
     // ERSTER KAUF — checkout.session.completed

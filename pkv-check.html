@@ -306,6 +306,9 @@ footer .legal{margin-top:18px;max-width:80ch;font-size:.72rem;color:#9AA8AC}
             <input type="checkbox" id="f-consent">
             <span>Ich willige ein, dass meine Angaben zum Zweck der Beratung an einen unabhängigen Versicherungsmakler mit Erlaubnis nach §34d GewO weitergegeben werden und dieser mich telefonisch oder per E-Mail kontaktieren darf. Die Einwilligung kann ich jederzeit widerrufen. Details in der <a href="/datenschutz-pkv.html" target="_blank">Datenschutzerklärung</a>.</span>
           </label>
+          <!-- Cloudflare Turnstile (unsichtbarer Bot-Schutz).
+               Wird per JS gemounted, sobald der Site-Key aus /api/config geladen ist. -->
+          <div id="cf-turnstile" style="margin:10px 0;min-height:0"></div>
           <p class="err-msg" id="err-3">Bitte fülle alle Felder aus und bestätige die Einwilligung.</p>
           <div class="btn-row">
             <button class="btn btn-ghost" onclick="goStep(2)">Zurück</button>
@@ -556,6 +559,17 @@ async function submitLead() {
   btn.disabled = true;
   btn.textContent = 'Wird gesendet…';
 
+  // Turnstile-Token holen (wenn Widget aktiv). Falls nicht konfiguriert → leer,
+  // der Server behandelt das als „nicht konfiguriert = fail-open".
+  const tsToken = (window.__cfTurnstileGetResponse && window.__cfTurnstileGetResponse()) || '';
+  if (window.__cfTurnstileRequired && !tsToken) {
+    err.textContent = 'Bitte die Sicherheitsprüfung abschließen und erneut senden.';
+    err.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Kostenlosen Rückruf anfordern';
+    return;
+  }
+
   const payload = {
     ...leadData,
     name: name.value.trim(),
@@ -565,7 +579,8 @@ async function submitLead() {
     consentText: 'Einwilligung Datenweitergabe an §34d-Makler, Kontakt per Telefon/E-Mail',
     timestamp: new Date().toISOString(),
     website: document.getElementById('f-website').value, // Honeypot – bleibt bei Menschen leer
-    formStartedAt: formStartedAt                          // Zeitfalle
+    formStartedAt: formStartedAt,                        // Zeitfalle
+    cf_turnstile_token: tsToken
   };
 
   /* Öffentlicher Endpoint (kein Login nötig) – Datei: /api/public-lead.js
@@ -593,6 +608,40 @@ async function submitLead() {
     goStep(4);
   }
 }
+
+/* ── Cloudflare Turnstile Widget dynamisch laden ──
+   Site-Key kommt vom Server (kein Hardcode). Ist keiner gesetzt → Widget
+   wird nicht gemounted, Formular funktioniert normal (Server läuft dann
+   ebenfalls im fail-open-Modus). Sobald TURNSTILE_SITE_KEY in Vercel
+   gesetzt ist, aktiviert sich der Bot-Schutz ohne Code-Änderung. */
+(async function mountTurnstile(){
+  try{
+    const r = await fetch('/api/config');
+    if(!r.ok) return;
+    const cfg = await r.json();
+    const key = cfg && cfg.turnstileSiteKey;
+    if(!key) return;
+    window.__cfTurnstileRequired = true;
+    // Loader-Script + Callback
+    window.onTurnstileLoad = function(){
+      if(!window.turnstile) return;
+      const el = document.getElementById('cf-turnstile');
+      if(!el) return;
+      const widgetId = window.turnstile.render(el, {
+        sitekey: key,
+        theme: 'light',
+        appearance: 'always'
+      });
+      window.__cfTurnstileGetResponse = function(){
+        try { return window.turnstile.getResponse(widgetId) || ''; } catch(_) { return ''; }
+      };
+    };
+    const s = document.createElement('script');
+    s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onTurnstileLoad&render=explicit';
+    s.async = true; s.defer = true;
+    document.head.appendChild(s);
+  }catch(_){}
+})();
 
 /* Gepufferte Leads nachsenden */
 (async function flushBuffer() {

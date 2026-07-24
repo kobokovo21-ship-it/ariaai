@@ -312,6 +312,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
       <button class="mc" onclick="window.location.href='/makler-onboarding.html'"><div class="md"></div>Meine Landing Page<span class="mt" style="background:#dcfce7;color:#166534">Makler</span></button>
       <button class="mc" onclick="window.location.href='/leads.html'"><div class="md"></div>Leads Dashboard<span class="mt" style="background:#dcfce7;color:#166534">Makler</span></button>
       <button class="mc" onclick="openInvoiceModal();closeSb()"><div class="md"></div>Rechnung erstellen</button>
+      <button class="mc" onclick="openFilmModal();closeSb()" style="border:1px solid rgba(147,51,234,.22)"><div class="md" style="background:#9333ea"></div>Sprecher-Video<span class="mt" style="background:#f3e8ff;color:#6b21a8">Beta</span></button>
     </div>
   </div>
 
@@ -321,6 +322,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
       <span class="sl">Business Tools</span>
       <button class="mc on" id="mc-chat-business" onclick="setModel(this,'chat','Virgo Chat')"><div class="md"></div>Virgo Chat</button>
       <button class="mc" onclick="openInvoiceModal();closeSb()"><div class="md"></div>Rechnung erstellen</button>
+      <button class="mc" onclick="openFilmModal();closeSb()" style="border:1px solid rgba(147,51,234,.22)"><div class="md" style="background:#9333ea"></div>Sprecher-Video<span class="mt" style="background:#f3e8ff;color:#6b21a8">Beta</span></button>
     </div>
   </div>
 
@@ -569,6 +571,84 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
     <div style="display:flex;gap:7px;margin-top:10px">
       <button class="mbtn sec" onclick="closeM('modal-invoice')">Abbrechen</button>
       <button class="mbtn" onclick="createInvoice()">Rechnung erstellen</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ MODAL SPRECHER-VIDEO (Beta) ═══════════════
+     4-Schritt-Pipeline: Bild (FLUX) → Video (Kling) → Stimme (ElevenLabs) → Lipsync (fal).
+     Backend: /api/film mit step-Parameter.
+     Nur zahlende Pläne + Admin (Backend erzwingt das). -->
+<div class="modal" id="modal-film">
+  <div class="mb2 wide">
+    <button class="mclose" onclick="closeM('modal-film')">×</button>
+    <h2>Sprecher-Video generieren <span style="font-size:11px;background:#fef3c7;color:#92400e;padding:3px 8px;border-radius:6px;margin-left:6px;vertical-align:middle;letter-spacing:0.5px">BETA</span></h2>
+    <p style="font-size:12px;color:var(--tm);margin-bottom:14px">Ein Reel mit einem echten sprechenden Charakter — Bild → Bewegtbild → Stimme → Lipsync. Dauert ca. 3–6 Minuten. Nur für Bezahl-Pläne.</p>
+
+    <!-- Schritt 1: Eingabe -->
+    <div id="film-step-input">
+      <label style="font-size:11px;color:var(--tm);display:block;margin-bottom:4px">Wen soll man sehen? (Charakter-Beschreibung)</label>
+      <textarea class="minp" id="film-prompt" placeholder="z.B. Freundlicher Versicherungsberater Mitte 40, dunkelblauer Anzug, im modernen Büro" style="min-height:60px;resize:vertical"></textarea>
+
+      <label style="font-size:11px;color:var(--tm);display:block;margin:10px 0 4px">Optional: Foto als Charakter-Referenz (für konsistentes Gesicht)</label>
+      <input class="minp" id="film-refimg" type="file" accept="image/jpeg,image/png,image/webp">
+      <div id="film-refimg-preview" style="display:none;margin-top:8px"><img id="film-refimg-thumb" style="max-width:120px;max-height:120px;border-radius:8px;border:1px solid var(--bd)"></div>
+
+      <label style="font-size:11px;color:var(--tm);display:block;margin:10px 0 4px">Was soll der Charakter sagen? (max. 2500 Zeichen)</label>
+      <textarea class="minp" id="film-script" placeholder="z.B. Hallo, ich bin Max Mustermann. Ich helfe Ihnen dabei, die richtige Krankenversicherung zu finden — kostenlos, unverbindlich, in nur 15 Minuten." style="min-height:80px;resize:vertical" maxlength="2500"></textarea>
+      <div style="font-size:10px;color:var(--td);margin-top:2px"><span id="film-script-count">0</span> / 2500 Zeichen</div>
+
+      <div id="film-input-err" style="font-size:12px;color:var(--red);margin:8px 0;display:none"></div>
+
+      <div style="background:#fef9e6;border:1px solid #f4d47a;border-radius:8px;padding:10px;margin-top:12px;font-size:11px;color:#7a5a10;line-height:1.5">
+        ℹ️ Diese Pipeline nutzt <b>fal.ai</b> (Bild + Video + Lipsync) und <b>ElevenLabs</b> (Stimme). Beide Anbieter müssen im Vercel-Backend konfiguriert und aufgeladen sein. Ist das nicht der Fall, endet die Generierung mit einer Fehlermeldung — es entstehen keine Kosten.
+      </div>
+
+      <div style="display:flex;gap:7px;margin-top:14px">
+        <button class="mbtn sec" onclick="closeM('modal-film')">Abbrechen</button>
+        <button class="mbtn" onclick="startFilmPipeline()">Video generieren</button>
+      </div>
+    </div>
+
+    <!-- Schritt 2: Fortschritt -->
+    <div id="film-step-progress" style="display:none">
+      <div style="text-align:center;padding:20px 0">
+        <div style="font-size:16px;font-weight:600;margin-bottom:8px" id="film-progress-title">Bild wird generiert…</div>
+        <div style="font-size:12px;color:var(--tm);margin-bottom:16px" id="film-progress-sub">Schritt 1 von 4 — das kann 30–90 Sekunden dauern</div>
+        <div style="height:6px;background:#eee;border-radius:3px;overflow:hidden;margin-bottom:20px">
+          <div id="film-progress-bar" style="height:100%;background:var(--t);width:0%;transition:width .5s ease"></div>
+        </div>
+        <div id="film-progress-steps" style="text-align:left;font-size:12px;color:var(--tm);max-width:280px;margin:0 auto">
+          <div id="film-s1" style="padding:4px 0">⏳ 1. Charakter-Bild (FLUX)</div>
+          <div id="film-s2" style="padding:4px 0">⋯ 2. Bild → Video (Kling)</div>
+          <div id="film-s3" style="padding:4px 0">⋯ 3. Stimme (ElevenLabs)</div>
+          <div id="film-s4" style="padding:4px 0">⋯ 4. Lipsync (fal)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Schritt 3: Ergebnis -->
+    <div id="film-step-result" style="display:none">
+      <div style="text-align:center">
+        <div style="font-size:16px;font-weight:600;margin-bottom:8px">✓ Fertig!</div>
+        <video id="film-result-video" controls playsinline style="width:100%;max-width:360px;border-radius:12px;background:#000"></video>
+        <div style="display:flex;gap:7px;margin-top:14px;justify-content:center">
+          <button class="mbtn sec" onclick="closeM('modal-film')">Schließen</button>
+          <a class="mbtn" id="film-result-download" download="virgo-sprecher-video.mp4" href="#">Video herunterladen</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Schritt 4: Fehler -->
+    <div id="film-step-error" style="display:none">
+      <div style="background:#fee;border:1px solid #fcc;border-radius:8px;padding:14px;font-size:12px;color:#8b2a2a;line-height:1.5">
+        <div style="font-weight:600;margin-bottom:6px">Video konnte nicht erzeugt werden</div>
+        <div id="film-error-msg">—</div>
+      </div>
+      <div style="display:flex;gap:7px;margin-top:14px">
+        <button class="mbtn sec" onclick="closeM('modal-film')">Schließen</button>
+        <button class="mbtn" onclick="resetFilmModal()">Nochmal versuchen</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1175,6 +1255,21 @@ function detectIntent(txt){
     var sIsHelp=/(online\s*stell|hochlad|veröffentlich|download|herunterlad|wie\s+(geht|poste|lade))/i.test(loS);
     if(!sIsHelp) return 'social';
   }
+  // ── VIDEO/REEL VORFAHRT ──
+  // "mach mir ein Werbevideo für meine Seite" → Video, NICHT Website.
+  // Wenn der Text explizit ein Video-Wort enthält (video/werbevideo/reel/clip/film/spot/trailer/animation/motion),
+  // routen wir zu 'social' (Grafikvideo-Flow) — auch wenn "seite"/"shop" darin vorkommt.
+  // Ausnahme: der User baut eine Website UND fügt darin ein Video ein → dann bleibt es Website(-Update).
+  var videoWord=/\b(werbevideo|werbe-?video|reel|reels|tiktok|tik\s?tok|werbespot|werbe-?spot|\bspot\b|\bclip\b|videoclip|trailer|imagefilm|image-?film|werbefilm|werbe-?film|kurzfilm|grafikvideo|grafik-?video|motion(\s?graphic)?|animation(?!\s+(zur|auf|in|für)\s+website))\b/i.test(loS)
+                || (/\bvideo(s)?\b/i.test(loS) && !/\b(video\s+(auf|zur|in|für|einbau|einfüg|einbinden|hinzufüg)\s+(die|meine|der|einer|einer\s+neuen)?\s*(website|webseite|seite|homepage|landingpage))\b/i.test(loS));
+  if(videoWord){
+    // Wenn schon eine (nicht-social) Website offen ist und der User Änderungswünsche äußert,
+    // handelt es sich vermutlich um "Video EINFÜGEN in Website" → website_update statt neuem Video.
+    var wantsVideoInSite = currentWebsiteHtml && !currentIsSocial &&
+      /\b(einfüg|einbau|einbinden|hinzufüg|pack|nimm|setze|leg|integrier|reinsetz|reinpack)\b/i.test(loS);
+    if(wantsVideoInSite) return 'website_update';
+    return 'social';
+  }
   // Social nur wenn echte Plattform genannt ist UND es nicht klar um eine Website geht
   if(socialPlatform && !hasWebWord){
     if(socialVerb || socialContent) return 'social';
@@ -1742,6 +1837,21 @@ async function genSocialPost(txt,imgs){
   // Konkrete Breite je Format — verhindert 0×0-Kollaps der Stage (Ursache der schwarzen Posts)
   const stageW = ratio==='1 / 1' ? 'min(100vw, 100vh)' : 'min(100vw, 56.25vh)';
 
+  // ── ZIELLÄNGE des Reels (Sekunden) ─────────────────────────
+  // Wird auch als CSS-Loop-Länge im HTML verwendet: KI baut genau EINEN
+  // Durchlauf, der MP4-Renderer nimmt dieselbe Länge auf → keine sichtbare
+  // Wiederholung mehr. Kann per Text ("30-Sekunden-Reel", "kurzer 15s-Clip")
+  // gesteuert werden, sonst 15s als Reel-Standard.
+  let targetSec = 15;
+  const durMatch = lo.match(/(\d{1,2})\s*(?:s(?:ek(?:unden)?)?|sec(?:onds)?)\b/);
+  if(durMatch){ targetSec = Math.min(60, Math.max(6, parseInt(durMatch[1],10))); }
+  else if(/\blang(er|es)?\b|langes reel|60/.test(lo)) targetSec = 60;
+  else if(/\bmittel|30/.test(lo)) targetSec = 30;
+  // Szenen: ~4s pro Szene (Kino-Rhythmus), min 4 Szenen
+  const scenes = Math.max(4, Math.round(targetSec / 4));
+  // Diese Länge landet im Prompt UND wird beim MP4-Export verwendet
+  window.__lastReelDurationSec = targetSec;
+
   // Anfrage zusammenbauen (bei Edit: alte Anfrage + Änderung)
   const fullRequest = isEdit ? (lastSocialRequest+'\n\nÄNDERUNG: '+txt) : txt;
   lastSocialRequest = fullRequest;
@@ -1813,15 +1923,15 @@ BEWEGUNG (Intensität richtet sich STRIKT nach der STIL-VORGABE oben — filmisc
 ✓ SIGNAL-CTA: großer Button mit durchlaufendem Shimmer, pulsierendem Glow und leichtem Wackeln/Scale-Pulse — unübersehbar
 ✓ MICRO-MOTION überall: nichts steht still, alles atmet/floatet/pulst leicht
 ✓ Schnelle, knackige Easings mit Overshoot (nicht nur sanftes ease-in-out) — es soll lebendig und energiegeladen wirken, NICHT träge
-✓ Alle Animationen LOOPEN unendlich (animation-iteration-count:infinite), Gesamtloop 14-18s passend zur Szenen-Architektur, damit man es als Video aufnehmen kann
+✓ Alle Animationen LOOPEN unendlich (animation-iteration-count:infinite), GESAMTLOOP EXAKT ${targetSec} SEKUNDEN (nicht kürzer, nicht länger — kritisch: der MP4-Export nimmt genau diese Länge auf; ist der Loop kürzer als ${targetSec}s, sieht der Zuschauer denselben Inhalt zweimal). Alle @keyframes/animation-duration im gesamten HTML MÜSSEN auf ${targetSec}s bzw. ganzzahlige Teiler davon abgestimmt sein.
 
 AUFBAU — FILM, KEIN FLYER (WICHTIGSTE REGEL):
 - Denke wie ein REGISSEUR, nicht wie ein Plakatgestalter. Der Post ist ein kurzer, atmosphärischer FILM in Szenen — keine vollgepackte Anzeige.
-- ECHTER FILM MIT SCHNITTEN — PFLICHT-ARCHITEKTUR: Baue MINDESTENS 4 VOLLBILD-SZENEN als eigene Container (.scene1 bis .scene4, jeweils position:absolute; inset:0), die nacheinander per CSS-Keyframes ein-/ausgeblendet werden (opacity + leichtes scale, filmischer Crossfade 0.4-0.6s). GESAMTLOOP 14-18 Sekunden, dann nahtlos von vorn. Ablauf:
-  · Szene 1 (ca. 0-3s) HOOK: Bild formatfüllend mit langsamer Kamerafahrt + 1-3 packende Worte
-  · Szene 2 (ca. 3-7s) STORY: ANDERER Bildausschnitt (anderes object-position/scale!) oder edle Farbfläche + der emotionale Kernsatz
-  · Szene 3 (ca. 7-11s) WOW: Detail-Ausschnitt (starker Zoom) mit Akzent-Element — hier dürfen bei Bedarf 2-3 Kurzinfos elegant erscheinen
-  · Szene 4 (ca. 11-15s) ABSCHLUSS: Marke groß + EIN CTA, ruhig und selbstbewusst
+- ECHTER FILM MIT SCHNITTEN — PFLICHT-ARCHITEKTUR: Baue GENAU ${scenes} VOLLBILD-SZENEN als eigene Container (.scene1 bis .scene${scenes}, jeweils position:absolute; inset:0), die nacheinander per CSS-Keyframes ein-/ausgeblendet werden (opacity + leichtes scale, filmischer Crossfade 0.4-0.6s). GESAMTLOOP EXAKT ${targetSec} Sekunden, dann nahtlos von vorn — jede Szene bekommt ${(targetSec/scenes).toFixed(1)}s Bildschirmzeit. Ablauf:
+  · Szene 1 (0 – ${(targetSec/scenes).toFixed(1)}s) HOOK: Bild formatfüllend mit langsamer Kamerafahrt + 1-3 packende Worte
+  · Szene 2 (${(targetSec/scenes).toFixed(1)} – ${(2*targetSec/scenes).toFixed(1)}s) STORY: ANDERER Bildausschnitt (anderes object-position/scale!) oder edle Farbfläche + der emotionale Kernsatz
+  · Zwischenszenen: variieren zwischen Detail-Ausschnitten (starker Zoom, Akzent-Element), weiten Totalen und ruhigen Zwischenbildern — JEDE Szene zeigt einen ANDEREN Blick / Gedanken, damit ${targetSec}s Videolänge nie „gleich aussieht"
+  · Letzte Szene (${((scenes-1)*targetSec/scenes).toFixed(1)} – ${targetSec}s) ABSCHLUSS: Marke groß + EIN CTA, ruhig und selbstbewusst
 - KAMERA-ARBEIT: JEDE Szene hat ihre EIGENE Kamerabewegung (rein-zoomen, raus-zoomen, seitliches Ziehen — via transform/object-position, je 4-6s). EIN Foto wird wie von einem Cutter in MEHREREN Einstellungen verwendet (pro Szene ein anderer Ausschnitt desselben Bildes). NIE zweimal dasselbe statische Framing.
 - TIEFE PRO SZENE: Licht-Sweeps, feines Film-Grain, Parallax (Vordergrund-Element bewegt sich minimal anders als Hintergrund).
 - WENIG TEXT: 1-6 Worte pro Szene, gesamt maximal ~20 Worte. Keine Aufzählungen, keine Häkchen-Listen, keine Preistabellen — AUSSER der Kunde verlangt ausdrücklich Preise/Details/Angebot.
@@ -2144,22 +2254,214 @@ async function createInvoice(){
 }
 
 // ═══════════════════════════════════════
+// SPRECHER-VIDEO (Charakter-Video-Pipeline, api/film.js)
+// 4 Schritte hintereinander: image → video → voice → lipsync.
+// ═══════════════════════════════════════
+function openFilmModal(){
+  resetFilmModal();
+  if(!authToken){ showM('modal-login'); return; }
+  showM('modal-film');
+  // Optional: Character-Count für Skript live updaten
+  const s=document.getElementById('film-script');
+  const c=document.getElementById('film-script-count');
+  if(s && c && !s._wired){
+    s._wired=true;
+    s.addEventListener('input',()=>{ c.textContent=String(s.value.length); });
+  }
+  // Ref-Bild-Vorschau
+  const rf=document.getElementById('film-refimg');
+  if(rf && !rf._wired){
+    rf._wired=true;
+    rf.addEventListener('change',()=>{
+      const f=rf.files && rf.files[0];
+      const box=document.getElementById('film-refimg-preview');
+      const thumb=document.getElementById('film-refimg-thumb');
+      if(!f){ box.style.display='none'; return; }
+      const r=new FileReader();
+      r.onload=e=>{ thumb.src=e.target.result; box.style.display=''; };
+      r.readAsDataURL(f);
+    });
+  }
+}
+
+function resetFilmModal(){
+  const show=(id,vis)=>{const e=document.getElementById(id);if(e)e.style.display=vis?'':'none';};
+  show('film-step-input',true);
+  show('film-step-progress',false);
+  show('film-step-result',false);
+  show('film-step-error',false);
+  document.getElementById('film-input-err').style.display='none';
+  document.getElementById('film-progress-bar').style.width='0%';
+  ['film-s1','film-s2','film-s3','film-s4'].forEach((id,i)=>{
+    const e=document.getElementById(id);
+    if(!e) return;
+    e.textContent=(i===0?'⏳ 1. Charakter-Bild (FLUX)':i===1?'⋯ 2. Bild → Video (Kling)':i===2?'⋯ 3. Stimme (ElevenLabs)':'⋯ 4. Lipsync (fal)');
+  });
+}
+
+function _setFilmProgress(step, pct, title){
+  document.getElementById('film-progress-bar').style.width=Math.max(0,Math.min(100,pct))+'%';
+  if(title) document.getElementById('film-progress-title').textContent=title;
+  document.getElementById('film-progress-sub').textContent='Schritt '+step+' von 4';
+  for(let i=1;i<=4;i++){
+    const e=document.getElementById('film-s'+i);
+    if(!e) continue;
+    if(i<step) e.textContent='✓ '+e.textContent.replace(/^[⏳⋯✓•]\s?/,'');
+    else if(i===step) e.textContent='⏳ '+e.textContent.replace(/^[⏳⋯✓•]\s?/,'');
+  }
+}
+
+function _showFilmError(msg){
+  document.getElementById('film-step-progress').style.display='none';
+  document.getElementById('film-step-input').style.display='none';
+  document.getElementById('film-error-msg').textContent=msg||'Unbekannter Fehler';
+  document.getElementById('film-step-error').style.display='';
+}
+
+// Datei → data-URL (base64) für Ref-Bild
+function _fileToBase64(file){
+  return new Promise((resolve,reject)=>{
+    const r=new FileReader();
+    r.onload=()=>{ const s=String(r.result||''); const idx=s.indexOf(','); resolve({b64: idx>=0?s.slice(idx+1):s, mime: file.type||'image/jpeg'}); };
+    r.onerror=reject;
+    r.readAsDataURL(file);
+  });
+}
+
+async function _filmCall(stepName, body){
+  const r=await fetch('/api/film',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},
+    body:JSON.stringify({step:stepName, ...body})
+  });
+  const d=await r.json().catch(()=>({error:'Server-Antwort ungültig'}));
+  if(!r.ok){
+    if(r.status===401 || r.status===403) throw new Error('Die Sprecher-Video-Pipeline ist nur in Bezahl-Plänen verfügbar. Bitte Plan buchen.');
+    if(r.status===402) throw new Error('Nicht genug Credits für diesen Schritt.');
+    throw new Error(d.error||('HTTP '+r.status));
+  }
+  return d;
+}
+
+async function startFilmPipeline(){
+  const promptEl=document.getElementById('film-prompt');
+  const scriptEl=document.getElementById('film-script');
+  const refImgEl=document.getElementById('film-refimg');
+  const errEl=document.getElementById('film-input-err');
+  const prompt=(promptEl.value||'').trim();
+  const script=(scriptEl.value||'').trim();
+  errEl.style.display='none';
+  if(prompt.length<10){ errEl.textContent='Bitte den Charakter kurz beschreiben (mindestens 10 Zeichen).'; errEl.style.display=''; return; }
+  if(script.length<10){ errEl.textContent='Bitte einen kurzen Text eingeben, den der Charakter sagen soll.'; errEl.style.display=''; return; }
+  if(script.length>2500){ errEl.textContent='Der Text ist zu lang (max. 2500 Zeichen).'; errEl.style.display=''; return; }
+
+  // UI in Progress-Modus
+  document.getElementById('film-step-input').style.display='none';
+  document.getElementById('film-step-progress').style.display='';
+
+  try{
+    // Optional: Ref-Bild hochladen (damit fal eine URL bekommt)
+    let referenceImageUrl=null;
+    const file=refImgEl.files && refImgEl.files[0];
+    if(file){
+      _setFilmProgress(1,5,'Referenz-Bild wird hochgeladen…');
+      const {b64, mime}=await _fileToBase64(file);
+      const ur=await fetch('/api/upload',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},
+        body:JSON.stringify({image_base64:b64, mime})
+      });
+      const ud=await ur.json().catch(()=>({}));
+      if(!ur.ok || !ud.url){ throw new Error('Referenz-Bild konnte nicht hochgeladen werden.'); }
+      referenceImageUrl=ud.url;
+    }
+
+    // Schritt 1: image
+    _setFilmProgress(1,10,'Charakter-Bild wird generiert…');
+    const img=await _filmCall('image', { prompt, referenceImageUrl });
+    if(!img.imageUrl) throw new Error('Bild-Schritt lieferte keine imageUrl.');
+    _setFilmProgress(1,25,'Charakter-Bild fertig.');
+
+    // Schritt 2: video (Bild → 5s Bewegtbild)
+    _setFilmProgress(2,30,'Bild wird zu Video animiert…');
+    const vid=await _filmCall('video', { imageUrl: img.imageUrl });
+    if(!vid.videoUrl) throw new Error('Video-Schritt lieferte keine videoUrl.');
+    _setFilmProgress(2,55,'Video fertig.');
+
+    // Schritt 3: voice (Text → MP3)
+    _setFilmProgress(3,60,'Stimme wird generiert…');
+    const voice=await _filmCall('voice', { text: script });
+    if(!voice.audioBase64) throw new Error('Stimm-Schritt lieferte kein Audio.');
+    _setFilmProgress(3,80,'Stimme fertig.');
+
+    // Schritt 4: lipsync (Video + Audio → Final-MP4)
+    _setFilmProgress(4,85,'Lippen werden synchronisiert…');
+    const finalOut=await _filmCall('lipsync', { videoUrl: vid.videoUrl, audioBase64: voice.audioBase64 });
+    if(!finalOut.videoUrl) throw new Error('Lipsync-Schritt lieferte kein Video.');
+    _setFilmProgress(4,100,'Fertig!');
+
+    // Ergebnis anzeigen
+    document.getElementById('film-step-progress').style.display='none';
+    const vidEl=document.getElementById('film-result-video');
+    const dl=document.getElementById('film-result-download');
+    vidEl.src=finalOut.videoUrl;
+    dl.href=finalOut.videoUrl;
+    document.getElementById('film-step-result').style.display='';
+  }catch(e){
+    _showFilmError(e && e.message ? e.message : String(e));
+  }
+}
+
+// ═══════════════════════════════════════
 // VOICE
 // ═══════════════════════════════════════
 let recOn=false;
 function toggleVoice(){
   if(!location.protocol.startsWith('https')&&location.hostname!=='localhost'){alert('Mikrofon nur über HTTPS.');return;}
   const btn=document.getElementById('mic-btn');
-  if(recOn){if(window._rec)window._rec.stop();recOn=false;btn.textContent='🎤';btn.style.color='';return;}
-  if('webkitSpeechRecognition' in window||'SpeechRecognition' in window){
-    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;const rec=new SR();rec.lang='de-DE';
-    rec.onstart=()=>{recOn=true;btn.textContent='⏹';btn.style.color='#ef4444';};
-    rec.onresult=e=>{document.getElementById('prompt').value=e.results[0][0].transcript;recOn=false;btn.textContent='🎤';btn.style.color='';};
-    rec.onerror=rec.onend=()=>{recOn=false;btn.textContent='🎤';btn.style.color='';};
-    try{rec.start();window._rec=rec;}catch(e){}
-  }
+  const inp=document.getElementById('prompt');
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){alert('Diktat wird von diesem Browser nicht unterstützt. Bitte Chrome oder Safari verwenden.');return;}
+  const stopMic=()=>{recOn=false;btn.textContent='🎤';btn.style.color='';window._rec=null;};
+  if(recOn){try{if(window._rec)window._rec.stop();}catch(e){}stopMic();return;}
+  const rec=new SR();
+  rec.lang='de-DE';
+  rec.continuous=true;
+  rec.interimResults=true;
+  const baseValue=inp.value;
+  const baseNeedsSpace=baseValue.length>0 && !/\s$/.test(baseValue);
+  let finalTranscript='';
+  rec.onstart=()=>{recOn=true;btn.textContent='⏹';btn.style.color='#ef4444';};
+  rec.onresult=(e)=>{
+    let interim='';
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      const r=e.results[i];
+      const t=r[0].transcript;
+      if(r.isFinal){finalTranscript+=(finalTranscript && !/\s$/.test(finalTranscript)?' ':'')+t.trim();}
+      else{interim+=t;}
+    }
+    const sep=baseNeedsSpace?' ':'';
+    const live=(finalTranscript+(interim?(finalTranscript?' ':'')+interim.trim():'')).trim();
+    inp.value=baseValue+(live?sep+live:'');
+    inp.dispatchEvent(new Event('input',{bubbles:true}));
+  };
+  rec.onerror=(e)=>{
+    const code=e && e.error;
+    if(code==='not-allowed' || code==='service-not-allowed'){
+      alert('Mikrofon-Zugriff wurde blockiert. Bitte in den Browser-Einstellungen erlauben.');
+    } else if(code==='no-speech'){
+      // silent — just stop, no annoying alert
+    } else if(code && code!=='aborted'){
+      console.warn('SpeechRecognition error:',code);
+    }
+    stopMic();
+  };
+  rec.onend=()=>{stopMic();inp.focus();};
+  try{rec.start();window._rec=rec;}
+  catch(e){stopMic();console.warn('SpeechRecognition start failed:',e);}
 }
-document.getElementById('mic-btn').addEventListener('touchstart',function(e){e.preventDefault();toggleVoice();},{passive:false});
+const _micBtnEl=document.getElementById('mic-btn');
+if(_micBtnEl){_micBtnEl.addEventListener('touchstart',function(e){e.preventDefault();toggleVoice();},{passive:false});}
 
 // ═══════════════════════════════════════
 // MODALS
@@ -2289,10 +2591,16 @@ applyFreeRestrictions();
   var RENDER_SERVICE_URL = 'https://remotion-on-vercel-phi-flax.vercel.app';
   /* ▲▲▲ z.B. https://virgo-render.vercel.app — sonst zeigt der Knopf nur einen Hinweis ▲▲▲ */
 
-  /* Gewünschte MP4-Länge in Sekunden. Der Render-Service erlaubt max. 90s;
-     der Wert wird unten auf 1–90 begrenzt, damit der Server nicht mit 400
-     ablehnt. (Früher war hier fest 6 verdrahtet — daher kamen nur 6s heraus.) */
-  var MP4_DURATION_SECONDS = 60;
+  /* Gewünschte MP4-Länge in Sekunden. Wird ZUR LAUFZEIT aus der Loop-Länge
+     des gerade offenen Social-Posts übernommen (window.__lastReelDurationSec,
+     15/30/60s), damit die MP4-Aufnahme exakt einen Loop lang ist und der
+     Inhalt sich nicht wiederholt. Fällt zurück auf 15s, wenn kein Wert
+     gesetzt ist (Standard-Reel-Länge). */
+  function getMp4DurationSeconds(){
+    var v = Number(window.__lastReelDurationSec);
+    if(!Number.isFinite(v) || v < 6) v = 15;
+    return Math.min(90, Math.max(6, Math.round(v)));
+  }
 
   function getHtml(){ try{ return (typeof currentWebsiteHtml!=='undefined'&&currentWebsiteHtml)?currentWebsiteHtml:''; }catch(e){ return ''; } }
   function getIsSocial(){ try{ return (typeof currentIsSocial!=='undefined')?!!currentIsSocial:false; }catch(e){ return false; } }
@@ -2341,7 +2649,7 @@ applyFreeRestrictions();
     try{
       /* /api/render-post streamt Server-Sent Events (kein JSON, kein Polling):
          data: {"type":"phase"|"done"|"error", ...} */
-      var dur=Math.min(90,Math.max(1,Math.round(Number(MP4_DURATION_SECONDS)||6)));
+      var dur=getMp4DurationSeconds();
       // Fetch a short-lived render token (server holds the secret). If the
       // secret isn't configured yet, /api/render-token returns {token:null} and
       // we call the (still-open) render service without a key.

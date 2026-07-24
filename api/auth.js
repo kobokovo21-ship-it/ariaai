@@ -1,3 +1,5 @@
+import { enforceRateLimit, clientIp } from '../lib/rate-limit.js';
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -12,6 +14,17 @@ export default async function handler(req, res) {
   const { action, email, password, refresh_token } = req.body || {};
   if (!action) {
     return res.status(400).json({ error: 'Aktion erforderlich' });
+  }
+
+  // Brute-Force-Schutz: strenger IP-Limit für Login/Register, milder für Refresh.
+  const ip = clientIp(req);
+  if (action === 'login' || action === 'register') {
+    if (!(await enforceRateLimit(req, res, { name: `auth:${action}:ip:${ip}`, windowSec: 300, max: 10 }))) return;
+    if (email) {
+      if (!(await enforceRateLimit(req, res, { name: `auth:${action}:email:${String(email).toLowerCase().slice(0, 160)}`, windowSec: 300, max: 8 }))) return;
+    }
+  } else if (action === 'refresh') {
+    if (!(await enforceRateLimit(req, res, { name: `auth:refresh:ip:${ip}`, windowSec: 60, max: 30 }))) return;
   }
 
   try {

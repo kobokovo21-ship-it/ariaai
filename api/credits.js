@@ -1,49 +1,49 @@
+import { requireUser, getUserPlan, isAdminEmail } from '../lib/auth.js';
+import { deductCredits } from '../lib/credits.js';
+import { enforceRateLimit } from '../lib/rate-limit.js';
+
+const ALLOWED_ORIGINS = ['https://virgoio.com', 'https://www.virgoio.com'];
+
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const origin = req.headers.origin || '';
+  const referer = req.headers.referer || '';
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
   res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Vary', 'Origin');
   if (req.method === 'OPTIONS') return res.status(200).end();
+  const originOk = ALLOWED_ORIGINS.includes(origin) || ALLOWED_ORIGINS.some(o => referer.startsWith(o));
+  if (!originOk) return res.status(403).json({ error: 'Forbidden' });
 
-  const SUPABASE_URL = process.env.SUPABASE_URL;
-  const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
-  const token = req.headers.authorization?.replace('Bearer ', '');
-  if (!token) return res.status(401).json({ error: 'Nicht eingeloggt' });
+  const user = await requireUser(req, res);
+  if (!user) return;
+
+  if (!(await enforceRateLimit(req, res, { name: 'credits:' + user.id, windowSec: 60, max: 120 }))) return;
 
   try {
-    const userRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-      headers: { 'apikey': SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${token}` }
-    });
-    const user = await userRes.json();
-    if (!user?.id) return res.status(401).json({ error: 'Ungültiger Token' });
-
     if (req.method === 'GET') {
-      const r = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${user.id}&select=credits,plan`, {
-        headers: { 'apikey': SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}` }
-      });
-      const data = await r.json();
-      const isAdmin = !!(process.env.ADMIN_EMAIL && user.email === process.env.ADMIN_EMAIL);
-      return res.status(200).json({ credits: data?.[0]?.credits ?? 0, plan: data?.[0]?.plan ?? 'free', is_admin: isAdmin });
+      const { plan, credits } = await getUserPlan(user.id);
+      return res.status(200).json({ credits, plan, is_admin: isAdminEmail(user.email) });
     }
 
     if (req.method === 'POST') {
-      const { amount } = req.body;
-      const r = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${user.id}&select=credits`, {
-        headers: { 'apikey': SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}` }
-      });
-      const data = await r.json();
-      const current = data?.[0]?.credits ?? 0;
-      if (current < amount) return res.status(402).json({ error: 'Nicht genug Credits' });
-
-      const upd = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${user.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`, 'Prefer': 'return=representation' },
-        body: JSON.stringify({ credits: current - amount })
-      });
-      const updated = await upd.json();
-      return res.status(200).json({ success: true, credits: updated?.[0]?.credits ?? current - amount });
+      const raw = req.body?.amount;
+      const amount = Math.trunc(Number(raw));
+      if (!Number.isFinite(amount) || amount <= 0) {
+        return res.status(400).json({ error: 'Ungültiger Credit-Betrag' });
+      }
+      if (amount > 1000) {
+        return res.status(400).json({ error: 'Betrag zu hoch' });
+      }
+      const r = await deductCredits(user.id, amount);
+      if (!r.success) return res.status(402).json({ error: 'Nicht genug Credits', credits: r.credits });
+      return res.status(200).json({ success: true, credits: r.credits });
     }
-  } catch (error) {
-    return res.status(500).json({ error: error.message });
+
+    return res.status(405).json({ error: 'Methode nicht erlaubt' });
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
   }
 }
-

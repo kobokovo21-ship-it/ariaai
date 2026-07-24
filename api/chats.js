@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { enforceRateLimit, clientIp } from '../lib/rate-limit.js';
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_KEY
@@ -27,7 +28,8 @@ export default async function handler(req, res) {
     return res.status(200).json({});
   }
   const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-  if (authError || !user) return res.status(200).json([]);
+  if (authError || !user) return res.status(401).json({ error: 'Sitzung abgelaufen' });
+  if (!(await enforceRateLimit(req, res, { name: 'chats:' + user.id, windowSec: 60, max: 120 }))) return;
   // GET - Chats laden
   if (req.method === 'GET') {
     if (req.query.gallery === 'true') {

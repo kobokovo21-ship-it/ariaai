@@ -5,6 +5,9 @@
 // im Dashboard und weist sie per Bearbeiten einem Makler zu.
 // Keine Schema-Änderung in Supabase nötig.
 
+import { enforceRateLimit, clientIp } from '../lib/rate-limit.js';
+import { enforceTurnstile } from '../lib/turnstile.js';
+
 export default async function handler(req, res) {
   // Wenn die Landingpage auf einer anderen Domain als virgoio.com liegt,
   // hier die Domain eintragen. Liegt sie auf virgoio.com selbst, ist
@@ -14,6 +17,16 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Methode nicht erlaubt' });
+
+  // Öffentlicher, unauthentifizierter Endpoint → strenger IP-Rate-Limit,
+  // damit die leads-Tabelle nicht mit Spam geflutet werden kann.
+  const ip = clientIp(req);
+  if (!(await enforceRateLimit(req, res, { name: 'public-lead:' + ip, windowSec: 3600, max: 10 }))) return;
+
+  // Cloudflare Turnstile: Wenn konfiguriert, muss ein gültiger Token vorliegen.
+  // Ohne Konfiguration → fail-open (siehe lib/turnstile.js).
+  const tsToken = req.body && (req.body.cf_turnstile_token || req.body.turnstileToken);
+  if (!(await enforceTurnstile(req, res, tsToken, ip))) return;
 
   const BASE = process.env.SUPABASE_URL;
   const SVC = process.env.SUPABASE_SERVICE_KEY;

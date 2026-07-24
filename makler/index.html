@@ -228,6 +228,10 @@ footer{background:var(--acc);color:#fff;padding:28px 20px;text-align:center}
         <button class="form-tab" onclick="switchTab('anfrage',this)">✉️ Kostenlose Anfrage</button>
       </div>
 
+      <!-- Cloudflare Turnstile: Bot-Schutz für alle drei Formulare (Termin, Rückruf, Anfrage).
+           Wird per JS aktiviert, sobald der Site-Key aus /api/config geladen ist. -->
+      <div id="cf-turnstile" style="margin:12px 0"></div>
+
       <!-- TERMIN -->
       <div class="form-panel active" id="panel-termin">
         <div class="form-grid">
@@ -530,6 +534,14 @@ async function submitForm(type){
     data = {...data, vorname:v, nachname:n, name:v+' '+n, email:e, telefon:document.getElementById('a-telefon').value, interesse:document.getElementById('a-interesse').value, nachricht:nm, anfrage_typ:'Kostenlose Anfrage'};
   }
 
+  // Turnstile-Token holen (fail-open, wenn Widget nicht konfiguriert ist).
+  const tsToken = (window.__cfTurnstileGetResponse && window.__cfTurnstileGetResponse()) || '';
+  if (window.__cfTurnstileRequired && !tsToken) {
+    showMsg(msg,'error','Bitte die Sicherheitsprüfung oben abschließen und erneut senden.');
+    btn.disabled = false;
+    return;
+  }
+
   try{
     const r = await fetch('/api/tools', {
       method:'POST',
@@ -541,7 +553,8 @@ async function submitForm(type){
         telefon: data.telefon,
         email: data.email,
         versicherung: data.interesse || data.anliegen || 'Allgemein',
-        nachricht: data.nachricht || data.anfrage_typ || ''
+        nachricht: data.nachricht || data.anfrage_typ || '',
+        cf_turnstile_token: tsToken
       })
     });
     const d = await r.json();
@@ -550,6 +563,8 @@ async function submitForm(type){
       showMsg(msg,'success','✓ Vielen Dank! Ich melde mich innerhalb von 24 Stunden bei Ihnen.');
       btn.textContent = '✓ Gesendet';
       clearForm(type);
+      // Turnstile-Token nach Erfolg zurücksetzen — sonst wird er beim nächsten Formular abgelehnt.
+      try { window.turnstile && window.turnstile.reset(); } catch(_){}
     }
   }catch(e){
     showMsg(msg,'error','Verbindungsfehler. Bitte nochmal versuchen.');
@@ -728,6 +743,38 @@ async function saveEdits(){
     setTimeout(()=>{saveBtn.textContent='💾 Speichern';saveBtn.disabled=false;toggleEditMode();window._newHeroImg=null;},1500);
   }catch(e){alert('Fehler: '+e.message);saveBtn.textContent='💾 Speichern';saveBtn.disabled=false;}
 }
+
+// ── Cloudflare Turnstile Bot-Schutz ──
+// Aktiviert sich automatisch, sobald TURNSTILE_SITE_KEY in Vercel gesetzt ist.
+// Wird der Key auch nach Konfiguration nicht bereitgestellt, funktioniert das
+// Formular normal weiter (Server läuft im fail-open-Modus).
+(async function mountTurnstile(){
+  try{
+    const r = await fetch('/api/config');
+    if(!r.ok) return;
+    const cfg = await r.json();
+    const key = cfg && cfg.turnstileSiteKey;
+    if(!key) return;
+    window.__cfTurnstileRequired = true;
+    window.onTurnstileLoad = function(){
+      if(!window.turnstile) return;
+      const el = document.getElementById('cf-turnstile');
+      if(!el) return;
+      const widgetId = window.turnstile.render(el, {
+        sitekey: key,
+        theme: 'light',
+        appearance: 'always'
+      });
+      window.__cfTurnstileGetResponse = function(){
+        try { return window.turnstile.getResponse(widgetId) || ''; } catch(_) { return ''; }
+      };
+    };
+    const s = document.createElement('script');
+    s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onTurnstileLoad&render=explicit';
+    s.async = true; s.defer = true;
+    document.head.appendChild(s);
+  }catch(_){}
+})();
 
 // ── INIT ──
 loadProfile();

@@ -1,5 +1,8 @@
 export const config = { maxDuration: 30 };
 
+import { validateToken, extractToken } from '../lib/auth.js';
+import { enforceRateLimit } from '../lib/rate-limit.js';
+
 const ALLOWED_ORIGINS = ['https://virgoio.com', 'https://www.virgoio.com'];
 
 // Alle Nutzereingaben escapen, bevor sie ins HTML wandern
@@ -31,6 +34,10 @@ export default async function handler(req, res) {
     console.warn('⛔ Blocked invoice. origin=' + origin + ' referer=' + referer);
     return res.status(403).json({ error: 'Forbidden' });
   }
+
+  const user = await validateToken(extractToken(req));
+  if (!user) return res.status(401).json({ error: 'Nicht eingeloggt' });
+  if (!(await enforceRateLimit(req, res, { name: 'invoice:' + user.id, windowSec: 60, max: 30 }))) return;
 
   try {
     const {

@@ -1,6 +1,18 @@
 export const config = { maxDuration: 60 };
 
+import { validateToken, extractToken, isAdminEmail } from '../lib/auth.js';
+import { deductCredits } from '../lib/credits.js';
+import { enforceRateLimit, clientIp } from '../lib/rate-limit.js';
+
 const ALLOWED_ORIGINS = ['https://virgoio.com', 'https://www.virgoio.com'];
+const IMAGE_COST = 1;
+
+// Interne Aufrufe (aus /api/chat, wenn dort bereits Credits verbucht wurden)
+// dürfen Doppelverbuchung überspringen. Geheimer Header, per env-Var geteilt.
+function isInternalCall(req) {
+  const secret = process.env.INTERNAL_API_SECRET;
+  return !!secret && req.headers['x-internal-secret'] === secret;
+}
 
 async function enhanceImagePrompt(userPrompt) {
   const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
@@ -55,6 +67,20 @@ export default async function handler(req, res) {
   if (!ok) {
     console.warn('⛔ Blocked generate-image. origin=' + origin + ' referer=' + referer);
     return res.status(403).json({ error: 'Forbidden' });
+  }
+
+  // ── Auth + Credits + Rate-Limit ─────────────────────────
+  const internal = isInternalCall(req);
+  let user = null;
+  if (!internal) {
+    user = await validateToken(extractToken(req));
+    if (!user) return res.status(401).json({ error: 'Nicht eingeloggt' });
+    if (!(await enforceRateLimit(req, res, { name: 'genimg:user:' + user.id, windowSec: 60, max: 20 }))) return;
+    if (!(await enforceRateLimit(req, res, { name: 'genimg:ip:' + clientIp(req), windowSec: 60, max: 40 }))) return;
+    if (!isAdminEmail(user.email)) {
+      const charge = await deductCredits(user.id, IMAGE_COST);
+      if (!charge.success) return res.status(402).json({ error: 'Nicht genug Credits — bitte Plan upgraden.', credits: charge.credits });
+    }
   }
 
   try {

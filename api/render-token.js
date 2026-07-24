@@ -11,6 +11,7 @@
 // remotion-on-vercel render service (src/app/api/render/auth.ts).
 
 import crypto from 'crypto';
+import { enforceRateLimit } from '../lib/rate-limit.js';
 
 export const config = { maxDuration: 10 };
 
@@ -61,6 +62,8 @@ export default async function handler(req, res) {
     if (u && u.id) user = u;
   } catch (e) {}
   if (!user) return res.status(401).json({ error: 'Bitte einloggen für den MP4-Export.' });
+
+  if (!(await enforceRateLimit(req, res, { name: 'render-token:' + user.id, windowSec: 60, max: 30 }))) return;
 
   const exp = Math.floor(Date.now() / 1000) + TOKEN_TTL_SEC;
   const payloadB64 = b64url(JSON.stringify({ exp, sub: user.id }));

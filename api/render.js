@@ -1,6 +1,11 @@
 export const config = { maxDuration: 120 };
 
+import { validateToken, extractToken, isAdminEmail } from '../lib/auth.js';
+import { deductCredits } from '../lib/credits.js';
+import { enforceRateLimit } from '../lib/rate-limit.js';
+
 const ALLOWED_ORIGINS = ['https://virgoio.com', 'https://www.virgoio.com'];
+const RENDER_COST = 2;
 
 export default async function handler(req, res) {
   const origin = req.headers.origin || '';
@@ -14,6 +19,10 @@ export default async function handler(req, res) {
   const ok = ALLOWED_ORIGINS.includes(origin) || ALLOWED_ORIGINS.some(o => referer.startsWith(o));
   if (!ok) return res.status(403).json({ error: 'Forbidden' });
 
+  const user = await validateToken(extractToken(req));
+  if (!user) return res.status(401).json({ error: 'Nicht eingeloggt' });
+  if (!(await enforceRateLimit(req, res, { name: 'render:' + user.id, windowSec: 300, max: 15 }))) return;
+
   const CREATOMATE_KEY = process.env.CREATOMATE_API_KEY;
   if (!CREATOMATE_KEY) {
     return res.status(500).json({ error: 'CREATOMATE_API_KEY fehlt in den Vercel-Umgebungsvariablen.' });
@@ -21,6 +30,12 @@ export default async function handler(req, res) {
 
   const { html, aspect = '9/16' } = req.body || {};
   if (!html) return res.status(400).json({ error: 'html fehlt' });
+  if (typeof html !== 'string' || html.length > 1024 * 1024) return res.status(413).json({ error: 'HTML zu groß' });
+
+  if (!isAdminEmail(user.email)) {
+    const charge = await deductCredits(user.id, RENDER_COST);
+    if (!charge.success) return res.status(402).json({ error: 'Nicht genug Credits', credits: charge.credits });
+  }
 
   // Auflösung je nach Format (9:16 für Reels, 1:1 für Posts)
   const width  = aspect === '1/1' ? 1080 : 608;

@@ -1,5 +1,7 @@
 export const config = { maxDuration: 60 };
 
+import { enforceRateLimit, clientIp } from '../lib/rate-limit.js';
+
 const ALLOWED_ORIGINS = ['https://virgoio.com', 'https://www.virgoio.com'];
 
 // === MODELL-STEUERUNG ===
@@ -95,6 +97,11 @@ export default async function handler(req, res) {
     return res.status(403).json({ error: 'Forbidden' });
   }
 
+  // Auth-Pflicht + Rate-Limit (Web-Search-Tool nutzt Anthropic-Kontingent — teuer)
+  const accessCheck = await getUserAccess(req);
+  if (!accessCheck.user) return res.status(401).json({ error: 'Nicht eingeloggt' });
+  if (!(await enforceRateLimit(req, res, { name: 'agent:' + accessCheck.user.id, windowSec: 60, max: 20 }))) return;
+
   try {
     const { messages = [], goal } = req.body;
     const systemPrompt = `Du bist Virgo Agent — der mächtigste KI-Agent in Virgo AI. Du erledigst komplexe Aufgaben automatisch in mehreren Schritten.
@@ -120,7 +127,7 @@ WICHTIG:
 - Formatiere Ergebnisse klar mit Überschriften und Listen`;
 
     // === MODELLWAHL: zahlender Plan oder Admin = PAID-Modell, sonst FREE-Modell ===
-    const { isPaying } = await getUserAccess(req);
+    const { isPaying } = accessCheck;
     const chosenModel = isPaying ? MODEL_PAID : MODEL_FREE;
 
     let data = await callAnthropic(chosenModel, systemPrompt, messages);

@@ -1,5 +1,8 @@
 export const config = { maxDuration: 60 };
 
+import { validateToken, extractToken } from '../lib/auth.js';
+import { enforceRateLimit, clientIp } from '../lib/rate-limit.js';
+
 const ALLOWED_ORIGINS = ['https://virgoio.com', 'https://www.virgoio.com'];
 
 const MAX_URLS = 40;
@@ -74,6 +77,12 @@ export default async function handler(req, res) {
 
   const ok = ALLOWED_ORIGINS.includes(origin) || ALLOWED_ORIGINS.some(o => referer.startsWith(o));
   if (!ok) return res.status(403).json({ error: 'Forbidden' });
+
+  // Auth-Pflicht: dieser Endpoint proxied Bytes und darf nicht anonym als
+  // SSRF-Rampe (auch mit Blocklist) nutzbar sein.
+  const user = await validateToken(extractToken(req));
+  if (!user) return res.status(401).json({ error: 'Nicht eingeloggt' });
+  if (!(await enforceRateLimit(req, res, { name: 'inline-image:' + user.id, windowSec: 60, max: 30 }))) return;
 
   const urls = req.body && Array.isArray(req.body.urls) ? req.body.urls : null;
   if (!urls) return res.status(400).json({ error: 'urls[] required' });

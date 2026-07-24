@@ -1,5 +1,8 @@
 export const config = { maxDuration: 60 };
 
+import { validateToken, extractToken, getUserPlan, isPayingPlan, isAdminEmail } from '../lib/auth.js';
+import { enforceRateLimit, clientIp } from '../lib/rate-limit.js';
+
 const ALLOWED_ORIGINS = ['https://virgoio.com', 'https://www.virgoio.com'];
 
 // === MODELL-STEUERUNG ===
@@ -10,8 +13,8 @@ const MODEL_PAID = process.env.ANTHROPIC_MODEL_PAID || 'claude-fable-5';
 const MODEL_FREE = process.env.ANTHROPIC_MODEL_FREE || 'claude-opus-4-8';
 const MODEL_REFUSAL_FALLBACK = 'claude-opus-4-8';
 
-// Pläne, die als "zahlend" gelten (gleiche Liste wie in tools.js)
-const ACTIVE_PLANS = ['makler-starter', 'makler-pro', 'makler-business'];
+// Kostenloses Nachrichten-Kontingent für Free-Plan (pro Nutzer & Tag)
+const FREE_CHAT_DAILY_LIMIT = 20;
 
 function guard(req, res) {
   const origin = req.headers.origin || '';
@@ -33,44 +36,14 @@ function guard(req, res) {
   return true;
 }
 
-// Prüft Token + Plan des Users über Supabase.
+// Prüft Token + Plan des Users über Supabase (Signatur-Validierung).
 // Zahlender Kunde (aktiver Makler-Plan) oder Admin → isPaying = true.
-// Bei jedem Problem: isPaying = false → User bekommt das Free-Modell.
 async function getUserAccess(req) {
-  try {
-    const BASE = process.env.SUPABASE_URL;
-    const SVC = process.env.SUPABASE_SERVICE_KEY;
-    const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim();
-    if (!token || !BASE || !SVC) return { user: null, isPaying: false };
-
-    const r = await fetch(`${BASE}/auth/v1/user`, {
-      headers: { 'apikey': SVC, 'Authorization': 'Bearer ' + token }
-    });
-    if (!r.ok) return { user: null, isPaying: false };
-    const user = await r.json();
-    if (!user || !user.id) return { user: null, isPaying: false };
-
-    // Admin bekommt immer das beste Modell
-    const ADMIN = process.env.ADMIN_EMAIL || 'holyencore@gmail.com';
-    if (user.email === ADMIN) return { user, isPaying: true };
-
-    let isPaying = false;
-    try {
-      const planR = await fetch(`${BASE}/rest/v1/users?id=eq.${user.id}&select=plan&limit=1`, {
-        headers: { 'apikey': SVC, 'Authorization': `Bearer ${SVC}` }
-      });
-      if (planR.ok) {
-        const planData = await planR.json();
-        if (Array.isArray(planData) && planData.length > 0) {
-          isPaying = ACTIVE_PLANS.includes(planData[0].plan);
-        }
-      }
-    } catch (e) {}
-    return { user, isPaying };
-  } catch (e) {
-    console.warn('Auth-Check fehlgeschlagen:', e.message);
-    return { user: null, isPaying: false };
-  }
+  const user = await validateToken(extractToken(req));
+  if (!user) return { user: null, isPaying: false, isAdmin: false };
+  if (isAdminEmail(user.email)) return { user, isPaying: true, isAdmin: true };
+  const { plan } = await getUserPlan(user.id);
+  return { user, isPaying: isPayingPlan(plan), isAdmin: false, plan };
 }
 
 function isImageRequest(text) {
@@ -106,6 +79,26 @@ async function callAnthropic(model, maxTokens, systemPrompt, messages) {
 export default async function handler(req, res) {
   if (!guard(req, res)) return;
 
+  // ── Auth-Pflicht + serverseitige Quota ─────────────────────────
+  // Chat ist nicht mehr komplett anonym: der Client MUSS ein gültiges
+  // Supabase-Token schicken, sonst kommt kein Anthropic-/Gemini-/OpenAI-Call
+  // durch — sonst könnten Angreifer die AI-APIs auf unsere Kosten nutzen.
+  const access = await getUserAccess(req);
+  if (!access.user) {
+    return res.status(401).json({ error: 'Nicht eingeloggt' });
+  }
+  const { user, isPaying, isAdmin } = access;
+
+  // Rate-Limit pro User (Burst-Schutz) + globales IP-Limit (registrierte Bots)
+  if (!(await enforceRateLimit(req, res, { name: 'chat:user:' + user.id, windowSec: 60, max: 40 }))) return;
+  if (!(await enforceRateLimit(req, res, { name: 'chat:ip:' + clientIp(req), windowSec: 60, max: 120 }))) return;
+
+  // Free-Plan: 20 Nachrichten/Tag (Admin & Paying: unbegrenzt)
+  if (!isPaying && !isAdmin) {
+    const dayKey = `chat:free-quota:${user.id}:${new Date().toISOString().slice(0, 10)}`;
+    if (!(await enforceRateLimit(req, res, { name: dayKey, windowSec: 86400, max: FREE_CHAT_DAILY_LIMIT, key: dayKey }))) return;
+  }
+
   try {
     const { messages = [], codeMode = false, systemOverride = null } = req.body;
     const lastContent = messages[messages.length - 1]?.content || '';
@@ -140,7 +133,10 @@ export default async function handler(req, res) {
           headers: {
             'Content-Type': 'application/json',
             // WICHTIG: interner Aufruf muss sich als eigene Domain ausweisen
-            'origin': 'https://virgoio.com'
+            'origin': 'https://virgoio.com',
+            // Auth-Token des Users durchreichen, damit generate-image die
+            // Credits beim richtigen User verbucht (und Rate-Limit greift).
+            ...(req.headers.authorization ? { 'authorization': req.headers.authorization } : {})
           },
           body: JSON.stringify({ prompt: lastText })
         });
@@ -185,7 +181,7 @@ VERBOTE: Erwähne niemals Claude, ARIA, Gemini, ChatGPT, OpenAI, Anthropic. Kein
     const maxTokens = codeMode ? 16000 : 8192;
 
     // === MODELLWAHL: zahlender Plan oder Admin = PAID-Modell, sonst FREE-Modell ===
-    const { isPaying } = await getUserAccess(req);
+    // isPaying wurde oben schon ermittelt (access.isPaying) — nicht doppelt ausrollen.
     const chosenModel = isPaying ? MODEL_PAID : MODEL_FREE;
 
     try {

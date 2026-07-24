@@ -1,5 +1,11 @@
 import { generateVideoForUser } from '../lib/higgsfield.js';
+import { deductCredits } from '../lib/credits.js';
+import { enforceRateLimit, clientIp } from '../lib/rate-limit.js';
+import { isAdminEmail } from '../lib/auth.js';
+import { enforceTurnstile } from '../lib/turnstile.js';
 export const config = { maxDuration: 60 };
+
+const TTS_COST = 1;
 
 export default async function handler(req, res) {
  const ALLOWED_ORIGINS = ['https://virgoio.com', 'https://www.virgoio.com'];
@@ -32,6 +38,9 @@ export default async function handler(req, res) {
       const r = await fetch(`${BASE}/auth/v1/user`, {
         headers: { 'apikey': SVC, 'Authorization': `Bearer ${token}` }
       });
+      // Supabase prüft hier die JWT-Signatur mit dem Projekt-Secret.
+      // Ungültige/gefälschte Tokens ergeben !r.ok — wir lehnen sie hart ab.
+      if (!r.ok) return null;
       const user = await r.json();
       return user?.id ? user : null;
     } catch(e) { return null; }
@@ -82,10 +91,18 @@ export default async function handler(req, res) {
   // ─── TEXT TO SPEECH ───
   if (tool === 'tts') {
     try {
+      const token = (req.headers.authorization || '').replace('Bearer ', '').trim();
+      const user = await validateToken(token);
+      if (!user) return res.status(401).json({ error: 'Nicht eingeloggt' });
+      if (!(await enforceRateLimit(req, res, { name: 'tts:' + user.id, windowSec: 60, max: 15 }))) return;
       const { text, voice_id = 'pNInz6obpgDQGcFmaJgB', model_id = 'eleven_multilingual_v2' } = body;
       if (!text) return res.status(400).json({ error: 'Kein Text angegeben' });
       if (text.length > 5000) return res.status(400).json({ error: 'Text zu lang (max. 5000 Zeichen)' });
       if (!ELEVEN) return res.status(500).json({ error: 'Audio-Engine nicht konfiguriert' });
+      if (!isAdminEmail(user.email)) {
+        const charge = await deductCredits(user.id, TTS_COST);
+        if (!charge.success) return res.status(402).json({ error: 'Nicht genug Credits', credits: charge.credits });
+      }
       const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(voice_id)}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'xi-api-key': ELEVEN },
@@ -103,6 +120,10 @@ export default async function handler(req, res) {
   // ─── EMAIL ───
   if (tool === 'email') {
     try {
+      const token = (req.headers.authorization || '').replace('Bearer ', '').trim();
+      const user = await validateToken(token);
+      if (!user) return res.status(401).json({ error: 'Nicht eingeloggt' });
+      if (!(await enforceRateLimit(req, res, { name: 'email:' + user.id, windowSec: 3600, max: 30 }))) return;
       const { type, to, data = {} } = body;
       if (!to) return res.status(400).json({ error: 'Kein Empfaenger angegeben' });
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) return res.status(400).json({ error: 'Ungueltige Email-Adresse' });
@@ -136,9 +157,10 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true });
     } catch(e) { return res.status(500).json({ error: e.message }); }
   }
-  // ─── MAKLER — PROFIL PER SLUG ───
+  // ─── MAKLER — PROFIL PER SLUG (öffentlich) ───
   if (tool === 'makler-get' || (req.method === 'GET' && req.query.slug)) {
     try {
+      if (!(await enforceRateLimit(req, res, { name: 'makler-get:' + clientIp(req), windowSec: 60, max: 120 }))) return;
       const slug = req.query.slug;
       if (!slug) return res.status(400).json({ error: 'Slug fehlt' });
       if (!/^[a-z0-9-]{1,80}$/.test(slug)) return res.status(400).json({ error: 'Ungültiger Slug' });
@@ -283,13 +305,21 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true });
     } catch(e) { return res.status(500).json({ error: e.message }); }
   }
-  // ─── MAKLER — LEAD VON LANDING PAGE ───
+  // ─── MAKLER — LEAD VON LANDING PAGE (öffentlich) ───
   if (tool === 'makler-lead') {
     try {
+      // Öffentlicher Endpoint → strenger IP-Rate-Limit + per-Slug-Limit,
+      // damit Angreifer nicht die Leads-Tabelle und Twilio/Resend fluten.
+      const ip = clientIp(req);
+      if (!(await enforceRateLimit(req, res, { name: 'makler-lead:ip:' + ip, windowSec: 3600, max: 20 }))) return;
+      // Cloudflare Turnstile (fail-open, wenn nicht konfiguriert).
+      if (!(await enforceTurnstile(req, res, body.cf_turnstile_token || body.turnstileToken, ip))) return;
       const { makler_slug, name, telefon, email, versicherung, nachricht } = body;
       if (!name || !telefon) return res.status(400).json({ error: 'Name und Telefon sind Pflichtfelder' });
       if (name.length > 200 || telefon.length > 50) return res.status(400).json({ error: 'Eingabe zu lang' });
+      if (nachricht && String(nachricht).length > 2000) return res.status(400).json({ error: 'Nachricht zu lang' });
       if (!makler_slug || !/^[a-z0-9-]{1,80}$/.test(makler_slug)) return res.status(400).json({ error: 'Ungültiger Makler' });
+      if (!(await enforceRateLimit(req, res, { name: 'makler-lead:slug:' + makler_slug, windowSec: 3600, max: 100 }))) return;
       const maklerR = await fetch(`${BASE}/rest/v1/makler?slug=eq.${encodeURIComponent(makler_slug)}&select=*&limit=1`, {
         headers: { 'apikey': SVC, 'Authorization': `Bearer ${SVC}` }
       });
@@ -324,15 +354,19 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true });
     } catch(e) { return res.status(500).json({ error: e.message }); }
   }
-  // ─── MAKLER — TERMIN BUCHEN ───
+  // ─── MAKLER — TERMIN BUCHEN (öffentlich) ───
   if (tool === 'makler-booking') {
     try {
+      const ip = clientIp(req);
+      if (!(await enforceRateLimit(req, res, { name: 'booking:ip:' + ip, windowSec: 3600, max: 20 }))) return;
       const { makler_slug, name, telefon, email, versicherung, nachricht, date, time } = body;
       if (!name || !telefon) return res.status(400).json({ error: 'Name und Telefon sind Pflichtfelder' });
+      if (String(name).length > 200 || String(telefon).length > 50) return res.status(400).json({ error: 'Eingabe zu lang' });
       if (!date || !time) return res.status(400).json({ error: 'Datum und Uhrzeit fehlen' });
       if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return res.status(400).json({ error: 'Ungultiges Datum' });
       if (!/^\d{2}:\d{2}$/.test(time)) return res.status(400).json({ error: 'Ungultige Uhrzeit' });
       if (!makler_slug || !/^[a-z0-9-]{1,80}$/.test(makler_slug)) return res.status(400).json({ error: 'Ungultiger Makler' });
+      if (!(await enforceRateLimit(req, res, { name: 'booking:slug:' + makler_slug, windowSec: 3600, max: 100 }))) return;
       const maklerR = await fetch(`${BASE}/rest/v1/makler?slug=eq.${encodeURIComponent(makler_slug)}&select=*&limit=1`, {
         headers: { 'apikey': SVC, 'Authorization': `Bearer ${SVC}` }
       });

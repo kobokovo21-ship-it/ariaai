@@ -1,5 +1,7 @@
 const config = { maxDuration: 300 };
 
+import { enforceRateLimit, clientIp } from '../lib/rate-limit.js';
+
 const ALLOWED_ORIGINS = [
   'https://virgoio.com',
   'https://www.virgoio.com'
@@ -96,6 +98,12 @@ async function handler(req, res) {
     return res.status(403).json({ error: 'Forbidden' });
   }
 
+  // Auth-Pflicht + Rate-Limit — sonst könnten Angreifer Anthropic auf unsere Kosten missbrauchen.
+  const access = await getUserAccess(req);
+  if (!access.user) return res.status(401).json({ error: 'Nicht eingeloggt' });
+  if (!(await enforceRateLimit(req, res, { name: 'business:' + access.user.id, windowSec: 60, max: 30 }))) return;
+  if (!(await enforceRateLimit(req, res, { name: 'business:ip:' + clientIp(req), windowSec: 60, max: 60 }))) return;
+
   try {
     const { type, messages = [], systemOverride } = req.body || {};
 
@@ -125,7 +133,7 @@ async function handler(req, res) {
     };
 
     // === MODELLWAHL: zahlender Plan oder Admin = PAID-Modell, sonst FREE-Modell ===
-    const { isPaying } = await getUserAccess(req);
+    const { isPaying } = access;
     const chosenModel = isPaying ? MODEL_PAID : MODEL_FREE;
 
     // Anthropic API
