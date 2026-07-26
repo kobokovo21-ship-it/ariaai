@@ -86,6 +86,60 @@ async function callAnthropic(model, maxTokens, systemPrompt, messages) {
   return data;
 }
 
+// Gestreamter Anthropic-Call für LANGE Outputs (website-html).
+// Warum streamen: bei hohem max_tokens (große animierte Seite) kann ein
+// nicht-gestreamter Request in HTTP-Read-Timeouts laufen, bevor die Antwort
+// fertig ist. Streaming hält die Verbindung mit Bytes am Leben und lässt die
+// Seite bis </html> vollständig generieren. Wir sammeln alle Text-Deltas und
+// geben dieselbe Datenstruktur wie callAnthropic zurück ({content, stop_reason}).
+async function callAnthropicStreaming(model, maxTokens, systemPrompt, messages) {
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': process.env.ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01'
+    },
+    body: JSON.stringify({ model, max_tokens: maxTokens, system: systemPrompt, messages, stream: true })
+  });
+  if (r.status === 529 || r.status === 500 || r.status === 503 || r.status === 502 || r.status === 429) {
+    throw new Error('Anthropic overloaded: ' + r.status);
+  }
+  if (!r.ok || !r.body) {
+    const body = r.body ? await r.text().catch(() => '') : '';
+    console.error(`[anthropic-stream] HTTP ${r.status} model=${model} max_tokens=${maxTokens} body=${body.slice(0, 400)}`);
+    throw new Error('Anthropic HTTP ' + r.status);
+  }
+  const reader = r.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = '', text = '', stopReason = null;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, { stream: true });
+    let nl;
+    while ((nl = buf.indexOf('\n')) >= 0) {
+      const line = buf.slice(0, nl).trim();
+      buf = buf.slice(nl + 1);
+      if (!line.startsWith('data:')) continue;
+      const payload = line.slice(5).trim();
+      if (!payload || payload === '[DONE]') continue;
+      let ev;
+      try { ev = JSON.parse(payload); } catch { continue; }
+      if (ev.type === 'content_block_delta' && ev.delta && ev.delta.type === 'text_delta') {
+        text += ev.delta.text;
+      } else if (ev.type === 'message_delta' && ev.delta && ev.delta.stop_reason) {
+        stopReason = ev.delta.stop_reason;
+      } else if (ev.type === 'error') {
+        console.error(`[anthropic-stream] error event model=${model}:`, JSON.stringify(ev).slice(0, 400));
+        throw new Error('Anthropic stream error');
+      }
+    }
+  }
+  if (!text) throw new Error('Anthropic stream: kein Text');
+  return { content: [{ type: 'text', text }], stop_reason: stopReason };
+}
+
 export default async function handler(req, res) {
   const origin = req.headers.origin || '';
   const referer = req.headers.referer || '';
@@ -134,11 +188,12 @@ export default async function handler(req, res) {
       'Du bist Virgo Business AI — erstelle professionelle Business-Inhalte auf Deutsch. Antworte vollständig und direkt verwendbar.';
 
     // website-html braucht viel Output-Budget für eine vollständige animierte
-    // Seite (mit </html>). Opus 4.8 kann bis 128k Output; wir nehmen für den
-    // NICHT-gestreamten Call 32k — genug für die Seite, klein genug, um nicht
-    // in Anthropic-/Vercel-Timeouts zu laufen. (Opus 4.8 denkt per Default
-    // NICHT mit, anders als Fable 5 — daher kein Thinking-Token-Verbrauch.)
-    const maxTokens = type === 'website-html' ? 32000 : 8192;
+    // Seite (mit </html>). Symptom "zweimal abgeschnitten" = 200 mit partiellem
+    // HTML = stop_reason:max_tokens → das Budget war zu klein. Opus 4.8 kann bis
+    // 128k Output; wir geben 64k (mehr als jede reale Landingpage braucht) und
+    // STREAMEN den Call (Pflicht bei so hohem max_tokens, sonst HTTP-Timeout).
+    const isWebsiteHtml = type === 'website-html';
+    const maxTokens = isWebsiteHtml ? 64000 : 8192;
     // Fallback-Modelle sind pro-Provider gedeckelt — Gemini 2.0 Flash 8k, GPT-4o 16k.
     const geminiMaxTokens = Math.min(maxTokens, 8192);
     const openaiMaxTokens = Math.min(maxTokens, 16384);
@@ -161,33 +216,19 @@ export default async function handler(req, res) {
       chosenModel = process.env.ANTHROPIC_MODEL_WEBSITE_HTML || MODEL_REFUSAL_FALLBACK;
     }
 
-    // Anthropic API
+    // Anthropic API — website-html gestreamt (langer Output), Rest normal.
+    const callModel = (m) => isWebsiteHtml
+      ? callAnthropicStreaming(m, maxTokens, systemPrompt, messages)
+      : callAnthropic(m, maxTokens, systemPrompt, messages);
     try {
-      let data = await callAnthropic(chosenModel, maxTokens, systemPrompt, messages);
+      let data = await callModel(chosenModel);
       let usedModel = chosenModel;
 
       // === REFUSAL-FALLBACK ===
       if (data.stop_reason === 'refusal' && chosenModel !== MODEL_REFUSAL_FALLBACK) {
         console.warn('Refusal von ' + chosenModel + ' → Retry mit ' + MODEL_REFUSAL_FALLBACK);
-        data = await callAnthropic(MODEL_REFUSAL_FALLBACK, maxTokens, systemPrompt, messages);
+        data = await callModel(MODEL_REFUSAL_FALLBACK);
         usedModel = MODEL_REFUSAL_FALLBACK;
-      }
-
-      // === MAX-TOKENS-FALLBACK (kritisch für website-html) ===
-      // Fable's interne Thinking-Tokens fressen Budget — bei Abbruch
-      // einmal auf Opus 4.8 umsteigen (keine internen Denk-Tokens),
-      // damit die Antwort komplett wird statt zweimal abzuschneiden.
-      if (data.stop_reason === 'max_tokens' && chosenModel !== MODEL_REFUSAL_FALLBACK && type === 'website-html') {
-        console.warn('max_tokens von ' + chosenModel + ' → Retry mit ' + MODEL_REFUSAL_FALLBACK);
-        try {
-          const retry = await callAnthropic(MODEL_REFUSAL_FALLBACK, maxTokens, systemPrompt, messages);
-          if (retry && retry.content && retry.stop_reason !== 'max_tokens') {
-            data = retry;
-            usedModel = MODEL_REFUSAL_FALLBACK;
-          }
-        } catch (retryErr) {
-          console.warn('max_tokens-Retry fehlgeschlagen:', retryErr.message);
-        }
       }
 
       const textBlocks = (data.content || []).filter(b => b.type === 'text' && b.text);
@@ -199,7 +240,11 @@ export default async function handler(req, res) {
         });
       }
 
-      console.log(`✓ Anthropic (${usedModel}) erfolgreich, stop=${data.stop_reason}`);
+      const outLen = textBlocks.reduce((n, b) => n + b.text.length, 0);
+      console.log(`✓ Anthropic (${usedModel}) ok, stop=${data.stop_reason}, type=${type}, chars=${outLen}`);
+      if (data.stop_reason === 'max_tokens') {
+        console.warn(`[business] max_tokens erreicht bei ${usedModel} (max=${maxTokens}, type=${type}) — Output evtl. abgeschnitten.`);
+      }
       return res.status(200).json({
         ...data,
         content: textBlocks,
