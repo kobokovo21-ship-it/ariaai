@@ -1466,7 +1466,7 @@ async function expandBriefing(shortText){
   try{
     const r=await fetchWithRetry('/api/business',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{'Content-Type':'application/json',...(authToken?{'Authorization':'Bearer '+authToken}:{})},
       body:JSON.stringify({type:'plan',messages:[{role:'user',content:user}],systemOverride:sys})
     });
     const d=await r.json();
@@ -1801,7 +1801,8 @@ Das HTML MUSS mind. 6KB sein (echte Inhalte + Animationen + Grafikvideo-Optik).
       let attemptContent;
       if(typeof userContent==='string'){ attemptContent=userContent+compactHint; }
       else { attemptContent=userContent.map(b=>b.type==='text'?{type:'text',text:b.text+compactHint}:b); }
-      const r=await fetchWithRetry('/api/business',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'website-html',messages:[{role:'user',content:attemptContent}],systemOverride:sys})});
+      const r=await fetchWithRetry('/api/business',{method:'POST',headers:{'Content-Type':'application/json',...(authToken?{'Authorization':'Bearer '+authToken}:{})},body:JSON.stringify({type:'website-html',messages:[{role:'user',content:attemptContent}],systemOverride:sys})});
+      if(r.status===401){hideTyping();endGen();WEB.active=false;addAIMsg('🔒 <b>Bitte melde dich an</b> (oder neu an), um Websites zu bauen — deine Sitzung ist abgelaufen.');showM('modal-login');return;}
       const resp=await r.json();
       rawText=(resp.content&&resp.content[0]&&resp.content[0].text)||'';
       truncated=htmlWasTruncated(rawText);
@@ -2006,7 +2007,7 @@ OUTPUT: NUR der HTML-Code. KEIN Text davor/danach, KEINE Backticks. Mindestens 5
       let attemptContent;
       if(typeof userContent==='string'){ attemptContent=userContent+compactHint; }
       else { attemptContent=userContent.map(b=>b.type==='text'?{type:'text',text:b.text+compactHint}:b); }
-      const r=await fetchWithRetry('/api/business',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'website-html',messages:[{role:'user',content:attemptContent}],systemOverride:sys})});
+      const r=await fetchWithRetry('/api/business',{method:'POST',headers:{'Content-Type':'application/json',...(authToken?{'Authorization':'Bearer '+authToken}:{})},body:JSON.stringify({type:'website-html',messages:[{role:'user',content:attemptContent}],systemOverride:sys})});
       const resp=await r.json();
       rawText=(resp.content&&resp.content[0]&&resp.content[0].text)||'';
       truncated=htmlWasTruncated(rawText);
@@ -2146,7 +2147,7 @@ async function generateMaklerAd(){
   const adPrompt=`Erstelle Werbeanzeigen für einen ${branche}-Makler auf Deutsch. Makler: ${name}. Angebot: ${angebot}. Werbeziel: ${ziel}.${zielgruppe?' Zielgruppe: '+zielgruppe:''}${usp?' USP: '+usp:''} JSON (kein anderer Text): ${jt}`;
   document.getElementById('mak-pfill').style.width='10%';document.getElementById('mak-loader-txt').textContent='Ad-Texte werden erstellt...';
   try{
-    const r=await fetch('/api/business',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'ads',messages:[{role:'user',content:adPrompt}],systemOverride:'Du bist ein Google Ads Experte. Antworte NUR mit validem JSON. Kein Markdown.'})});
+    const r=await fetch('/api/business',{method:'POST',headers:{'Content-Type':'application/json',...(authToken?{'Authorization':'Bearer '+authToken}:{})},body:JSON.stringify({type:'ads',messages:[{role:'user',content:adPrompt}],systemOverride:'Du bist ein Google Ads Experte. Antworte NUR mit validem JSON. Kein Markdown.'})});
     const d=await r.json();const rawText=(d.content&&d.content[0]&&d.content[0].text)||'{}';
     let adData;try{adData=JSON.parse(rawText.replace(/```json|```/g,'').trim());}catch(e){adData={google:{headlines:['Jetzt PKV vergleichen','Kostenlos beraten lassen',name.substring(0,28)],descriptions:['Finden Sie die beste Versicherung.','Ihr '+branche+'-Experte.'],cta:'Jetzt Termin'},meta:{primary_text:'Suchen Sie '+angebot+'?',headline:'Kostenlos beraten lassen',description:'Ihr Experte',cta:'Mehr erfahren'}};}
     maklerAdData=adData;document.getElementById('mak-pfill').style.width='60%';document.getElementById('mak-loader-txt').textContent='Creative wird erstellt...';
