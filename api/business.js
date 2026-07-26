@@ -123,7 +123,12 @@ async function handler(req, res) {
       'Du bist Virgo Business AI — erstelle professionelle Business-Inhalte auf Deutsch. Antworte vollständig und direkt verwendbar.';
 
     // Fable 5 denkt intern mit — diese Denk-Tokens zählen ins max_tokens-Budget.
-    const maxTokens = type === 'website-html' ? 16000 : 8192;
+    // website-html braucht deshalb DEUTLICH mehr, sonst reicht das Budget nicht
+    // für vollständiges HTML mit </html> ("Generierung wurde abgeschnitten").
+    const maxTokens = type === 'website-html' ? 48000 : 8192;
+    // Fallback-Modelle sind pro-Provider gedeckelt — Gemini 2.0 Flash 8k, GPT-4o 16k.
+    const geminiMaxTokens = Math.min(maxTokens, 8192);
+    const openaiMaxTokens = Math.min(maxTokens, 16384);
 
     const extractText = (msg) => {
       if (!msg) return '';
@@ -134,7 +139,14 @@ async function handler(req, res) {
 
     // === MODELLWAHL: zahlender Plan oder Admin = PAID-Modell, sonst FREE-Modell ===
     const { isPaying } = access;
-    const chosenModel = isPaying ? MODEL_PAID : MODEL_FREE;
+    let chosenModel = isPaying ? MODEL_PAID : MODEL_FREE;
+    // Für website-html direkt Opus 4.8 nehmen — Fable's interne Denk-Tokens
+    // fressen sonst so viel Budget, dass für vollständiges HTML kein Platz
+    // mehr bleibt. Opus produziert die Seite in einem Rutsch, ohne Truncation.
+    // Über ANTHROPIC_MODEL_WEBSITE_HTML lässt sich das per Env-Var overriden.
+    if (type === 'website-html') {
+      chosenModel = process.env.ANTHROPIC_MODEL_WEBSITE_HTML || MODEL_REFUSAL_FALLBACK;
+    }
 
     // Anthropic API
     try {
@@ -142,12 +154,27 @@ async function handler(req, res) {
       let usedModel = chosenModel;
 
       // === REFUSAL-FALLBACK ===
-      // Fable 5 kann Anfragen ablehnen (HTTP 200 mit stop_reason "refusal").
-      // Dann denselben Request einmal mit Opus wiederholen.
       if (data.stop_reason === 'refusal' && chosenModel !== MODEL_REFUSAL_FALLBACK) {
         console.warn('Refusal von ' + chosenModel + ' → Retry mit ' + MODEL_REFUSAL_FALLBACK);
         data = await callAnthropic(MODEL_REFUSAL_FALLBACK, maxTokens, systemPrompt, messages);
         usedModel = MODEL_REFUSAL_FALLBACK;
+      }
+
+      // === MAX-TOKENS-FALLBACK (kritisch für website-html) ===
+      // Fable's interne Thinking-Tokens fressen Budget — bei Abbruch
+      // einmal auf Opus 4.8 umsteigen (keine internen Denk-Tokens),
+      // damit die Antwort komplett wird statt zweimal abzuschneiden.
+      if (data.stop_reason === 'max_tokens' && chosenModel !== MODEL_REFUSAL_FALLBACK && type === 'website-html') {
+        console.warn('max_tokens von ' + chosenModel + ' → Retry mit ' + MODEL_REFUSAL_FALLBACK);
+        try {
+          const retry = await callAnthropic(MODEL_REFUSAL_FALLBACK, maxTokens, systemPrompt, messages);
+          if (retry && retry.content && retry.stop_reason !== 'max_tokens') {
+            data = retry;
+            usedModel = MODEL_REFUSAL_FALLBACK;
+          }
+        } catch (retryErr) {
+          console.warn('max_tokens-Retry fehlgeschlagen:', retryErr.message);
+        }
       }
 
       const textBlocks = (data.content || []).filter(b => b.type === 'text' && b.text);
@@ -159,9 +186,13 @@ async function handler(req, res) {
         });
       }
 
-      console.log(`✓ Anthropic (${usedModel}) erfolgreich`);
-      // Nur Text-Blöcke zurückgeben — Fable liefert zusätzlich interne Denk-Blöcke mit.
-      return res.status(200).json({ ...data, content: textBlocks, _model: usedModel });
+      console.log(`✓ Anthropic (${usedModel}) erfolgreich, stop=${data.stop_reason}`);
+      return res.status(200).json({
+        ...data,
+        content: textBlocks,
+        _model: usedModel,
+        _truncated: data.stop_reason === 'max_tokens'
+      });
     } catch (anthropicErr) {
       console.warn('⚠️ Anthropic failed → Gemini:', anthropicErr.message);
     }
@@ -183,7 +214,7 @@ async function handler(req, res) {
           body: JSON.stringify({
             system_instruction: { parts: [{ text: systemPrompt }] },
             contents: geminiMessages,
-            generationConfig: { maxOutputTokens: maxTokens, temperature: 0.7 }
+            generationConfig: { maxOutputTokens: geminiMaxTokens, temperature: 0.7 }
           })
         }
       );
@@ -218,7 +249,7 @@ async function handler(req, res) {
         },
         body: JSON.stringify({
           model: process.env.OPENAI_MODEL || 'gpt-4o',
-          max_tokens: maxTokens,
+          max_tokens: openaiMaxTokens,
           messages: openaiMessages,
           temperature: 0.7
         })

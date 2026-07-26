@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { randomUUID } from 'crypto';
 import { enforceRateLimit, clientIp } from '../lib/rate-limit.js';
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -44,7 +45,7 @@ export default async function handler(req, res) {
     const { id, title, messages, model, website_html, website_name, is_social } = req.body;
     if (!messages) return res.status(200).json({ local: true });
 
-    const chatId = id || require('crypto').randomUUID();
+    const chatId = id || randomUUID();
     const { data: existing } = await supabase.from('chats').select('id').eq('id', chatId).eq('user_id', user.id).single();
 
     if (existing) {

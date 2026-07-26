@@ -33,10 +33,35 @@ async function enhanceImagePrompt(userPrompt) {
 STRICT RULES:
 - Output ONLY the image prompt. No explanations, no quotes, no preamble.
 - The image must NEVER contain text, letters, words, logos, UI elements, buttons, or website layouts. Always end the prompt with: "no text, no letters, no logos, no UI elements"
-- If the user mentions "Landingpage", "Website", "Header" or similar: they want a HERO IMAGE for that topic — a photographic scene, NEVER a screenshot or mockup of a webpage.
-- If the user mentions an insurance company or insurance topic (e.g. Hansemerkur, Versicherung, Makler): create a professional, trustworthy insurance-marketing scene, e.g. a confident advisor with clients, a happy protected family, a modern bright office, a secure home — depending on context.
+- If the user mentions "Landingpage", "Website", "Header", "Hero" or similar: they want a HERO IMAGE for that topic — a photographic scene, NEVER a screenshot or mockup of a webpage.
+
+INDUSTRY MAPPING — HIGHEST PRIORITY:
+Before writing the prompt, IDENTIFY the specific business/industry mentioned by the user (German or English) and choose a scene that VISUALLY makes that industry unmistakable at first glance. The industry MUST be the visual subject of the photo, not a background detail. Examples of the required specificity:
+- Autohändler / Autohaus / car dealer / Autohandel → modern car showroom with new/luxury cars in view, glossy floor, spot lighting; optionally a salesperson greeting customers
+- Friseur / Friseursalon / hair salon / hair stylist → bright modern hair salon interior with styling chairs, mirrors, a stylist working on a client's hair
+- Restaurant / Gastronomie / Bistro / Café → warm restaurant or café interior, plated food on a table, ambient light, chef or waiter in view
+- Bäckerei / bakery → warm bakery display with fresh bread, pastries, croissants
+- Handwerker / Tischler / Schreiner / craftsman → workshop scene with wood/metal/tools, hands working on the craft
+- Anwalt / Kanzlei / lawyer → modern law-office interior, books, professional in a suit at a desk
+- Arzt / Arztpraxis / Zahnarzt / doctor → clean modern medical practice, doctor with patient, warm professional atmosphere
+- Fitness / Gym / Personal Trainer → modern gym floor with equipment, trainer coaching an athlete
+- Beauty / Kosmetik / Nagelstudio → premium beauty studio, cosmetic treatment in progress
+- Immobilien / real estate / Makler(nicht Versicherung) → elegant modern home interior or exterior, warm daylight
+- Versicherung / Versicherungsmakler / insurance broker → confident advisor with clients, a protected happy family, a modern bright insurance office, or a secure home
+- Tech / IT / Software / SaaS → modern tech workspace, laptops, focused team collaborating
+- Handel / Retail / Onlineshop → curated product display in a boutique setting
+- Coach / Berater / Consultant → confident professional consulting in a bright modern meeting space
+- Fotograf / Photographer → photographer at work with camera, studio lighting
+- Musiker / Band → musician performing on stage, cinematic concert lighting
+- Yoga / Wellness / Spa → serene wellness studio with soft natural light, person in a yoga pose
+- Bau / Bauunternehmen / construction → construction site with workers, cranes, modern architecture
+- Reise / Travel Agency → travel scene relevant to destinations (skyline, beach, mountains)
+If NONE of the above fits, invent a scene that is UNMISTAKABLY specific to the mentioned business. If the request is truly generic ("modern business"), pick a modern bright co-working / office scene with real people — NEVER default to forest, trees, mountain landscape, sunset over water, or any generic nature photography.
+
+HARD BANS (unless the business itself is nature-related, e.g. arborist, hiking gear, forestry): forest, woods, trees as the main subject, mountain vistas, sunset landscapes, empty nature scenes.
+
 - Style: photorealistic, professional commercial photography, soft natural light, high detail, 16:9 composition feel.
-- Keep it under 80 words.`,
+- Keep it under 90 words.`,
         messages: [{ role: 'user', content: userPrompt }]
       })
     });

@@ -1256,18 +1256,40 @@ function detectIntent(txt){
     if(!sIsHelp) return 'social';
   }
   // ── VIDEO/REEL VORFAHRT ──
-  // "mach mir ein Werbevideo für meine Seite" → Video, NICHT Website.
-  // Wenn der Text explizit ein Video-Wort enthält (video/werbevideo/reel/clip/film/spot/trailer/animation/motion),
-  // routen wir zu 'social' (Grafikvideo-Flow) — auch wenn "seite"/"shop" darin vorkommt.
-  // Ausnahme: der User baut eine Website UND fügt darin ein Video ein → dann bleibt es Website(-Update).
-  var videoWord=/\b(werbevideo|werbe-?video|reel|reels|tiktok|tik\s?tok|werbespot|werbe-?spot|\bspot\b|\bclip\b|videoclip|trailer|imagefilm|image-?film|werbefilm|werbe-?film|kurzfilm|grafikvideo|grafik-?video|motion(\s?graphic)?|animation(?!\s+(zur|auf|in|für)\s+website))\b/i.test(loS)
-                || (/\bvideo(s)?\b/i.test(loS) && !/\b(video\s+(auf|zur|in|für|einbau|einfüg|einbinden|hinzufüg)\s+(die|meine|der|einer|einer\s+neuen)?\s*(website|webseite|seite|homepage|landingpage))\b/i.test(loS));
-  if(videoWord){
-    // Wenn schon eine (nicht-social) Website offen ist und der User Änderungswünsche äußert,
-    // handelt es sich vermutlich um "Video EINFÜGEN in Website" → website_update statt neuem Video.
-    var wantsVideoInSite = currentWebsiteHtml && !currentIsSocial &&
-      /\b(einfüg|einbau|einbinden|hinzufüg|pack|nimm|setze|leg|integrier|reinsetz|reinpack)\b/i.test(loS);
-    if(wantsVideoInSite) return 'website_update';
+  // Starke Video-Wörter = eindeutig ein Video/Reel gewünscht.
+  var strongVideo = /\b(reel|reels|tiktok|tik\s?tok|werbevideo|werbe-video|werbeclip|werbe-clip|werbespot|werbe-spot|werbefilm|werbe-film|imagefilm|image-film|kurzfilm|trailer|grafikvideo|grafik-video|videoclip|videoclips)\b/i.test(loS);
+  // Schwache Video-Wörter = mehrdeutig. Alleinstehendes "motion"/"animation"
+  // NICHT drin, weil "Website mit motion und webflow" oder "Landingpage mit
+  // Animation" sonst fälschlich Video-Flow triggern.
+  var weakVideo = /\b(video|videos|clip|clips|\bspot\b|spots|motion\s?graphics?|motion\s?design)\b/i.test(loS);
+  // "clip" nur zählen, wenn NICHT CSS-Kontext (clip-path, clippath, clip-mask).
+  if(weakVideo && /\bclip[-\s]?(path|mask)|clippath\b/i.test(loS) &&
+     !/\b(video|reel|spot|film|trailer)\b/i.test(loS)) weakVideo = false;
+
+  // Starke Web-Wörter = eindeutig Website. "seite"/"shop" NICHT drin,
+  // weil zu mehrdeutig ("für meine Seite" = Firmenseite).
+  var strongWeb = /\b(website|webseite|webside|webseit|weseite|weseit|web-?seite|homepage|home-?page|landingpage|landing\s?page|onlineshop|online-?shop|firmenwebsite|firmenseite|makler.?website)\b/i.test(loS);
+  var hasUrl = /https?:\/\/|www\.[a-z0-9-]+\.[a-z]{2,}/i.test(loS);
+  var webContextWord = /\b(webflow|framer|nextjs|next\.js|react|astro|vue|svelte|tailwind|shopify|wordpress|wix|squarespace|html|css|javascript|typescript|nachbau|nachbauen|nachgebaut|klon|klone|klonen|clone|kopier|kopiere|kopieren|rebuild)\b/i.test(loS);
+
+  // Einbau-Absicht: zusammengeschriebenes Verb ODER trennbare Konstruktion.
+  var insertVerb = /\b(einfüg|einfueg|einbau|einbinden|einbett|hinzufüg|hinzufueg|integrier|reinsetz|reinpack)\b/i.test(loS)
+    || /\b(füg|bau|bind|bett|pack|setz|leg|nimm)\w{0,4}\b[^.!?]{0,40}\b(rein|hinein|ein|hinzu|dazu)\b/i.test(loS);
+
+  // ── Entscheidung ──
+  // 1) Starkes Video-Wort → immer Video (auch bei "Reel für meine Seite").
+  //    Ausnahme: schon Website offen + Einbau-Verb → website_update.
+  if(strongVideo){
+    if(currentWebsiteHtml && !currentIsSocial && insertVerb) return 'website_update';
+    return 'social';
+  }
+  // 2) Starkes Web-Wort ODER (URL + Web-Kontext) → Website, egal was sonst.
+  if(strongWeb || ((hasUrl || webContextWord) && (strongWeb || /\bseite\b/i.test(loS)))){
+    // fällt in Website-Erkennung weiter unten
+  }
+  // 3) Schwaches Video-Wort ohne starkes Web-Signal → Video.
+  else if(weakVideo){
+    if(currentWebsiteHtml && !currentIsSocial && insertVerb) return 'website_update';
     return 'social';
   }
   // Social nur wenn echte Plattform genannt ist UND es nicht klar um eine Website geht
@@ -1623,14 +1645,33 @@ Das Video muss den oberen Seitenbereich DOMINIEREN — großer, mutiger Auftritt
     document.getElementById('gl').textContent='Website wird gebaut...';
   }
 
-  // ── AUTO-HERO-BILD: Neubau ohne hochgeladene Fotos → Foto mit Menschen generieren (Hero).
+  // ── AUTO-HERO-BILD: Neubau ohne hochgeladene Fotos → branchenspezifisches Hero-Foto generieren.
   //    Entfällt, wenn ein Hero-VIDEO den Auftakt bildet (Video ist der Hero-Visual).
   if(!isUpdate && !uploadedUrls.length && !heroClip){
     try{
       document.getElementById('gl').textContent='Hero-Foto wird generiert...';
-      const wsSubject=(d._request||[d.name,d.branche,d.angebot].filter(Boolean).join(', ')||'modern business').slice(0,280);
-      const wsPr='cinematic wide hero photograph with real people for a premium website about: '+wsSubject+'. professional friendly people, editorial photography, soft cinematic light, atmospheric, photorealistic, no text, no letters, no logos, no watermark';
-      const ir=await fetch('/api/generate-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:wsPr,model:'nano'})});
+      // Branche EXPLIZIT als Fokus. Reihenfolge: erst konkrete Branche/Angebot, dann Freitext.
+      // Der Enhancer im Backend (api/generate-image.js) mappt die Branche auf eine
+      // typische Szene. Kein "premium website about X" mehr, weil Flux das sonst
+      // als atmosphärisches Naturbild interpretiert.
+      const branche = (d.branche||'').trim();
+      const angebot = (d.angebot||'').trim();
+      const name = (d.name||'').trim();
+      const freeReq = (d._request||'').trim();
+      let subject;
+      if(branche){
+        subject = 'Hero-Bild für eine Website in der Branche "' + branche + '"'
+          + (angebot ? ' — Angebot: ' + angebot : '')
+          + (name ? ' — Firma: ' + name : '')
+          + '. Zeige die typische Szene dieser Branche unmissverständlich.';
+      } else {
+        // Kein Q&A-Feld → Direkt-Modus mit Freitext. Wir sagen dem Enhancer klar,
+        // dass er die Branche aus dem Text ableiten und dann die typische Szene malen soll.
+        subject = 'Hero-Bild für die folgende Business-Beschreibung: "'
+          + (freeReq || 'modern business').slice(0,600)
+          + '". Erkenne die Branche und zeige eine typische Szene, die diese Branche auf den ersten Blick zeigt (z.B. Autohaus mit Autos, Salon mit Friseurstuhl, Restaurant-Interieur mit Essen).';
+      }
+      const ir=await fetch('/api/generate-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:subject,model:'nano'})});
       const idt=await ir.json();
       if(idt&&idt.imageUrl){uploadedUrls.push(idt.imageUrl);uploadedImageUrl=idt.imageUrl;console.log('✓ Hero-Bild generiert:',idt.imageUrl);}
     }catch(e){console.warn('⚠️ Hero-Bild fehlgeschlagen:',e.message);}
@@ -2413,52 +2454,119 @@ async function startFilmPipeline(){
 }
 
 // ═══════════════════════════════════════
-// VOICE
+// VOICE — Diktat mit Auto-Restart (überlebt browser-seitige Timeouts)
 // ═══════════════════════════════════════
-let recOn=false;
-function toggleVoice(){
-  if(!location.protocol.startsWith('https')&&location.hostname!=='localhost'){alert('Mikrofon nur über HTTPS.');return;}
+let recOn=false;          // Nutzer-Intent: soll das Diktat weiterlaufen?
+let _recInstance=null;    // aktive SpeechRecognition-Instanz
+let _recBaseValue='';     // Text im Feld vor Start des Diktats (Anker)
+let _recFinal='';         // bereits finalisierter Diktat-Text (kumuliert)
+let _recRestartTs=0;      // gegen Auto-Restart-Loop
+function _stopMicUI(){
+  recOn=false;
   const btn=document.getElementById('mic-btn');
+  if(btn){btn.textContent='🎤';btn.style.color='';}
+  _recInstance=null;
+  window._rec=null;
+}
+function _paintDictation(interim){
   const inp=document.getElementById('prompt');
+  if(!inp)return;
+  const sep=(_recBaseValue.length>0 && !/\s$/.test(_recBaseValue))?' ':'';
+  const dict=(_recFinal + (interim ? (_recFinal?' ':'') + interim : '')).trim();
+  inp.value=_recBaseValue + (dict ? sep+dict : '');
+  // Autosize + Preview-State aktuell halten
+  try{ inp.dispatchEvent(new Event('input',{bubbles:true})); }catch(e){}
+}
+function _startRecognition(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){alert('Diktat wird von diesem Browser nicht unterstützt. Bitte Chrome oder Safari verwenden.');return;}
-  const stopMic=()=>{recOn=false;btn.textContent='🎤';btn.style.color='';window._rec=null;};
-  if(recOn){try{if(window._rec)window._rec.stop();}catch(e){}stopMic();return;}
+  if(!SR) return null;
   const rec=new SR();
   rec.lang='de-DE';
-  rec.continuous=true;
+  // iOS Safari verträgt continuous=true schlecht → dort single-shot + Auto-Restart.
+  const isIOS=/iP(hone|ad|od)/i.test(navigator.userAgent||'');
+  rec.continuous=!isIOS;
   rec.interimResults=true;
-  const baseValue=inp.value;
-  const baseNeedsSpace=baseValue.length>0 && !/\s$/.test(baseValue);
-  let finalTranscript='';
-  rec.onstart=()=>{recOn=true;btn.textContent='⏹';btn.style.color='#ef4444';};
+  rec.maxAlternatives=1;
+  rec.onstart=()=>{
+    const btn=document.getElementById('mic-btn');
+    if(btn){btn.textContent='⏹';btn.style.color='#ef4444';}
+  };
   rec.onresult=(e)=>{
     let interim='';
     for(let i=e.resultIndex;i<e.results.length;i++){
       const r=e.results[i];
-      const t=r[0].transcript;
-      if(r.isFinal){finalTranscript+=(finalTranscript && !/\s$/.test(finalTranscript)?' ':'')+t.trim();}
-      else{interim+=t;}
+      const t=(r[0]&&r[0].transcript)||'';
+      if(r.isFinal){
+        const clean=t.trim();
+        if(clean){
+          _recFinal += (_recFinal && !/\s$/.test(_recFinal) ? ' ' : '') + clean;
+        }
+      } else {
+        interim += t;
+      }
     }
-    const sep=baseNeedsSpace?' ':'';
-    const live=(finalTranscript+(interim?(finalTranscript?' ':'')+interim.trim():'')).trim();
-    inp.value=baseValue+(live?sep+live:'');
-    inp.dispatchEvent(new Event('input',{bubbles:true}));
+    _paintDictation(interim.trim());
   };
   rec.onerror=(e)=>{
     const code=e && e.error;
     if(code==='not-allowed' || code==='service-not-allowed'){
       alert('Mikrofon-Zugriff wurde blockiert. Bitte in den Browser-Einstellungen erlauben.');
-    } else if(code==='no-speech'){
-      // silent — just stop, no annoying alert
-    } else if(code && code!=='aborted'){
+      recOn=false;
+      try{ rec.stop(); }catch(_){}
+      _stopMicUI();
+      return;
+    }
+    // 'no-speech','aborted','network','audio-capture' → still leise weiterlaufen
+    if(code && code!=='no-speech' && code!=='aborted'){
       console.warn('SpeechRecognition error:',code);
     }
-    stopMic();
+    // onend übernimmt den Neustart.
   };
-  rec.onend=()=>{stopMic();inp.focus();};
-  try{rec.start();window._rec=rec;}
-  catch(e){stopMic();console.warn('SpeechRecognition start failed:',e);}
+  rec.onend=()=>{
+    // Wenn Nutzer noch aktiv ist: automatisch neu starten (Chrome/Safari beenden
+    // die Session gerne nach ~30-60s Stille oder nach jedem Final-Chunk auf iOS).
+    if(!recOn){ _stopMicUI(); return; }
+    const now=Date.now();
+    if(now - _recRestartTs < 400){
+      // zu schnell hintereinander → aufgeben, Feedback-Loop vermeiden
+      _stopMicUI();
+      return;
+    }
+    _recRestartTs=now;
+    try{
+      const next=_startRecognition();
+      if(next){ _recInstance=next; window._rec=next; }
+      else { _stopMicUI(); }
+    }catch(e){
+      console.warn('SpeechRecognition restart failed:',e);
+      _stopMicUI();
+    }
+  };
+  try{ rec.start(); return rec; }
+  catch(e){ console.warn('SpeechRecognition start failed:',e); return null; }
+}
+function toggleVoice(){
+  if(!location.protocol.startsWith('https')&&location.hostname!=='localhost'){alert('Mikrofon nur über HTTPS.');return;}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){alert('Diktat wird von diesem Browser nicht unterstützt. Bitte Chrome oder Safari verwenden.');return;}
+  if(recOn){
+    // Nutzer stoppt aktiv
+    recOn=false;
+    try{ if(_recInstance) _recInstance.stop(); }catch(e){}
+    _stopMicUI();
+    const inp=document.getElementById('prompt');
+    if(inp){ inp.focus(); try{ inp.setSelectionRange(inp.value.length, inp.value.length); }catch(_){}}
+    return;
+  }
+  const inp=document.getElementById('prompt');
+  _recBaseValue = inp ? inp.value : '';
+  _recFinal = '';
+  _recRestartTs = 0;
+  recOn = true;
+  const rec=_startRecognition();
+  if(!rec){ _stopMicUI(); return; }
+  _recInstance=rec;
+  window._rec=rec;
 }
 const _micBtnEl=document.getElementById('mic-btn');
 if(_micBtnEl){_micBtnEl.addEventListener('touchstart',function(e){e.preventDefault();toggleVoice();},{passive:false});}

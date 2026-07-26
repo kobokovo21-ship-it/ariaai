@@ -1,7 +1,7 @@
 import { generateVideoForUser } from '../lib/higgsfield.js';
 import { deductCredits } from '../lib/credits.js';
 import { enforceRateLimit, clientIp } from '../lib/rate-limit.js';
-import { isAdminEmail } from '../lib/auth.js';
+import { isAdminEmail, validateToken as validateTokenShared } from '../lib/auth.js';
 import { enforceTurnstile } from '../lib/turnstile.js';
 export const config = { maxDuration: 60 };
 
@@ -31,20 +31,10 @@ export default async function handler(req, res) {
   const TWILIO_FROM = process.env.TWILIO_FROM_NUMBER;
   const body = req.method !== 'GET' ? (req.body || {}) : {};
   const tool = req.method === 'GET' ? req.query.tool : body.tool;
-  // ─── HELPER: Token validieren ───
-  async function validateToken(token) {
-    if (!token) return null;
-    try {
-      const r = await fetch(`${BASE}/auth/v1/user`, {
-        headers: { 'apikey': SVC, 'Authorization': `Bearer ${token}` }
-      });
-      // Supabase prüft hier die JWT-Signatur mit dem Projekt-Secret.
-      // Ungültige/gefälschte Tokens ergeben !r.ok — wir lehnen sie hart ab.
-      if (!r.ok) return null;
-      const user = await r.json();
-      return user?.id ? user : null;
-    } catch(e) { return null; }
-  }
+  // ─── HELPER: Token validieren (zentral aus lib/auth.js) ───
+  // Erst lokale HS256-Signaturprüfung mit SUPABASE_JWT_SECRET, dann Live-Check
+  // gegen Supabase /auth/v1/user (fängt gelöschte/gesperrte User ab).
+  const validateToken = validateTokenShared;
   // ─── HELPER: SMS via Twilio ───
   async function sendSMS(to, message) {
     if (!TWILIO_SID || !TWILIO_KEY || !TWILIO_SECRET || !TWILIO_FROM) return false;
