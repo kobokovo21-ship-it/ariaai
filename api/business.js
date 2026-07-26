@@ -1,4 +1,4 @@
-const config = { maxDuration: 300 };
+export const config = { maxDuration: 300 };
 
 import { enforceRateLimit, clientIp } from '../lib/rate-limit.js';
 
@@ -86,7 +86,7 @@ async function callAnthropic(model, maxTokens, systemPrompt, messages) {
   return data;
 }
 
-async function handler(req, res) {
+export default async function handler(req, res) {
   const origin = req.headers.origin || '';
   const referer = req.headers.referer || '';
 
@@ -133,12 +133,11 @@ async function handler(req, res) {
       defaultSystems[type] ||
       'Du bist Virgo Business AI — erstelle professionelle Business-Inhalte auf Deutsch. Antworte vollständig und direkt verwendbar.';
 
-    // Fable 5 denkt intern mit — diese Denk-Tokens zählen ins max_tokens-Budget.
-    // website-html braucht deshalb DEUTLICH mehr, sonst reicht das Budget nicht
-    // für vollständiges HTML mit </html> ("Generierung wurde abgeschnitten").
-    // 32000 ist das dokumentierte Maximum für Opus 4.x — höhere Werte werden
-    // von Anthropic mit HTTP 400 abgelehnt und triggern dann den Gemini-
-    // Fallback (nur 8k Output → HTML garantiert abgeschnitten).
+    // website-html braucht viel Output-Budget für eine vollständige animierte
+    // Seite (mit </html>). Opus 4.8 kann bis 128k Output; wir nehmen für den
+    // NICHT-gestreamten Call 32k — genug für die Seite, klein genug, um nicht
+    // in Anthropic-/Vercel-Timeouts zu laufen. (Opus 4.8 denkt per Default
+    // NICHT mit, anders als Fable 5 — daher kein Thinking-Token-Verbrauch.)
     const maxTokens = type === 'website-html' ? 32000 : 8192;
     // Fallback-Modelle sind pro-Provider gedeckelt — Gemini 2.0 Flash 8k, GPT-4o 16k.
     const geminiMaxTokens = Math.min(maxTokens, 8192);
@@ -294,6 +293,3 @@ async function handler(req, res) {
     });
   }
 }
-
-module.exports = handler;
-exports.config = config;
