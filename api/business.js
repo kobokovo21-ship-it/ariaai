@@ -70,8 +70,19 @@ async function callAnthropic(model, maxTokens, systemPrompt, messages) {
   if (r.status === 529 || r.status === 500 || r.status === 503 || r.status === 502 || r.status === 429) {
     throw new Error('Anthropic overloaded: ' + r.status);
   }
+  // 400 = Bad Request (z.B. max_tokens über Modell-Limit). Body loggen, damit
+  // wir das nicht wieder als "Anthropic error" verschleiern und in Gemini-
+  // Fallback rennen, wo dann bei 8k-Output das HTML abschneidet.
+  if (!r.ok) {
+    const body = await r.text().catch(() => '');
+    console.error(`[anthropic] HTTP ${r.status} model=${model} max_tokens=${maxTokens} body=${body.slice(0, 400)}`);
+    throw new Error('Anthropic HTTP ' + r.status);
+  }
   const data = await r.json();
-  if (data.type === 'error' || !data.content) throw new Error('Anthropic error');
+  if (data.type === 'error' || !data.content) {
+    console.error(`[anthropic] error response model=${model}:`, JSON.stringify(data).slice(0, 400));
+    throw new Error('Anthropic error');
+  }
   return data;
 }
 
@@ -125,7 +136,10 @@ async function handler(req, res) {
     // Fable 5 denkt intern mit — diese Denk-Tokens zählen ins max_tokens-Budget.
     // website-html braucht deshalb DEUTLICH mehr, sonst reicht das Budget nicht
     // für vollständiges HTML mit </html> ("Generierung wurde abgeschnitten").
-    const maxTokens = type === 'website-html' ? 48000 : 8192;
+    // 32000 ist das dokumentierte Maximum für Opus 4.x — höhere Werte werden
+    // von Anthropic mit HTTP 400 abgelehnt und triggern dann den Gemini-
+    // Fallback (nur 8k Output → HTML garantiert abgeschnitten).
+    const maxTokens = type === 'website-html' ? 32000 : 8192;
     // Fallback-Modelle sind pro-Provider gedeckelt — Gemini 2.0 Flash 8k, GPT-4o 16k.
     const geminiMaxTokens = Math.min(maxTokens, 8192);
     const openaiMaxTokens = Math.min(maxTokens, 16384);
