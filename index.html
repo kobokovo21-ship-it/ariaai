@@ -991,7 +991,17 @@ function setWorkspace(ws){_applyWorkspace(ws);applyFreeRestrictions();}
 const ADMIN_EMAIL='holyencore@gmail.com';
 function isAdmin(){return currentUser&&currentUser.email===ADMIN_EMAIL;}
 // ── Admin-only Hero-Video Beta toggle (internal testing; NOT for paid users) ──
-const HERO_BETA_PLACEHOLDER='https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4';
+// Der frühere Big-Buck-Bunny-Teststub ist ENTFERNT — er ist auf echten Seiten (Wald
+// bei "Luxus Uhren") nie richtig. Kein Platzhalter mehr; Hero-Video nur mit echter URL.
+const HERO_BETA_PLACEHOLDER='';
+// SELF-HEAL: alte gespeicherte Stub-URL aus früheren Sessions sofort entfernen,
+// damit KEINE bestehende localStorage-Einstellung mehr den Wald-Clip triggert.
+try{
+  const _hv=localStorage.getItem('virgo_hero_video_url')||'';
+  const _hb=localStorage.getItem('virgo_hero_beta_url')||'';
+  if(/test-videos\.co\.uk|bigbuckbunny/i.test(_hv)) localStorage.removeItem('virgo_hero_video_url');
+  if(/test-videos\.co\.uk|bigbuckbunny/i.test(_hb)) localStorage.removeItem('virgo_hero_beta_url');
+}catch(e){}
 function renderAdminPanel(){
   const p=document.getElementById('admin-panel');if(!p)return;
   if(!isAdmin()){p.style.display='none';return;}
@@ -1827,6 +1837,11 @@ Das HTML MUSS mind. 6KB sein (echte Inhalte + Animationen + Grafikvideo-Optik).
       return;
     }
     
+    // SAFETY NET: falls durch alten Zustand doch ein Teststub-Video im HTML landet,
+    // das <video>…test-videos/bigbuckbunny…</video> komplett entfernen (kein Wald-Clip).
+    html=html.replace(/<video\b[^>]*\b(?:test-videos\.co\.uk|bigbuckbunny)[^>]*>[\s\S]*?<\/video>/gi,'')
+             .replace(/<video\b[^>]*\bsrc=["'][^"']*(?:test-videos\.co\.uk|bigbuckbunny)[^"']*["'][^>]*\/?>/gi,'');
+
     // Check for animation keywords
     const hasAnimations=/@keyframes|animation:|transition:|transform:|IntersectionObserver|scroll/i.test(html);
     console.log('✓ HTML valid, size:',html.length+'B, has animations:',hasAnimations);
