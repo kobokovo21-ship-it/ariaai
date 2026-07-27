@@ -50,6 +50,10 @@ Before writing the prompt, IDENTIFY the specific business/industry mentioned by 
 - Versicherung / Versicherungsmakler / insurance broker → confident advisor with clients, a protected happy family, a modern bright insurance office, or a secure home
 - Tech / IT / Software / SaaS → modern tech workspace, laptops, focused team collaborating
 - Handel / Retail / Onlineshop → curated product display in a boutique setting
+- Uhren / Uhrmacher / Luxusuhren / Uhrenmanufaktur / watches / watchmaker / horology → EXTREME macro close-up of a single luxury mechanical wristwatch: the dial, hands and indices razor-sharp, the exposed movement / gears / balance wheel visible, dramatic directional studio light, deep dark reflective background, water-droplet detail on polished steel or gold. The watch itself fills the frame — it must be instantly recognizable as a fine timepiece.
+- Schmuck / Juwelier / Goldschmied / jewelry / jeweler → elegant close-up of fine jewelry (rings, necklace, diamonds) on dark velvet or polished surface, sparkling gemstones, luxurious studio lighting
+- Mode / Fashion / Boutique / Bekleidung → editorial fashion scene, styled clothing on a model or elegant boutique interior, high-fashion lighting
+- Schmuck-/Uhren-Boutique / luxury boutique → refined boutique interior with glass display cases and spotlit luxury products
 - Coach / Berater / Consultant → confident professional consulting in a bright modern meeting space
 - Fotograf / Photographer → photographer at work with camera, studio lighting
 - Musiker / Band → musician performing on stage, cinematic concert lighting
