@@ -534,13 +534,10 @@ async function submitForm(type){
     data = {...data, vorname:v, nachname:n, name:v+' '+n, email:e, telefon:document.getElementById('a-telefon').value, interesse:document.getElementById('a-interesse').value, nachricht:nm, anfrage_typ:'Kostenlose Anfrage'};
   }
 
-  // Turnstile-Token holen (fail-open, wenn Widget nicht konfiguriert ist).
+  // Turnstile-Token holen, wenn vorhanden — aber Lead NIE blockieren, wenn das
+  // Widget keinen Token liefert (verlorener Lead = verlorener Umsatz). Der Server
+  // nimmt den Lead an; Bot-Schutz über Rate-Limit/Validierung.
   const tsToken = (window.__cfTurnstileGetResponse && window.__cfTurnstileGetResponse()) || '';
-  if (window.__cfTurnstileRequired && !tsToken) {
-    showMsg(msg,'error','Bitte die Sicherheitsprüfung oben abschließen und erneut senden.');
-    btn.disabled = false;
-    return;
-  }
 
   try{
     const r = await fetch('/api/tools', {

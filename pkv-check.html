@@ -559,16 +559,11 @@ async function submitLead() {
   btn.disabled = true;
   btn.textContent = 'Wird gesendet…';
 
-  // Turnstile-Token holen (wenn Widget aktiv). Falls nicht konfiguriert → leer,
-  // der Server behandelt das als „nicht konfiguriert = fail-open".
+  // Turnstile-Token holen, wenn vorhanden — aber NIEMALS den Lead blockieren,
+  // wenn das Widget keinen Token liefert (z.B. Widget lädt auf der Domain nicht).
+  // Ein verlorener Lead ist verlorener Umsatz; der Server nimmt den Lead ohnehin
+  // an und schützt per Honeypot/Zeitfalle/Rate-Limit gegen Bots.
   const tsToken = (window.__cfTurnstileGetResponse && window.__cfTurnstileGetResponse()) || '';
-  if (window.__cfTurnstileRequired && !tsToken) {
-    err.textContent = 'Bitte die Sicherheitsprüfung abschließen und erneut senden.';
-    err.style.display = 'block';
-    btn.disabled = false;
-    btn.textContent = 'Kostenlosen Rückruf anfordern';
-    return;
-  }
 
   const payload = {
     ...leadData,
