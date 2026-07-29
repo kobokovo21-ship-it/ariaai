@@ -1651,18 +1651,32 @@ Das Video muss den oberen Seitenbereich DOMINIEREN — großer, mutiger Auftritt
   let uploadedImageUrl='';
   let uploadedUrls=[];
   const imgList=(WEB.imgs&&WEB.imgs.length)?WEB.imgs:(WEB.imgBase64?[{b64:WEB.imgBase64,mime:WEB.imgMime}]:[]);
+  let uploadFailReason='';
   if(imgList.length){
     for(let i=0;i<imgList.length;i++){
       try{
         document.getElementById('gl').textContent='Bild '+(i+1)+'/'+imgList.length+' wird hochgeladen...';
         const ur=await fetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json',...(authToken?{'Authorization':'Bearer '+authToken}:{})},body:JSON.stringify({image_base64:imgList[i].b64,mime:imgList[i].mime||'image/jpeg'})});
-        const ud=await ur.json();
+        if(ur.status===401){uploadFailReason='login';}
+        const ud=await ur.json().catch(()=>({}));
         if(ud&&ud.url){uploadedUrls.push(ud.url);console.log('✓ Bild '+(i+1)+' hochgeladen:',ud.url);}
-        else{console.warn('⚠️ Bild '+(i+1)+' ohne URL:',ud&&ud.error);}
-      }catch(e){console.warn('⚠️ Bild '+(i+1)+' Upload fehlgeschlagen:',e.message);}
+        else{console.warn('⚠️ Bild '+(i+1)+' ohne URL:',ud&&ud.error);if(!uploadFailReason)uploadFailReason=(ud&&ud.error)||('HTTP '+ur.status);}
+      }catch(e){console.warn('⚠️ Bild '+(i+1)+' Upload fehlgeschlagen:',e.message);if(!uploadFailReason)uploadFailReason=e.message;}
     }
     uploadedImageUrl=uploadedUrls[0]||'';
     document.getElementById('gl').textContent='Website wird gebaut...';
+    // ── SICHTBARER Fehler statt stillem Fallback: der Nutzer MUSS sehen, warum sein Bild fehlt ──
+    if(!uploadedUrls.length){
+      hideTyping();endGen();
+      if(uploadFailReason==='login'){
+        addAIMsg('🔒 <b>Dein hochgeladenes Bild wurde NICHT verwendet</b> — deine Sitzung war beim Hochladen nicht (mehr) eingeloggt. Bitte einmal neu anmelden und dann nochmal versuchen.');
+        showM('modal-login');
+      } else {
+        addAIMsg('⚠️ <b>Dein Bild konnte nicht hochgeladen werden</b> (Grund: '+escHtml(uploadFailReason||'unbekannt')+'). Die Website wird trotzdem gebaut, aber ohne dein Bild. Versuch es gleich nochmal mit "füg das Bild ein".');
+      }
+      // Trotzdem weiterbauen (ohne Bild) — aber jetzt WEISS der Nutzer warum, statt eine stille leere Hero-Section zu bekommen.
+      startGen('Website wird gebaut...');showTyping();
+    }
   }
 
   // ── AUTO-HERO-BILD: Neubau ohne hochgeladene Fotos → branchenspezifisches Hero-Foto generieren.
@@ -1694,6 +1708,7 @@ Das Video muss den oberen Seitenbereich DOMINIEREN — großer, mutiger Auftritt
       const ir=await fetch('/api/generate-image',{method:'POST',headers:{'Content-Type':'application/json',...(authToken?{'Authorization':'Bearer '+authToken}:{})},body:JSON.stringify({prompt:subject,model:'nano'})});
       const idt=await ir.json();
       if(idt&&idt.imageUrl){uploadedUrls.push(idt.imageUrl);uploadedImageUrl=idt.imageUrl;console.log('✓ Hero-Bild generiert:',idt.imageUrl);}
+      else{console.warn('⚠️ Auto-Hero-Bild ohne URL:',idt&&idt.error);}
     }catch(e){console.warn('⚠️ Hero-Bild fehlgeschlagen:',e.message);}
     document.getElementById('gl').textContent='Website wird gebaut...';
   }
