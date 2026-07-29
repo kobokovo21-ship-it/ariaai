@@ -808,7 +808,7 @@ async function inlineExternalImages(html){
   // Attribute values may HTML-encode & as &amp;; decode for the real request.
   var decoded=raw.map(function(u){ return u.replace(/&amp;/gi,'&'); });
   var resp=await fetch('/api/inline-image',{
-    method:'POST', headers:{'Content-Type':'application/json'},
+    method:'POST', headers:{'Content-Type':'application/json',...(authToken?{'Authorization':'Bearer '+authToken}:{})},
     body:JSON.stringify({ urls:decoded })
   });
   if(!resp.ok) throw new Error('inline-image '+resp.status);
@@ -1650,7 +1650,7 @@ Das Video muss den oberen Seitenbereich DOMINIEREN — großer, mutiger Auftritt
     for(let i=0;i<imgList.length;i++){
       try{
         document.getElementById('gl').textContent='Bild '+(i+1)+'/'+imgList.length+' wird hochgeladen...';
-        const ur=await fetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image_base64:imgList[i].b64,mime:imgList[i].mime||'image/jpeg'})});
+        const ur=await fetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json',...(authToken?{'Authorization':'Bearer '+authToken}:{})},body:JSON.stringify({image_base64:imgList[i].b64,mime:imgList[i].mime||'image/jpeg'})});
         const ud=await ur.json();
         if(ud&&ud.url){uploadedUrls.push(ud.url);console.log('✓ Bild '+(i+1)+' hochgeladen:',ud.url);}
         else{console.warn('⚠️ Bild '+(i+1)+' ohne URL:',ud&&ud.error);}
@@ -1686,7 +1686,7 @@ Das Video muss den oberen Seitenbereich DOMINIEREN — großer, mutiger Auftritt
           + (freeReq || 'modern business').slice(0,600)
           + '". Erkenne die Branche und zeige eine typische Szene, die diese Branche auf den ersten Blick zeigt (z.B. Autohaus mit Autos, Salon mit Friseurstuhl, Restaurant-Interieur mit Essen).';
       }
-      const ir=await fetch('/api/generate-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:subject,model:'nano'})});
+      const ir=await fetch('/api/generate-image',{method:'POST',headers:{'Content-Type':'application/json',...(authToken?{'Authorization':'Bearer '+authToken}:{})},body:JSON.stringify({prompt:subject,model:'nano'})});
       const idt=await ir.json();
       if(idt&&idt.imageUrl){uploadedUrls.push(idt.imageUrl);uploadedImageUrl=idt.imageUrl;console.log('✓ Hero-Bild generiert:',idt.imageUrl);}
     }catch(e){console.warn('⚠️ Hero-Bild fehlgeschlagen:',e.message);}
@@ -1925,7 +1925,7 @@ async function genSocialPost(txt,imgs){
   for(let i=0;i<imgs.length;i++){
     try{
       document.getElementById('gl').textContent='Bild '+(i+1)+'/'+imgs.length+' wird hochgeladen...';
-      const ur=await fetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image_base64:imgs[i].b64,mime:imgs[i].mime||'image/jpeg'})});
+      const ur=await fetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json',...(authToken?{'Authorization':'Bearer '+authToken}:{})},body:JSON.stringify({image_base64:imgs[i].b64,mime:imgs[i].mime||'image/jpeg'})});
       const ud=await ur.json(); if(ud&&ud.url)urls.push(ud.url);
     }catch(e){}
   }
@@ -1945,7 +1945,7 @@ async function genSocialPost(txt,imgs){
     for(let s=0;s<shots.length;s++){
       try{
         document.getElementById('gl').textContent='Filmmaterial wird generiert ('+(s+1)+'/2)...';
-        const ir=await fetch('/api/generate-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:shots[s],model:'nano'})});
+        const ir=await fetch('/api/generate-image',{method:'POST',headers:{'Content-Type':'application/json',...(authToken?{'Authorization':'Bearer '+authToken}:{})},body:JSON.stringify({prompt:shots[s],model:'nano'})});
         const idt=await ir.json();
         if(idt&&idt.imageUrl){urls.push(idt.imageUrl);console.log('✓ Auto-Bild '+(s+1)+' generiert:',idt.imageUrl);}
         else{console.warn('⚠️ Auto-Bild '+(s+1)+' ohne URL:',idt&&idt.error);}
@@ -2171,7 +2171,7 @@ async function generateMaklerAd(){
     const d=await r.json();const rawText=(d.content&&d.content[0]&&d.content[0].text)||'{}';
     let adData;try{adData=JSON.parse(rawText.replace(/```json|```/g,'').trim());}catch(e){adData={google:{headlines:['Jetzt PKV vergleichen','Kostenlos beraten lassen',name.substring(0,28)],descriptions:['Finden Sie die beste Versicherung.','Ihr '+branche+'-Experte.'],cta:'Jetzt Termin'},meta:{primary_text:'Suchen Sie '+angebot+'?',headline:'Kostenlos beraten lassen',description:'Ihr Experte',cta:'Mehr erfahren'}};}
     maklerAdData=adData;document.getElementById('mak-pfill').style.width='60%';document.getElementById('mak-loader-txt').textContent='Creative wird erstellt...';
-    let imgUrl=null;try{const ir=await fetch('/api/generate-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:`professional ${branche.toLowerCase()} broker advertisement, clean corporate design, trust, German business, no text, no logos`,model:'nano'})});const id=await ir.json();if(id.imageUrl)imgUrl=id.imageUrl;}catch(e){}
+    let imgUrl=null;try{const ir=await fetch('/api/generate-image',{method:'POST',headers:{'Content-Type':'application/json',...(authToken?{'Authorization':'Bearer '+authToken}:{})},body:JSON.stringify({prompt:`professional ${branche.toLowerCase()} broker advertisement, clean corporate design, trust, German business, no text, no logos`,model:'nano'})});const id=await ir.json();if(id.imageUrl)imgUrl=id.imageUrl;}catch(e){}
     document.getElementById('mak-pfill').style.width='100%';
     setTimeout(()=>{document.getElementById('mak-loader').style.display='none';renderMaklerResult(adData,imgUrl,name,slug);btn.disabled=false;},500);
   }catch(e){document.getElementById('mak-loader').style.display='none';msgEl.textContent='Fehler: '+e.message;msgEl.style.display='block';btn.disabled=false;}
@@ -2270,7 +2270,7 @@ async function createInvoice(){
   const datumRaw=document.getElementById('inv-datum').value;
   const datumDE=datumRaw?new Date(datumRaw).toLocaleDateString('de-DE'):'';
   try{
-    const r=await fetch('/api/invoice',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+    const r=await fetch('/api/invoice',{method:'POST',headers:{'Content-Type':'application/json',...(authToken?{'Authorization':'Bearer '+authToken}:{})},body:JSON.stringify({
       invoice_nr:document.getElementById('inv-nr').value||'INV-'+Date.now(),
       kunde,
       kunde_adresse:document.getElementById('inv-kunde-adresse').value,
@@ -2626,7 +2626,7 @@ async function sendHelp(){
   const uB=document.createElement('div');uB.style.cssText='align-self:flex-end;background:var(--t);color:#fff;border-radius:11px;border-bottom-right-radius:3px;padding:9px 13px;font-size:13px;font-weight:300;max-width:85%';uB.textContent=txt;feed.appendChild(uB);
   const typing=document.createElement('div');typing.style.cssText='background:var(--sf);border:1px solid var(--bd);border-radius:11px;padding:9px 13px;max-width:85%';typing.innerHTML='<div style="display:flex;gap:4px"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';feed.appendChild(typing);feed.scrollTop=99999;
   helpHistory.push({role:'user',content:txt});
-  try{const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:helpHistory,systemOverride:'Du bist Virgo Support. Helfe Nutzern bei der Virgo App. Kurz, konkret, auf Deutsch.'})});const d=await r.json();const reply=(d.content&&d.content[0]&&d.content[0].text)||'Bitte nochmal versuchen.';helpHistory.push({role:'assistant',content:reply});if(helpHistory.length>20)helpHistory=helpHistory.slice(-20);typing.remove();const aB=document.createElement('div');aB.style.cssText='background:var(--sf);border:1px solid var(--bd);border-radius:11px;border-bottom-left-radius:3px;padding:9px 13px;font-size:13px;font-weight:300;max-width:85%';aB.innerHTML=renderMD(reply);feed.appendChild(aB);}catch(e){typing.remove();}
+  try{const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json',...(authToken?{'Authorization':'Bearer '+authToken}:{})},body:JSON.stringify({messages:helpHistory,systemOverride:'Du bist Virgo Support. Helfe Nutzern bei der Virgo App. Kurz, konkret, auf Deutsch.'})});const d=await r.json();const reply=(d.content&&d.content[0]&&d.content[0].text)||'Bitte nochmal versuchen.';helpHistory.push({role:'assistant',content:reply});if(helpHistory.length>20)helpHistory=helpHistory.slice(-20);typing.remove();const aB=document.createElement('div');aB.style.cssText='background:var(--sf);border:1px solid var(--bd);border-radius:11px;border-bottom-left-radius:3px;padding:9px 13px;font-size:13px;font-weight:300;max-width:85%';aB.innerHTML=renderMD(reply);feed.appendChild(aB);}catch(e){typing.remove();}
   feed.scrollTop=99999;
 }
 
