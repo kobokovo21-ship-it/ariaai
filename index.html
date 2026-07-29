@@ -1515,6 +1515,11 @@ function detectUserColor(text){
   const hex=t.match(/#[0-9a-f]{3,8}\b/i); if(hex) return hex[0];
   const colors=t.match(/\b(schwarz|wei(?:ß|ss)|grau|anthrazit|graphit|silber|platin|blau|navy|petrol|türkis|tuerkis|mint|rot|bordeaux|weinrot|grün|gruen|oliv|gelb|gold|orange|kupfer|bronze|lila|violett|purpur|pink|rosa|magenta|braun|beige|creme|sand)\b/gi);
   if(colors&&colors.length) return [...new Set(colors.map(c=>c.toLowerCase()))].join(', ');
+  // Ausdrücklicher Wunsch nach LEBENDIGEN Farben (ohne konkrete Farbe) → Neutralizer aus,
+  // satte, hochwertige Palette. So kann der Kunde "bunt/kräftig/lebendig" steuern.
+  if(/\b(bunt|farbenfroh|farbig|kräftige?\s*farben|kraeftige?\s*farben|lebendige?\s*farben|knallig|leuchtende?\s*farben|vibrant|colou?rful|satte?\s*farben|nicht\s*(so\s*)?(grau|neutral|langweilig)|mehr\s*farbe)\b/i.test(t)){
+    return 'kräftige, satte, lebendige Farben — hochwertig und modern (NICHT grau/entsättigt), mit einer klaren, mutigen Farbpalette und starken Akzentfarben; wirkt edel und teuer, aber farbenfroh';
+  }
   return null;
 }
 // Deterministischer Farb-Neutralizer: garantiert die edel-neutrale Default-Palette,
