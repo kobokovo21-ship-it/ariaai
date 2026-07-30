@@ -6,8 +6,12 @@
 //   • Magic-Byte-Prüfung zusätzlich zur MIME-Angabe des Clients
 //
 // UPDATE (2026-07-29): Video-Upload (MP4/MOV) für Kunden-Hero-Videos hinzugefügt.
-//   Bilder und Videos laufen über denselben Endpoint, aber mit getrennten
-//   Limits (Video darf deutlich größer sein) und getrenntem Magic-Byte-Check.
+// UPDATE (2026-07-30): Signierte Direkt-Upload-URL für Video ergänzt (action:'sign').
+//   Grund: Videos als Base64 durch diese Funktion schlagen bei Vercels
+//   Payload-Limit mit HTTP 413 fehl. Der 'sign'-Pfad schickt keine Videodaten
+//   durch Vercel — er gibt nur eine kurzlebige Supabase-Upload-URL zurück,
+//   die das Frontend direkt (Browser → Supabase) für den echten Upload nutzt.
+//   Der alte Base64-Video-Pfad bleibt als Fallback für kleine Dateien erhalten.
 
 import { requireUser } from '../lib/auth.js';
 import { enforceRateLimit } from '../lib/rate-limit.js';
@@ -60,6 +64,59 @@ export default async function handler(req, res) {
 
   const user = await requireUser(req, res);
   if (!user) return;
+
+  // ── SIGNIERTE DIREKT-UPLOAD-URL (Video) ──────────────────────────────────
+  // Grund: Vercel-Functions haben ein Payload-Limit (~4,5 MB). Ein Video als
+  // Base64 durch diese Funktion zu schicken schlägt bei größeren Dateien mit
+  // HTTP 413 fehl, BEVOR unser Code überhaupt läuft. Lösung: dieser Endpoint
+  // schickt selbst KEINE Videodaten — er fragt Supabase nur nach einer
+  // kurzlebigen, signierten Upload-URL (winzige Antwort) und gibt sie ans
+  // Frontend zurück. Das Frontend lädt die Videodatei dann DIREKT zu
+  // Supabase Storage hoch, komplett an Vercel vorbei.
+  if (req.body && req.body.action === 'sign') {
+    const { kind: signKind, mime: signMime } = req.body;
+    if (signKind !== 'video') return res.status(400).json({ error: 'Signierte Upload-URL nur für Video verfügbar' });
+    if (!/^video\/(mp4|quicktime)$/i.test(signMime || '')) return res.status(400).json({ error: 'Nur MP4/MOV erlaubt' });
+
+    // Gleiches Limit wie beim (jetzt nicht mehr genutzten) Base64-Video-Pfad.
+    if (!(await enforceRateLimit(req, res, { name: 'upload-video-sign:' + user.id, windowSec: 600, max: 10 }))) return;
+
+    const BASE = process.env.SUPABASE_URL;
+    const SVC = process.env.SUPABASE_SERVICE_KEY;
+    const ANON = process.env.SUPABASE_ANON_KEY;
+    if (!BASE || !SVC || !ANON) return res.status(500).json({ error: 'Storage nicht konfiguriert (SUPABASE_ANON_KEY fehlt?)' });
+
+    const ext = signMime === 'video/quicktime' ? 'mov' : 'mp4';
+    const rand = Math.random().toString(36).slice(2, 10);
+    const fileName = `v-${user.id.slice(0, 8)}-${Date.now()}-${rand}.${ext}`;
+
+    try {
+      // Supabase Storage: POST .../object/upload/sign/{bucket}/{path} (Service-Key,
+      // NUR serverseitig — der Service-Key darf nie ans Frontend). Antwort enthält
+      // eine relative signierte URL mit Einmal-Token für den eigentlichen Upload.
+      const signRes = await fetch(`${BASE}/storage/v1/object/upload/sign/uploads/${fileName}`, {
+        method: 'POST',
+        headers: { 'apikey': SVC, 'Authorization': `Bearer ${SVC}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      });
+      if (!signRes.ok) {
+        const t = await signRes.text();
+        console.error('Signed URL creation failed:', signRes.status, t);
+        return res.status(500).json({ error: 'Signierte Upload-URL konnte nicht erstellt werden' });
+      }
+      const signData = await signRes.json();
+      if (!signData || !signData.url) return res.status(500).json({ error: 'Unerwartete Antwort von Supabase (kein url-Feld)' });
+
+      const uploadUrl = `${BASE}/storage/v1${signData.url}`;
+      const publicUrl = `${BASE}/storage/v1/object/public/uploads/${fileName}`;
+      // ANON-Key ist bewusst öffentlich/sicher zu teilen (Supabase-Designprinzip,
+      // durch Row-Level-Security abgesichert) — kein Sicherheitsrisiko.
+      return res.status(200).json({ uploadUrl, publicUrl, anonKey: ANON });
+    } catch (e) {
+      console.error('upload sign error:', e.message);
+      return res.status(500).json({ error: 'Server Fehler bei Signierung' });
+    }
+  }
 
   // Video-Uploads sind teurer (Storage + Bandbreite) → eigenes, engeres Limit.
   const { image_base64, mime, kind } = req.body || {};
