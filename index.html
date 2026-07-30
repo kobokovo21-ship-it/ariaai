@@ -1141,14 +1141,6 @@ function uploadHeroVideo(){
   document.getElementById('file-input-video').value='';
   document.getElementById('file-input-video').click();
 }
-function fileToBase64Raw(file){
-  return new Promise((res,rej)=>{
-    const r=new FileReader();
-    r.onload=()=>{ const s=String(r.result||''); const idx=s.indexOf(','); res({b64: idx>=0?s.slice(idx+1):s}); };
-    r.onerror=()=>rej(new Error('Video konnte nicht gelesen werden'));
-    r.readAsDataURL(file);
-  });
-}
 async function handleHeroVideoInput(inp){
   const f=inp.files&&inp.files[0];
   inp.value='';
@@ -1158,12 +1150,38 @@ async function handleHeroVideoInput(inp){
   if(!/^video\/(mp4|quicktime)$/i.test(f.type) && !/\.(mp4|mov)$/i.test(f.name)){
     addAIMsg('⚠️ Bitte ein MP4- oder MOV-Video hochladen.'); return;
   }
-  try{
-    const {b64}=await fileToBase64Raw(f);
-    heroVideoUpload={b64,mime:f.type||'video/mp4',name:f.name};
-    renderHeroVideoBadge();
-    addAIMsg('🎬 <b>Video bereit:</b> "'+escHtml(f.name)+'" wird als Hero-Video verwendet, sobald du jetzt eine Website baust.');
-  }catch(e){ addAIMsg('⚠️ Video konnte nicht gelesen werden: '+e.message); }
+  // WICHTIG: Datei wird NICHT mehr zu Base64 konvertiert und NICHT durch Vercel
+  // geschickt (das verursachte den HTTP-413-Fehler bei größeren Videos). Die
+  // rohe Datei wird erst beim tatsächlichen Website-Bau direkt zu Supabase
+  // hochgeladen (siehe uploadHeroVideoDirect() in startWebsiteFlow).
+  heroVideoUpload={file:f,mime:f.type||'video/mp4',name:f.name};
+  renderHeroVideoBadge();
+  addAIMsg('🎬 <b>Video bereit:</b> "'+escHtml(f.name)+'" wird als Hero-Video verwendet, sobald du jetzt eine Website baust.');
+}
+// Lädt die rohe Videodatei DIREKT zu Supabase Storage hoch (Browser → Supabase,
+// an Vercel vorbei). Vercel liefert nur eine kurzlebige signierte Upload-URL
+// (winziger Request, kein Payload-Limit-Problem); der eigentliche Datei-Upload
+// läuft danach als reiner Browser→Supabase-Request.
+async function uploadHeroVideoDirect(fileObj){
+  const signRes=await fetch('/api/upload',{
+    method:'POST',
+    headers:{'Content-Type':'application/json',...(authToken?{'Authorization':'Bearer '+authToken}:{})},
+    body:JSON.stringify({action:'sign',kind:'video',mime:fileObj.mime})
+  });
+  const signData=await signRes.json().catch(()=>({}));
+  if(!signRes.ok || !signData.uploadUrl){
+    throw new Error((signData&&signData.error)||('HTTP '+signRes.status+' bei Signierung'));
+  }
+  const putRes=await fetch(signData.uploadUrl,{
+    method:'PUT',
+    headers:{'apikey':signData.anonKey,'Content-Type':fileObj.mime,'x-upsert':'true'},
+    body:fileObj.file
+  });
+  if(!putRes.ok){
+    const t=await putRes.text().catch(()=>'');
+    throw new Error('Direkt-Upload zu Supabase fehlgeschlagen: HTTP '+putRes.status+(t?' — '+t.slice(0,150):''));
+  }
+  return signData.publicUrl;
 }
 function renderHeroVideoBadge(){
   const btn=document.getElementById('video-btn');
@@ -1172,6 +1190,8 @@ function renderHeroVideoBadge(){
   else { btn.classList.remove('has'); btn.textContent='🎬'; }
 }
 function clearHeroVideoUpload(){ heroVideoUpload=null; renderHeroVideoBadge(); }
+
+
 
 // drag & drop
 document.getElementById('feed').addEventListener('dragover',e=>e.preventDefault());
@@ -1476,18 +1496,12 @@ async function startWebsiteFlow(txt,imgs){
   WEB.imgBase64=WEB.imgs.length?WEB.imgs[0].b64:null;
   WEB.imgMime=WEB.imgs.length?WEB.imgs[0].mime:null;
 
-  // ── Falls ein Hero-Video wartet: JETZT hochladen, bevor gebaut wird ──
+  // ── Falls ein Hero-Video wartet: JETZT direkt zu Supabase hochladen (an Vercel vorbei) ──
   pendingHeroVideoUrl='';
   if(heroVideoUpload){
     startGen('Video wird hochgeladen...');showTyping();
     try{
-      const vr=await fetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json',...(authToken?{'Authorization':'Bearer '+authToken}:{})},body:JSON.stringify({image_base64:heroVideoUpload.b64,mime:heroVideoUpload.mime,kind:'video'})});
-      const vd=await vr.json().catch(()=>({}));
-      if(vd&&vd.url){ pendingHeroVideoUrl=vd.url; }
-      else{
-        hideTyping();endGen();
-        addAIMsg('⚠️ <b>Dein Video konnte nicht hochgeladen werden</b> (Grund: '+escHtml((vd&&vd.error)||('HTTP '+vr.status))+'). Ich baue die Website trotzdem, aber ohne dein Video.');
-      }
+      pendingHeroVideoUrl=await uploadHeroVideoDirect(heroVideoUpload);
     }catch(e){
       hideTyping();endGen();
       addAIMsg('⚠️ <b>Dein Video konnte nicht hochgeladen werden</b> (Grund: '+escHtml(e.message)+'). Ich baue die Website trotzdem, aber ohne dein Video.');
