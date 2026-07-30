@@ -281,6 +281,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
 
 <!-- hidden file input -->
 <input type="file" id="file-input-permanent" accept="image/*" multiple style="position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0;pointer-events:none" onchange="handleFileInput(this)">
+<input type="file" id="file-input-video" accept="video/mp4,video/quicktime" style="position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0;pointer-events:none" onchange="handleHeroVideoInput(this)">
 
 <div class="sb-overlay" id="sb-overlay"></div>
 
@@ -401,6 +402,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
           <div class="pb">
             <div class="pts">
               <button type="button" class="pt2" id="img-btn" onclick="uploadRef()" style="cursor:pointer;display:flex;align-items:center;justify-content:center">📎</button>
+              <button type="button" class="pt2" id="video-btn" onclick="uploadHeroVideo()" style="cursor:pointer;display:flex;align-items:center;justify-content:center" title="Eigenes Hero-Video hochladen (MP4/MOV, max. 60MB)">🎬</button>
               <button class="pt2" id="mic-btn" onclick="toggleVoice()">🎤</button>
             </div>
           </div>
@@ -714,6 +716,7 @@ let credits=parseInt(localStorage.getItem('virgo_credits')||'3');
 let curTab='login',genTimer=null,refImages=[],conversationHistory=[],lastUserMsg='';
 let maklerAdData=null,maklerPlatform='google';
 let currentWebsiteHtml='',currentWebsiteName='website',currentIsSocial=false,lastSocialRequest='';
+let heroVideoUpload=null,pendingHeroVideoUrl='';
 window.virgoStructured={};
 
 // ═══════════════════════════════════════
@@ -1132,6 +1135,44 @@ function renderRefZone(){
 function removeRef(i){refImages.splice(i,1);renderRefZone();}
 function clearRef(){refImages=[];renderRefZone();}
 
+// ── HERO-VIDEO UPLOAD (Kunde lädt eigenes Video hoch, statt Admin-Test-URL) ──
+function uploadHeroVideo(){
+  if(!authToken){ addAIMsg('🔒 Bitte melde dich an, um ein eigenes Hero-Video hochzuladen.'); showM('modal-login'); return; }
+  document.getElementById('file-input-video').value='';
+  document.getElementById('file-input-video').click();
+}
+function fileToBase64Raw(file){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=()=>{ const s=String(r.result||''); const idx=s.indexOf(','); res({b64: idx>=0?s.slice(idx+1):s}); };
+    r.onerror=()=>rej(new Error('Video konnte nicht gelesen werden'));
+    r.readAsDataURL(file);
+  });
+}
+async function handleHeroVideoInput(inp){
+  const f=inp.files&&inp.files[0];
+  inp.value='';
+  if(!f)return;
+  const MAX=60*1024*1024;
+  if(f.size>MAX){ addAIMsg('⚠️ Video zu groß — max. 60 MB. Deins hat '+(f.size/1024/1024).toFixed(1)+' MB.'); return; }
+  if(!/^video\/(mp4|quicktime)$/i.test(f.type) && !/\.(mp4|mov)$/i.test(f.name)){
+    addAIMsg('⚠️ Bitte ein MP4- oder MOV-Video hochladen.'); return;
+  }
+  try{
+    const {b64}=await fileToBase64Raw(f);
+    heroVideoUpload={b64,mime:f.type||'video/mp4',name:f.name};
+    renderHeroVideoBadge();
+    addAIMsg('🎬 <b>Video bereit:</b> "'+escHtml(f.name)+'" wird als Hero-Video verwendet, sobald du jetzt eine Website baust.');
+  }catch(e){ addAIMsg('⚠️ Video konnte nicht gelesen werden: '+e.message); }
+}
+function renderHeroVideoBadge(){
+  const btn=document.getElementById('video-btn');
+  if(!btn)return;
+  if(heroVideoUpload){ btn.classList.add('has'); btn.textContent='🎬✓'; }
+  else { btn.classList.remove('has'); btn.textContent='🎬'; }
+}
+function clearHeroVideoUpload(){ heroVideoUpload=null; renderHeroVideoBadge(); }
+
 // drag & drop
 document.getElementById('feed').addEventListener('dragover',e=>e.preventDefault());
 document.getElementById('feed').addEventListener('drop',async e=>{e.preventDefault();const files=Array.from(e.dataTransfer.files).filter(f=>f.type.startsWith('image/'));for(const f of files.slice(0,4-refImages.length)){try{const c=await compressImg(f);refImages.push(c);}catch(e){}}renderRefZone();});
@@ -1435,6 +1476,26 @@ async function startWebsiteFlow(txt,imgs){
   WEB.imgBase64=WEB.imgs.length?WEB.imgs[0].b64:null;
   WEB.imgMime=WEB.imgs.length?WEB.imgs[0].mime:null;
 
+  // ── Falls ein Hero-Video wartet: JETZT hochladen, bevor gebaut wird ──
+  pendingHeroVideoUrl='';
+  if(heroVideoUpload){
+    startGen('Video wird hochgeladen...');showTyping();
+    try{
+      const vr=await fetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json',...(authToken?{'Authorization':'Bearer '+authToken}:{})},body:JSON.stringify({image_base64:heroVideoUpload.b64,mime:heroVideoUpload.mime,kind:'video'})});
+      const vd=await vr.json().catch(()=>({}));
+      if(vd&&vd.url){ pendingHeroVideoUrl=vd.url; }
+      else{
+        hideTyping();endGen();
+        addAIMsg('⚠️ <b>Dein Video konnte nicht hochgeladen werden</b> (Grund: '+escHtml((vd&&vd.error)||('HTTP '+vr.status))+'). Ich baue die Website trotzdem, aber ohne dein Video.');
+      }
+    }catch(e){
+      hideTyping();endGen();
+      addAIMsg('⚠️ <b>Dein Video konnte nicht hochgeladen werden</b> (Grund: '+escHtml(e.message)+'). Ich baue die Website trotzdem, aber ohne dein Video.');
+    }
+    heroVideoUpload=null; renderHeroVideoBadge();
+    hideTyping();endGen();
+  }
+
   const wordCount=txt.trim().split(/\s+/).filter(Boolean).length;
   const hasImage=WEB.imgs.length>0;
 
@@ -1629,16 +1690,19 @@ async function buildWebsite(isUpdate,updateRequest){
   // Dieselbe Regel zusätzlich im SYSTEM-Prompt (stärkster Hebel).
   const paletteRule=effectiveWish?` FARB-REGEL (ABSOLUT, höchste Priorität, überschreibt JEDES Branchen-Klischee): Der Kunde wünscht ausdrücklich die Farbwelt „${effectiveWish}". Nutze GENAU diese und keine andere.`:'';
 
-  // ── HERO-VIDEO (nur Bezahl-Plan, nur Neubau): echtes bewegtes Footage als kräftiger
-  //    Eröffnungsmoment. Stub-Clip aus localStorage (leer = aus → CSS-GRAFIKVIDEO als Fallback);
-  //    ersetzt später der Industrie-Clip-Pool. Host MUSS HTTP-Range unterstützen (<video>).
+  // ── HERO-VIDEO: echtes bewegtes Footage als kräftiger Eröffnungsmoment.
+  //    Priorität: 1) Video, das der Kunde JETZT hochgeladen hat (pendingHeroVideoUrl,
+  //    für jeden eingeloggten Kunden — nicht nur Admin/Bezahl-Plan, es ist sein eigenes
+  //    Asset). 2) Admin-Test-Stub aus localStorage (nur für dich, wie bisher).
+  //    Leer = aus → CSS-GRAFIKVIDEO als Fallback. Host MUSS HTTP-Range unterstützen (<video>).
   const _heroStub=localStorage.getItem('virgo_hero_video_url')||'';
   // Der Big-Buck-Bunny-Teststub (Hero-Beta) darf NIE auf einer echten Kundenseite
   // landen — ein einzelnes fixes Video passt zu keinem Thema (Wald bei "Luxus Uhren").
   // Nur echte, nicht-Platzhalter-URLs als Hero-Video zulassen; sonst greift das
   // themenrelevante AUTO-HERO-BILD weiter unten.
   const _isStubPlaceholder=/test-videos\.co\.uk|bigbuckbunny/i.test(_heroStub);
-  const heroClip=(!isUpdate && isPaidPlan() && _heroStub && !_isStubPlaceholder)?_heroStub:'';
+  const _adminStub=(!isUpdate && isPaidPlan() && _heroStub && !_isStubPlaceholder)?_heroStub:'';
+  const heroClip=(!isUpdate && pendingHeroVideoUrl) ? pendingHeroVideoUrl : _adminStub;
   const heroVideoBlock=heroClip?`\nHERO-VIDEO — PFLICHT, kräftiger Auftakt (KEIN dezenter Hintergrund-Loop): Baue GANZ OBEN eine formatfüllende Hero-Sektion (min-height:88vh; position:relative; overflow:hidden), in der ein echtes Video den dominanten Eröffnungsmoment bildet. EXAKTE Ebenen-Architektur, von unten nach oben:
 1) FALLBACK/POSTER (sofort sichtbar): der animierte GRAFIKVIDEO-Mesh (Gradient-Mesh + schwebende Orbs) als eigene Ebene position:absolute;inset:0 — füllt den Hero und ist die Sofort-Anzeige, bis das Video lädt bzw. FALLS es nicht lädt.
 2) VIDEO: <video src="${heroClip}" autoplay muted loop playsinline preload="auto" onerror="this.style.display='none'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;animation:heroVidIn 1s ease .25s forwards"></video> plus @keyframes heroVidIn{to{opacity:1}} — das Video blendet sanft über den Mesh ein. KEINE controls.
@@ -1876,7 +1940,7 @@ Das HTML MUSS mind. 6KB sein (echte Inhalte + Animationen + Grafikvideo-Optik).
     currentWebsiteHtml=html;
     currentWebsiteName=(d.name||'website').toLowerCase().replace(/[^a-z0-9]/g,'-').replace(/-+/g,'-')||'website';
     currentIsSocial=false;
-    WEB.active=false;WEB.imgBase64=null;WEB.imgMime=null;WEB.imgs=[];
+    WEB.active=false;WEB.imgBase64=null;WEB.imgMime=null;WEB.imgs=[];pendingHeroVideoUrl='';
     
     // Open preview
     openPreview(html,d.name||'Website');
@@ -2670,9 +2734,9 @@ function newChat(){
   state.chatStarted=false;state.activeChatId=null;state.model='chat';state.modelName='Virgo Chat';
   document.getElementById('chat-title').textContent='Neuer Chat';
   document.getElementById('prompt').value='';
-  conversationHistory=[];clearRef();closePreview();
+  conversationHistory=[];clearRef();closePreview();clearHeroVideoUpload();
   currentWebsiteHtml='';currentIsSocial=false;lastSocialRequest='';
-  WEB.active=false;WEB.collecting=false;WEB.step=0;WEB.data={};WEB.imgBase64=null;WEB.imgMime=null;WEB.imgs=[];
+  WEB.active=false;WEB.collecting=false;WEB.step=0;WEB.data={};WEB.imgBase64=null;WEB.imgMime=null;WEB.imgs=[];pendingHeroVideoUrl='';
   document.getElementById('fi').innerHTML=landingHTML();closeSb();
   loadChats();
 }
