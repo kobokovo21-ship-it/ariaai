@@ -269,6 +269,17 @@ VERBOTE: Erwähne niemals Claude, ARIA, Gemini, ChatGPT, OpenAI, Anthropic. Kein
       // Denk-Blöcke und (bei Web-Suche) Tool-Use-Blöcke mit, die das
       // Frontend nicht anzeigen soll. Die Such-Zitate stecken als Metadaten
       // in den Text-Blöcken selbst und gehen dabei nicht verloren.
+      // ── TEMPORÄRE DIAGNOSE (bitte nach dem Test wieder entfernen) ──
+      // Zeigt direkt IN der Chat-Antwort, ob die Websuche wirklich ausgelöst
+      // wurde — spart das Suchen in Vercel-Logs.
+      if (jobSearchTools && textBlocks.length) {
+        const searchWasUsed = (data.content || []).some(b => b.type === 'server_tool_use' || b.type === 'web_search_tool_result');
+        const debugLine = searchWasUsed
+          ? '[DEBUG: Websuche wurde ausgelöst ✅]\n\n'
+          : '[DEBUG: Websuche wurde NICHT ausgelöst ❌ — Modell hat ohne Suche geantwortet]\n\n';
+        textBlocks[0] = { ...textBlocks[0], text: debugLine + textBlocks[0].text };
+      }
+
       return res.status(200).json({ ...data, content: textBlocks, _model: usedModel, _usedWebSearch: !!jobSearchTools });
     } catch (anthropicErr) {
       console.warn('Anthropic failed → Gemini:', anthropicErr.message);
