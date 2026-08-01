@@ -16,6 +16,11 @@ const MODEL_REFUSAL_FALLBACK = 'claude-opus-4-8';
 // Kostenloses Nachrichten-Kontingent für Free-Plan (pro Nutzer & Tag)
 const FREE_CHAT_DAILY_LIMIT = 20;
 
+// Web-Suche kostet pro Aufruf extra bei Anthropic — eigenes, engeres Limit
+// pro Nutzer und Tag, damit ein einzelner Chat nicht unbegrenzt teuer wird.
+const JOB_SEARCH_DAILY_LIMIT = 30;
+const WEB_SEARCH_MAX_USES = 5; // max. Suchanfragen, die das Modell PRO Chat-Nachricht stellen darf
+
 function guard(req, res) {
   const origin = req.headers.origin || '';
   const referer = req.headers.referer || '';
@@ -54,9 +59,25 @@ function isImageRequest(text) {
   return (hasVerb && hasNoun) || directPatterns;
 }
 
+// ── JOBSUCHE ──────────────────────────────────────────────────────
+// Erkennt Anfragen rund um Jobsuche, Bewerbung und Lebenslauf. Bei Treffer
+// wird das Anthropic-Web-Search-Tool für DIESEN einen Chat-Aufruf aktiviert,
+// damit das Modell echte, aktuelle Stellenanzeigen findet statt sich welche
+// auszudenken.
+function isJobSearchRequest(text) {
+  const t = (text || '').toLowerCase();
+  const jobWords = /\bjob(s)?\b|\bstelle(n)?\b|stellenangebot|stellenanzeige|arbeitsstelle|arbeitsplatz|ausbildungsplatz|praktikumsplatz|arbeit\s+such|jobsuche|jobangebot/.test(t);
+  const applyWords = /bewerbung|anschreiben|lebenslauf|cv\b|bewerbungsschreiben|bewerben/.test(t);
+  const searchVerb = /such|find|zeig|gib mir|welche|verfügbar|offen/.test(t);
+  return (jobWords && searchVerb) || (jobWords && applyWords) || applyWords;
+}
+
 // Ein einzelner Anthropic-Call. Wirft bei Überlastung/Fehlern,
 // damit die Fallback-Kette (Gemini → OpenAI) greift.
-async function callAnthropic(model, maxTokens, systemPrompt, messages) {
+// `tools` optional: z.B. Web-Search-Tool für Jobsuche-Anfragen.
+async function callAnthropic(model, maxTokens, systemPrompt, messages, tools) {
+  const body = { model, max_tokens: maxTokens, system: systemPrompt, messages };
+  if (tools && tools.length) body.tools = tools;
   const r = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -64,7 +85,7 @@ async function callAnthropic(model, maxTokens, systemPrompt, messages) {
       'x-api-key': process.env.ANTHROPIC_API_KEY,
       'anthropic-version': '2023-06-01'
     },
-    body: JSON.stringify({ model, max_tokens: maxTokens, system: systemPrompt, messages })
+    body: JSON.stringify(body)
   });
   if (r.status === 529 || r.status === 500 || r.status === 503 || r.status === 502 || r.status === 429) {
     throw new Error('Anthropic overloaded: ' + r.status);
@@ -158,6 +179,30 @@ export default async function handler(req, res) {
       }
     }
 
+    // === JOBSUCHE: Web-Search-Tool aktivieren ===
+    // Nur im normalen Virgo-Chat (nicht Code-Modus, nicht Prompt-Modus, nicht
+    // bei anderen systemOverride-Flows wie Website-Bau) — sonst gleiche Logik
+    // wie die automatische Bilderkennung oben.
+    const wantsJobSearch = !codeMode && !isPromptMode && !systemOverride && isJobSearchRequest(lastText);
+    let jobSearchTools = null;
+    if (wantsJobSearch) {
+      // Eigenes Tageslimit für Jobsuche-Anfragen (Web-Suche kostet extra bei Anthropic)
+      const jobDayKey = `chat:jobsearch-quota:${user.id}:${new Date().toISOString().slice(0, 10)}`;
+      const jobQuotaOk = isPaying || isAdmin
+        ? true // zahlende Kunden/Admin: kein Extra-Limit, das normale Chat-Limit reicht
+        : await enforceRateLimit(req, res, { name: jobDayKey, windowSec: 86400, max: JOB_SEARCH_DAILY_LIMIT, key: jobDayKey });
+      if (!jobQuotaOk) return; // enforceRateLimit hat bei Überschreitung bereits geantwortet
+      jobSearchTools = [{ type: 'web_search_20250305', name: 'web_search', max_uses: WEB_SEARCH_MAX_USES }];
+    }
+
+    const jobSearchSystemAddendum = wantsJobSearch ? `
+
+JOBSUCHE-MODUS: Der Nutzer sucht Jobs, Ausbildungs-/Praktikumsplätze oder braucht Hilfe bei Bewerbung/Lebenslauf. Du hast Web-Suche zur Verfügung — nutze sie, um ECHTE, AKTUELLE Stellenanzeigen zu finden. Erfinde NIEMALS Stellenangebote oder Firmen.
+- Frage kurz nach, falls Ort/Region, Berufsfeld oder Vollzeit/Teilzeit fehlt — aber nur EINE Rückfrage, dann direkt suchen.
+- Präsentiere gefundene Stellen klar: Jobtitel, Firma, Ort, kurze Beschreibung, Link zur Anzeige.
+- Biete danach von dir aus an, ein passendes Anschreiben und/oder einen Lebenslauf für eine der gefundenen Stellen zu schreiben.
+- Für Anschreiben/Lebenslauf: frage kompakt nach den nötigsten Eckdaten (bisherige Erfahrung, Ausbildung, Stärken), falls nicht schon im Gespräch genannt — dann schreibe einen vollständigen, professionellen Text auf Deutsch, direkt einsatzbereit.` : '';
+
     const systemPrompt = systemOverride || (isPromptMode
       ? `Du bist ein professioneller KI-Prompt-Generator für Bildgenerierung. Wandle Stichwörter in perfekte englische Bild-Prompts um. Gib NUR den fertigen Prompt zurück, ohne Erklärung.`
       : codeMode
@@ -168,24 +213,26 @@ SCHREIBWEISE: Normaler fließender Text. Kein Markdown, kein Fettdruck mit Stern
 
 BILDER: Du kannst Bilder direkt generieren. Wenn jemand ein Bild will, generiere es sofort — sag nicht dass du keine Bilder erstellen kannst. Das System macht es automatisch.
 
+JOBSUCHE: Du kannst bei Bedarf im Internet nach echten, aktuellen Stellenangeboten suchen und Bewerbungen/Lebensläufe schreiben. Sag NIEMALS dass du das nicht kannst.
+
 FACHWISSEN: Versicherungsbranche, PKV, GKV, BU, Altersvorsorge, Lead-Generierung, Google Ads, Meta Ads, Landing Pages, Vertriebspsychologie, Compliance IDD/DSGVO.
 
-TOOLS: Makler Landing Page, Ads schalten, Leads Dashboard, Social Posts, Emails, Business Plan, Website, Pitch Deck, Rechnung, Bilder — alles direkt im Chat.
+TOOLS: Makler Landing Page, Ads schalten, Leads Dashboard, Social Posts, Emails, Business Plan, Website, Pitch Deck, Rechnung, Bilder, Jobsuche — alles direkt im Chat.
 
 REGELN: Antworte auf Deutsch. Kurz, direkt, konkret. Maximal 1 Emoji. Du heißt Virgo.
 
-VERBOTE: Erwähne niemals Claude, ARIA, Gemini, ChatGPT, OpenAI, Anthropic. Keine Rechtsberatung, keine konkreten Tarifempfehlungen.`);
+VERBOTE: Erwähne niemals Claude, ARIA, Gemini, ChatGPT, OpenAI, Anthropic. Keine Rechtsberatung, keine konkreten Tarifempfehlungen.${jobSearchSystemAddendum}`);
 
     // Fable 5 denkt intern mit — diese Denk-Tokens zählen ins max_tokens-Budget.
-    // Deshalb höhere Limits als vorher, sonst werden Antworten abgeschnitten.
-    const maxTokens = codeMode ? 16000 : 8192;
+    // Web-Suche braucht zusätzlichen Puffer (Suchergebnisse + finale Antwort).
+    const maxTokens = codeMode ? 16000 : (wantsJobSearch ? 12000 : 8192);
 
     // === MODELLWAHL: zahlender Plan oder Admin = PAID-Modell, sonst FREE-Modell ===
     // isPaying wurde oben schon ermittelt (access.isPaying) — nicht doppelt ausrollen.
     const chosenModel = isPaying ? MODEL_PAID : MODEL_FREE;
 
     try {
-      let data = await callAnthropic(chosenModel, maxTokens, systemPrompt, messages);
+      let data = await callAnthropic(chosenModel, maxTokens, systemPrompt, messages, jobSearchTools);
       let usedModel = chosenModel;
 
       // === REFUSAL-FALLBACK ===
@@ -193,7 +240,7 @@ VERBOTE: Erwähne niemals Claude, ARIA, Gemini, ChatGPT, OpenAI, Anthropic. Kein
       // Dann denselben Request einmal mit Opus wiederholen — der User merkt nichts.
       if (data.stop_reason === 'refusal' && chosenModel !== MODEL_REFUSAL_FALLBACK) {
         console.warn('Refusal von ' + chosenModel + ' → Retry mit ' + MODEL_REFUSAL_FALLBACK);
-        data = await callAnthropic(MODEL_REFUSAL_FALLBACK, maxTokens, systemPrompt, messages);
+        data = await callAnthropic(MODEL_REFUSAL_FALLBACK, maxTokens, systemPrompt, messages, jobSearchTools);
         usedModel = MODEL_REFUSAL_FALLBACK;
       }
 
@@ -208,11 +255,21 @@ VERBOTE: Erwähne niemals Claude, ARIA, Gemini, ChatGPT, OpenAI, Anthropic. Kein
       }
 
       // Nur Text-Blöcke zurückgeben — Fable liefert zusätzlich interne
-      // Denk-Blöcke mit, die das Frontend nicht anzeigen soll.
-      return res.status(200).json({ ...data, content: textBlocks, _model: usedModel });
+      // Denk-Blöcke und (bei Web-Suche) Tool-Use-Blöcke mit, die das
+      // Frontend nicht anzeigen soll. Die Such-Zitate stecken als Metadaten
+      // in den Text-Blöcken selbst und gehen dabei nicht verloren.
+      return res.status(200).json({ ...data, content: textBlocks, _model: usedModel, _usedWebSearch: !!jobSearchTools });
     } catch (anthropicErr) {
       console.warn('Anthropic failed → Gemini:', anthropicErr.message);
     }
+
+    // ── Hinweis: Gemini/OpenAI-Fallback haben KEIN Web-Search-Tool angebunden.
+    // Springt der Request bei einer Jobsuche-Anfrage hierher (Anthropic down),
+    // kann das Modell keine echten Stellenanzeigen liefern — es bekommt daher
+    // eine explizite Anweisung, das offen zu sagen statt Jobs zu erfinden.
+    const fallbackSystemPrompt = wantsJobSearch
+      ? systemPrompt + '\n\nWICHTIG: Web-Suche ist gerade nicht verfügbar. Erfinde KEINE Stellenanzeigen — sag dem Nutzer ehrlich, dass die Jobsuche kurz nicht funktioniert und er es gleich nochmal versuchen soll.'
+      : systemPrompt;
 
     try {
       if (!process.env.GEMINI_API_KEY) throw new Error('Kein Gemini Key');
@@ -222,7 +279,7 @@ VERBOTE: Erwähne niemals Claude, ARIA, Gemini, ChatGPT, OpenAI, Anthropic. Kein
       });
       const geminiRes = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ system_instruction: { parts: [{ text: systemPrompt }] }, contents: geminiMessages, generationConfig: { maxOutputTokens: maxTokens, temperature: 0.7 } }) }
+        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ system_instruction: { parts: [{ text: fallbackSystemPrompt }] }, contents: geminiMessages, generationConfig: { maxOutputTokens: maxTokens, temperature: 0.7 } }) }
       );
       if (!geminiRes.ok) throw new Error('Gemini HTTP ' + geminiRes.status);
       const geminiData = await geminiRes.json();
@@ -235,7 +292,7 @@ VERBOTE: Erwähne niemals Claude, ARIA, Gemini, ChatGPT, OpenAI, Anthropic. Kein
 
     try {
       if (!process.env.OPENAI_API_KEY) throw new Error('Kein OpenAI Key');
-      const openaiMessages = [{ role: 'system', content: systemPrompt }];
+      const openaiMessages = [{ role: 'system', content: fallbackSystemPrompt }];
       messages.forEach(msg => {
         const text = Array.isArray(msg.content) ? (msg.content.find(b => b.type === 'text')?.text || '') : msg.content;
         openaiMessages.push({ role: msg.role === 'assistant' ? 'assistant' : 'user', content: text });
