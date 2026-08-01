@@ -2173,14 +2173,23 @@ async function genChat(txt){
 
   fetchWithRetry('/api/chat', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...(authToken?{'Authorization':'Bearer '+authToken}:{}) },
     body: JSON.stringify({ messages: conversationHistory, systemOverride: SYS })
   })
-    .then(r => r.json())
+    .then(r => {
+      if(r.status===401){
+        hideTyping();
+        addAIMsg('🔒 <b>Bitte melde dich an</b>, um mit Virgo zu chatten — deine Sitzung ist abgelaufen oder du bist ausgeloggt.');
+        showM('modal-login');
+        return null;
+      }
+      return r.json();
+    })
     .then(d => {
+      if(d===null) return; // 401 bereits oben behandelt
       hideTyping();
 
-      const reply = (d.content && d.content[0] && d.content[0].text) || 'Fehler.';
+      const reply = (d.content && d.content[0] && d.content[0].text) || (d.error ? ('⚠️ ' + d.error) : 'Fehler.');
 
       const htmlDoc = extractHtml(reply);
       if (htmlDoc) {
@@ -2214,10 +2223,13 @@ async function genImage(prompt,imgs){
   const body={prompt,model:'nano',negative_prompt:'low quality,blurry,deformed'};
   if(imgs.length){body.image_base64=imgs[0].b64;body.image_mime=imgs[0].mime;}
   try{
-    const r=await fetchWithRetry('/api/generate-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const r=await fetchWithRetry('/api/generate-image',{method:'POST',headers:{'Content-Type':'application/json',...(authToken?{'Authorization':'Bearer '+authToken}:{})},body:JSON.stringify(body)});
     const d=await r.json();
     hideTyping();endGen();
-    if(d.imageUrl){
+    if(r.status===401){
+      addAIMsg('🔒 Bitte melde dich an, um Bilder zu generieren.');
+      showM('modal-login');
+    } else if(d.imageUrl){
       addImageCard(prompt,d.imageUrl);
       conversationHistory.push({role:'assistant',content:'[Bild generiert: '+prompt.substring(0,60)+']'});
       saveChat(document.getElementById('chat-title').textContent,conversationHistory);
