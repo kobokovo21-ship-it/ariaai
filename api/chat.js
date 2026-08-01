@@ -78,13 +78,21 @@ function isJobSearchRequest(text) {
 async function callAnthropic(model, maxTokens, systemPrompt, messages, tools) {
   const body = { model, max_tokens: maxTokens, system: systemPrompt, messages };
   if (tools && tools.length) body.tools = tools;
+  const headers = {
+    'Content-Type': 'application/json',
+    'x-api-key': process.env.ANTHROPIC_API_KEY,
+    'anthropic-version': '2023-06-01'
+  };
+  // Web-Search ist ein Server-Tool, das (Stand der Anthropic-Doku zum Zeitpunkt
+  // dieses Codes) einen Beta-Header braucht, damit es überhaupt aktiv wird —
+  // ohne ihn ignoriert die API das Tool stillschweigend und der Chat antwortet
+  // ganz normal ohne Suche, OHNE Fehler zu werfen. Genau das war der Bug.
+  if (tools && tools.some(t => t.type === 'web_search_20250305')) {
+    headers['anthropic-beta'] = 'web-search-2025-03-05';
+  }
   const r = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': process.env.ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01'
-    },
+    headers,
     body: JSON.stringify(body)
   });
   if (r.status === 529 || r.status === 500 || r.status === 503 || r.status === 502 || r.status === 429) {
@@ -92,6 +100,9 @@ async function callAnthropic(model, maxTokens, systemPrompt, messages, tools) {
   }
   const data = await r.json();
   if (data.type === 'error' || !data.content) {
+    // Rohe Fehlermeldung ins Log — bei einem falschen/veralteten Tool-Namen
+    // sagt Anthropic hier meist explizit, welcher Tool-Typ erwartet wird.
+    console.error('Anthropic tool/API error:', JSON.stringify(data.error || data));
     throw new Error('Anthropic error: ' + (data.error?.message || 'no content'));
   }
   return data;
