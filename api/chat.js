@@ -244,7 +244,7 @@ VERBOTE: Erwähne niemals Claude, ARIA, Gemini, ChatGPT, OpenAI, Anthropic. Kein
 
     // Fable 5 denkt intern mit — diese Denk-Tokens zählen ins max_tokens-Budget.
     // Web-Suche braucht zusätzlichen Puffer (Suchergebnisse + finale Antwort).
-    const maxTokens = codeMode ? 16000 : (wantsJobSearch ? 12000 : 8192);
+    const maxTokens = codeMode ? 16000 : (wantsJobSearch ? 20000 : 8192);
 
     // === MODELLWAHL: zahlender Plan oder Admin = PAID-Modell, sonst FREE-Modell ===
     // isPaying wurde oben schon ermittelt (access.isPaying) — nicht doppelt ausrollen.
@@ -277,6 +277,16 @@ VERBOTE: Erwähne niemals Claude, ARIA, Gemini, ChatGPT, OpenAI, Anthropic. Kein
       // Denk-Blöcke und (bei Web-Suche) Tool-Use-Blöcke mit, die das
       // Frontend nicht anzeigen soll. Die Such-Zitate stecken als Metadaten
       // in den Text-Blöcken selbst und gehen dabei nicht verloren.
+
+      // Abgeschnittene Antwort erkennen (Token-Budget ausgeschöpft, bevor die
+      // Antwort fertig war) — passiert vor allem bei Websuche, weil Suchtreffer
+      // + internes Denken + die eigentliche Liste viel Budget brauchen.
+      // Lieber ehrlich sagen als eine mitten im Satz abbrechende Liste zeigen.
+      if (data.stop_reason === 'max_tokens' && textBlocks.length) {
+        const last = textBlocks[textBlocks.length - 1];
+        last.text = last.text.trim() + '\n\n⚠️ Die Antwort wurde mitten drin abgeschnitten (zu viele Ergebnisse für eine Nachricht). Schreib "weiter" oder grenz die Suche etwas ein (z. B. eine Stadt/einen Bezirk weniger), dann bekommst du die komplette Liste.';
+      }
+
       // ── TEMPORÄRE DIAGNOSE (bitte nach dem Test wieder entfernen) ──
       // Zeigt direkt IN der Chat-Antwort, ob die Websuche wirklich ausgelöst
       // wurde — spart das Suchen in Vercel-Logs.
@@ -291,6 +301,7 @@ VERBOTE: Erwähne niemals Claude, ARIA, Gemini, ChatGPT, OpenAI, Anthropic. Kein
       return res.status(200).json({ ...data, content: textBlocks, _model: usedModel, _usedWebSearch: !!jobSearchTools });
     } catch (anthropicErr) {
       console.warn('Anthropic failed → Gemini:', anthropicErr.message);
+      var anthropicErrMsg = anthropicErr.message; // für Debug-Marker im Fallback unten
     }
 
     // ── Hinweis: Gemini/OpenAI-Fallback haben KEIN Web-Search-Tool angebunden.
@@ -315,7 +326,10 @@ VERBOTE: Erwähne niemals Claude, ARIA, Gemini, ChatGPT, OpenAI, Anthropic. Kein
       const geminiData = await geminiRes.json();
       const geminiText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!geminiText) throw new Error('Gemini no content');
-      return res.status(200).json({ content: [{ type: 'text', text: geminiText }], _fallback: 'gemini' });
+      const geminiDebugPrefix = wantsJobSearch
+        ? `[DEBUG: Anthropic fehlgeschlagen, Gemini-Fallback OHNE Websuche aktiv. Anthropic-Fehler: ${anthropicErrMsg || 'unbekannt'}]\n\n`
+        : '';
+      return res.status(200).json({ content: [{ type: 'text', text: geminiDebugPrefix + geminiText }], _fallback: 'gemini' });
     } catch (geminiErr) {
       console.warn('Gemini failed → OpenAI:', geminiErr.message);
     }
@@ -336,7 +350,10 @@ VERBOTE: Erwähne niemals Claude, ARIA, Gemini, ChatGPT, OpenAI, Anthropic. Kein
       const openaiData = await openaiRes.json();
       const openaiText = openaiData?.choices?.[0]?.message?.content;
       if (!openaiText) throw new Error('OpenAI no content');
-      return res.status(200).json({ content: [{ type: 'text', text: openaiText }], _fallback: 'openai' });
+      const openaiDebugPrefix = wantsJobSearch
+        ? `[DEBUG: Anthropic + Gemini fehlgeschlagen, OpenAI-Fallback OHNE Websuche aktiv. Anthropic-Fehler: ${anthropicErrMsg || 'unbekannt'}]\n\n`
+        : '';
+      return res.status(200).json({ content: [{ type: 'text', text: openaiDebugPrefix + openaiText }], _fallback: 'openai' });
     } catch (openaiErr) {
       console.error('Alle 3 fehlgeschlagen:', openaiErr.message);
     }
