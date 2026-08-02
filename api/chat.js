@@ -208,11 +208,20 @@ export default async function handler(req, res) {
 
     const jobSearchSystemAddendum = wantsJobSearch ? `
 
-JOBSUCHE-MODUS: Der Nutzer sucht Jobs, Ausbildungs-/Praktikumsplätze oder braucht Hilfe bei Bewerbung/Lebenslauf. Du hast Web-Suche zur Verfügung — nutze sie, um ECHTE, AKTUELLE Stellenanzeigen zu finden. Erfinde NIEMALS Stellenangebote oder Firmen.
-- Frage kurz nach, falls Ort/Region, Berufsfeld oder Vollzeit/Teilzeit fehlt — aber nur EINE Rückfrage, dann direkt suchen.
-- Präsentiere gefundene Stellen klar: Jobtitel, Firma, Ort, kurze Beschreibung, Link zur Anzeige.
-- Biete danach von dir aus an, ein passendes Anschreiben und/oder einen Lebenslauf für eine der gefundenen Stellen zu schreiben.
-- Für Anschreiben/Lebenslauf: frage kompakt nach den nötigsten Eckdaten (bisherige Erfahrung, Ausbildung, Stärken), falls nicht schon im Gespräch genannt — dann schreibe einen vollständigen, professionellen Text auf Deutsch, direkt einsatzbereit.` : '';
+JOBSUCHE-MODUS: Der Nutzer sucht Jobs, Ausbildungs-/Praktikumsplätze oder braucht Hilfe bei Bewerbung/Lebenslauf. Du hast Web-Suche zur Verfügung.
+
+PFLICHT — NUR ECHTE, AKTUELLE ANGEBOTE:
+- Suche gezielt auf echten Jobbörsen (arbeitsagentur.de/jobsuche, indeed.de, stepstone.de) und Karriereseiten der Firmen — nicht nur allgemeines Wissen über Firmen.
+- Jedes gelistete Angebot MUSS aus einem tatsächlichen Suchtreffer stammen, mit einer echten, funktionierenden URL zur Anzeige. KEINE Angebote ohne Link.
+- Erfinde NIEMALS Stellenangebote, Firmen oder Links. Wenn die Suche keine konkreten offenen Stellen findet, sag das ehrlich — biete dann stattdessen an, bei den größten lokalen Arbeitgebern der Branche eine Initiativbewerbung vorzubereiten.
+- Wenn eine gefundene Anzeige kein Datum zeigt oder alt wirken könnte, weise kurz darauf hin ("könnte nicht mehr aktuell sein — direkt prüfen").
+
+FORMAT — klar nummeriert, damit der Kunde eine Nummer auswählen kann:
+1. [Jobtitel] — [Firma], [Ort]
+   Kurzbeschreibung in 1 Satz.
+   Link: [echte URL]
+
+Nach der Liste IMMER fragen: "Für welche Nummer soll ich dir die Bewerbung schreiben?" — sobald der Kunde eine Nummer oder Stelle nennt, sofort ein vollständiges, auf genau diese Anzeige zugeschnittenes Anschreiben schreiben (nutze Firmenname, Jobtitel und Details aus der Anzeige). Frage nur nach den nötigsten persönlichen Eckdaten (Erfahrung, Stärken), falls die noch fehlen.` : '';
 
     let systemPrompt = systemOverride || (isPromptMode
       ? `Du bist ein professioneller KI-Prompt-Generator für Bildgenerierung. Wandle Stichwörter in perfekte englische Bild-Prompts um. Gib NUR den fertigen Prompt zurück, ohne Erklärung.`
@@ -298,16 +307,7 @@ VERBOTE: Erwähne niemals Claude, ARIA, Gemini, ChatGPT, OpenAI, Anthropic. Kein
         last.text = last.text.trim() + '\n\n⚠️ Die Antwort wurde mitten drin abgeschnitten (zu viele Ergebnisse für eine Nachricht). Schreib "weiter" oder grenz die Suche etwas ein (z. B. eine Stadt/einen Bezirk weniger), dann bekommst du die komplette Liste.';
       }
 
-      // ── TEMPORÄRE DIAGNOSE (bitte nach dem Test wieder entfernen) ──
-      // Zeigt direkt IN der Chat-Antwort, ob die Websuche wirklich ausgelöst
-      // wurde — spart das Suchen in Vercel-Logs.
-      if (jobSearchTools && textBlocks.length) {
-        const searchWasUsed = (data.content || []).some(b => b.type === 'server_tool_use' || b.type === 'web_search_tool_result');
-        const debugLine = searchWasUsed
-          ? '[DEBUG: Websuche wurde ausgelöst ✅]\n\n'
-          : '[DEBUG: Websuche wurde NICHT ausgelöst ❌ — Modell hat ohne Suche geantwortet]\n\n';
-        textBlocks[0] = { ...textBlocks[0], text: debugLine + textBlocks[0].text };
-      }
+      // ── TEMPORÄRE DIAGNOSE ENTFERNT (Websuche-Fix bestätigt funktionierend) ──
 
       return res.status(200).json({ ...data, content: textBlocks, _model: usedModel, _usedWebSearch: !!jobSearchTools });
     } catch (anthropicErr) {
@@ -337,10 +337,7 @@ VERBOTE: Erwähne niemals Claude, ARIA, Gemini, ChatGPT, OpenAI, Anthropic. Kein
       const geminiData = await geminiRes.json();
       const geminiText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!geminiText) throw new Error('Gemini no content');
-      const geminiDebugPrefix = wantsJobSearch
-        ? `[DEBUG: Anthropic fehlgeschlagen, Gemini-Fallback OHNE Websuche aktiv. Anthropic-Fehler: ${anthropicErrMsg || 'unbekannt'}]\n\n`
-        : '';
-      return res.status(200).json({ content: [{ type: 'text', text: geminiDebugPrefix + geminiText }], _fallback: 'gemini' });
+      return res.status(200).json({ content: [{ type: 'text', text: geminiText }], _fallback: 'gemini' });
     } catch (geminiErr) {
       console.warn('Gemini failed → OpenAI:', geminiErr.message);
     }
@@ -361,10 +358,7 @@ VERBOTE: Erwähne niemals Claude, ARIA, Gemini, ChatGPT, OpenAI, Anthropic. Kein
       const openaiData = await openaiRes.json();
       const openaiText = openaiData?.choices?.[0]?.message?.content;
       if (!openaiText) throw new Error('OpenAI no content');
-      const openaiDebugPrefix = wantsJobSearch
-        ? `[DEBUG: Anthropic + Gemini fehlgeschlagen, OpenAI-Fallback OHNE Websuche aktiv. Anthropic-Fehler: ${anthropicErrMsg || 'unbekannt'}]\n\n`
-        : '';
-      return res.status(200).json({ content: [{ type: 'text', text: openaiDebugPrefix + openaiText }], _fallback: 'openai' });
+      return res.status(200).json({ content: [{ type: 'text', text: openaiText }], _fallback: 'openai' });
     } catch (openaiErr) {
       console.error('Alle 3 fehlgeschlagen:', openaiErr.message);
     }
