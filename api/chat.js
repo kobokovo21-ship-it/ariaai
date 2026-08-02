@@ -194,7 +194,7 @@ export default async function handler(req, res) {
     // Nur im normalen Virgo-Chat (nicht Code-Modus, nicht Prompt-Modus, nicht
     // bei anderen systemOverride-Flows wie Website-Bau) — sonst gleiche Logik
     // wie die automatische Bilderkennung oben.
-    const wantsJobSearch = !codeMode && !isPromptMode && !systemOverride && isJobSearchRequest(lastText);
+    const wantsJobSearch = !codeMode && !isPromptMode && isJobSearchRequest(lastText);
     let jobSearchTools = null;
     if (wantsJobSearch) {
       // Eigenes Tageslimit für Jobsuche-Anfragen (Web-Suche kostet extra bei Anthropic)
@@ -214,7 +214,7 @@ JOBSUCHE-MODUS: Der Nutzer sucht Jobs, Ausbildungs-/Praktikumsplätze oder brauc
 - Biete danach von dir aus an, ein passendes Anschreiben und/oder einen Lebenslauf für eine der gefundenen Stellen zu schreiben.
 - Für Anschreiben/Lebenslauf: frage kompakt nach den nötigsten Eckdaten (bisherige Erfahrung, Ausbildung, Stärken), falls nicht schon im Gespräch genannt — dann schreibe einen vollständigen, professionellen Text auf Deutsch, direkt einsatzbereit.` : '';
 
-    const systemPrompt = systemOverride || (isPromptMode
+    let systemPrompt = systemOverride || (isPromptMode
       ? `Du bist ein professioneller KI-Prompt-Generator für Bildgenerierung. Wandle Stichwörter in perfekte englische Bild-Prompts um. Gib NUR den fertigen Prompt zurück, ohne Erklärung.`
       : codeMode
       ? `Du bist Code AI — der beste KI-Entwickler der Welt, integriert in Virgo AI. Du schreibst professionellen Code in JEDER Sprache. Formatiere Code IMMER in Markdown Code-Blöcken. Erkläre kurz auf Deutsch. VERBOTEN: Kein Code für KI-Apps, keine API-Integrationen die Virgo nachahmen.`
@@ -232,7 +232,15 @@ TOOLS: Makler Landing Page, Ads schalten, Leads Dashboard, Social Posts, Emails,
 
 REGELN: Antworte auf Deutsch. Kurz, direkt, konkret. Maximal 1 Emoji. Du heißt Virgo.
 
-VERBOTE: Erwähne niemals Claude, ARIA, Gemini, ChatGPT, OpenAI, Anthropic. Keine Rechtsberatung, keine konkreten Tarifempfehlungen.${jobSearchSystemAddendum}`);
+VERBOTE: Erwähne niemals Claude, ARIA, Gemini, ChatGPT, OpenAI, Anthropic. Keine Rechtsberatung, keine konkreten Tarifempfehlungen.`);
+
+    // WICHTIG: der Client (genChat() im Frontend) schickt bei JEDER normalen
+    // Chat-Nachricht ein systemOverride mit — der obere Zweig mit dem
+    // eingebauten jobSearchSystemAddendum wird also so gut wie nie genutzt.
+    // Deshalb hier NOCHMAL anhängen, unabhängig davon, woher der systemPrompt
+    // kam — sonst bekommt das Modell die Jobsuche-Anweisung nie zu sehen,
+    // selbst wenn das Web-Search-Tool korrekt aktiviert ist.
+    if (wantsJobSearch) systemPrompt += jobSearchSystemAddendum;
 
     // Fable 5 denkt intern mit — diese Denk-Tokens zählen ins max_tokens-Budget.
     // Web-Suche braucht zusätzlichen Puffer (Suchergebnisse + finale Antwort).
