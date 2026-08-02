@@ -264,7 +264,18 @@ VERBOTE: Erwähne niemals Claude, ARIA, Gemini, ChatGPT, OpenAI, Anthropic. Kein
       }
 
       // Falls auch das abgelehnt wird (sehr selten): freundliche Antwort statt leerem Chat
-      const textBlocks = (data.content || []).filter(b => b.type === 'text' && b.text);
+      let textBlocks = (data.content || []).filter(b => b.type === 'text' && b.text);
+
+      // ── WICHTIGER FUND: Bei Websuche (mehrere Suchanfragen hintereinander)
+      // liefert Anthropic den Text in MEHRERE Blöcke aufgeteilt — einen vor
+      // jeder neuen Suchpause. Das Frontend liest aber nur content[0].text,
+      // also nur den ERSTEN Block — alles danach (Punkt 2, 3, Links usw.)
+      // ging bisher verloren, obwohl die Antwort serverseitig vollständig war.
+      // Fix: alle Text-Blöcke zu einem zusammenführen, bevor sie rausgehen.
+      if (textBlocks.length > 1) {
+        const combinedText = textBlocks.map(b => b.text).join('\n\n');
+        textBlocks = [{ type: 'text', text: combinedText }];
+      }
       if (data.stop_reason === 'refusal' || textBlocks.length === 0) {
         return res.status(200).json({
           content: [{ type: 'text', text: 'Bei dieser Anfrage kann ich nicht helfen. Formuliere sie bitte etwas anders — ich unterstütze dich gerne bei Leads, Marketing, Ads, Texten und Bildern.' }],
