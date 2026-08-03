@@ -44,6 +44,32 @@ export default async function handler(req, res) {
     const code = normalizeCode(req.body?.code);
     if (!code) return res.status(400).json({ error: 'Bitte einen Code eingeben' });
 
+    // ── SICHERHEITSNETZ: sicherstellen, dass der Nutzer wirklich in der
+    // eigenen users-Tabelle existiert, BEVOR wir versuchen, den Code auf ihn
+    // zu buchen. Grund: Registrierung legt normalerweise eine Zeile in
+    // public.users an, aber falls das je fehlgeschlagen ist (z.B. Race
+    // Condition, Netzwerkfehler beim Insert), existiert der Nutzer nur in
+    // Supabase Auth — dann schlägt die Fremdschlüssel-Prüfung von access_codes
+    // fehl (genau der Fehler, den wir gerade gesehen haben). Upsert mit
+    // "on conflict do nothing"-Verhalten: legt die Zeile nur an, falls sie
+    // fehlt, überschreibt NIE einen bestehenden Plan/Credits-Stand.
+    const ensureUserRes = await fetch(`${BASE}/rest/v1/users`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SVC,
+        'Authorization': `Bearer ${SVC}`,
+        'Prefer': 'resolution=ignore-duplicates'
+      },
+      body: JSON.stringify({ id: user.id, email: user.email || null, credits: 0, plan: 'free' })
+    });
+    if (!ensureUserRes.ok) {
+      const t = await ensureUserRes.text().catch(() => '');
+      console.warn('ensure-user-row vor Code-Einlösung fehlgeschlagen (evtl. existierte Zeile schon):', ensureUserRes.status, t);
+      // Kein harter Abbruch hier — falls die Zeile schon existiert, ist das
+      // erwartetes Verhalten bei manchen Supabase-Konfigurationen.
+    }
+
     // Code nachschlagen
     const lookupRes = await fetch(`${BASE}/rest/v1/access_codes?code=eq.${encodeURIComponent(code)}&select=code,plan,used`, {
       headers: { 'apikey': SVC, 'Authorization': `Bearer ${SVC}` }
