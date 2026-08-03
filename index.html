@@ -2793,29 +2793,51 @@ async function redeemCode(){
   const input=document.getElementById('redeem-code-input');
   const btn=document.getElementById('redeem-code-btn');
   const msgEl=document.getElementById('redeem-code-msg');
-  const code=(input.value||'').trim();
-  if(!code){
-    msgEl.style.display='block';msgEl.style.color='var(--red)';
-    msgEl.textContent='Bitte einen Code eingeben.';
-    return;
-  }
-  if(!authToken){
-    msgEl.style.display='block';msgEl.style.color='var(--red)';
-    msgEl.textContent='Bitte melde dich zuerst an, um einen Code einzulösen.';
-    return;
-  }
-  btn.disabled=true;btn.textContent='...';
-  msgEl.style.display='none';
   try{
-    const r=await fetch('/api/redeem-code',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},
-      body:JSON.stringify({code})
-    });
-    const d=await r.json().catch(()=>({}));
+    const code=(input.value||'').trim();
+    if(!code){
+      msgEl.style.display='block';msgEl.style.color='var(--red)';
+      msgEl.textContent='Bitte einen Code eingeben.';
+      return;
+    }
+    if(!authToken){
+      msgEl.style.display='block';msgEl.style.color='var(--red)';
+      msgEl.textContent='Bitte melde dich zuerst an, um einen Code einzulösen.';
+      return;
+    }
+    btn.disabled=true;btn.textContent='...';
+    msgEl.style.display='none';
+
+    let r;
+    try{
+      r=await fetch('/api/redeem-code',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},
+        body:JSON.stringify({code})
+      });
+    }catch(networkErr){
+      // Die Anfrage kam nie beim Server an (Netzwerk/CORS/blockiert) —
+      // das steht jetzt hier lesbar, statt nur in der Konsole.
+      msgEl.style.display='block';msgEl.style.color='var(--red)';
+      msgEl.textContent='Verbindung fehlgeschlagen (kam nie beim Server an): '+networkErr.message;
+      btn.disabled=false;btn.textContent='Einlösen';
+      return;
+    }
+
+    const rawText=await r.text();
+    let d={};
+    try{ d=JSON.parse(rawText); }
+    catch(parseErr){
+      // Server hat geantwortet, aber KEIN gültiges JSON — Rohtext direkt anzeigen.
+      msgEl.style.display='block';msgEl.style.color='var(--red)';
+      msgEl.textContent='Unerwartete Server-Antwort (HTTP '+r.status+'): '+rawText.slice(0,200);
+      btn.disabled=false;btn.textContent='Einlösen';
+      return;
+    }
+
     if(!r.ok||!d.success){
       msgEl.style.display='block';msgEl.style.color='var(--red)';
-      msgEl.textContent=d.error||'Code konnte nicht eingelöst werden.';
+      msgEl.textContent='Fehler (HTTP '+r.status+'): '+(d.error||'Code konnte nicht eingelöst werden.');
     } else {
       credits=d.credits;
       localStorage.setItem('virgo_credits',credits);
@@ -2826,9 +2848,11 @@ async function redeemCode(){
       input.value='';
       setTimeout(()=>closeM('modal-upgrade'),1500);
     }
-  }catch(e){
+  }catch(outerErr){
+    // Jeder sonstige, unerwartete JS-Fehler landet hier sichtbar statt nur
+    // in der (für dich schwer erreichbaren) Browser-Konsole.
     msgEl.style.display='block';msgEl.style.color='var(--red)';
-    msgEl.textContent='Fehler: '+e.message;
+    msgEl.textContent='Unerwarteter Fehler im Browser: '+outerErr.message;
   }
   btn.disabled=false;btn.textContent='Einlösen';
 }
