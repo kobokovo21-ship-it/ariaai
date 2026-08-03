@@ -63,8 +63,10 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({ id: user.id, email: user.email || null, credits: 0, plan: 'free' })
     });
+    let ensureUserDiag = 'ok';
     if (!ensureUserRes.ok) {
       const t = await ensureUserRes.text().catch(() => '');
+      ensureUserDiag = `HTTP ${ensureUserRes.status}: ${t.slice(0, 150)}`;
       console.warn('ensure-user-row vor Code-Einlösung fehlgeschlagen (evtl. existierte Zeile schon):', ensureUserRes.status, t);
       // Kein harter Abbruch hier — falls die Zeile schon existiert, ist das
       // erwartetes Verhalten bei manchen Supabase-Konfigurationen.
@@ -95,7 +97,7 @@ export default async function handler(req, res) {
     if (!claimRes.ok) {
       const claimErrText = await claimRes.text().catch(() => '');
       console.error('access_codes claim failed:', claimRes.status, claimErrText);
-      return res.status(500).json({ error: `Code konnte nicht eingelöst werden (DB-Fehler ${claimRes.status}): ${claimErrText.slice(0, 200)}` });
+      return res.status(500).json({ error: `Code konnte nicht eingelöst werden (DB-Fehler ${claimRes.status}): ${claimErrText.slice(0, 200)} [ensure-user: ${ensureUserDiag}]` });
     }
     const claimed = await claimRes.json();
     if (!claimed.length) return res.status(400).json({ error: 'Dieser Code wurde gerade eben schon eingelöst' });
