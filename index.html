@@ -694,7 +694,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
       </div>
     </div>
     <div style="font-size:10px;color:var(--td);text-align:center;margin-top:12px">Zahlung über Stripe · SSL-verschlüsselt</div>
-    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--bd)">
+    <div id="redeem-code-block" style="display:none;margin-top:16px;padding-top:14px;border-top:1px solid var(--bd)">
       <div style="font-size:12px;font-weight:500;margin-bottom:7px">Hast du einen Zugangscode bekommen?</div>
       <div style="display:flex;gap:7px">
         <input class="minp" id="redeem-code-input" placeholder="z.B. VIRGO-AB3D-9XKQ" style="margin-bottom:0;text-transform:uppercase" onkeydown="if(event.key==='Enter')redeemCode()">
@@ -2836,6 +2836,8 @@ function openUpgrade(){
   const ws=localStorage.getItem('virgo_workspace')||'makler';
   document.getElementById('up-makler').style.display=ws==='makler'?'':'none';
   document.getElementById('up-business').style.display=ws==='business'?'':'none';
+  const rcBlock=document.getElementById('redeem-code-block');
+  if(rcBlock)rcBlock.style.display=ws==='business'?'block':'none';
   const title=document.getElementById('up-title');
   const sub=document.getElementById('up-sub');
   const sum=document.getElementById('up-summary');
