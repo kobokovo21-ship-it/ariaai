@@ -66,7 +66,11 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({ used: true, used_by: user.id, used_at: new Date().toISOString() })
     });
-    if (!claimRes.ok) return res.status(500).json({ error: 'Code konnte nicht eingelöst werden' });
+    if (!claimRes.ok) {
+      const claimErrText = await claimRes.text().catch(() => '');
+      console.error('access_codes claim failed:', claimRes.status, claimErrText);
+      return res.status(500).json({ error: `Code konnte nicht eingelöst werden (DB-Fehler ${claimRes.status}): ${claimErrText.slice(0, 200)}` });
+    }
     const claimed = await claimRes.json();
     if (!claimed.length) return res.status(400).json({ error: 'Dieser Code wurde gerade eben schon eingelöst' });
 
@@ -82,8 +86,9 @@ export default async function handler(req, res) {
       body: JSON.stringify({ plan: row.plan, credits: DEFAULT_CREDITS })
     });
     if (!updateRes.ok) {
-      console.error('user plan update after redeem failed:', await updateRes.text());
-      return res.status(500).json({ error: 'Code eingelöst, aber Plan konnte nicht gesetzt werden — bitte melde dich beim Support' });
+      const updateErrText = await updateRes.text().catch(() => '');
+      console.error('user plan update after redeem failed:', updateRes.status, updateErrText);
+      return res.status(500).json({ error: `Code eingelöst, aber Plan konnte nicht gesetzt werden (DB-Fehler ${updateRes.status}): ${updateErrText.slice(0, 200)}` });
     }
 
     return res.status(200).json({ success: true, plan: row.plan, credits: DEFAULT_CREDITS });
