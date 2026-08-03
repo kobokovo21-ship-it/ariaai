@@ -337,9 +337,26 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
     <input class="ap-url" id="hv-url" type="text" placeholder="Test-Clip-URL (leer = Platzhalter-Clip)" oninput="applyHeroBeta()">
     <div class="ap-hint" id="hv-hint"></div>
   </div>
+
+  <div class="admin-panel" id="admin-access-panel" style="display:none">
+    <div class="ap-head">
+      <span class="ap-title">Zugangscodes erzeugen</span>
+    </div>
+    <input class="ap-url" id="ac-count" type="number" min="1" max="500" placeholder="Anzahl, z.B. 100" style="margin-top:8px">
+    <select class="ap-url" id="ac-plan" style="margin-top:6px">
+      <option value="pro">Business Pro</option>
+      <option value="standard">Standard</option>
+    </select>
+    <input class="ap-url" id="ac-label" type="text" placeholder="Bezeichnung, z.B. Jobcenter Düsseldorf" style="margin-top:6px">
+    <button class="new-btn" style="margin-top:8px" onclick="generateAccessCodes()" id="ac-btn">Codes erzeugen</button>
+    <div class="ap-hint" id="ac-result" style="display:none;white-space:pre-wrap;user-select:all;max-height:200px;overflow-y:auto"></div>
+    <button class="new-btn" style="margin-top:6px;display:none;background:transparent;color:var(--t);border:1px solid var(--bd)" id="ac-download-btn" onclick="downloadAccessCodes()">Als Datei herunterladen</button>
+  </div>
+
   <div class="ubar" id="ubar" onclick="showM('modal-login')">
     <div class="av" id="uav">?</div>
     <div style="flex:1;min-width:0"><div class="un" id="uname">Anmelden</div><div class="up" id="uplan">Kostenlos starten</div></div>
+
   </div>
 </div>
 
@@ -677,6 +694,14 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);display:
       </div>
     </div>
     <div style="font-size:10px;color:var(--td);text-align:center;margin-top:12px">Zahlung über Stripe · SSL-verschlüsselt</div>
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--bd)">
+      <div style="font-size:12px;font-weight:500;margin-bottom:7px">Hast du einen Zugangscode bekommen?</div>
+      <div style="display:flex;gap:7px">
+        <input class="minp" id="redeem-code-input" placeholder="z.B. VIRGO-AB3D-9XKQ" style="margin-bottom:0;text-transform:uppercase" onkeydown="if(event.key==='Enter')redeemCode()">
+        <button class="mbtn" style="width:auto;padding:10px 16px;margin-top:0;flex-shrink:0" onclick="redeemCode()" id="redeem-code-btn">Einlösen</button>
+      </div>
+      <div id="redeem-code-msg" style="font-size:11px;margin-top:6px;display:none"></div>
+    </div>
     <button class="mbtn sec" onclick="closeM('modal-upgrade')" style="margin-top:14px">Später</button>
   </div>
 </div>
@@ -967,6 +992,11 @@ function setModel(el,model,name){
   closeSb();
 }
 function isPaidPlan(){const p=localStorage.getItem('virgo_plan')||'free';return['makler-pro','makler-business','makler-starter','pro','standard'].includes(p)||isAdmin();}
+// Makler-Werkzeuge (Ads schalten, Leads Dashboard, Landing Page) sind AN DEN
+// MAKLER-PLAN gebunden — ein Business-Plan (auch per Zugangscode) darf da NIE
+// reinkommen, egal ob generell "bezahlt" oder nicht. Nur echte Makler-Pläne
+// (oder Admin) zählen hier.
+function isMaklerPlan(){if(isAdmin())return true;const p=localStorage.getItem('virgo_plan')||'free';return['makler-pro','makler-business','makler-starter'].includes(p);}
 function isFreePlan(){if(isAdmin())return false;const p=localStorage.getItem('virgo_plan')||'free';return!p||p==='free';}
 function freeChatsUsed(){return parseInt(localStorage.getItem('virgo_free_chats')||'0',10);}
 function freeChatsLeft(){return Math.max(0,5-freeChatsUsed());}
@@ -1012,6 +1042,57 @@ function renderAdminPanel(){
   document.getElementById('hv-toggle').checked=localStorage.getItem('virgo_hero_beta')==='1';
   document.getElementById('hv-url').value=localStorage.getItem('virgo_hero_beta_url')||'';
   applyHeroBeta(); // reconcile virgo_hero_video_url with saved toggle state on load
+  const ap2=document.getElementById('admin-access-panel');
+  if(ap2)ap2.style.display='block';
+}
+let _lastGeneratedCodes=null; // für den Download-Button
+async function generateAccessCodes(){
+  const countEl=document.getElementById('ac-count');
+  const planEl=document.getElementById('ac-plan');
+  const labelEl=document.getElementById('ac-label');
+  const btn=document.getElementById('ac-btn');
+  const resultEl=document.getElementById('ac-result');
+  const dlBtn=document.getElementById('ac-download-btn');
+  const count=parseInt(countEl.value,10);
+  if(!count||count<1||count>500){
+    resultEl.style.display='block';resultEl.style.color='var(--red)';
+    resultEl.textContent='Bitte eine Anzahl zwischen 1 und 500 eingeben.';
+    return;
+  }
+  btn.disabled=true;btn.textContent='Wird erzeugt...';
+  resultEl.style.display='none';dlBtn.style.display='none';
+  try{
+    const r=await fetch('/api/admin-generate-codes',{
+      method:'POST',
+      headers:{'Content-Type':'application/json',...(authToken?{'Authorization':'Bearer '+authToken}:{})},
+      body:JSON.stringify({count,plan:planEl.value,batch_label:labelEl.value})
+    });
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok||!d.success){
+      resultEl.style.display='block';resultEl.style.color='var(--red)';
+      resultEl.textContent='Fehler: '+(d.error||'HTTP '+r.status);
+    } else {
+      _lastGeneratedCodes={codes:d.codes,plan:d.plan,label:d.batch_label||''};
+      resultEl.style.display='block';resultEl.style.color='var(--t)';
+      resultEl.textContent='✓ '+d.count+' Codes erzeugt ('+d.plan+')\n\n'+d.codes.join('\n');
+      dlBtn.style.display='block';
+    }
+  }catch(e){
+    resultEl.style.display='block';resultEl.style.color='var(--red)';
+    resultEl.textContent='Fehler: '+e.message;
+  }
+  btn.disabled=false;btn.textContent='Codes erzeugen';
+}
+function downloadAccessCodes(){
+  if(!_lastGeneratedCodes)return;
+  const {codes,plan,label}=_lastGeneratedCodes;
+  const header='Virgo Zugangscodes'+(label?' — '+label:'')+'\nPlan: '+plan+'\nErzeugt: '+new Date().toLocaleString('de-DE')+'\nAnzahl: '+codes.length+'\n\n';
+  const text=header+codes.join('\n')+'\n';
+  const blob=new Blob([text],{type:'text/plain;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='virgo-codes'+(label?'-'+label.toLowerCase().replace(/[^a-z0-9]+/g,'-'):'')+'.txt';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
 }
 function updateHeroHint(){
   const h=document.getElementById('hv-hint');if(!h)return;
@@ -2708,6 +2789,49 @@ if(_micBtnEl){_micBtnEl.addEventListener('touchstart',function(e){e.preventDefau
 function showM(id){document.getElementById(id).classList.add('vis');}
 function closeM(id){document.getElementById(id).classList.remove('vis');if(id==='modal-login'){const el=document.getElementById('auth-msg');el.className='';el.textContent='Melde dich an oder erstelle ein kostenloses Konto.';}}
 document.querySelectorAll('.modal').forEach(m=>{m.addEventListener('click',function(e){if(e.target===this)closeM(this.id);});});
+async function redeemCode(){
+  const input=document.getElementById('redeem-code-input');
+  const btn=document.getElementById('redeem-code-btn');
+  const msgEl=document.getElementById('redeem-code-msg');
+  const code=(input.value||'').trim();
+  if(!code){
+    msgEl.style.display='block';msgEl.style.color='var(--red)';
+    msgEl.textContent='Bitte einen Code eingeben.';
+    return;
+  }
+  if(!authToken){
+    msgEl.style.display='block';msgEl.style.color='var(--red)';
+    msgEl.textContent='Bitte melde dich zuerst an, um einen Code einzulösen.';
+    return;
+  }
+  btn.disabled=true;btn.textContent='...';
+  msgEl.style.display='none';
+  try{
+    const r=await fetch('/api/redeem-code',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},
+      body:JSON.stringify({code})
+    });
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok||!d.success){
+      msgEl.style.display='block';msgEl.style.color='var(--red)';
+      msgEl.textContent=d.error||'Code konnte nicht eingelöst werden.';
+    } else {
+      credits=d.credits;
+      localStorage.setItem('virgo_credits',credits);
+      localStorage.setItem('virgo_plan',d.plan);
+      updateUI();
+      msgEl.style.display='block';msgEl.style.color='#16a34a';
+      msgEl.textContent='✓ Code eingelöst! Dein Plan ist jetzt aktiv.';
+      input.value='';
+      setTimeout(()=>closeM('modal-upgrade'),1500);
+    }
+  }catch(e){
+    msgEl.style.display='block';msgEl.style.color='var(--red)';
+    msgEl.textContent='Fehler: '+e.message;
+  }
+  btn.disabled=false;btn.textContent='Einlösen';
+}
 function openUpgrade(){
   const ws=localStorage.getItem('virgo_workspace')||'makler';
   document.getElementById('up-makler').style.display=ws==='makler'?'':'none';
@@ -2798,6 +2922,28 @@ function applyFreeRestrictions(){
       const hint=document.createElement('div');hint.id='free-sb-hint';hint.style.cssText='margin:14px 10px;padding:14px;border:1px solid var(--bd);border-radius:12px;text-align:center;background:linear-gradient(135deg,rgba(124,58,237,.05),rgba(37,99,235,.05))';
       hint.innerHTML='<div style="font-size:20px;margin-bottom:6px">🔒</div><div style="font-size:12px;font-weight:600;margin-bottom:3px">Tools mit Plan</div><div style="font-size:11px;color:var(--td);line-height:1.5;margin-bottom:10px">Landing Pages, Leads, Ads und mehr</div><button onclick="openUpgrade()" style="width:100%;padding:9px;border-radius:9px;background:linear-gradient(90deg,#7c3aed,#2563eb);color:#fff;border:0;cursor:pointer;font-size:12px;font-weight:600">Plan wählen</button><div style="font-size:10px;color:var(--td);margin-top:8px">Free: '+freeChatsLeft()+' von 5 Chats übrig</div>';
       wsEl.appendChild(hint);
+    }
+  }
+
+  // ── MAKLER-SPERRE: bezahlter Plan reicht NICHT für Makler-Werkzeuge ──
+  // Nur ein echter Makler-Plan (nicht Business/Standard, auch nicht per
+  // Zugangscode) darf Ads schalten, Leads Dashboard, Landing Page sehen.
+  // Diese Sperre gilt ZUSÄTZLICH zur obigen Free/Login-Sperre — sie greift
+  // auch bei eingeloggten, zahlenden Business-Kunden.
+  const oldMaklerLock=document.getElementById('makler-lock-hint');if(oldMaklerLock)oldMaklerLock.remove();
+  if(loggedIn && !isFreePlan() && !isMaklerPlan()){
+    const wsMakler=document.getElementById('ws-makler');
+    if(wsMakler){
+      wsMakler.querySelectorAll('.ms').forEach(el=>{el.style.display='none';});
+      const lock=document.createElement('div');lock.id='makler-lock-hint';
+      lock.style.cssText='margin:14px 10px;padding:14px;border:1px solid var(--bd);border-radius:12px;text-align:center;background:var(--sf2)';
+      lock.innerHTML='<div style="font-size:20px;margin-bottom:6px">🔒</div><div style="font-size:12px;font-weight:600;margin-bottom:3px">Nur im Makler-Plan</div><div style="font-size:11px;color:var(--td);line-height:1.5">Diese Werkzeuge (Ads, Leads, Landing Page) sind Teil des separaten Makler-Tarifs, nicht im Business-Plan enthalten.</div>';
+      wsMakler.appendChild(lock);
+    }
+    // Falls gerade der Makler-Tab aktiv war, automatisch auf Business wechseln —
+    // niemand landet auf einem leeren, gesperrten Tab.
+    if((localStorage.getItem('virgo_workspace')||'makler')==='makler'){
+      _applyWorkspace('business');
     }
   }
 }
